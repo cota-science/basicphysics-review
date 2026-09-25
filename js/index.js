@@ -14,7 +14,7 @@ window.UNIT_LIST = [
     { id: "kinematics", title: "速度・加速度（運動の表し方）", file: "units/kinematics.js" },
     { id: "free-fall",  title: "落体の運動",                 file: "units/free-fall.js" },
     { id: "force",      title: "力とつり合い",               file: "units/force.js" },
-    { id: "newton",     title: "運動の法則",                 file: null },
+    { id: "newton",     title: "運動の法則",                 file: "units/newton.js" },
     { id: "energy",     title: "仕事と力学的エネルギー",     file: null }
   ]},
   { group: "熱", units: [
@@ -32,4 +32,3 @@ window.UNIT_LIST = [
     { id: "energy-use", title: "エネルギーとその利用",       file: null }
   ]}
 ];
-
