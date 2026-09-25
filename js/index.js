@@ -15,7 +15,7 @@ window.UNIT_LIST = [
     { id: "free-fall",  title: "落体の運動",                 file: "units/free-fall.js" },
     { id: "force",      title: "力とつり合い",               file: "units/force.js" },
     { id: "newton",     title: "運動の法則",                 file: "units/newton.js" },
-    { id: "energy",     title: "仕事と力学的エネルギー",     file: null }
+    { id: "energy",     title: "仕事と力学的エネルギー",     file: "units/energy.js" }
   ]},
   { group: "熱", units: [
     { id: "heat",       title: "熱とエネルギー",             file: null }
