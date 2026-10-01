@@ -74,7 +74,7 @@ function validate(u){
 function parseNum(str){
   if(str==null) return NaN;
   const t = String(str).replace(/[０-９．]/g, c => String.fromCharCode(c.charCodeAt(0)-0xFEE0))
-    .replace(/[−ー―–—‐－]/g,"-").replace(/[＋]/g,"+").replace(/[，,\s]/g,"");
+    .replace(/[−ー―–—‐‑－﹣ｰ]/g,"-").replace(/[＋]/g,"+").replace(/[，,\s]/g,"");
   if(!/^[+-]?\d*\.?\d+$/.test(t)) return NaN;
   return parseFloat(t);
 }
@@ -144,7 +144,8 @@ function qHTML(q){
     });
     h += `</div>`;
   } else if(q.type==="num"){
-    h += `<div class="numrow"><input type="text" inputmode="decimal" autocomplete="off" aria-label="答え" data-act="num" value="${st.v!=null?esc(st.v):""}" ${done?"disabled":""} placeholder="例 −1.5"><span class="unit">${q.unit||""}</span></div>`;
+    h += `<div class="numrow">${done?"":`<button type="button" class="sign" data-act="sign" aria-label="正負を切り替える">±</button>`}<input type="text" inputmode="decimal" autocomplete="off" aria-label="答え" data-act="num" value="${st.v!=null?esc(st.v):""}" ${done?"disabled":""} placeholder="例 −1.5"><span class="unit">${q.unit||""}</span></div>`;
+    if(!done) h += `<p class="hint" style="margin:6px 0 0">負の数は「±」ボタンで符号を切り替える</p>`;
   } else if(q.type==="self"){
     h += `<textarea data-act="text" aria-label="あなたの答え" placeholder="ここに書く">${st.v?esc(st.v):""}</textarea>`;
   } else if(q.type==="checklist"){
@@ -366,6 +367,12 @@ document.addEventListener("click", e => {
     else st.v = i;
     save(); rerenderQ(id);
     const nb = document.querySelector(`#q-${id} [data-act="pick"][data-i="${i}"]`); if(nb) nb.focus();
+  } else if(act === "sign"){
+    const inp = qel.querySelector('[data-act="num"]');
+    let v = (inp.value || "").trim().replace(/^[−ー―–—‐‑－﹣ｰ]/,"-");
+    v = v.startsWith("-") ? v.slice(1) : (v.startsWith("+") ? "-" + v.slice(1) : "-" + v);
+    inp.value = v; st.v = v; save();
+    const n = qel.querySelector(".note"); if(n) n.textContent = "";
   } else if(act === "check"){
     if(!complete(q, st)){ const n = qel.querySelector(".note"); if(n) n.textContent = q.type==="num" ? "数値を入力してください" : "すべて選んでから答え合わせしよう"; return; }
     st.checked = true; st.correct = grade(q, st); save(); rerenderQ(id);
