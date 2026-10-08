@@ -14,7 +14,7 @@ const DEF_TABLE = `<div class="tbl"><table>
 <tr><td>平均の速度</td><td>変位 ÷ かかった時間</td><td>m/s</td><td>あり</td></tr>
 <tr><td>加速度 a</td><td>単位時間あたりの<b>速度</b>の変化</td><td>m/s²</td><td>あり</td></tr>
 </table></div>
-<p class="formula">平均の速度 ＝ Δx ÷ Δt　　加速度 a ＝ Δv ÷ Δt</p>${FORMULAS}`;
+<p class="formula">平均の速度 ＝ Δx ÷ Δt　　平均の加速度 a ＝ Δv ÷ Δt</p>${FORMULAS}`;
 const DIM_TABLE = `<div class="tbl"><table>
 <tr><th>量</th><th>単位</th><th>次元</th></tr>
 <tr><td>変位 x</td><td>m</td><td>〔L〕</td></tr>
@@ -73,7 +73,7 @@ const SECTIONS = [
      explain:"「止まった」は最後の状態なので、最後の速度 v ＝ 0 です。"},
     {id:"ra4",type:"choice",prompt:"「真上に投げたボールが最高点に達した。」",options:["v ＝ 0 かつ a ＝ 0","v ＝ 0 だが a は 0 ではない","a ＝ 0 だが v は 0 ではない"],answer:1,
      explain:"最高点では一瞬速度が 0 になりますが、重力による加速度ははたらき続けています。"},
-    {id:"ra5",type:"choice",prompt:"「等速で走っている。」",options:["a ＝ 0","v ＝ 0","a が一定で 0 でない"],answer:0,
+    {id:"ra5",type:"choice",prompt:"「等速度で走っている。」",options:["a ＝ 0","v ＝ 0","a が一定で 0 でない"],answer:0,
      explain:"等速 → 速度が変わらない → 加速度 a ＝ 0 です。"}
   ]},
   { title:"B. 符号を言葉にする・言葉を符号にする", lead:"東向きを正とする。", qs:[
