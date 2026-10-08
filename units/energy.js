@@ -11,7 +11,7 @@ const DEF_TABLE = `<div class="tbl"><table>
 <tr><td>仕事の正負</td><td>θ ＜ 90° で正、θ ＝ 90° で 0、θ ＞ 90° で負</td><td>―</td></tr>
 <tr><td>仕事率</td><td>単位時間あたりの仕事</td><td>P ＝ W ÷ t〔W〕</td></tr>
 <tr><td>運動エネルギー</td><td>運動している物体がもつエネルギー</td><td>K ＝ ½mv²〔J〕</td></tr>
-<tr><td>仕事と運動エネルギー</td><td>運動エネルギーの変化 ＝ された仕事の和</td><td>ΔK = ½mv² − ½mv₀² ＝ W</td></tr>
+<tr><td>仕事と運動エネルギー</td><td>運動エネルギーの変化 ＝ された仕事の和</td><td>ΔK ＝ ½mv² − ½mv₀² ＝ W</td></tr>
 <tr><td>重力による位置エネルギー</td><td>基準水平面から高さ h にある物体がもつ</td><td>U ＝ mgh〔J〕</td></tr>
 <tr><td>弾性力による位置エネルギー</td><td>x だけ変形したばねがもつ</td><td>U ＝ ½kx²〔J〕</td></tr>
 <tr><td>力学的エネルギーの保存</td><td>保存力である重力・弾性力以外の力が仕事をしないとき</td><td>K ＋ U ＝ 一定</td></tr>
