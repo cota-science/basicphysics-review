@@ -12,18 +12,18 @@ const FORMULAS = `<div class="tbl"><table>
 const DEF_TABLE = `<div class="tbl"><table>
 <tr><th>用語</th><th>定義</th><th>初速度</th><th>加速度</th></tr>
 <tr><td>重力加速度 g</td><td>重力だけを受けて運動する物体の加速度。9.8 m/s²、鉛直下向き</td><td>―</td><td>―</td></tr>
-<tr><td>自由落下</td><td>静止状態から、重力だけを受けて落ちる運動</td><td>0</td><td>下向きに g</td></tr>
-<tr><td>鉛直投げ下ろし</td><td>鉛直下向きに初速度を与えて落とす運動</td><td>下向き v₀</td><td>下向きに g</td></tr>
-<tr><td>鉛直投げ上げ</td><td>鉛直上向きに初速度を与えて投げる運動</td><td>上向き v₀</td><td>下向きに g</td></tr>
-<tr><td>最高点</td><td>投げ上げた物体の速度が 0 になり、向きが変わる点</td><td>―</td><td>下向きに g</td></tr>
-</table></div><p>加速度は、上昇中・最高点・下降中のどこでも<b>下向きに g で一定</b>。</p>${FORMULAS}`;
+<tr><td>自由落下</td><td>静止状態から、重力だけを受けて落下する運動</td><td>0</td><td>鉛直下向きに g</td></tr>
+<tr><td>鉛直投げ下ろし</td><td>鉛直下向きに初速度を与えて落下させる運動</td><td>鉛直下向き v₀</td><td>鉛直下向きに g</td></tr>
+<tr><td>鉛直投げ上げ</td><td>鉛直上向きに初速度を与えて投げ上げる運動</td><td>鉛直上向き v₀</td><td>鉛直下向きに g</td></tr>
+<tr><td>最高点</td><td>投げ上げた物体の速度が 0 になり、運動の向きが変わる点</td><td>―</td><td>鉛直下向きに g</td></tr>
+</table></div><p>加速度は、上昇中・最高点・下降中のどこでも<b>鉛直下向きに g で一定</b>。</p>${FORMULAS}`;
 const DIM_TABLE = `<div class="tbl"><table>
 <tr><th>量</th><th>単位</th><th>次元</th></tr>
-<tr><td>高さ・変位 h, y</td><td>m</td><td>〔L〕</td></tr>
+<tr><td>高さ・変位の大きさ h, y</td><td>m</td><td>〔L〕</td></tr>
 <tr><td>時間 t</td><td>s</td><td>〔T〕</td></tr>
-<tr><td>速度 v</td><td>m/s</td><td>〔L〕/〔T〕</td></tr>
-<tr><td>重力加速度 g</td><td>m/s²</td><td>〔L〕/〔T〕²</td></tr></table></div>`;
-const VT_GRAPH = `<svg class="graph" viewBox="0 0 320 180" role="img" aria-label="上向き正で投げ上げたときのv-tグラフ。切片v0の右下がりの直線で、途中でt軸と交わる。">
+<tr><td>速度の大きさ（速さ） v</td><td>m/s</td><td>〔L〕/〔T〕</td></tr>
+<tr><td>重力加速度の大きさ g</td><td>m/s²</td><td>〔L〕/〔T〕²</td></tr></table></div>`;
+const VT_GRAPH = `<svg class="graph" viewBox="0 0 320 180" role="img" aria-label="鉛直上向き正で投げ上げたときのv-tグラフ。切片v0の右下がりの直線で、途中でt軸と交わる。">
 <line x1="30" y1="90" x2="305" y2="90" stroke="currentColor" stroke-width="1.5"/>
 <line x1="30" y1="170" x2="30" y2="10" stroke="currentColor" stroke-width="1.5"/>
 <polygon points="30,90 30,30 150,90" fill="var(--blue)" opacity=".15"/>
@@ -42,8 +42,8 @@ const SGN = ["正","負","0"];
 
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:"覚える量は重力加速度 g ひとつだけ。あとは運動の名前と初速度の関係を覚えます。",
-  advice:"g の大きさと向き、そして「加速度はどこでも下向きに g」を覚え直そう。",
+  intro:"覚える量は重力加速度の大きさ g ひとつだけ。あとは運動の名前と初速度の関係を覚えます。",
+  advice:"g の大きさと向き、そして「加速度はどこでも鉛直下向きに g」を覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
     {id:"d1",type:"blanks",text:"重力加速度の大きさは{0}で、向きは{1}である。",
@@ -239,7 +239,7 @@ const SECTIONS = [
 { id:"sum", tab:"まとめ", title:"単元のまとめ",
   intro:"計算はしません。「正の向き・a の符号・使う式」を選びます。",
   advice:"問題を読んだら、まず正の向きと a の符号、次に「わからず求めもしない量」を決めよう。",
-  ref:{label:"符号と3式を見る", html:FORMULAS},
+  ref:{label:"符号と落体の運動の3式を見る", html:FORMULAS},
   groups:[{ title:"式と符号を選ぶ", qs:[
     {id:"m1",type:"choice",prompt:"小球を静かにはなし、2.0 s 後までに落ちた距離を求めたい。",
      options:["上向き正、a ＝ −g、v ＝ −gt","下向き正、a ＝ ＋g、y ＝ ½gt²","下向き正、a ＝ ＋g、v² ＝ 2gy"],answer:1,
