@@ -11,14 +11,14 @@ const DEF_TABLE = `<div class="tbl"><table>
 <tr><td>重力</td><td>地球が物体に及ぼす引力。鉛直下向き</td><td>W ＝ mg</td></tr>
 <tr><td>垂直抗力</td><td>面が、接している物体に及ぼす、面に垂直な力</td><td>N</td></tr>
 <tr><td>張力</td><td>糸が、つながれた物体に及ぼす、糸に沿って引く力</td><td>T</td></tr>
-<tr><td>弾性力</td><td>変形したばねが物体に及ぼす、もとに戻ろうとする力。x は自然の長さからの伸び</td><td>F ＝ kx、k〔N/m〕</td></tr>
+<tr><td>弾性力</td><td>変形したばねが物体に及ぼす、もとに戻ろうとする力。x は自然の長さからの伸び（縮み）</td><td>F ＝ kx、k〔N/m〕</td></tr>
 <tr><td>力のつり合い</td><td>1つの物体が受けるすべての力の合力が 0</td><td>合力 ＝ 0</td></tr>
 <tr><td>作用・反作用</td><td>A が B に力を及ぼすと、B も A に同じ大きさ・逆向きの力を及ぼす</td><td>―</td></tr>
 </table></div>
 <div class="tbl"><table>
 <tr><th></th><th>つり合いの2力</th><th>作用・反作用の2力</th></tr>
 <tr><td>受ける物体</td><td>同じ1つの物体</td><td>別々の2つの物体</td></tr>
-<tr><td>成り立つとき</td><td>静止・等速のときだけ</td><td>いつでも</td></tr>
+<tr><td>成り立つとき</td><td>静止・等速度のときだけ</td><td>いつでも</td></tr>
 </table></div>`;
 const DIM_TABLE = `<div class="tbl"><table>
 <tr><th>量</th><th>単位</th></tr>
@@ -58,9 +58,9 @@ const SECTIONS = [
   advice:"力の定義を「〇〇が△△に及ぼす力」の形で言えるように覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
-    {id:"d1",type:"blanks",text:"力の単位は{0}で、力は大きさ・{1}・作用点の3つで表す。",
-     options:[["kg","N","N/m"],["質量","速さ","向き"]],answer:[1,2],
-     explain:"力の単位はニュートン（N）。大きさ・向き・作用点をもつ量です。"},
+    {id:"d1",type:"blanks",text:"力の大きさの単位は{0}で、力は大きさ・{1}・作用点の3つで表す。",
+     options:[["kg","N","N/m"],["質量","速度","向き"]],answer:[1,2],
+     explain:"力の大きさの単位はニュートン（N）。大きさ・向き・作用点をもつ量です。"},
     {id:"d2",type:"blanks",text:"重力とは、{0}が物体に及ぼす引力で、大きさは{1}である。",
      options:[["地球","物体","床"],["m","mg","g"]],answer:[0,1],
      explain:"重力は「地球が物体に及ぼす力」。大きさ W ＝ mg〔N〕です。"},
@@ -68,7 +68,7 @@ const SECTIONS = [
      options:[["物体","地球","面"],["平行","垂直","斜め"]],answer:[2,1],
      explain:"垂直抗力は「面が物体に及ぼす力」。物体が面を押す力ではありません。"},
     {id:"d4",type:"blanks",text:"フックの法則 F ＝ kx の x は、ばねの{0}であり、k の単位は{1}である。",
-     options:[["長さ","自然の長さからの伸び","質量"],["N","N/m","N·m"]],answer:[1,1],
+     options:[["長さ","自然の長さからの伸び（縮み）","質量"],["N","N/m","N·m"]],answer:[1,1],
      explain:"x はばねの長さそのものではなく、自然の長さからの伸び（縮み）です。"},
     {id:"d5",type:"blanks",text:"つり合いの2力は{0}物体にはたらき、作用・反作用の2力は{1}物体にはたらく。",
      options:[["同じ","別々の"],["同じ","別々の"]],answer:[0,1],
@@ -108,11 +108,11 @@ const SECTIONS = [
     {id:"rc3",type:"choice",prompt:"地球がりんごに及ぼす重力と、本がりんごに及ぼす垂直抗力",options:PAIR,answer:0,
      explain:"どちらもりんごが受ける力で、りんごが受ける力はこの2つだけ。静止しているのでつり合っています。"},
     {id:"rc4",type:"choice",prompt:"地球が本に及ぼす重力と、机が本に及ぼす垂直抗力",options:PAIR,answer:2,
-     explain:"どちらも本が受ける逆向きの力ですが、本はりんごからも押されています。垂直抗力は本とりんごの重さの和に等しく、重力と大きさが違います。この2力だけではつり合いません。"}
+     explain:"どちらも本が受ける逆向きの力ですが、本はりんごからも押されています。垂直抗力の大きさは本とりんごの重さの和に等しく、重力と大きさが違います。この2力だけではつり合いません。"}
   ]},
   { title:"D. 正しいか、誤りか", qs:[
-    {id:"rd1",type:"choice",prompt:"垂直抗力の大きさは、いつも物体の重力の大きさに等しい。",options:TF,answer:1,
-     explain:"誤り。上から押したり、斜面に置いたりすると mg とは異なります。つり合いの式から求めます。"},
+    {id:"rd1",type:"choice",prompt:"垂直抗力の大きさは、いつも物体にはたらく重力の大きさに等しい。",options:TF,answer:1,
+     explain:"誤り。上から押したり、斜面に置いたりすると mg とは異なります。力のつり合いの式から求めます。"},
     {id:"rd2",type:"choice",prompt:"作用・反作用の2力は同じ大きさで逆向きなので、つり合っている。",options:TF,answer:1,
      explain:"誤り。作用・反作用は別々の物体にはたらくので、1つの物体のつり合いを考えるときには並べられません。"},
     {id:"rd4",type:"choice",prompt:"落下しているりんごが地球から引かれるとき、りんごも地球を同じ大きさの力で引いている。",options:TF,answer:0,
@@ -141,8 +141,8 @@ const SECTIONS = [
   ref:{label:"単位の表を見る", html:DIM_TABLE},
   groups:[
   { title:"A. 計算せずに単位を予測する", qs:[
-    {id:"da1",type:"choice",prompt:"m × g",options:UNITQ,answer:0,two:true,explain:"kg × m/s² ＝ N。重力です。"},
-    {id:"da2",type:"choice",prompt:"k × x",options:UNITQ,answer:0,two:true,explain:"(N/m) × m ＝ N。弾性力です。"},
+    {id:"da1",type:"choice",prompt:"m × g",options:UNITQ,answer:0,two:true,explain:"kg × m/s² ＝ N。重力の大きさです。"},
+    {id:"da2",type:"choice",prompt:"k × x",options:UNITQ,answer:0,two:true,explain:"(N/m) × m ＝ N。ばねの弾性力の大きさです。"},
     {id:"da3",type:"choice",prompt:"F ÷ k",options:UNITQ,answer:1,two:true,explain:"N ÷ (N/m) ＝ m。ばねの伸びです。"},
     {id:"da4",type:"choice",prompt:"mg ÷ x",options:UNITQ,answer:2,two:true,explain:"N ÷ m ＝ N/m。ばね定数です。"},
     {id:"da5",type:"choice",prompt:"F ÷ g",options:UNITQ,answer:3,two:true,explain:"N ÷ (m/s²) ＝ kg。質量です。"}
@@ -152,12 +152,12 @@ const SECTIONS = [
      options:["W ＝ mg","W ＝ m ÷ g","F ＝ kx","x ＝ k ÷ mg","x ＝ mg ÷ k"],answer:[1,3],
      explain:"m ÷ g の単位は kg·s²/m、k ÷ mg の単位は 1/m で、どちらも左辺と合いません。"}
   ]},
-  { title:"C. 次元チェックの限界", lead:"ばねでつるした質量 m のおもりが静止している。ばねの伸びを「x ＝ 2mg ÷ k」と書いた。", qs:[
+  { title:"C. 次元チェックの限界", lead:"ばねで鉛直につるした質量 m のおもりが静止している。ばねの伸びを「x ＝ 2mg ÷ k」と書いた。", qs:[
     {id:"dc1",type:"choice",prompt:"この式について正しいものはどれか。",
      options:["次元が合わないので誤り","次元は合うが、正しくは x ＝ mg ÷ k","正しい"],answer:1,
      explain:"係数 2 には次元がないので、次元チェックでは見つかりません。"},
     {id:"dc2",type:"choice",prompt:"このような誤りに気づくには、次元のほかに何を確かめればよいか。",
-     options:["つり合いの式（kx ＝ mg）に戻って確かめる","有効数字をそろえる","g を 10 m/s² にして計算し直す"],answer:0,
+     options:["力のつり合いの式（kx ＝ mg）に戻って確かめる","有効数字をそろえる","g を 10 m/s² にして計算し直す"],answer:0,
      explain:"式を立てた根拠（つり合い）に戻るのが確実です。"}
   ]},
   { title:"D. 答案の誤りを見つける", lead:"問「ばね定数 49 N/m のばねに、質量 2.0 kg のおもりをつるした。ばねの伸びを求めよ。」",
@@ -191,13 +191,13 @@ const SECTIONS = [
     {id:"s12",type:"multi",prompt:"ステップ2　おもりが受ける力をすべて選べ。",
      options:["地球がおもりに及ぼす重力（下向き）","ばねがおもりに及ぼす弾性力（上向き）","おもりがばねを引く力（下向き）","天井がばねを引く力（上向き）"],answer:[0,1],
      explain:"おもりが触れているのはばねだけ。重力と弾性力の2つです。ほかの2つは、ばねが受ける力です。"},
-    {id:"s13",type:"choice",prompt:"ステップ3・4　上向きを正として、つり合いの式を立てよ。",options:["kx − mg ＝ 0","kx ＋ mg ＝ 0","kx ＝ m"],answer:0,
+    {id:"s13",type:"choice",prompt:"ステップ3・4　鉛直上向きを正として、力のつり合いの式を立てよ。",options:["kx − mg ＝ 0","kx ＋ mg ＝ 0","kx ＝ m"],answer:0,
      explain:"上向きの力 kx と下向きの力 mg の合力が 0。"},
     {id:"s14",type:"choice",prompt:"ステップ5　x を文字式で表し、単位を確かめる。",
      options:["x ＝ mg ÷ k、単位は N ÷ (N/m) ＝ m","x ＝ k ÷ mg、単位は (N/m) ÷ N ＝ 1/m","x ＝ m ÷ k、単位は kg ÷ (N/m)"],answer:0,
      explain:"kx ＝ mg より x ＝ mg ÷ k。長さの単位になっています。"},
     {id:"s15",type:"num",prompt:"ステップ6　ばねの伸び",answer:0.40,tol:0.005,unit:"m",
-     traps:{"0.041":"質量ではなく重力 mg を使います。","2.5":"k ÷ mg になっていませんか。"},explain:"x ＝ 2.0 × 9.8 ÷ 49 ＝ 0.40 m。"},
+     traps:{"0.041":"質量ではなく重力の大きさ mg を使います。","2.5":"k ÷ mg になっていませんか。"},explain:"x ＝ 2.0 × 9.8 ÷ 49 ＝ 0.40 m。"},
     {id:"s16",type:"choice",prompt:"ステップ7　質量を 2 倍にすると、伸びはどうなるはずか。",options:["2 倍","½ 倍","変わらない"],answer:0,
      explain:"x ＝ mg ÷ k なので伸びは質量に比例。重いほど伸びるという感覚と合っています。"}
   ]},
@@ -207,8 +207,8 @@ const SECTIONS = [
      options:["地球が箱に及ぼす重力","手が箱を押す力","床が箱に及ぼす垂直抗力","箱が床を押す力"],answer:[0,1,2],
      explain:"箱が触れているのは手と床。重力を加えて3つです。「箱が床を押す力」は床が受ける力です。"},
     {id:"s22",type:"num",prompt:"(1) 垂直抗力の大きさ",answer:39.4,tol:0.2,unit:"N",
-     traps:{"29.4":"手が押す力を忘れていませんか。","19.4":"手の力は下向きです。重力と同じ向きに加えます。","13":"質量ではなく重力 mg を使います。"},
-     explain:"上向き N ＝ 下向き（29.4 ＋ 10）より N ＝ 39.4 N。垂直抗力は mg と等しいとは限りません。"},
+     traps:{"29.4":"手が押す力を忘れていませんか。","19.4":"手の力は下向きです。重力と同じ向きに加えます。","13":"質量ではなく重力の大きさ mg を使います。"},
+     explain:"上向き N ＝ 下向き（29.4 ＋ 10）より N ＝ 39.4 N。垂直抗力の大きさは mg と等しいとは限りません。"},
     {id:"s23",type:"choice",prompt:"(2) (1) の力の反作用はどれか。",
      options:["地球が箱に及ぼす重力","箱が床を押す力（下向き 39.4 N）","手が箱を押す力"],answer:1,
      explain:"「床が箱に」の反作用は「箱が床に」。同じ大きさで逆向きです。"}
@@ -222,7 +222,7 @@ const SECTIONS = [
      traps:{"4.9":"mg sin 30° ではありません。水平方向のつり合い T sin 30° ＝ F を使います。","17":"tan 30° で割っていませんか。F ＝ mg tan 30° です。"},
      explain:"水平方向：F ＝ T sin 30° ＝ mg tan 30° ≒ 9.8 × 0.577 ≒ 5.7 N。"},
     {id:"s33",type:"checklist",prompt:"解き終えたら点検しよう（採点には入りません）。",
-     items:["着目物体を1つに決めた","受ける力を、重力と触れている物体の数だけ挙げた","斜めの力を、軸の方向に分解した","軸ごとにつり合いの式を立てた","文字式で解いてから数値を入れた"]},
+     items:["着目物体を1つに決めた","受ける力を、重力と触れている物体の数だけ挙げた","斜めの力を、直交する２軸の方向に分解した","軸ごとに力のつり合いの式を立てた","文字式で解いてから数値を入れた"]},
     {id:"s34",type:"self",prompt:"(1) の答えが mg（9.8 N）より大きくなる理由を説明せよ。",
      model:"重力とつり合うのは張力の鉛直成分 T cos 30° だけである。cos 30° は 1 より小さいので、T cos 30° ＝ mg となるには T が mg より大きくなければならない。"}
   ]}]
