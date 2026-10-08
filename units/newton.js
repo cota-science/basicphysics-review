@@ -7,7 +7,7 @@
 
 const DEF_TABLE = `<div class="tbl"><table>
 <tr><th>用語</th><th>定義</th><th>式・単位</th></tr>
-<tr><td>慣性の法則</td><td>物体が外部から力を受けないか、あるいは外部から受ける力がつりあている場合には、静止している物体は静止を続け、運動している物体は等速直線運動を続ける</td><td>―</td></tr>
+<tr><td>慣性の法則</td><td>物体が外部から力を受けないか、あるいは外部から受ける力がつりあっている場合には、静止している物体は静止を続け、運動している物体は等速直線運動を続ける</td><td>―</td></tr>
 <tr><td>運動の法則</td><td>物体にいくつかの力がはたらくとき、物体にはそれらの合力の向きに加速度が生じる。その加速度の大きさは合力の大きさに比例し、物体の質量に反比例する。</td><td>a ＝ F ÷ m</td></tr>
 <tr><td>運動方程式</td><td>着目物体について、質量 × 加速度 ＝ 受ける力の合力</td><td>ma ＝ F</td></tr>
 <tr><td>1 N</td><td>質量 1 kg の物体に 1 m/s² の加速度を生じさせる力の大きさ</td><td>1 N ＝ 1 kg·m/s²</td></tr>
@@ -21,7 +21,7 @@ const DIM_TABLE = `<div class="tbl"><table>
 <tr><td>加速度 a, g</td><td>m/s²</td></tr>
 <tr><td>力 F, N, T, F′</td><td>N ＝ kg·m/s²</td></tr>
 <tr><td>摩擦係数 μ, μ′</td><td>なし</td></tr></table></div>`;
-const STEPS = `<p>1 着目物体 → 2 受ける力をすべて挙げる → 3 軸と正の向き（運動の向きを正に） → 4 加速度が生じる方向では ma ＝ F、それに垂直な方向では力のつり合いの式 → 5 文字式と次元（単位） → 6 数値 → 7 妥当性</p>`;
+const STEPS = `<p>1 着目物体 → 2 受ける力をすべて挙げる → 3 軸と正の向き（加速度の向きを正に） → 4 加速度が生じる方向では ma ＝ F、それに垂直な方向では力のつり合いの式 → 5 文字式と次元（単位） → 6 数値 → 7 妥当性</p>`;
 const PULLEY = `<svg class="graph" viewBox="0 0 320 180" role="img" aria-label="水平な台の上の物体Aが糸で台の端の滑車につながり、滑車の先に物体Bがつるされている図">
 <rect x="20" y="80" width="230" height="10" fill="currentColor" opacity=".55"/>
 <rect x="30" y="90" width="10" height="80" fill="currentColor" opacity=".45"/>
@@ -99,7 +99,7 @@ const SECTIONS = [
     {id:"rd1",type:"choice",prompt:"同じ大きさの力を加えるとき、質量が大きい物体ほど加速しにくい。",options:TF,answer:0,
      explain:"正しい。a ＝ F ÷ m。質量は「加速のしにくさ（慣性の大きさ）」を表します。"},
     {id:"rd2",type:"choice",prompt:"鉛直上向きに投げ上げた物体の速度が 0 の瞬間、物体が受ける合力も 0 である。",options:TF,answer:1,
-     explain:"誤り。投げ上げの最高点では v ＝ 0 でも、合力は鉛直下向き大きさ mg の重力です。"},
+     explain:"誤り。投げ上げの最高点では v ＝ 0 でも、合力は鉛直下向きで大きさ mg の重力です。"},
     {id:"rd3",type:"choice",prompt:"等速直線運動をしている物体が受ける力の合力は 0 である。",options:TF,answer:0,
      explain:"正しい。加速度が 0 なので、合力も 0。"},
     {id:"rd4",type:"choice",prompt:"動摩擦力の大きさは、物体の速さが大きいほど大きい。",options:TF,answer:1,
@@ -191,7 +191,7 @@ const SECTIONS = [
      options:["地球が物体に及ぼす重力","面が物体に及ぼす垂直抗力","引く力 20 N","面が物体に及ぼす動摩擦力","物体が進むための力"],answer:[0,1,2,3],
      explain:"受ける力は4つ。動摩擦力は運動の向きと逆向きです。"},
     {id:"s22",type:"num",prompt:"ステップ4　鉛直方向の力のつり合いから、垂直抗力の大きさ N",answer:49,tol:0.2,unit:"N",
-     traps:{"5":"質量ではなく重力 mg とつり合います。"},explain:"N - mg = 0 より N ＝ mg ＝ 5.0 × 9.8 ＝ 49 N。"},
+     traps:{"5":"質量ではなく重力 mg とつり合います。"},explain:"N - mg ＝ 0 より N ＝ mg ＝ 5.0 × 9.8 ＝ 49 N。"},
     {id:"s23",type:"num",prompt:"ステップ4　動摩擦力の大きさ F′",answer:9.8,tol:0.05,unit:"N",
      traps:{"1":"μ′m ではなく μ′N（N ＝ mg）です。","4":"引く力の大きさではなく、垂直抗力の大きさに μ′ を掛けます。"},explain:"F′ ＝ μ′N ＝ 0.20 × 49 ＝ 9.8 N。"},
     {id:"s24",type:"num",prompt:"加速度の大きさ",answer:2.0,tol:0.05,unit:"m/s²",
@@ -218,7 +218,7 @@ const SECTIONS = [
   groups:[{ title:"式を選ぶ", qs:[
     {id:"m1",type:"choice",prompt:"エレベーターが一定の速さで上昇している。床が人に及ぼす垂直抗力の大きさを求めたい。",
      options:["運動方程式（上向きに加速している）","力のつり合いの式（等速度運動なので加速度 0）"],answer:1,
-     explain:"等速度 → 加速度 0 → 合力 0。力のつり合いの式で N - mg = 0 。"},
+     explain:"等速度 → 加速度 0 → 合力 0。力のつり合いの式で N - mg ＝ 0 。"},
     {id:"m2",type:"choice",prompt:"あらい水平な床に置いた箱を水平方向に押したが動かなかった。箱が受ける摩擦力の大きさを求めたい。",
      options:["μN を計算する","力のつり合いの式を立てる"],answer:1,
      explain:"静止しているので静止摩擦力。押す力とのつり合いで決まります。"},
