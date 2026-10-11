@@ -10,6 +10,9 @@
  * id は半角英数字とハイフンだけにし、単元ファイルの registerUnit の id と同じにしてください。
  */
 window.UNIT_LIST = [
+    { group: "基礎", units: [
+    { id: "notation",   title: "表記ルールと測定値の扱い",   file: "units/notation.js" }
+  ]},
   { group: "運動とエネルギー", units: [
     { id: "kinematics", title: "速度・加速度（運動の表し方）", file: "units/kinematics.js" },
     { id: "free-fall",  title: "落体の運動",                 file: "units/free-fall.js" },
