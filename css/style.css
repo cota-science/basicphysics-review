@@ -1,7 +1,7 @@
 :root{
   --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
   --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
-  --line:#CBD5DF; --sheet:#FFFFFF;
+  --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3;
   --body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
   --pen:"Klee One","Hiragino Maru Gothic ProN","Yu Gothic",cursive;
   box-sizing:border-box;
@@ -12,13 +12,13 @@
   :root:not([data-theme="light"]){
     --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
     --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
-    --line:#2F3B49; --sheet:#18202B;
+    --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0;
   }
 }
 :root[data-theme="dark"]{
   --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
   --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
-  --line:#2F3B49; --sheet:#18202B;
+  --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0;
 }
 html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 110px)}
 *,*::before,*::after{box-sizing:inherit}
@@ -32,6 +32,9 @@ body{
   -webkit-text-size-adjust:100%;
 }
 button,select,input,textarea{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+button:disabled,input:disabled,textarea:disabled{opacity:1;color:var(--ink);-webkit-text-fill-color:var(--ink)}
+.opt.wrongpick:disabled{color:var(--muted);-webkit-text-fill-color:var(--muted)}
 :focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 
 /* header */
@@ -88,7 +91,7 @@ svg.graph{display:block;max-width:100%;height:auto;margin:8px 0}
 .opt.sel{border-color:var(--blue);background:var(--blue-soft);font-weight:700}
 .opt:disabled{cursor:default}
 .opt.right{border-color:var(--blue);border-style:dashed}
-.opt.right::after{content:"  ← 正解";font-weight:700;color:var(--blue);font-size:14px}
+.opt.right::after{content:"  ← 正解";font-weight:700;color:var(--blue);-webkit-text-fill-color:var(--blue);font-size:14px}
 .opt.wrongpick{text-decoration:line-through;color:var(--muted)}
 .hint{font-size:14px;color:var(--muted);margin:-4px 0 8px}
 .sentence{margin:0 0 10px}
@@ -104,9 +107,7 @@ svg.graph{display:block;max-width:100%;height:auto;margin:8px 0}
 .numrow .unit{font-size:17px}
 textarea{width:100%;min-height:96px;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--sheet);line-height:1.6;resize:vertical}
 .actions{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
-.btn{border:0;border-radius:8px;padding:11px 20px;min-height:46px;font-weight:700;cursor:pointer;background:var(--blue);color:#fff}
-:root[data-theme="dark"] .btn{color:#101521}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn{color:#101521}}
+.btn{border:0;border-radius:8px;padding:11px 20px;min-height:46px;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
 .btn.ghost{background:none;color:var(--blue);border:1.5px solid var(--blue)}
 .link{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:14px;padding:6px 0}
 .note{font-size:14px;color:var(--red)}
