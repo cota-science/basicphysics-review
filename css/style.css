@@ -152,6 +152,8 @@ a.unit:hover{border-color:var(--blue)}
 .unit .us{font-size:14px;color:var(--muted);display:flex;gap:10px;align-items:center;margin-top:4px}
 .unit .us .bar{flex:1;max-width:160px}
 .unit.soon{border-style:dashed;color:var(--muted)}
+.unit.link{border-color:var(--blue);background:var(--blue-soft)}
+.unit.link .ut{color:var(--blue)}
 .unit.soon .ut{font-weight:400}
 .warn{background:#FFF6D6;color:#5A4500;border:1px solid #E8CF6B;border-radius:6px;padding:10px 14px;font-size:14px;margin-bottom:14px}
 .warn ul{margin:4px 0 0;padding-left:1.2em}

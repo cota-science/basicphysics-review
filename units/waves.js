@@ -130,9 +130,11 @@ const TF = ["正しい","誤り"];
 const UNITQ = ["m/s（速さ）","m（波長）","Hz（振動数）","s（周期）"];
 const UPDN = ["上（<i class='qv'>y</i> の正の向き）","下（<i class='qv'>y</i> の負の向き）","動かない"];
 
+/* アニメーションへのボタン型リンク */
+const ANIM = (href, label) => `<a href='${href}' style='display:inline-block;margin:8px 6px 0 0;padding:6px 12px;border:1.5px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:700;text-decoration:none;line-height:1.5'>▶ ${label}</a>`;
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:"波で動いているのは「振動の状態」で、媒質そのものではありません。用語と記号を正確に覚えます。重ね合わせ・定在波（定常波）・反射の動きは <a href='anim/transverse.html#sup' style='color:var(--blue);font-weight:700'>横波のアニメーション</a> で、<i class='qv'>v</i> ＝ <i class='qv'>fλ</i> の意味は <a href='anim/wave-speed.html' style='color:var(--blue);font-weight:700'>波の速さのアニメーション</a> で確かめられます。",
+  intro:`波で動いているのは「振動の状態」で、媒質そのものではありません。用語と記号を正確に覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/wave-speed.html",`波の速さ（${v} ＝ ${f}${L}）`)}${ANIM("anim/transverse.html#sup","波の重ね合わせ")}${ANIM("anim/transverse.html#ref","波の反射")}${ANIM("anim/transverse.html#std","定在波（定常波）")}${ANIM("anim/longitudinal.html","縦波（疎密波）")}`,
   advice:"波長と周期の定義（何と何の間隔か）と、<i class='qv'>v</i> ＝ <i class='qv'>fλ</i> を覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[

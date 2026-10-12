@@ -7,6 +7,7 @@
  *      （一覧にない単元なら、{ id: ..., title: ..., file: ... } の行を追加する）
  *
  * file: null の単元は、メニューに「準備中」と表示されます。
+ * href を書いた行は単元ではなく、そのページへのボタンになります（例：アニメーション集）。
  * id は半角英数字とハイフンだけにし、単元ファイルの registerUnit の id と同じにしてください。
  */
 window.UNIT_LIST = [
@@ -24,6 +25,7 @@ window.UNIT_LIST = [
     { id: "heat",       title: "熱とエネルギー",             file: "units/heat.js" }
   ]},
   { group: "波", units: [
+    { id: "anim-waves", title: "▶ 波と音のアニメーション集", href: "anim/index.html", note: "Webテストの前に、波の動きを見て確かめよう" },
     { id: "waves",      title: "波の性質",                   file: "units/waves.js" },
     { id: "sound",      title: "音",                         file: "units/sound.js" }
   ]},
