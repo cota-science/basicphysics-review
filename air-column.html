@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>気柱の固有振動</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Klee+One:wght@600&display=swap" rel="stylesheet">
+<style>
+/* Layout: one-column worksheet on graph paper — readout strip (V, ρ, λ, f) above a tube drawing (air particles + displacement envelope), controls below, questions last. */
+:root{
+  --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
+  --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
+  --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3; --shade:#EEF2F6; --green:#1F7A4D;
+  --dense:#2447B3; --sparse:#C9761A;
+  --body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --math:"Times New Roman",Times,"Noto Serif",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+    --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+    --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37; --green:#5FD39A;
+    --dense:#93AAFF; --sparse:#F0B060; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+  --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+  --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37; --green:#5FD39A;
+  --dense:#93AAFF; --sparse:#F0B060; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qv{font-family:var(--math);font-style:italic;font-size:1.08em}
+sub{font-size:.7em;line-height:0}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.top-inner{max-width:760px;margin:0 auto;padding:10px 16px 10px}
+.back{font-size:14px;color:var(--blue);text-decoration:none}
+h1{font-size:19px;margin:2px 0 0;line-height:1.4;text-wrap:balance}
+.nav{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin-top:2px}
+.nav a{color:var(--blue);text-decoration:none}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:700}
+main{max-width:760px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px;min-width:0}
+h2{font-size:20px;margin:0 0 4px;line-height:1.4;text-wrap:balance}
+.lead{margin:0 0 12px;color:var(--muted);font-size:15px}
+.readout{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-bottom:10px}
+.readout div{padding:8px 10px;border-left:1px solid var(--line);min-width:0}
+.readout div:first-child{border-left:0}
+.readout .k{font-size:12px;color:var(--muted);display:block;line-height:1.3}
+.readout .v{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.readout .calc{background:var(--blue-soft)}
+@media (max-width:520px){.readout{grid-template-columns:repeat(2,minmax(0,1fr))}.readout div:nth-child(3){border-left:0}.readout div:nth-child(n+3){border-top:1px solid var(--line)}}
+.formula{font-size:15px;margin:0 0 4px;font-variant-numeric:tabular-nums}
+.formula b{color:var(--blue)}
+.note{font-size:13px;color:var(--muted);margin:0 0 10px}
+.stage{position:relative;width:100%;background:var(--sheet);border:1px solid var(--line);border-radius:4px;aspect-ratio:2.3/1}
+@media (max-width:520px){.stage{aspect-ratio:1.5/1}}
+canvas{display:block;width:100%;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;color:var(--muted);margin-top:6px}
+.legend i.sw{display:inline-block;width:14px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px;font-style:normal}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.btn{border:0;border-radius:8px;padding:9px 16px;min-height:44px;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.btn.ghost{background:none;color:var(--blue);border:1.5px solid var(--blue)}
+.speed{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted);margin-left:auto}
+.speed select{min-height:40px;border:1.5px solid var(--line);border-radius:8px;background:var(--sheet);padding:4px 8px}
+.opts{display:grid;gap:12px;margin-top:14px}
+.seg{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.seg-label{font-size:14px;color:var(--muted);min-width:5.5em}
+.seg button{border:1.5px solid var(--line);background:var(--sheet);border-radius:999px;padding:6px 12px;min-height:40px;cursor:pointer;font-size:15px}
+.seg button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft);font-weight:700}
+.slider{display:grid;grid-template-columns:8.5em minmax(0,1fr) 6em;align-items:center;gap:10px}
+.slider label{font-size:15px}
+.slider input{width:100%;accent-color:var(--blue);min-height:32px}
+.slider output{font-variant-numeric:tabular-nums;text-align:right;font-weight:700}
+.slider.locked label,.slider.locked output{color:var(--muted)}
+.slider.locked input{opacity:.45}
+@media (max-width:520px){.slider{grid-template-columns:6.6em minmax(0,1fr) 5.4em}}
+.checks{display:flex;flex-wrap:wrap;gap:6px 18px}
+.checks label{display:flex;align-items:center;gap:8px;font-size:15px;min-height:40px;cursor:pointer}
+.checks input{width:20px;height:20px;accent-color:var(--blue)}
+.hint{font-size:13px;color:var(--muted);margin:10px 0 0}
+h3{font-size:17px;margin:0 0 8px}
+.qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
+.qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
+.ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <a class="back" id="backLink" href="../index.html#/u/sound/3" hidden>‹ 音（Webテスト）へ</a>
+    <h1>気柱の固有振動</h1>
+    <nav class="nav" id="nav" hidden aria-label="アニメーション">
+      <a href="transverse.html">横波（重ね合わせ・定在波（定常波）・反射）</a>
+      <a href="wave-speed.html">波の速さ</a>
+      <a href="longitudinal.html">縦波（疎密波）</a>
+      <a href="string.html">弦の固有振動</a>
+      <a href="air-column.html" aria-current="page">気柱の固有振動</a>
+      <a href="beats.html">うなり</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="sheet" aria-labelledby="t1">
+    <h2 id="t1">管の中の空気にできる定在波（定常波）</h2>
+    <p class="lead">管の閉じた端では空気が動けないので変位の節、開いた端では自由に動けるので変位の腹になります。この条件に合う波長の音だけが管の中で強め合い、その振動数が気柱の固有振動数です。</p>
+
+    <div class="readout" aria-live="polite">
+      <div class="calc"><span class="k">音速 <i class="qv">V</i></span><span class="v" id="rV"></span></div>
+      <div><span class="k">気体の密度 <i class="qv">ρ</i></span><span class="v" id="rR"></span></div>
+      <div class="calc"><span class="k">波長 <i class="qv">λ</i></span><span class="v" id="rL"></span></div>
+      <div class="calc"><span class="k">振動数 <i class="qv">f</i> ＝ <i class="qv">V</i>/<i class="qv">λ</i></span><span class="v" id="rF"></span></div>
+    </div>
+    <p class="formula" id="fV"></p>
+    <p class="formula" id="fL"></p>
+    <p class="note" id="gasNote"></p>
+
+    <div class="stage"><canvas id="cv" role="img" aria-label="管の中の空気の粒子の振動と、変位を横波のように表した図。"></canvas></div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--dense);opacity:.45"></i>密</span>
+      <span><i class="sw" style="background:var(--sparse);opacity:.45"></i>疎</span>
+      <span><i class="sw" style="background:var(--blue)"></i>変位を横波のように表した線（右向きの変位を上に）</span>
+    </div>
+
+    <div class="controls">
+      <button type="button" class="btn" id="playBtn">一時停止</button>
+      <button type="button" class="btn ghost" id="soundBtn">♪ この音を聞く</button>
+      <label class="speed" for="speedSel">速さ
+        <select id="speedSel"><option value="0.5">ゆっくり</option><option value="1" selected>ふつう</option><option value="2">はやい</option></select>
+      </label>
+    </div>
+
+    <div class="opts">
+      <div class="seg" role="group" aria-label="管の種類">
+        <span class="seg-label">管の種類</span>
+        <button type="button" data-tube="closed" aria-pressed="true">閉管（左端が閉じている）</button>
+        <button type="button" data-tube="open" aria-pressed="false">開管（両端が開いている）</button>
+      </div>
+      <div class="seg" role="group" aria-label="振動のしかた" id="segN"><span class="seg-label">振動のしかた</span></div>
+      <div class="slider"><label for="sL">管の長さ <i class="qv">L</i></label><input type="range" id="sL" min="0.20" max="1.00" step="0.01" value="0.50"><output id="oL" for="sL"></output></div>
+      <div class="slider"><label for="sT">気温 <i class="qv">t</i></label><input type="range" id="sT" min="-20" max="40" step="1" value="20"><output id="oT" for="sT"></output></div>
+      <div class="seg" role="group" aria-label="気体" id="segGas"><span class="seg-label">気体</span></div>
+      <div class="checks">
+        <label><input type="checkbox" id="ckCorr">開口端補正を入れる</label>
+        <label><input type="checkbox" id="ckEnv" checked>変位を横波のように表す</label>
+        <label><input type="checkbox" id="ckShade" checked>疎密を濃淡で表す</label>
+        <label><input type="checkbox" id="ckMarks" checked>節と腹</label>
+      </div>
+      <div class="slider" id="rowD"><label for="sD">管の直径 <i class="qv">d</i></label><input type="range" id="sD" min="2" max="10" step="0.5" value="4"><output id="oD" for="sD"></output></div>
+    </div>
+    <p class="hint">アニメーションは実際の振動よりずっとゆっくり、粒子の変位は大きく誇張して描いています（振動数が大きいほど速く動くように、比をそろえてあります）。開口端補正は Δ<i class="qv">L</i> ≒ 0.6 × 半径（＝ 0.3<i class="qv">d</i>）としています。</p>
+  </section>
+
+  <section class="sheet" aria-labelledby="qsTitle">
+    <h3 id="qsTitle">見てみよう</h3>
+    <ol class="qs" id="qs"></ol>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id), TAU = 2 * Math.PI;
+const I = s => `<i class="qv">${s}</i>`;
+const R = 8.314, P = 1.013e5, XL = -0.05, XR = 1.05, VMIN = 0.5;   // XL〜XR は粒子を置く範囲
+const GASES = {
+  air:{ name:"空気", M:28.97, g:1.40 },
+  he: { name:"ヘリウム", M:4.00, g:1.66 },
+  co2:{ name:"二酸化炭素", M:44.01, g:1.29 },
+  ar: { name:"アルゴン", M:39.95, g:1.67 }
+};
+const st = { tube:"closed", n:1, L:0.50, t:20, gas:"air", corr:false, d:4, env:true, shade:true, marks:true, playing:true, speed:1, phase:0 };
+const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+if(reduce) st.playing = false;
+if(/\/anim\//.test(location.pathname)){ $("backLink").hidden = false; $("nav").hidden = false; }
+
+const gas = () => GASES[st.gas];
+const TK = () => st.t + 273.15;
+const dens = () => P * gas().M * 1e-3 / (R * TK());               // ρ ＝ pM/(RT)
+const speed = () => Math.sqrt(gas().g * P / dens());               // V ＝ √(γp/ρ)
+const dL = () => st.corr ? 0.003 * st.d : 0;                       // ΔL ＝ 0.3d（d は cm）
+const Leff = () => st.L + (st.tube === "closed" ? 1 : 2) * dL();
+const lam = () => (st.tube === "closed" ? 4 : 2) * Leff() / st.n;
+const freq = () => speed() / lam();
+const F_REF = Math.sqrt(1.4 * P / (P * 28.97e-3 / (R * 293.15))) / (4 * 0.50);
+const visRate = () => Math.min(3.2, Math.max(0.12, 0.45 * freq() / F_REF));
+const fmtF = x => x >= 100 ? x.toFixed(0) : x.toFixed(1);
+const x0 = () => st.tube === "closed" ? 0 : -dL();                 // 変位の形の基準点
+// 変位の形（最大 1）
+const shape = x => st.tube === "closed" ? Math.sin(TAU * x / lam()) : Math.cos(TAU * (x + dL()) / lam());
+const dshape = x => st.tube === "closed" ? TAU / lam() * Math.cos(TAU * x / lam()) : -TAU / lam() * Math.sin(TAU * (x + dL()) / lam());
+
+$("segGas").insertAdjacentHTML("beforeend", Object.entries(GASES).map(([k, g]) => `<button type="button" data-gas="${k}" aria-pressed="${k === "air"}">${g.name}</button>`).join(""));
+function buildN(){
+  const list = st.tube === "closed" ? [1, 3, 5, 7] : [1, 2, 3, 4, 5];
+  if(!list.includes(st.n)) st.n = 1;
+  const seg = $("segN"); seg.querySelectorAll("button").forEach(b => b.remove());
+  seg.insertAdjacentHTML("beforeend", list.map(n => `<button type="button" data-n="${n}" aria-pressed="${n === st.n}">${n === 1 ? "基本振動" : n + "倍振動"}</button>`).join(""));
+  seg.querySelectorAll("[data-n]").forEach(b => b.addEventListener("click", () => { st.n = +b.dataset.n; sync(); }));
+}
+
+/* 粒子（位置に固定のばらつき） */
+let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const DX = 0.0125, ROWS = 6, parts = [];
+for(let i = 0; XL + i * DX <= XR + 1e-9; i++) for(let r = 0; r < ROWS; r++) parts.push({ x0: XL + i * DX + (rnd() - .5) * DX * .5, r: (r + .5 + (rnd() - .5) * .6) / ROWS });
+
+/* ---------- canvas ---------- */
+const cv = $("cv"), ctx = cv.getContext("2d"); let W = 0, H = 0, col = {};
+function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","green","shade","sheet","dense","sparse"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
+function resize(){ const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0); draw(); }
+function Ln(pts, color, w, dash){ ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore(); }
+function Tx(s, x, y, color, size, align, opt){ ctx.save(); ctx.fillStyle = color; ctx.font = `${opt === "i" ? "italic " : opt === "b" ? "700 " : ""}${size || 12}px ${opt === "i" ? '"Times New Roman",Times,serif' : 'BIZ UDPGothic,"Hiragino Sans","Yu Gothic UI",sans-serif'}`; ctx.textAlign = align || "center"; ctx.textBaseline = "middle"; ctx.fillText(s, x, y); ctx.restore(); }
+function bracket(xa, xb, y, color, label, italic){
+  Ln([[xa, y - 5], [xa, y + 5]], color, 1.4); Ln([[xb, y - 5], [xb, y + 5]], color, 1.4); Ln([[xa, y], [xb, y]], color, 1.4);
+  if(label){ const w = Math.max(30, label.length * 8 + 10); if(Math.abs(xb - xa) < w + 12){ Tx(label, Math.max(xa, xb) + 6, y, color, 14, "left", italic ? "i" : ""); return; } ctx.save(); ctx.fillStyle = col.sheet; ctx.fillRect((xa + xb) / 2 - w / 2, y - 9, w, 18); ctx.restore(); Tx(label, (xa + xb) / 2, y, color, 14, "center", italic ? "i" : ""); }
+}
+function draw(){
+  if(!W) return; readColors(); ctx.clearRect(0, 0, W, H);
+  const vl = -0.045, vr = Math.max(VMIN, st.L + dL()) + 0.045;      // 表示範囲：管が短いときは 0.5 m 分の幅で描く
+  const pl = 14, pr = 30, X = x => pl + (x - vl) / (vr - vl) * (W - pl - pr);
+  const ty = Math.round(H * 0.15), th = Math.round(H * 0.5), cy = ty + th / 2, hh = th * 0.42;
+  const l = lam(), c = Math.cos(st.phase), dl = dL();
+  const closed = st.tube === "closed";
+  const xs = closed ? 0 : -dl, xe = st.L + dl;              // 空気が振動している範囲
+  const amp = Math.min(0.08, 0.06 * l);                        // 粒子の変位（誇張）
+  // 疎密の濃淡
+  if(st.shade){
+    const n = 160;
+    for(let i = 0; i < n; i++){ const xa = xs + (xe - xs) * i / n, xb = xs + (xe - xs) * (i + 1) / n, xm = (xa + xb) / 2;
+      const d = -amp * dshape(xm) * c / 0.38; if(Math.abs(d) < 0.04) continue;
+      ctx.save(); ctx.globalAlpha = Math.min(.34, Math.abs(d) * .34) * (xm < 0 || xm > st.L ? .5 : 1); ctx.fillStyle = d > 0 ? col.dense : col.sparse;
+      ctx.fillRect(X(xa), ty + 2, X(xb) - X(xa) + .6, th - 4); ctx.restore(); }
+  }
+  // 粒子
+  parts.forEach(p => { if(p.x0 < xs - 1e-9 || p.x0 > xe + 1e-9) return; const outside = p.x0 < 0 || p.x0 > st.L;
+    const x = p.x0 + amp * shape(p.x0) * c;
+    ctx.save(); ctx.fillStyle = col.ink; ctx.globalAlpha = outside ? .25 : .6; ctx.beginPath(); ctx.arc(X(x), ty + 4 + p.r * (th - 8), 2.4, 0, TAU); ctx.fill(); ctx.restore(); });
+  // 管
+  ctx.save(); ctx.strokeStyle = col.ink; ctx.lineWidth = 3; ctx.lineCap = "butt";
+  ctx.beginPath(); ctx.moveTo(X(0), ty); ctx.lineTo(X(st.L), ty); ctx.moveTo(X(0), ty + th); ctx.lineTo(X(st.L), ty + th); ctx.stroke(); ctx.restore();
+  if(closed){ ctx.save(); ctx.fillStyle = col.ink; ctx.fillRect(X(0) - 6, ty - 1.5, 6, th + 3); ctx.restore(); }
+  // 変位を横波のように表した図
+  if(st.env){
+    const N = 300, up = [], dn = [], cur = [];
+    for(let i = 0; i <= N; i++){ const x = xs + (xe - xs) * i / N; up.push([X(x), cy - hh * shape(x)]); dn.push([X(x), cy + hh * shape(x)]); cur.push([X(x), cy - hh * shape(x) * c]); }
+    Ln(up, col.muted, 1.2, [4, 4]); Ln(dn, col.muted, 1.2, [4, 4]); Ln(cur, col.blue, 2.6);
+  }
+  // 節と腹（変位）
+  if(st.marks){
+    const base = closed ? 0 : -dl, firstNode = closed ? 0 : base + l / 4, firstAnti = closed ? l / 4 : base;
+    for(let x = firstNode; x <= xe + 1e-6; x += l / 2){ Tx("節", X(x), ty - 12, col.red, 12, "center", "b"); Ln([[X(x), ty - 4], [X(x), ty + th + 4]], col.red, 1, [2, 4]); }
+    for(let x = firstAnti; x <= xe + 1e-6; x += l / 2) Tx("腹", X(x), ty - 12, col.blue, 12, "center", "b");
+  }
+  // 寸法
+  const y1 = ty + th + 22, y2 = Math.min(H - 12, y1 + 30);
+  bracket(X(0), X(st.L), y1, col.ink, "L", true);
+  if(dl > 0){
+    bracket(X(st.L), X(st.L + dl), y1, col.red, "", false); Tx("ΔL", X(st.L + dl) + 3, y1 - 12, col.red, 13, "left", "i");
+    if(!closed) bracket(X(-dl), X(0), y1, col.red, "", false);
+  }
+  const qa = closed ? 0 : -dl;
+  bracket(X(qa), X(qa + l / 4), y2, col.green, "λ/4", true);
+  Tx(closed ? "閉じた端" : "開いた端", X(0) + 6, ty + th + 8, col.muted, 11, "left");
+}
+
+/* ---------- 音 ---------- */
+let AC = null;
+function playTone(fq){
+  try{
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if(AC.state === "suspended") AC.resume();
+    const o = AC.createOscillator(), g = AC.createGain(), now = AC.currentTime;
+    o.type = "sine"; o.frequency.value = fq;
+    g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.25, now + 0.06); g.gain.setValueAtTime(0.25, now + 1.1); g.gain.exponentialRampToValueAtTime(0.0001, now + 1.5);
+    o.connect(g).connect(AC.destination); o.start(now); o.stop(now + 1.6);
+  }catch(e){}
+}
+
+/* ---------- UI ---------- */
+function sync(){
+  const g = gas(), V = speed(), rho = dens(), l = lam(), f = freq(), closed = st.tube === "closed", dl = dL();
+  $("oL").textContent = `${st.L.toFixed(2)} m`; $("oT").textContent = `${st.t} ℃`; $("oD").textContent = `${st.d.toFixed(1)} cm`;
+  $("rV").textContent = `${V.toFixed(0)} m/s`; $("rR").textContent = `${rho.toFixed(2)} kg/m³`; $("rL").textContent = `${l.toFixed(3)} m`; $("rF").textContent = `${fmtF(f)} Hz`;
+  const approx = st.gas === "air" ? `　近似式 ${I("V")} ＝ 331.5 ＋ 0.6${I("t")} ＝ ${(331.5 + 0.6 * st.t).toFixed(1)} m/s` : "";
+  $("fV").innerHTML = `${g.name}（${st.t} ℃、1気圧）：${I("V")} ≒ <b>${V.toFixed(1)} m/s</b>${approx}`;
+  const Lt = dl > 0 ? `(${I("L")} ＋ ${closed ? "" : "2"}Δ${I("L")})` : I("L");
+  const Lv = dl > 0 ? `(${st.L.toFixed(2)} ＋ ${closed ? "" : "2 × "}${dl.toFixed(3)})` : st.L.toFixed(2);
+  $("fL").innerHTML = closed
+    ? `閉管：${Lt} ＝ ${I("n")} × ${I("λ")}/4 → ${I("λ")} ＝ 4${Lt}/${I("n")} ＝ 4 × ${Lv} ÷ ${st.n} ＝ <b>${l.toFixed(3)} m</b>（${I("n")} ＝ 1, 3, 5, …）`
+    : `開管：${Lt} ＝ ${I("n")} × ${I("λ")}/2 → ${I("λ")} ＝ 2${Lt}/${I("n")} ＝ 2 × ${Lv} ÷ ${st.n} ＝ <b>${l.toFixed(3)} m</b>（${I("n")} ＝ 1, 2, 3, …）`;
+  $("gasNote").innerHTML = `${g.name}：モル質量 ${g.M.toFixed(2)} g/mol、比熱比 ${I("γ")} ＝ ${g.g.toFixed(2)}。参考（「物理」の内容）：圧力 ${I("p")} が一定のとき、気温が上がると気体は膨張して密度 ${I("ρ")} が小さくなり、音速 ${I("V")} ＝ √(${I("γp")}/${I("ρ")}) は大きくなります。`;
+  document.querySelectorAll("[data-tube]").forEach(b => b.setAttribute("aria-pressed", b.dataset.tube === st.tube));
+  document.querySelectorAll("[data-gas]").forEach(b => b.setAttribute("aria-pressed", b.dataset.gas === st.gas));
+  document.querySelectorAll("[data-n]").forEach(b => b.setAttribute("aria-pressed", +b.dataset.n === st.n));
+  $("rowD").classList.toggle("locked", !st.corr); $("sD").disabled = !st.corr;
+  $("soundBtn").textContent = `♪ この音を聞く（${fmtF(f)} Hz）`;
+  draw();
+}
+function setPlaying(p){ st.playing = p; $("playBtn").textContent = p ? "一時停止" : "再生"; }
+document.querySelectorAll("[data-tube]").forEach(b => b.addEventListener("click", () => { st.tube = b.dataset.tube; buildN(); sync(); }));
+document.querySelectorAll("[data-gas]").forEach(b => b.addEventListener("click", () => { st.gas = b.dataset.gas; sync(); }));
+$("sL").addEventListener("input", e => { st.L = +e.target.value; sync(); });
+$("sT").addEventListener("input", e => { st.t = +e.target.value; sync(); });
+$("sD").addEventListener("input", e => { st.d = +e.target.value; sync(); });
+$("ckCorr").addEventListener("change", e => { st.corr = e.target.checked; sync(); });
+[["ckEnv","env"],["ckShade","shade"],["ckMarks","marks"]].forEach(([id, k]) => $(id).addEventListener("change", e => { st[k] = e.target.checked; draw(); }));
+$("playBtn").addEventListener("click", () => setPlaying(!st.playing));
+$("soundBtn").addEventListener("click", () => playTone(freq()));
+$("speedSel").addEventListener("change", e => st.speed = +e.target.value);
+
+let last = null;
+function tick(ts){ if(last == null) last = ts; const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
+  if(st.playing){ st.phase = (st.phase + TAU * visRate() * st.speed * dt) % TAU; draw(); }
+  requestAnimationFrame(tick); }
+const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+if(mq && mq.addEventListener) mq.addEventListener("change", draw);
+new MutationObserver(draw).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+if(window.ResizeObserver) new ResizeObserver(resize).observe(cv); else window.addEventListener("resize", resize);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+if(reduce) st.phase = 0.3;
+
+$("qs").innerHTML = [
+  ["閉管の閉じた端と開いた端で、粒子の動きを比べよう。それぞれ変位の節か腹か。空気の疎密の変化が大きいのはどちらか。", "閉じた端では粒子は動けないので変位の節、開いた端では最も大きく動くので変位の腹です。疎密（圧力）の変化は逆に、閉じた端で最も大きく、開いた端ではほとんど変化しません。"],
+  ["閉管では「2倍振動」を選べない。なぜか。", `閉じた端が節、開いた端が腹という条件を満たすには、長さが ${I("λ")}/4 の奇数倍でなければならないからです。そのため閉管では基本振動数の奇数倍（1, 3, 5, … 倍）の音しか生じません。開管は両端が腹なので、整数倍すべての音が生じます。`],
+  [`気温 ${I("t")} を上げよう。音速と振動数はどうなるか。管楽器を吹いて管が暖まると、音の高さはどうなるか。`, `気温が上がると音速が大きくなり、波長は管の長さで決まって変わらないので、振動数が大きく（音が高く）なります。管楽器は、暖まると音が少し高くなります。`],
+  ["「開口端補正を入れる」をオンにしよう。基本振動の振動数はどう変わるか。", `腹が管口より少し外側にできるので、定在波（定常波）が実際に入る長さは ${I("L")} ＋ Δ${I("L")} になります。波長が少し長くなり、振動数は少し小さくなります。共鳴の実験で、隣り合う2つの共鳴位置の差（＝ ${I("λ")}/2）を使うと、補正の影響を消して波長が求められます。`],
+  ["気体を「ヘリウム」にしよう。音速と基本振動数はおよそ何倍になるか。", `空気のおよそ 3 倍になります（20 ℃ で約 1000 m/s）。ヘリウムは軽い（密度が小さい）気体だからです。なお、ヘリウムを吸うと声が変わるのは、声帯の振動数（声の高さ）が変わるからではなく、のどや口の中の共鳴の振動数が高くなって音色が変わるためです。`],
+  ["気体を「二酸化炭素」にしよう。空気と比べて、音はどうなるか。", "二酸化炭素は空気より重い（密度が大きい）ので音速が小さくなり、同じ管でも固有振動数は小さく（音は低く）なります。"]
+].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
+
+buildN(); sync(); setPlaying(st.playing); resize(); requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
