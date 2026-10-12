@@ -18,7 +18,7 @@ const Sb = (s, sub) => `${I(s)}<sub>${sub}</sub>`;
 const V = I("V"), v = I("v"), f = I("f"), L = I("λ"), l = I("L"), t = I("t"), n = I("n");
 const f1 = Sb("f","1"), f2 = Sb("f","2");
 
-/* 気柱の基本振動（定常波の振幅の包絡線） */
+/* 気柱の基本振動：定在波（定常波）の振幅の包絡線 */
 const TUBES = (() => {
   const env = (x0, len, cy, a, fn) => {
     let up = [], dn = [];
@@ -45,7 +45,7 @@ const DEF_TABLE = `<div class="tbl"><table>
 <tr><td>音の3要素</td><td>高さ ← 振動数、大きさ ← 振幅、音色 ← 波形</td><td>―</td></tr>
 <tr><td>可聴音</td><td>人が聞くことのできる音。振動数はおよそ 20 Hz〜20000 Hz</td><td>―</td></tr>
 <tr><td>うなり</td><td>振動数がわずかに異なる2つの音が重なり、大きさが周期的に変わる現象</td><td>1 s 間の回数 ＝ |${f1} − ${f2}|</td></tr>
-<tr><td>弦の固有振動</td><td>両端が節の定常波。長さ ${l} に半波長が ${n} 個入る</td><td>${L} ＝ 2${l}/${n}、${f} ＝ ${n}${v}/(2${l})</td></tr>
+<tr><td>弦の固有振動</td><td>両端が節の定在波（定常波）。長さ ${l} に半波長が ${n} 個入る</td><td>${L} ＝ 2${l}/${n}、${f} ＝ ${n}${v}/(2${l})</td></tr>
 <tr><td>閉管</td><td>閉じた端が節、開いた端が腹。基本振動数の奇数倍の音だけが生じる</td><td>基本振動：${l} ＝ ${L}/4</td></tr>
 <tr><td>開管</td><td>両端が腹。基本振動数の整数倍の音が生じる</td><td>基本振動：${l} ＝ ${L}/2</td></tr>
 <tr><td>共振（共鳴）</td><td>物体の固有振動数と同じ振動数で振動を与えると、大きく振動する現象</td><td>―</td></tr>
@@ -56,14 +56,14 @@ const DIM_TABLE = `<div class="tbl"><table>
 <tr><td>波長 ${L}、長さ ${l}</td><td>m</td></tr>
 <tr><td>振動数 ${f}</td><td>Hz ＝ 1/s</td></tr>
 <tr><td>気温 ${t}</td><td>℃</td></tr></table></div>`;
-const STEPS = `<p>1 何が振動しているか（弦か気柱か） → 2 両端の条件（節か腹か）を決める → 3 定常波を描き、長さと波長の関係を書く → 4 ${v} ＝ ${f}${L} を使う → 5 文字式で解く → 6 単位をそろえて代入 → 7 妥当性（音の高さの感覚と合うか）</p>`;
+const STEPS = `<p>1 何が振動しているか（弦か気柱か） → 2 両端の条件（節か腹か）を決める → 3 定在波（定常波）を描き、長さと波長の関係を書く → 4 ${v} ＝ ${f}${L} を使う → 5 文字式で解く → 6 単位をそろえて代入 → 7 妥当性（音の高さの感覚と合うか）</p>`;
 const TF = ["正しい","誤り"];
 const UNITQ = ["m/s（速さ）","m（長さ・波長）","Hz（振動数）","s（時間）"];
 const LAM = ["2<i class='qv'>L</i>","4<i class='qv'>L</i>","<i class='qv'>L</i>","<i class='qv'>L</i>/2"];
 
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:"音は空気を伝わる縦波です。「高い・大きい・音色」がそれぞれどの量に対応するかを正確に覚えます。",
+  intro:"音は空気を伝わる縦波です。「高い・大きい・音色」がそれぞれどの量に対応するかを正確に覚えます。空気の粒子の動きと疎密の伝わり方は <a href='anim/longitudinal.html' style='color:var(--blue);font-weight:700'>縦波（疎密波）のアニメーション</a> で確かめられます。",
   advice:"音の3要素の対応と、弦・閉管・開管の端の条件（節か腹か）を覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
@@ -80,7 +80,7 @@ const SECTIONS = [
     {id:"d6",type:"blanks",text:"両端を固定した弦では、両端が{0}になる。閉管では閉じた端が{1}、開いた端が{2}になる。",
      options:[["節","腹"],["節","腹"],["節","腹"]],answer:[0,0,1],explain:"固定された端・閉じた端は動けないので節、開いた端は自由に動けるので腹です。"},
     {id:"d7",type:"choice",prompt:"閉管で生じる音の振動数はどれか。",options:["基本振動数の奇数倍だけ","基本振動数の整数倍","基本振動数の偶数倍だけ"],answer:0,
-     explain:`閉管には ${L}/4 の奇数倍の長さの定常波しかできません。`},
+     explain:`閉管には ${L}/4 の奇数倍の長さの定在波（定常波）しかできません。`},
     {id:"d8",type:"choice",prompt:"共振（共鳴）とは何か。",
      options:["固有振動数と同じ振動数で振動を与えると、大きく振動する現象","2つの音が重なって大きさが変わる現象","音が壁で反射して戻ってくる現象"],answer:0,
      explain:"2つ目はうなり、3つ目は反射（こだま）です。"}
@@ -106,7 +106,7 @@ const SECTIONS = [
      explain:"誤り。閉管の基本振動の波長は 4<i class='qv'>L</i>、開管は 2<i class='qv'>L</i> なので、閉管の基本振動数は開管の半分です。"},
     {id:"rb6",type:"choice",prompt:"音は水中でも伝わる。",options:TF,answer:0,explain:"正しい。水中では空気中より速く伝わります。"}
   ]},
-  { title:"C. 気柱の定常波の図を読む", lead:"長さ <i class='qv'>L</i> の閉管と開管の基本振動を表した図。", figure:TUBES, qs:[
+  { title:"C. 気柱の定在波（定常波）の図を読む", lead:"長さ <i class='qv'>L</i> の閉管と開管の基本振動を表した図。空気の粒子の動きは <a href='anim/air-column.html' style='color:var(--blue);font-weight:700'>気柱の固有振動のアニメーション</a> で確かめられる。", figure:TUBES, qs:[
     {id:"rc1",type:"choice",prompt:"閉管の基本振動で、管の長さ <i class='qv'>L</i> は波長の何倍か。",options:["1/4 倍","1/2 倍","1 倍"],answer:0,
      explain:"節から隣の腹までの間隔は <i class='qv'>λ</i>/4。図の閉管にはちょうどその長さが入っています。"},
     {id:"rc2",type:"choice",prompt:"開管の基本振動で、管の長さ <i class='qv'>L</i> は波長の何倍か。",options:["1/4 倍","1/2 倍","1 倍"],answer:1,
@@ -146,11 +146,11 @@ const SECTIONS = [
   ]}]
 },
 { id:"step", tab:"④手順", title:"④ 手順固定の演習",
-  intro:"弦や気柱の問題は、端の条件から定常波を描けば、長さと波長の関係が決まります。",
+  intro:"弦や気柱の問題は、端の条件から定在波（定常波）を描けば、長さと波長の関係が決まります。",
   advice:"端が節か腹かを先に決め、図を描いてから長さと波長の関係を書こう。",
   ref:{label:"7ステップを見る", html:STEPS},
   groups:[
-  { title:"問題1（弦・すべてのステップ）", quote:"長さ 0.50 m の弦の両端を固定してはじいた。弦を伝わる波の速さは 200 m/s である。", qs:[
+  { title:"問題1（弦・すべてのステップ）", lead:"張力・線密度・長さを変えたときの振動は <a href='anim/string.html' style='color:var(--blue);font-weight:700'>弦の固有振動のアニメーション</a> で確かめられる。", quote:"長さ 0.50 m の弦の両端を固定してはじいた。弦を伝わる波の速さは 200 m/s である。", qs:[
     {id:"s11",type:"blanks",prompt:"ステップ2　両端の条件",text:"弦の両端は{0}になる。",options:[["節","腹"]],answer:[0],explain:"固定された端は振動できません。"},
     {id:"s12",type:"choice",prompt:"ステップ3　基本振動で、弦の長さと波長の関係は？",options:[`${l} ＝ ${L}/2`,`${l} ＝ ${L}/4`,`${l} ＝ ${L}`],answer:0,
      explain:"両端が節で、間に腹が1つ。節と節の間隔は半波長です。"},
@@ -160,7 +160,7 @@ const SECTIONS = [
     {id:"s15",type:"num",prompt:"ステップ7　腹が2つの振動（2倍振動）の振動数",answer:400,tol:1,unit:"Hz",
      traps:{"100":"腹が増えると波長は短く、振動数は大きくなります。"},explain:`${L} ＝ ${l} ＝ 0.50 m、${f} ＝ 200 ÷ 0.50 ＝ 400 Hz。基本振動数の2倍です。`}
   ]},
-  { title:"問題2（気柱）", quote:"長さ 0.17 m の管がある。音速を 340 m/s とし、開口端補正は無視する。", qs:[
+  { title:"問題2（気柱）", lead:"閉管・開管、気温、開口端補正の影響は <a href='anim/air-column.html' style='color:var(--blue);font-weight:700'>気柱の固有振動のアニメーション</a> で確かめられる。", quote:"長さ 0.17 m の管がある。音速を 340 m/s とし、開口端補正は無視する。", qs:[
     {id:"s21",type:"num",prompt:"一端を閉じた閉管としたとき、基本振動数を求めよ。",answer:500,tol:2,unit:"Hz",
      traps:{"1000":"閉管の基本振動の波長は 4<i class='qv'>L</i> です。","2000":"<i class='qv'>λ</i> ＝ 4<i class='qv'>L</i> ＝ 0.68 m を使います。"},
      explain:`${L} ＝ 4 × 0.17 ＝ 0.68 m、${f} ＝ 340 ÷ 0.68 ＝ 500 Hz。`},
@@ -171,7 +171,7 @@ const SECTIONS = [
     {id:"s24",type:"self",prompt:"閉管で、基本振動数の偶数倍の音が生じない理由を説明せよ。",
      model:"閉管では閉じた端が節、開いた端が腹でなければならない。管の長さには <i class='qv'>λ</i>/4 の奇数倍しか入らないので、振動数は基本振動数の奇数倍だけになる。"}
   ]},
-  { title:"問題3（音速・こだま・うなり）", qs:[
+  { title:"問題3（音速・こだま・うなり）", lead:"うなりは <a href='anim/beats.html' style='color:var(--blue);font-weight:700'>うなりのアプリ</a> で、2つの音を実際に鳴らして確かめられる。", qs:[
     {id:"s31",type:"num",prompt:"気温 15 ℃ のときの音速を、小数第1位まで求めよ。",answer:340.5,tol:0.05,unit:"m/s",
      traps:{"331.5":"0.6<i class='qv'>t</i> の項を加えます。","340":"小数第1位まで求めよう。"},explain:`${V} ＝ 331.5 ＋ 0.6 × 15 ＝ 340.5 m/s。`},
     {id:"s32",type:"num",prompt:"この気温で崖に向かって音を出したら、2.0 s 後にこだまが聞こえた。崖までの距離はおよそ何 m か（有効数字2桁）。",answer:340,tol:2,unit:"m",

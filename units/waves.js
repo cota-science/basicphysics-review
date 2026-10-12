@@ -1,7 +1,7 @@
 /*
  * 単元：波の性質
  * 横波・縦波、振幅・波長・周期・振動数、v ＝ fλ、y-x グラフと y-t グラフの読み分け、
- * 重ね合わせ、反射（自由端・固定端）、定常波。
+ * 重ね合わせ、反射（自由端・固定端）、定在波（定常波）。
  */
 (function(){
 
@@ -67,6 +67,41 @@ ${ticks}
 </svg>`;
 })();
 
+/* 振動数と周期：1 s 間を、1回の振動の時間 T ずつに区切ると f 個に分かれる（fT ＝ 1） */
+const FT = (() => {
+  const X = s => 40 + s * 260;
+  const row = (cy, fr, label, tlabel) => {
+    const Tp = 1 / fr; let g = "";
+    for(let n = 0; n < fr; n++){
+      const a = X(n * Tp), b = X((n + 1) * Tp), w = b - a;
+      g += `<rect x="${a.toFixed(1)}" y="${cy - 24}" width="${w.toFixed(1)}" height="48" fill="${n % 2 ? "var(--red-soft)" : "var(--blue-soft)"}"/>`
+        +  `<text x="${(a + w * 0.75).toFixed(1)}" y="${cy - 10}" font-size="10.5" text-anchor="middle" fill="currentColor">${n + 1}回目</text>`
+        +  `<line x1="${(a + 3).toFixed(1)}" y1="${cy + 33}" x2="${(b - 3).toFixed(1)}" y2="${cy + 33}" stroke="currentColor" stroke-width="1.2"/>`
+        +  `<polyline points="${(a + 8).toFixed(1)},${cy + 29} ${(a + 3).toFixed(1)},${cy + 33} ${(a + 8).toFixed(1)},${cy + 37}" fill="none" stroke="currentColor" stroke-width="1.2"/>`
+        +  `<polyline points="${(b - 8).toFixed(1)},${cy + 29} ${(b - 3).toFixed(1)},${cy + 33} ${(b - 8).toFixed(1)},${cy + 37}" fill="none" stroke="currentColor" stroke-width="1.2"/>`
+        +  `<text x="${((a + b) / 2).toFixed(1)}" y="${cy + 47}" font-size="12" text-anchor="middle" fill="currentColor">${SI("T")}</text>`;
+    }
+    return g
+      + `<line x1="${X(0)}" y1="${cy}" x2="${X(1)}" y2="${cy}" stroke="currentColor" stroke-width="1"/>`
+      + `<polyline points="${sine(X(0), X(1), X(0), cy, 17, 260 * Tp, 0)}" fill="none" stroke="var(--blue)" stroke-width="2.4"/>`
+      + `<text x="${X(0) + 5}" y="${cy - 32}" font-size="12" fill="currentColor">${label}</text>`
+      + `<text x="${X(1)}" y="${cy - 32}" font-size="12" text-anchor="end" fill="var(--red)">${tlabel}</text>`;
+  };
+  return `<svg class="graph" viewBox="0 0 320 262" role="img" aria-label="1 s 間の振動を、1回の振動にかかる時間 T ずつに区切った図。振動数 2 Hz では1 s 間に2回振動し、周期は0.50 s。振動数 4 Hz では1 s 間に4回振動し、周期は0.25 s。">
+<line x1="${X(0)}" y1="14" x2="${X(0)}" y2="252" stroke="currentColor" stroke-dasharray="3 3" stroke-width="1"/>
+<line x1="${X(1)}" y1="14" x2="${X(1)}" y2="252" stroke="currentColor" stroke-dasharray="3 3" stroke-width="1"/>
+<line x1="${X(0)}" y1="20" x2="${X(1)}" y2="20" stroke="currentColor" stroke-width="1.4"/>
+<line x1="${X(0)}" y1="14" x2="${X(0)}" y2="26" stroke="currentColor" stroke-width="1.4"/><line x1="${X(1)}" y1="14" x2="${X(1)}" y2="26" stroke="currentColor" stroke-width="1.4"/>
+<rect x="${X(0.5) - 24}" y="11" width="48" height="18" fill="var(--sheet)"/>
+<text x="${X(0.5)}" y="24" font-size="12" font-weight="700" text-anchor="middle" fill="currentColor">1 s 間</text>
+<text x="${X(0) - 4}" y="24" font-size="10" text-anchor="end" fill="currentColor">${SI("t")}＝0</text>
+${row(84, 2, `${SI("f")} ＝ 2 Hz（1 s 間に2回）`, `${SI("T")} ＝ 0.50 s`)}
+${row(196, 4, `${SI("f")} ＝ 4 Hz（1 s 間に4回）`, `${SI("T")} ＝ 0.25 s`)}
+</svg>`;
+})();
+const FT_NOTE = `<p>1 s 間に ${f} 回振動し、1回に ${T}〔s〕かかる。${f} 回分の時間をつなげるとちょうど 1 s になるので、<b>${f}${T} ＝ 1</b>（${f} ＝ 1/${T}、${T} ＝ 1/${f}）。振動数が2倍になると、周期は半分になる。</p>
+<p>単位で確かめる：${f}〔Hz ＝ 1/s〕×${T}〔s〕→ 1/s × s ＝ 1（単位なし）。</p>`;
+
 const DEF_TABLE = `<div class="tbl"><table>
 <tr><th>用語</th><th>定義</th><th>記号・単位</th></tr>
 <tr><td>波（波動）</td><td>ある点の振動が、次々と周りに伝わっていく現象。媒質そのものは移動しない</td><td>―</td></tr>
@@ -78,9 +113,12 @@ const DEF_TABLE = `<div class="tbl"><table>
 <tr><td>波の速さ</td><td>波形が1 s 間に進む距離。媒質によって決まる</td><td>${v} ＝ ${f}${L} ＝ ${L}/${T}〔m/s〕</td></tr>
 <tr><td>重ね合わせの原理</td><td>2つの波が重なった点の変位は、それぞれの変位の和</td><td>${y} ＝ ${Sb("y","1")} ＋ ${Sb("y","2")}</td></tr>
 <tr><td>反射</td><td>自由端では山は山として、固定端では山は谷として（位相が逆になって）反射する</td><td>―</td></tr>
-<tr><td>定常波</td><td>逆向きに進む同じ波が重なってできる、どちらにも進まない波。振動しない点が節、最も大きく振動する点が腹</td><td>節の間隔 ＝ ${L}/2</td></tr>
+<tr><td>定在波（定常波）</td><td>逆向きに進む同じ波が重なってできる、どちらにも進まない波。振動しない点が節、最も大きく振動する点が腹</td><td>節の間隔 ＝ ${L}/2</td></tr>
 </table></div>
-<p>${y}-${x} グラフはある時刻の波形（山と山の間隔が波長）。${y}-${t} グラフは媒質の1点の振動（山と山の間隔が周期）。</p>`;
+<p>${y}-${x} グラフはある時刻の波形（山と山の間隔が波長）。${y}-${t} グラフは媒質の1点の振動（山と山の間隔が周期）。</p>
+<h3 style='font-size:15px;margin:14px 0 4px'>振動数と周期の関係</h3>
+${FT}
+${FT_NOTE}`;
 const DIM_TABLE = `<div class="tbl"><table>
 <tr><th>量</th><th>単位</th></tr>
 <tr><td>波長 ${L}、振幅 ${A}</td><td>m</td></tr>
@@ -94,7 +132,7 @@ const UPDN = ["上（<i class='qv'>y</i> の正の向き）","下（<i class='qv
 
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:"波で動いているのは「振動の状態」で、媒質そのものではありません。用語と記号を正確に覚えます。",
+  intro:"波で動いているのは「振動の状態」で、媒質そのものではありません。用語と記号を正確に覚えます。重ね合わせ・定在波（定常波）・反射の動きは <a href='anim/transverse.html#sup' style='color:var(--blue);font-weight:700'>横波のアニメーション</a> で、<i class='qv'>v</i> ＝ <i class='qv'>fλ</i> の意味は <a href='anim/wave-speed.html' style='color:var(--blue);font-weight:700'>波の速さのアニメーション</a> で確かめられます。",
   advice:"波長と周期の定義（何と何の間隔か）と、<i class='qv'>v</i> ＝ <i class='qv'>fλ</i> を覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
@@ -110,13 +148,21 @@ const SECTIONS = [
      explain:`1 s 間に ${f} 回振動し、1回ごとに ${L} 進むので、${v} ＝ ${f}${L}。`},
     {id:"d5",type:"choice",prompt:"波長とは何か。",
      options:["隣り合う山と山の間隔","山の高さ","山と隣の谷の間隔"],answer:0,explain:"山と隣の谷の間隔は半波長です。"},
-    {id:"d6",type:"blanks",text:"定常波で、まったく振動しない点を{0}、最も大きく振動する点を{1}という。隣り合う節の間隔は{2}である。",
+    {id:"d6",type:"blanks",text:"定在波（定常波）で、まったく振動しない点を{0}、最も大きく振動する点を{1}という。隣り合う節の間隔は{2}である。",
      options:[["節","腹"],["節","腹"],["<i class='qv'>λ</i>/2","<i class='qv'>λ</i>","<i class='qv'>λ</i>/4"]],answer:[0,1,0],explain:`隣り合う節と節の間隔は半波長 ${L}/2 です。`},
     {id:"d7",type:"choice",prompt:"固定端で反射するとき、入射した山はどのように反射するか。",
      options:["山として反射する","谷として反射する","反射しない"],answer:1,explain:"固定端では位相が逆になります。自由端ではそのまま山として反射します。"},
     {id:"d8",type:"choice",prompt:"2つの波が重なった点の変位はどうなるか（重ね合わせの原理）。",
      options:[`それぞれの変位の和 ${Sb("y","1")} ＋ ${Sb("y","2")}`,"大きいほうの波の変位","それぞれの変位の積"],answer:0,
      explain:"重なり合った後、それぞれの波はもとの形のまま進んでいきます（独立性）。"}
+  ]},
+  { title:"振動数と周期を図で見る", lead:"どちらも 1 s 間の振動です。色の帯1つが1回の振動で、その時間が周期 <i class='qv'>T</i> です。", figure:FT, qs:[
+    {id:"d9",type:"choice",prompt:"振動数を 2 Hz から 4 Hz にすると、1回の振動にかかる時間（周期）はどうなるか。",
+     options:["半分になる","2倍になる","変わらない"],answer:0,
+     explain:`1 s 間に入る振動の回数が2倍になるので、1回あたりの時間は半分になります。${f}${T} ＝ 1 なので、${f} と ${T} は反比例します。`},
+    {id:"d10",type:"num",prompt:`振動数 ${f} ＝ 5.0 Hz の振動の周期 ${T} を求めよ。`,answer:0.20,tol:0.005,unit:"s",
+     traps:{"5":"それは振動数の値です。<i class='qv'>T</i> ＝ 1/<i class='qv'>f</i> です。","0.5":"1 ÷ 5.0 を計算し直そう。"},
+     explain:`${T} ＝ 1/${f} ＝ 1 ÷ 5.0 ＝ 0.20 s。1 s 間を5つに区切った1つ分です。`}
   ]}]
 },
 { id:"read", tab:"②読解", title:"② 読解ドリル",
@@ -142,13 +188,13 @@ const SECTIONS = [
     {id:"rb3",type:"choice",prompt:"この <i class='qv'>y</i>-<i class='qv'>t</i> グラフの山と山の間隔は何を表すか。",options:["周期","波長","振幅"],answer:0,
      explain:"横軸が時間なので、山と山の間隔は時間（周期）です。<i class='qv'>y</i>-<i class='qv'>x</i> グラフなら波長になります。"}
   ]},
-  { title:"C. 正しいか、誤りか", qs:[
+  { title:"C. 正しいか、誤りか", lead:"迷ったら <a href='anim/transverse.html#ref' style='color:var(--blue);font-weight:700'>反射と定在波（定常波）のアニメーション</a> で動きを見てから答えよう。", qs:[
     {id:"rc1",type:"choice",prompt:"波が伝わると、媒質も波と一緒に移動する。",options:TF,answer:1,explain:"誤り。媒質はその場で振動するだけです。"},
     {id:"rc2",type:"choice",prompt:"同じ媒質を伝わる波では、振動数を大きくすると波の速さも大きくなる。",options:TF,answer:1,
      explain:"誤り。波の速さは媒質で決まります。振動数を大きくすると、波長が短くなります。"},
     {id:"rc3",type:"choice",prompt:"音は縦波である。",options:TF,answer:0,explain:"正しい。空気の密な部分と疎な部分が伝わります。"},
     {id:"rc4",type:"choice",prompt:"自由端で反射するとき、山は山として反射する。",options:TF,answer:0,explain:"正しい。固定端では谷として反射します。"},
-    {id:"rc5",type:"choice",prompt:"定常波は、波形が左右どちらにも進まない。",options:TF,answer:0,explain:"正しい。節の位置は動かず、腹の位置でその場の振動をくり返します。"},
+    {id:"rc5",type:"choice",prompt:"定在波（定常波）は、波形が左右どちらにも進まない。",options:TF,answer:0,explain:"正しい。節の位置は動かず、腹の位置でその場の振動をくり返します。"},
     {id:"rc6",type:"choice",prompt:"振幅が大きい波ほど、速く伝わる。",options:TF,answer:1,explain:"誤り。振幅は波の速さに関係しません。"}
   ]}]
 },
@@ -188,7 +234,7 @@ const SECTIONS = [
   advice:"グラフの横軸を確かめてから、<i class='qv'>λ</i>・<i class='qv'>T</i> を読み、<i class='qv'>v</i> ＝ <i class='qv'>fλ</i> を使おう。",
   ref:{label:"7ステップを見る", html:STEPS},
   groups:[
-  { title:"問題1（2つのグラフから速さを求める）", lead:"②読解ドリルの <i class='qv'>y</i>-<i class='qv'>x</i> グラフと <i class='qv'>y</i>-<i class='qv'>t</i> グラフは、同じ波についてのものである。", qs:[
+  { title:"問題1（2つのグラフから速さを求める）", lead:"②読解ドリルの <i class='qv'>y</i>-<i class='qv'>x</i> グラフと <i class='qv'>y</i>-<i class='qv'>t</i> グラフは、同じ波についてのものである。<br><a href='anim/wave-speed.html' style='color:var(--blue);font-weight:700'>波の速さのアニメーション</a> で、2つのグラフの関係を見てから解こう。", qs:[
     {id:"s11",type:"blanks",prompt:"ステップ1・2　それぞれのグラフから読める量",text:`${y}-${x} グラフからは{0}が、${y}-${t} グラフからは{1}が読める。`,
      options:[["波長","周期"],["波長","周期"]],answer:[0,1],explain:"横軸が距離なら波長、時間なら周期です。"},
     {id:"s12",type:"blanks",prompt:"ステップ3　既知・未知を整理する。",text:`${L} ＝ {0}　${T} ＝ {1}　${v} ＝ ？`,
@@ -201,8 +247,8 @@ const SECTIONS = [
     {id:"s15",type:"choice",prompt:"ステップ7　確認：この波は 1 周期の間に何 m 進むか。",options:["0.40 m（1波長）","0.80 m","0.20 m"],answer:0,
      explain:"1周期の間に、波はちょうど1波長進みます。0.80 m/s × 0.50 s ＝ 0.40 m で一致します。"}
   ]},
-  { title:"問題2（定常波）", quote:"長さ 1.2 m の弦の両端を固定して振動させたところ、腹が3つの定常波ができた。弦を伝わる波の速さは 40 m/s である。", qs:[
-    {id:"s21",type:"num",prompt:"定常波の波長を求めよ。",answer:0.80,tol:0.01,unit:"m",
+  { title:"問題2　定在波（定常波）", lead:"腹と節の並び方は <a href='anim/transverse.html#std' style='color:var(--blue);font-weight:700'>定在波（定常波）のアニメーション</a> で確かめられる。", quote:"長さ 1.2 m の弦の両端を固定して振動させたところ、腹が3つの定在波（定常波）ができた。弦を伝わる波の速さは 40 m/s である。", qs:[
+    {id:"s21",type:"num",prompt:"定在波（定常波）の波長を求めよ。",answer:0.80,tol:0.01,unit:"m",
      traps:{"0.4":"腹1つ分（節と節の間）が半波長です。","1.2":"弦全体に半波長が3つ入っています。","3.6":"1.2 m ＝ 3 × (<i class='qv'>λ</i>/2) から <i class='qv'>λ</i> を求めます。"},
      explain:`腹が3つ ＝ 半波長が3つなので、1.2 ＝ 3 × ${L}/2、${L} ＝ 0.80 m。`},
     {id:"s22",type:"num",prompt:"弦の振動数を求めよ。",answer:50,tol:0.5,unit:"Hz",
@@ -225,10 +271,10 @@ const SECTIONS = [
     {id:"m2",type:"choice",prompt:"周期を読み取れるのはどちらのグラフか。",options:[`${y}-${x} グラフ`,`${y}-${t} グラフ`],answer:1,explain:"横軸が時間のグラフです。"},
     {id:"m3",type:"choice",prompt:"波の速さを決めているのは何か。",options:["媒質の種類や状態","振動数","振幅"],answer:0,
      explain:"振動数を変えると、速さではなく波長が変わります。"},
-    {id:"m4",type:"choice",prompt:"定常波の、隣り合う節と節の間隔は？",options:[`${L}/2`,`${L}`,`${L}/4`],answer:0,explain:"腹1つ分が半波長です。"},
+    {id:"m4",type:"choice",prompt:"定在波（定常波）の、隣り合う節と節の間隔は？",options:[`${L}/2`,`${L}`,`${L}/4`],answer:0,explain:"腹1つ分が半波長です。"},
     {id:"m5",type:"blanks",prompt:"次の文を完成させよ。",text:"波が伝わるとき、移動するのは{0}であり、媒質は{1}。",
      options:[["振動の状態（エネルギー）","媒質"],["その場で振動するだけである","波と一緒に移動する"]],answer:[0,0],
-     explain:"この見方が、横波・縦波・反射・定常波すべての土台です。"}
+     explain:"この見方が、横波・縦波・反射・定在波（定常波）すべての土台です。"}
   ]}]
 }
 ];
