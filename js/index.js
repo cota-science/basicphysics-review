@@ -21,17 +21,17 @@ window.UNIT_LIST = [
     { id: "energy",     title: "仕事と力学的エネルギー",     file: "units/energy.js" }
   ]},
   { group: "熱", units: [
-    { id: "heat",       title: "熱とエネルギー",             file: null }
+    { id: "heat",       title: "熱とエネルギー",             file: "units/heat.js" }
   ]},
   { group: "波", units: [
-    { id: "waves",      title: "波の性質",                   file: null },
-    { id: "sound",      title: "音",                         file: null }
+    { id: "waves",      title: "波の性質",                   file: "units/waves.js" },
+    { id: "sound",      title: "音",                         file: "units/sound.js" }
   ]},
   { group: "電気", units: [
-    { id: "current",    title: "電流と電気抵抗",             file: null },
-    { id: "ac",         title: "電流と磁場・交流",           file: null }
+    { id: "current",    title: "電流と電気抵抗",             file: "units/current.js" },
+    { id: "ac",         title: "電流と磁場・交流",           file: "units/ac.js" }
   ]},
   { group: "エネルギーとその利用", units: [
-    { id: "energy-use", title: "エネルギーとその利用",       file: null }
+    { id: "energy-use", title: "エネルギーとその利用",       file: "units/energy-use.js" }
   ]}
 ];
