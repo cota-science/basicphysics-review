@@ -90,7 +90,7 @@ const UNITQ = ["m（波長）","W（電力）","s（周期）","V（電圧）"];
 
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:`電流と磁場は互いに関係し合います。法則の「向き」を言葉で正確に言えるようにします。<br>アニメーションで確かめよう：<br>${ANIM("anim/magnetic.html#field","磁場と磁力線")}${ANIM("anim/magnetic.html#line","直線電流")}${ANIM("anim/magnetic.html#loop","円形電流")}${ANIM("anim/magnetic.html#sol","ソレノイド")}`,
+  intro:`電流と磁場は互いに関係し合います。法則の「向き」を言葉で正確に言えるようにします。<br>アニメーションで確かめよう：<br>${ANIM("anim/magnetic.html#field","磁場と磁力線")}${ANIM("anim/magnetic.html#line","直線電流")}${ANIM("anim/magnetic.html#loop","円形電流")}${ANIM("anim/magnetic.html#sol","ソレノイド")}${ANIM("anim/motor.html#force","フレミングの左手の法則")}${ANIM("anim/motor.html#motor","直流モーター")}${ANIM("anim/induction.html#def","電磁誘導")}${ANIM("anim/induction.html#lenz","レンツの法則")}${ANIM("anim/induction.html#gen","交流発電機")}`,
   advice:"右ねじの法則、レンツの法則、変圧器の関係、実効値の意味を覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
@@ -126,7 +126,7 @@ const SECTIONS = [
      options:["紙面の表から裏へ","紙面の裏から表へ","電流と同じ上向き"],answer:0,
      explain:"右ねじを上に進めると、右側ではねじの回る向きが紙面の奥へ向かいます。"}
   ]},
-  { title:"B. 電磁誘導を読む", lead:"棒磁石の N 極を、コイルの端 A に近づける。", figure:LENZ, qs:[
+  { title:"B. 電磁誘導を読む", lead:`棒磁石の N 極を、コイルの端 A に近づける。${ANIM("anim/induction.html#lenz","レンツの法則のアニメーション（4つの場合）")}`, figure:LENZ, qs:[
     {id:"rb1",type:"choice",prompt:"コイルの端 A は何極になるように誘導電流が流れるか。",options:["N 極","S 極","極はできない"],answer:0,
      explain:"近づいてくる N 極を押し返す（変化を妨げる）ように、A が N 極になります。"},
     {id:"rb2",type:"choice",prompt:"N 極をコイルから遠ざけるとき、A は何極になるか。",options:["N 極","S 極","極はできない"],answer:1,
