@@ -75,7 +75,7 @@ const UNITQ = ["J（熱量）","J/K（熱容量）","J/(g·K)（比熱）","K（
 
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:`「熱」は物体がもっているものではなく、移動するエネルギーです。言葉と式を正確に覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/heat-motion.html","熱運動と状態変化")}${ANIM("anim/phase-equilibrium.html#lv","蒸発と凝縮（気液平衡）")}${ANIM("anim/phase-equilibrium.html#sl","融解と凝固（固液平衡）")}`,
+  intro:`「熱」は物体がもっているものではなく、移動するエネルギーです。言葉と式を正確に覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/heat-equilibrium.html","熱の移動と熱平衡")}${ANIM("anim/heat-motion.html","熱運動と状態変化")}${ANIM("anim/phase-equilibrium.html#lv","蒸発と凝縮（気液平衡）")}${ANIM("anim/phase-equilibrium.html#sl","融解と凝固（固液平衡）")}`,
   advice:`熱量・熱容量・比熱の違いと、熱力学第一法則の ${W} が「された仕事」であることを覚え直そう。`,
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
@@ -189,7 +189,7 @@ const SECTIONS = [
   ]}]
 },
 { id:"step", tab:"④手順", title:"④ 手順固定の演習",
-  intro:"熱量の保存は「失った熱量 ＝ 得た熱量」。各項を正の量で書くのが手順の要です。",
+  intro:`熱量の保存は「失った熱量 ＝ 得た熱量」。各項を正の量で書くのが手順の要です。<br>${ANIM("anim/heat-equilibrium.html","熱の移動と熱平衡のアニメーション")}`,
   advice:"熱を失う物体と得る物体を先に分け、温度差を正の量で書いてから式を立てよう。",
   ref:{label:"7ステップを見る", html:STEPS},
   groups:[
