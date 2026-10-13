@@ -182,7 +182,7 @@ sub .s, sub i{font-family:var(--f-sym)}
     <div class="hd">
       <a class="back" id="backLink" href="../index.html#/u/free-fall/0" hidden>‹ 落体の運動（Webテスト）へ</a>
       <h1>投射運動ラボ<small>物理基礎・落体の運動（水平投射・斜方投射）</small></h1>
-      <nav class="nav" aria-label="アニメーション"><a href="index.html#motion">≡ アニメーション集</a><a href="kinematics.html">直線運動ラボ</a><a href="projectile.html" aria-current="page">投射運動ラボ</a><a href="monkey.html">モンキーハンティング</a></nav>
+      <nav class="nav" aria-label="アニメーション"><a href="index.html#motion">≡ アニメーション集</a><a href="kinematics.html">直線運動ラボ</a><a href="relative.html">合成速度と相対速度</a><a href="projectile.html" aria-current="page">投射運動ラボ</a><a href="monkey.html">モンキーハンティング</a></nav>
     </div>
     <div class="tabs" aria-label="よくある形">
       <button class="tab" type="button" data-pre="h">水平投射</button>
@@ -312,7 +312,8 @@ sub .s, sub i{font-family:var(--f-sym)}
       const c = s[i];
       if (c === '*') { out += it ? '</i>' : '<i class="s">'; it = !it; continue; }
       if (c === '_' || c === '^') {
-        const n = s[++i]; const tag = c === '_' ? 'sub' : 'sup';
+        let n = s[++i]; const tag = c === '_' ? 'sub' : 'sup';
+        if (n === '{') { const j = s.indexOf('}', i); n = s.slice(i + 1, j); i = j; out += '<' + tag + '>' + n + '</' + tag + '>'; continue; }
         out += '<' + tag + '>' + (/[a-zA-Z]/.test(n) ? '<i class="s">' + n + '</i>' : n) + '</' + tag + '>';
         continue;
       }
@@ -327,7 +328,11 @@ sub .s, sub i{font-family:var(--f-sym)}
     for (let i = 0; i < s.length; i++) {
       const c = s[i];
       if (c === '*') { it = !it; continue; }
-      if (c === '_' || c === '^') { const n = s[++i]; r.push({ c: n, k: c === '_' ? 'sub' : 'sup', it: /[a-zA-Z]/.test(n) }); continue; }
+      if (c === '_' || c === '^') {
+        let n = s[++i]; const k = c === '_' ? 'sub' : 'sup';
+        if (n === '{') { const j = s.indexOf('}', i); for (const ch of s.slice(i + 1, j)) r.push({ c: ch, k, it: false }); i = j; continue; }
+        r.push({ c: n, k, it: /[a-zA-Z]/.test(n) }); continue;
+      }
       r.push({ c, k: 'n', it });
     }
     return r;

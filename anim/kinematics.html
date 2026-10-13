@@ -170,7 +170,7 @@ sub .s, sub i{font-family:var(--f-sym)}
     <div class="hd">
       <a class="back" id="backLink" href="../index.html#/u/kinematics/0" hidden>‹ 速度・加速度（Webテスト）へ</a>
       <h1>直線運動ラボ<small>物理基礎・運動の表し方／落体の運動</small></h1>
-      <nav class="nav" aria-label="アニメーション"><a href="index.html#motion">≡ アニメーション集</a><a href="kinematics.html" aria-current="page">直線運動ラボ</a><a href="projectile.html">投射運動ラボ</a><a href="monkey.html">モンキーハンティング</a></nav>
+      <nav class="nav" aria-label="アニメーション"><a href="index.html#motion">≡ アニメーション集</a><a href="kinematics.html" aria-current="page">直線運動ラボ</a><a href="relative.html">合成速度と相対速度</a><a href="projectile.html">投射運動ラボ</a><a href="monkey.html">モンキーハンティング</a></nav>
     </div>
     <div class="tabs" role="tablist" aria-label="運動の種類">
       <button class="tab" role="tab" data-mode="uniform" type="button">等速直線運動</button>
@@ -302,7 +302,8 @@ sub .s, sub i{font-family:var(--f-sym)}
       const c = s[i];
       if (c === '*') { out += it ? '</i>' : '<i class="s">'; it = !it; continue; }
       if (c === '_' || c === '^') {
-        const n = s[++i]; const tag = c === '_' ? 'sub' : 'sup';
+        let n = s[++i]; const tag = c === '_' ? 'sub' : 'sup';
+        if (n === '{') { const j = s.indexOf('}', i); n = s.slice(i + 1, j); i = j; out += '<' + tag + '>' + n + '</' + tag + '>'; continue; }
         out += '<' + tag + '>' + (/[a-zA-Z]/.test(n) ? '<i class="s">' + n + '</i>' : n) + '</' + tag + '>';
         continue;
       }
@@ -317,7 +318,11 @@ sub .s, sub i{font-family:var(--f-sym)}
     for (let i = 0; i < s.length; i++) {
       const c = s[i];
       if (c === '*') { it = !it; continue; }
-      if (c === '_' || c === '^') { const n = s[++i]; r.push({ c: n, k: c === '_' ? 'sub' : 'sup', it: /[a-zA-Z]/.test(n) }); continue; }
+      if (c === '_' || c === '^') {
+        let n = s[++i]; const k = c === '_' ? 'sub' : 'sup';
+        if (n === '{') { const j = s.indexOf('}', i); for (const ch of s.slice(i + 1, j)) r.push({ c: ch, k, it: false }); i = j; continue; }
+        r.push({ c: n, k, it: /[a-zA-Z]/.test(n) }); continue;
+      }
       r.push({ c, k: 'n', it });
     }
     return r;
