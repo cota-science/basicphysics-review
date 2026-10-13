@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>電熱線で水を温める</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: mode tabs (1本 / 直列 / 並列) → wide canvas (power supply + heaters in beakers with thermometers) → run controls → per-heater setting cards (A, B) + voltage → result table (W = Pt vs Q = mcΔT) with bars → temperature–time graph → explanation of the common quantity → questions. */
+@font-face{font-family:"OhmFix";font-weight:400;src:local("Segoe UI"),local("Meiryo"),local("Hiragino Sans W3"),local("Roboto"),local("Arial");unicode-range:U+03A9,U+2126}
+@font-face{font-family:"OhmFix";font-weight:700;src:local("Segoe UI Bold"),local("Meiryo Bold"),local("Hiragino Sans W6"),local("Roboto Bold"),local("Arial Bold");unicode-range:U+03A9,U+2126}
+:root{
+  --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
+  --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
+  --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3; --shade:#EEF2F6;
+  --hA:#2A62C9; --hB:#C2780F; --hot:#D2452F; --cold:#2A7BC9; --cur:#D2452F; --net:#1E8A4C;
+  --body:"OhmFix","BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --math:"Times New Roman",Times,"Noto Serif",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+    --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+    --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+    --hA:#7FA8FF; --hB:#F0A84A; --hot:#FF8068; --cold:#7DBBF5; --cur:#FF8068; --net:#5FD08F; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+  --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+  --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+  --hA:#7FA8FF; --hB:#F0A84A; --hot:#FF8068; --cold:#7DBBF5; --cur:#FF8068; --net:#5FD08F; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qv{font-family:var(--math);font-style:italic;font-size:1.08em}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.top-inner{max-width:1080px;margin:0 auto;padding:10px 16px 10px}
+.back{font-size:14px;color:var(--blue);text-decoration:none}
+h1{font-size:19px;margin:2px 0 0;line-height:1.4}
+.nav{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin-top:2px}
+.nav a{color:var(--blue);text-decoration:none}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:700}
+main{max-width:1080px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px;min-width:0}
+h2{font-size:20px;margin:0 0 4px;line-height:1.4}
+h3{font-size:16px;margin:0 0 6px}
+.lead{margin:0 0 12px;color:var(--muted);font-size:15px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.tabs button{border:1.5px solid var(--blue);background:none;color:var(--blue);border-radius:8px;padding:6px 16px;min-height:44px;font-weight:700;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--btn);border-color:var(--btn);color:#fff}
+.stage{position:relative;width:100%;aspect-ratio:1.75/1;background:var(--sheet);border:1px solid var(--line);border-radius:4px}
+@media (max-width:760px){.stage{aspect-ratio:1.25/1}}
+.gbox{position:relative;width:100%;aspect-ratio:3/1;border:1px solid var(--line);border-radius:4px;background:var(--sheet)}
+@media (max-width:760px){.gbox{aspect-ratio:1.6/1}}
+canvas{display:block;width:100%;height:100%}
+.run{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:10px;font-size:14px;color:var(--muted)}
+.run select{min-height:40px;border:1.5px solid var(--line);border-radius:8px;background:var(--sheet);padding:2px 8px;color:var(--ink)}
+.run label{display:flex;align-items:center;gap:6px;min-height:40px}
+.run input[type=checkbox]{width:20px;height:20px;accent-color:var(--blue)}
+.clock{font-size:20px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;min-width:7.5em}
+.btn{border:0;border-radius:8px;padding:6px 16px;min-height:44px;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.btn.ghost{background:none;color:var(--blue);border:1.5px solid var(--blue)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:14px}
+.card{border:1.5px solid var(--line);border-radius:8px;padding:10px 12px}
+.card h3{display:flex;align-items:center;gap:8px}
+.card .sw{width:14px;height:14px;border-radius:3px;display:inline-block}
+.card[hidden]{display:none}
+.sl{display:grid;grid-template-columns:auto 1fr;gap:0 10px;align-items:center;font-size:14px;margin-top:4px}
+.sl output{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+.sl input[type=range]{grid-column:1/-1;width:100%;min-height:30px;accent-color:var(--blue)}
+.sl select{grid-column:1/-1;min-height:38px;border:1.5px solid var(--line);border-radius:8px;background:var(--sheet);padding:2px 8px;color:var(--ink)}
+.rv{margin-top:6px;padding:4px 10px;background:var(--shade);border-radius:6px;font-size:15px;font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto;margin-top:12px}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:6px 6px;text-align:center}
+th{background:var(--shade);font-size:12.5px;line-height:1.45}
+td:first-child,th:first-child{text-align:left;white-space:nowrap}
+td.eq{font-weight:700;color:var(--net)}
+tr.sum td{font-weight:700;border-top:2px solid var(--ink)}
+.bars{display:grid;gap:10px;margin-top:12px}
+.bar .lab{display:flex;justify-content:space-between;font-size:14px;gap:8px}
+.bar .tr{height:16px;background:var(--shade);border-radius:4px;overflow:hidden;margin-top:2px}
+.bar .tr div{height:100%}
+.expl{margin-top:12px;padding:12px 14px;border-left:5px solid var(--blue);background:var(--blue-soft);border-radius:0 8px 8px 0;font-size:15px}
+.expl h3{margin:0 0 4px;color:var(--blue)}
+.note{font-size:13px;color:var(--muted);margin:8px 0 0}
+.qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
+.qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
+.ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <a class="back" id="backLink" href="../index.html#/u/current/0" hidden>‹ 電流と電気抵抗（Webテスト）へ</a>
+    <h1>電熱線で水を温める（ジュール熱）</h1>
+    <nav class="nav" id="nav" hidden aria-label="アニメーション">
+      <a href="index.html#elec">≡ アニメーション集</a>
+      <a href="ohm.html">電流の定義・オームの法則と電力</a>
+      <a href="circuit.html">回路シミュレーター</a>
+      <a href="joule.html" aria-current="page">電熱線で水を温める</a>
+      <a href="magnetic.html">電流がつくる磁場</a>
+      <a href="motor.html">電流が磁場から受ける力とモーター</a>
+      <a href="induction.html">電磁誘導と発電機</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="sheet" aria-labelledby="t1">
+    <h2 id="t1">電熱線で発生するジュール熱と、水が得た熱量を比べる</h2>
+    <p class="lead">電熱線に電流を流して、カップの水を温めます。電熱線で発生する熱（ジュール熱）は、電熱線が消費した電力量 <i class="qv">W</i> ＝ <i class="qv">Pt</i> に等しく、熱が逃げなければ、水が得た熱量 <i class="qv">Q</i> ＝ <i class="qv">mc</i>Δ<i class="qv">t</i> に等しくなるはずです。「スタート」を押して確かめよう。</p>
+    <div class="tabs" role="group" aria-label="つなぎ方">
+      <button type="button" data-m="one" aria-pressed="true">電熱線1本</button>
+      <button type="button" data-m="series" aria-pressed="false">2本を直列</button>
+      <button type="button" data-m="parallel" aria-pressed="false">2本を並列</button>
+    </div>
+    <div class="stage"><canvas id="cv" role="img" aria-label="左に電源装置、右に水を入れたカップと、その中の電熱線と温度計。導線の中を電流を表す粒が動き、電熱線が電力に応じて赤く光り、水温が上がる。"></canvas></div>
+    <div class="run">
+      <button type="button" class="btn" id="startBtn">スタート</button>
+      <button type="button" class="btn ghost" id="resetBtn">リセット</button>
+      <span class="clock" id="clock">0 s</span>
+      <label for="selSp">再生の速さ
+        <select id="selSp"><option value="1">実際の速さ</option><option value="10" selected>10 倍速</option><option value="60">60 倍速</option></select></label>
+      <label for="selEnd">自動で止める
+        <select id="selEnd"><option value="0">止めない</option><option value="60">1 分後</option><option value="180">3 分後</option><option value="300" selected>5 分後</option><option value="600">10 分後</option></select></label>
+      <label for="cbLoss"><input type="checkbox" id="cbLoss">熱が周りに逃げる（実際の実験に近づける）</label>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <h3>電源装置</h3>
+        <label class="sl" for="sV"><span>電源の電圧 <i class="qv">V</i></span><output id="oV"></output><input type="range" id="sV" min="0" max="12" step="0.5" value="6"></label>
+        <label class="sl" for="sT0"><span>水のはじめの温度（＝ 室温）</span><output id="oT0"></output><input type="range" id="sT0" min="10" max="30" step="1" value="20"></label>
+        <p class="note">水の比熱 <i class="qv">c</i> ＝ 4.2 J/(g·K)。カップの熱容量は無視します。</p>
+      </div>
+      <div class="card" id="cardA"></div>
+      <div class="card" id="cardB"></div>
+    </div>
+
+    <div class="tbl"><table>
+      <thead><tr><th></th><th>抵抗 <i class="qv">R</i>〔Ω〕</th><th>電圧 <i class="qv">V</i>〔V〕</th><th>電流 <i class="qv">I</i>〔A〕</th><th>電力 <i class="qv">P</i>〔W〕</th><th>電力量 <i class="qv">W</i> ＝ <i class="qv">Pt</i>〔J〕</th><th>水の質量 <i class="qv">m</i>〔g〕</th><th>温度変化 Δ<i class="qv">t</i>〔K〕</th><th>水が得た熱量 <i class="qv">Q</i> ＝ <i class="qv">mc</i>Δ<i class="qv">t</i>〔J〕</th><th><i class="qv">Q</i> と <i class="qv">W</i></th></tr></thead>
+      <tbody id="tb"></tbody>
+    </table></div>
+    <div class="bars" id="bars"></div>
+  </section>
+
+  <section class="sheet" aria-labelledby="t2">
+    <h2 id="t2">水温の変化のグラフ</h2>
+    <p class="lead" id="glead">グラフの傾き（1 s あたりの温度上昇）は、電力 <i class="qv">P</i> に比例し、水の質量 <i class="qv">m</i> に反比例します。</p>
+    <div class="gbox"><canvas id="gr" role="img" aria-label="水温と時間のグラフ。電熱線ごとに色の違う線で表す。"></canvas></div>
+    <div class="expl" id="expl"></div>
+  </section>
+
+  <section class="sheet" aria-labelledby="qsTitle">
+    <h3 id="qsTitle">見てみよう</h3>
+    <ol class="qs" id="qs"></ol>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const Iq = s => `<i class="qv">${s}</i>`, sb = (s, b) => `${Iq(s)}<sub>${b}</sub>`;
+if(/\/anim\//.test(location.pathname)){ $("backLink").hidden = false; $("nav").hidden = false; }
+const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+const TAU = Math.PI * 2, C_W = 4.2, K_LOSS = 0.06;     // 水の比熱 J/(g·K)、熱の逃げやすさ W/K
+
+/* ---------- 状態 ---------- */
+const MAT = [{ nm: "ニクロム", rho: 1.1e-6 }, { nm: "鉄クロム合金", rho: 1.4e-6 }, { nm: "マンガニン", rho: 4.4e-7 }, { nm: "鉄", rho: 1.0e-7 }];
+const S = { mode: "one", V: 6, T0: 20, run: false, t: 0, speed: 10, end: 300, loss: false,
+  H: [ { id: "A", mat: 0, L: 0.6, A: 0.11, m: 100 }, { id: "B", mat: 0, L: 0.3, A: 0.11, m: 100 } ] };
+const W = [ { T: 20, W: 0, Q: 0, boil: false, hist: [] }, { T: 20, W: 0, Q: 0, boil: false, hist: [] } ];
+const Rof = h => MAT[h.mat].rho * h.L / (h.A * 1e-6);
+function elec(){
+  const RA = Rof(S.H[0]), RB = Rof(S.H[1]), V = S.V;
+  if(S.mode === "one"){ const I = V / RA; return { R: [RA, RB], V: [V, 0], I: [I, 0], P: [V * I, 0], It: I, Rt: RA }; }
+  if(S.mode === "series"){ const Rt = RA + RB, I = V / Rt; return { R: [RA, RB], V: [RA * I, RB * I], I: [I, I], P: [RA * I * I, RB * I * I], It: I, Rt }; }
+  const IA = V / RA, IB = V / RB; return { R: [RA, RB], V: [V, V], I: [IA, IB], P: [V * IA, V * IB], It: IA + IB, Rt: RA * RB / (RA + RB) };
+}
+const nH = () => S.mode === "one" ? 1 : 2;
+
+/* ---------- 書式 ---------- */
+function f3(x){ if(!isFinite(x)) return "—"; const a = Math.abs(x); if(a < 5e-7) return "0"; if(a >= 1000) return Math.round(x).toString(); if(a >= 100) return x.toFixed(0); return x.toPrecision(3); }
+function sci(x){ const e = Math.floor(Math.log10(x) + 1e-9), m = x / Math.pow(10, e); return `${m.toFixed(1)} × 10${String(e).split("").map(ch => ch === "-" ? "⁻" : "⁰¹²³⁴⁵⁶⁷⁸⁹"[+ch]).join("")}`; }
+const fmtJ = x => x >= 1e4 ? `${(x / 1000).toFixed(1)}×10³` : x.toFixed(0);
+const fmtT = t0 => { const t = Math.round(t0); return t < 60 ? `${t.toFixed(0)} s` : `${Math.floor(t / 60)} 分 ${String(t % 60).padStart(2, "0")} 秒（${t} s）`; };
+
+/* ---------- 設定カード ---------- */
+function cardHTML(i){
+  const h = S.H[i], c = i ? "var(--hB)" : "var(--hA)";
+  return `<h3><span class="sw" style="background:${c}"></span>電熱線 ${h.id} と水</h3>
+  <label class="sl" for="m${i}"><span>物質（抵抗率 ${Iq("ρ")}）</span><span></span><select id="m${i}">${MAT.map((m, k) => `<option value="${k}"${k === h.mat ? " selected" : ""}>${m.nm}（${(m.rho * (m.rho < 1e-6 ? 1e7 : 1e6)).toFixed(1)} × 10${m.rho < 1e-6 ? "⁻⁷" : "⁻⁶"} Ω·m）</option>`).join("")}</select></label>
+  <label class="sl" for="L${i}"><span>長さ ${Iq("L")}</span><output id="oL${i}"></output><input type="range" id="L${i}" min="0.1" max="2" step="0.05" value="${h.L}"></label>
+  <label class="sl" for="A${i}"><span>断面積 ${Iq("S")}</span><output id="oA${i}"></output><input type="range" id="A${i}" min="0.05" max="0.5" step="0.01" value="${h.A}"></label>
+  <div class="rv" id="rv${i}"></div>
+  <label class="sl" for="w${i}"><span>水の質量 ${Iq("m")}</span><output id="ow${i}"></output><input type="range" id="w${i}" min="50" max="300" step="10" value="${h.m}"></label>`;
+}
+$("cardA").innerHTML = cardHTML(0); $("cardB").innerHTML = cardHTML(1);
+[0, 1].forEach(i => {
+  $("m" + i).addEventListener("change", e => { S.H[i].mat = +e.target.value; refresh(); });
+  $("L" + i).addEventListener("input", e => { S.H[i].L = +e.target.value; refresh(); });
+  $("A" + i).addEventListener("input", e => { S.H[i].A = +e.target.value; refresh(); });
+  $("w" + i).addEventListener("input", e => { S.H[i].m = +e.target.value; reset(); });
+});
+function cards(){
+  $("cardB").hidden = S.mode === "one";
+  [0, 1].forEach(i => { const h = S.H[i], M = MAT[h.mat], R = Rof(h);
+    $("oL" + i).textContent = `${h.L.toFixed(2)} m`; $("oA" + i).textContent = `${h.A.toFixed(2)} mm²`; $("ow" + i).textContent = `${h.m} g`;
+    $("rv" + i).innerHTML = `${Iq("R")} ＝ ${Iq("ρ")}${Iq("L")}/${Iq("S")} ＝ ${sci(M.rho)} × ${h.L.toFixed(2)} ÷ (${h.A.toFixed(2)} × 10⁻⁶) ＝ <b>${f3(R)} Ω</b>`; });
+  $("oV").textContent = `${S.V.toFixed(1)} V`; $("oT0").textContent = `${S.T0} ℃`;
+}
+
+/* ---------- 描画 ---------- */
+const cv = $("cv"), ctx = cv.getContext("2d"), gr = $("gr"), gc = gr.getContext("2d");
+let CW = 0, CH = 0, GW = 0, GH = 0, col = {}, LY = null, phase = [0, 0, 0];
+const FONT = `"OhmFix","BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`, MF = `"Times New Roman",Times,serif`;
+function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","shade","sheet","hA","hB","hot","cold","cur","net","paper"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
+function hex2rgb(h){ h = h.replace("#", ""); if(h.length === 3) h = h.split("").map(x => x + x).join(""); const n = parseInt(h, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function rgba(h, a){ const A = hex2rgb(h); return `rgba(${A[0]},${A[1]},${A[2]},${a})`; }
+function mix(a, b, t){ const A = hex2rgb(a), B = hex2rgb(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(",")})`; }
+function line(c, pts, color, w, dash){ c.save(); c.strokeStyle = color; c.lineWidth = w; c.setLineDash(dash || []); c.lineJoin = "round"; c.lineCap = "round"; c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke(); c.restore(); }
+function mt(c, str, x, y, color, size, align, bold, bg){
+  size = size || 13;
+  const parts = str.split(/(\{[^}]*\})/).filter(Boolean).map(p => p[0] === "{" ? { s: p.slice(1, -1), it: 1 } : { s: p, it: 0 });
+  const fo = p => p.it ? `italic ${Math.round(size * 1.12)}px ${MF}` : `${bold ? "700 " : ""}${size}px ${FONT}`;
+  c.save(); c.textBaseline = "middle"; let w = 0; parts.forEach(p => { c.font = fo(p); p.w = c.measureText(p.s).width; w += p.w; });
+  let x0 = align === "right" ? x - w : align === "center" ? x - w / 2 : x;
+  if(bg){ c.fillStyle = col.sheet; c.globalAlpha = .88; c.fillRect(x0 - 3, y - size * .75, w + 6, size * 1.5); c.globalAlpha = 1; }
+  c.fillStyle = color; parts.forEach(p => { c.font = fo(p); c.textAlign = "left"; c.fillText(p.s, x0, y); x0 += p.w; }); c.restore(); return w;
+}
+function setupCanvas(cv, c){ const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); const W = Math.max(1, Math.round(r.width)), H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); c.setTransform(d, 0, 0, d, 0, 0); return [W, H]; }
+function layout(){ readColors(); [CW, CH] = setupCanvas(cv, ctx); [GW, GH] = setupCanvas(gr, gc);
+  const narrow = CW < 600; CX = narrow ? [46, 84] : [52, 94]; BOXW = narrow ? 106 : 120;
+  const bw = BOXW, bh = 90, sc = Math.min(CW / bw, CH / bh); LY = { sc, ox: (CW - bw * sc) / 2, oy: (CH - bh * sc) / 2, fs: sc < 3.4 ? 11 : 13 }; draw(); drawGraph(); }
+const P = p => [LY.ox + p[0] * LY.sc, LY.oy + p[1] * LY.sc];
+
+// 配線（論理座標）：電源（左下）、カップ A（中心 x = 52）、B（x = 94）
+let CX = [52, 94], BOXW = 120; const TOPY = 34, BOTY = 66, BWID = 13, RAIL = 70;
+function wires(){
+  const la = x => [x - 5, TOPY], ra = x => [x + 5, TOPY], segs = [];
+  const plus = [[20, 36], [28, 36], [28, 14]], minus = [[24, RAIL], [24, 46], [20, 46]];
+  const a = CX[0], b = CX[1];
+  if(S.mode === "one"){
+    segs.push({ k: 2, pts: [...plus, [a - 5, 14], la(a)] });
+    segs.push({ k: 2, pts: [ra(a), [a + 5, 24], [a + 16, 24], [a + 16, RAIL], ...minus] });
+  } else if(S.mode === "series"){
+    segs.push({ k: 2, pts: [...plus, [a - 5, 14], la(a)] });
+    segs.push({ k: 2, pts: [ra(a), [a + 5, 24], [b - 5, 24], la(b)] });
+    segs.push({ k: 2, pts: [ra(b), [b + 5, 24], [b + 16, 24], [b + 16, RAIL], ...minus] });
+  } else {
+    segs.push({ k: 2, pts: [...plus, [a - 5, 14]] });
+    segs.push({ k: 0, pts: [[a - 5, 14], la(a)] });
+    segs.push({ k: 1, pts: [[a - 5, 14], [b - 5, 14], la(b)] });
+    segs.push({ k: 0, pts: [ra(a), [a + 5, 24], [a + 16, 24], [a + 16, RAIL]] });
+    segs.push({ k: 1, pts: [ra(b), [b + 5, 24], [b + 16, 24], [b + 16, RAIL], [a + 16, RAIL]] });
+    segs.push({ k: 2, pts: [[a + 16, RAIL], ...minus] });
+  }
+  return segs;
+}
+function tempColor(T){ const t = Math.max(0, Math.min(1, (T - 10) / 70)); return mix(col.cold, col.hot, t); }
+function draw(){
+  if(!LY || CW < 60) return; readColors();
+  const c = ctx, sc = LY.sc, fs = LY.fs, e = elec(), n = nH();
+  c.clearRect(0, 0, CW, CH);
+  // 電源装置
+  const b0 = P([3, 28]), b1 = P([20, 54]);
+  c.save(); c.fillStyle = col.shade; c.strokeStyle = col.ink; c.lineWidth = 1.5; c.fillRect(b0[0], b0[1], b1[0] - b0[0], b1[1] - b0[1]); c.strokeRect(b0[0], b0[1], b1[0] - b0[0], b1[1] - b0[1]); c.restore();
+  mt(c, "電源装置", (b0[0] + b1[0]) / 2, P([0, 31])[1], col.ink, fs, "center", true);
+  mt(c, `${S.V.toFixed(1)} V`, (b0[0] + b1[0]) / 2, P([0, 41])[1], col.blue, fs + 3, "center", true);
+  mt(c, "＋", P([17.5, 36])[0], P([0, 36])[1], col.red, fs, "center", true); mt(c, "−", P([17.5, 46])[0], P([0, 46])[1], col.ink, fs, "center", true);
+  mt(c, `{I} ＝ ${f3(e.It)} A`, (b0[0] + b1[0]) / 2, P([0, 58])[1], col.cur, fs - 1, "center", true, true);
+  // 導線と電流の粒
+  const segs = wires();
+  segs.forEach(sg => line(c, sg.pts.map(P), col.ink, 2.2));
+  if(S.mode === "parallel"){ [[CX[0] - 5, 14], [CX[0] + 16, RAIL]].forEach(p => { const q = P(p); c.beginPath(); c.arc(q[0], q[1], 3.5, 0, TAU); c.fillStyle = col.ink; c.fill(); }); }
+  const sp = 5;
+  segs.forEach(sg => {
+    const I = sg.k === 2 ? e.It : e.I[sg.k]; if(I <= 0) return;
+    const pts = sg.pts; let acc = 0; const ph = phase[sg.k] % sp;
+    for(let i = 1; i < pts.length; i++){ const a = pts[i-1], b = pts[i], L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      for(let u = ((ph - acc) % sp + sp) % sp; u < L; u += sp){ const t = u / L, q = P([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); c.beginPath(); c.arc(q[0], q[1], Math.max(2, sc * 0.6), 0, TAU); c.fillStyle = col.cur; c.fill(); }
+      acc += L; }
+  });
+  // カップ
+  for(let i = 0; i < n; i++){
+    const cx = CX[i], h = S.H[i], w = W[i], hc = i ? col.hB : col.hA, pw = e.P[i];
+    const lvl = BOTY - (6 + h.m / 300 * 22);
+    // 水
+    const wa = P([cx - BWID + 1, lvl]), wb = P([cx + BWID - 1, BOTY - 0.6]);
+    c.save(); c.fillStyle = tempColor(w.T); c.globalAlpha = 0.35; c.fillRect(wa[0], wa[1], wb[0] - wa[0], wb[1] - wa[1]); c.restore();
+    // 泡（沸騰）
+    if(w.boil){ for(let k = 0; k < 8; k++){ const x = cx - 9 + ((k * 37 + phase[0] * 3) % 18), y = BOTY - 2 - ((k * 13 + phase[0] * 6) % (BOTY - lvl - 2)); const q = P([x, y]); c.beginPath(); c.arc(q[0], q[1], 2.5, 0, TAU); c.strokeStyle = col.sheet; c.lineWidth = 1.5; c.stroke(); } }
+    // カップの線
+    line(c, [P([cx - BWID, TOPY]), P([cx - BWID + 1, BOTY]), P([cx + BWID - 1, BOTY]), P([cx + BWID, TOPY])], col.muted, 2);
+    // 電熱線（リード線とコイル）
+    const glow = Math.min(1, Math.sqrt(Math.max(0, pw) / 30));
+    line(c, [P([cx - 5, TOPY]), P([cx - 5, BOTY - 6])], col.ink, 2); line(c, [P([cx + 5, TOPY]), P([cx + 5, BOTY - 6])], col.ink, 2);
+    const coil = []; for(let k = 0; k <= 60; k++){ const t = k / 60, x = cx - 5 + 10 * t, y = BOTY - 6 + Math.sin(t * TAU * 6) * 1.6; coil.push(P([x, y])); }
+    if(glow > 0.02){ line(c, coil, rgba(col.hot, 0.25 * glow), 9); }
+    line(c, coil, glow > 0.02 ? mix(hc, col.hot, glow) : hc, 2.4);
+    // 温度計
+    const tx = cx + 9, tt = P([tx, 28]), tb = P([tx, BOTY - 3]);
+    c.save(); c.strokeStyle = col.muted; c.lineWidth = Math.max(5, sc * 1.4); c.lineCap = "round"; c.beginPath(); c.moveTo(tt[0], tt[1]); c.lineTo(tb[0], tb[1]); c.stroke();
+    c.strokeStyle = col.sheet; c.lineWidth = Math.max(3, sc * 1.0); c.stroke(); c.restore();
+    const frac = Math.max(0, Math.min(1, w.T / 100)), ty = tb[1] - (tb[1] - tt[1]) * frac;
+    line(c, [tb, [tb[0], ty]], col.red, Math.max(2.4, sc * 0.7)); c.beginPath(); c.arc(tb[0], tb[1], Math.max(3.5, sc * 1.1), 0, TAU); c.fillStyle = col.red; c.fill();
+    mt(c, `${w.T.toFixed(1)} ℃`, tt[0] + 6, tt[1] + 4, col.red, fs, "left", true, true);
+    // ラベル
+    const ly = BOTY + 8.5, nar = CW < 600;
+    mt(c, nar ? `${h.id}：${f3(e.R[i])} Ω` : `電熱線 ${h.id}：{R} ＝ ${f3(e.R[i])} Ω`, P([cx, ly])[0], P([0, ly])[1], hc, fs, "center", true, true);
+    mt(c, nar ? `${f3(e.V[i])} V・${f3(e.I[i])} A` : `{V} ＝ ${f3(e.V[i])} V　{I} ＝ ${f3(e.I[i])} A`, P([cx, ly + 5])[0], P([0, ly + 5])[1], col.ink, fs - 1, "center", false, true);
+    mt(c, nar ? `${f3(pw)} W・水 ${h.m} g` : `{P} ＝ ${f3(pw)} W　水 ${h.m} g`, P([cx, ly + 10])[0], P([0, ly + 10])[1], col.ink, fs - 1, "center", true, true);
+    if(w.boil) mt(c, "沸騰（100 ℃）", P([cx, lvl - 3])[0], P([0, lvl - 3])[1], col.red, fs, "center", true, true);
+  }
+  mt(c, S.mode === "series" ? "直列：電流が共通" : S.mode === "parallel" ? "並列：電圧が共通" : "", P([BOXW - 2, 4])[0], P([0, 4])[1], col.blue, fs, "right", true);
+}
+function drawGraph(){
+  const c = gc; if(GW < 60) return; c.clearRect(0, 0, GW, GH);
+  const ml = 48, mr = 14, mt_ = 14, mb = 34, x0 = ml, x1 = GW - mr, y0 = GH - mb, y1 = mt_, n = nH();
+  const tMax = Math.max(60, S.end || 0, S.t * 1.05);
+  let Tm = S.T0 + 5; for(let i = 0; i < n; i++) W[i].hist.forEach(h => Tm = Math.max(Tm, h.T));
+  const Tmax = Math.min(100, Math.ceil((Tm + 1) / 5) * 5), Tmin = Math.floor((S.T0 - 1) / 5) * 5;
+  const X = t => x0 + (x1 - x0) * t / tMax, Y = T => y0 - (y0 - y1) * (T - Tmin) / (Tmax - Tmin);
+  const tStep = tMax <= 120 ? 20 : tMax <= 300 ? 60 : 120, TStep = (Tmax - Tmin) <= 20 ? 2 : (Tmax - Tmin) <= 50 ? 5 : 10;
+  for(let t = 0; t <= tMax + 1e-6; t += tStep){ line(c, [[X(t), y0], [X(t), y1]], col.line, .8); mt(c, String(t), X(t), y0 + 12, col.muted, 11, "center"); }
+  for(let T = Tmin; T <= Tmax + 1e-6; T += TStep){ line(c, [[x0, Y(T)], [x1, Y(T)]], col.line, .8); mt(c, String(T), x0 - 6, Y(T), col.muted, 11, "right"); }
+  line(c, [[x0, y0], [x1, y0]], col.ink, 1.3); line(c, [[x0, y0], [x0, y1]], col.ink, 1.3);
+  mt(c, "時間 〔s〕", (x0 + x1) / 2, y0 + 26, col.ink, 12, "center");
+  c.save(); c.translate(13, (y0 + y1) / 2); c.rotate(-Math.PI / 2); mt(c, "水温 〔℃〕", 0, 0, col.ink, 12, "center"); c.restore();
+  for(let i = 0; i < n; i++){ const pts = W[i].hist.map(h => [X(h.t), Y(h.T)]); if(pts.length > 1) line(c, pts, i ? col.hB : col.hA, 2.6);
+    if(pts.length){ const p = pts[pts.length - 1]; mt(c, S.H[i].id, p[0] + 6, p[1], i ? col.hB : col.hA, 13, "left", true, true); } }
+}
+
+/* ---------- 表と説明 ---------- */
+function table(){
+  const e = elec(), n = nH();
+  let h = "";
+  for(let i = 0; i < n; i++){
+    const w = W[i], dT = w.T - S.T0, Q = S.H[i].m * C_W * dT, ratio = w.W > 0.5 ? Q / w.W : null;
+    h += `<tr><td><span style="color:var(--${i ? "hB" : "hA"});font-weight:700">電熱線 ${S.H[i].id}</span></td><td>${f3(e.R[i])}</td><td>${f3(e.V[i])}</td><td>${f3(e.I[i])}</td><td>${f3(e.P[i])}</td><td>${fmtJ(w.W)}</td><td>${S.H[i].m}</td><td>${dT.toFixed(2)}</td><td>${fmtJ(Q)}</td><td class="eq">${ratio == null ? "—" : Math.abs(ratio - 1) < 0.005 ? "等しい" : `${Iq("Q")} は ${Iq("W")} の ${(ratio * 100).toFixed(0)} %`}</td></tr>`;
+  }
+  if(n > 1){ const Wt = W[0].W + W[1].W, Qt = (S.H[0].m * (W[0].T - S.T0) + S.H[1].m * (W[1].T - S.T0)) * C_W;
+    h += `<tr class="sum"><td>回路全体</td><td>${f3(e.Rt)}</td><td>${S.V.toFixed(1)}</td><td>${f3(e.It)}</td><td>${f3(e.P[0] + e.P[1])}</td><td>${fmtJ(Wt)}</td><td>—</td><td>—</td><td>${fmtJ(Qt)}</td><td></td></tr>`; }
+  $("tb").innerHTML = h;
+  // 電力量と熱量の帯
+  let mx = 1; for(let i = 0; i < n; i++) mx = Math.max(mx, W[i].W, S.H[i].m * C_W * (W[i].T - S.T0));
+  let bh = "";
+  for(let i = 0; i < n; i++){ const Q = S.H[i].m * C_W * (W[i].T - S.T0), cc = i ? "var(--hB)" : "var(--hA)";
+    bh += `<div class="bar"><div class="lab"><span style="color:${cc};font-weight:700">電熱線 ${S.H[i].id}：電力量（ジュール熱）${Iq("W")}</span><span>${fmtJ(W[i].W)} J</span></div><div class="tr"><div style="width:${W[i].W / mx * 100}%;background:${cc}"></div></div>
+      <div class="lab"><span>水が得た熱量 ${Iq("Q")}</span><span>${fmtJ(Q)} J</span></div><div class="tr"><div style="width:${Math.max(0, Q) / mx * 100}%;background:var(--hot)"></div></div></div>`; }
+  $("bars").innerHTML = bh;
+  $("clock").textContent = fmtT(S.t);
+}
+function expl(){
+  const e = elec(), R = Iq("R"), I = Iq("I"), V = Iq("V"), Pp = Iq("P"), mm = Iq("m"), t = Iq("t");
+  const sameM = S.H[0].m === S.H[1].m;
+  let h = "";
+  if(S.mode === "one"){
+    h = `<h3>ジュール熱 ＝ 電力量 ＝ 水が得た熱量</h3>電熱線で 1 s 間に発生する熱は電力 ${Pp} ＝ ${V}${I} ＝ ${f3(e.P[0])} W なので、時間 ${t} の間に発生する熱（ジュール熱）は ${Iq("W")} ＝ ${Pp}${t}（電力量）。熱が逃げなければ、これがすべて水に移り、${mm}${Iq("c")}Δ${t} ＝ ${Pp}${t}。だから水温の上昇 Δ${t} ＝ ${Pp}${t} /(${mm}${Iq("c")}) は、<b>時間と電力に比例し、水の質量に反比例</b>します。電圧を2倍にすると、電流も2倍になり、電力は4倍（${Pp} ＝ ${V}²/${R}）になります。`;
+  } else if(S.mode === "series"){
+    h = `<h3>直列：電流が共通 → 抵抗が大きい電熱線ほど電力が大きい</h3>2本の電熱線には同じ電流 ${I} ＝ ${f3(e.I[0])} A が流れます。電力は ${Pp} ＝ ${V}${I} ＝ ${R}${I}² なので、<b>${sb("P", "A")}：${sb("P", "B")} ＝ ${sb("R", "A")}：${sb("R", "B")} ＝ ${f3(e.R[0])}：${f3(e.R[1])}</b>（${f3(e.P[0])} W と ${f3(e.P[1])} W）。電流が共通でも、抵抗が大きいほうの電熱線にかかる電圧が大きく、消費電力も大きくなります。${sameM ? `水の質量が同じなので、温度変化の比も ${f3(e.R[0])}：${f3(e.R[1])} になります。` : "比べるときは、水の質量をそろえよう。"}`;
+  } else {
+    h = `<h3>並列：電圧が共通 → 抵抗が小さい電熱線ほど電力が大きい</h3>2本の電熱線には同じ電圧 ${V} ＝ ${S.V.toFixed(1)} V がかかります。電力は ${Pp} ＝ ${V}${I} ＝ ${V}²/${R} なので、<b>${sb("P", "A")}：${sb("P", "B")} ＝ 1/${sb("R", "A")}：1/${sb("R", "B")} ＝ ${f3(e.R[1])}：${f3(e.R[0])}</b>（${f3(e.P[0])} W と ${f3(e.P[1])} W）。電圧が共通でも、抵抗が小さいほうに大きい電流が流れ、消費電力が大きくなります（直列のときと大小が逆）。${sameM ? `水の質量が同じなので、温度変化の比も ${f3(e.R[1])}：${f3(e.R[0])} になります。` : "比べるときは、水の質量をそろえよう。"}`;
+  }
+  if(S.loss) h += `<br><br><b>熱が周りに逃げる場合：</b>水温が室温より高くなるほど、カップや空気へ熱が逃げるので、水が得た熱量 ${Iq("Q")} は電力量 ${Iq("W")} より小さくなります（表の「${Iq("Q")} と ${Iq("W")}」）。実際の実験では、発泡ポリスチレンのカップを使い、水をよくかき混ぜ、温度上昇を小さめにして測ると、${Iq("Q")} が ${Iq("W")} に近くなります。`;
+  $("expl").innerHTML = h;
+}
+function refresh(){ cards(); table(); expl(); draw(); drawGraph(); }
+function reset(){ S.run = false; S.t = 0; W.forEach(w => { w.T = S.T0; w.W = 0; w.Q = 0; w.boil = false; w.hist = [{ t: 0, T: S.T0 }]; }); $("startBtn").textContent = "スタート"; refresh(); }
+
+/* ---------- 操作 ---------- */
+document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => { S.mode = b.dataset.m; document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false")); try{ history.replaceState(null, "", "#" + S.mode); }catch(e){} reset(); }));
+$("startBtn").addEventListener("click", () => { if(S.end && S.t >= S.end - 1e-6) reset(); S.run = !S.run; $("startBtn").textContent = S.run ? "一時停止" : "スタート"; });
+$("resetBtn").addEventListener("click", reset);
+$("selSp").addEventListener("change", e => { S.speed = +e.target.value; });
+$("selEnd").addEventListener("change", e => { S.end = +e.target.value; drawGraph(); });
+$("cbLoss").addEventListener("change", e => { S.loss = e.target.checked; reset(); });
+$("sV").addEventListener("input", e => { S.V = +e.target.value; refresh(); });
+$("sT0").addEventListener("input", e => { S.T0 = +e.target.value; reset(); });
+
+/* ---------- 時間の進み ---------- */
+let last = null, uiT = 0;
+function tick(ts){
+  if(last == null) last = ts; const dtr = Math.min(0.05, (ts - last) / 1000); last = ts;
+  const e = elec(), n = nH();
+  if(S.run){
+    let dt = dtr * S.speed; if(S.end && S.t + dt >= S.end){ dt = S.end - S.t; S.run = false; $("startBtn").textContent = "もう一度"; }
+    const steps = Math.max(1, Math.ceil(dt / 0.5)), h = dt / steps;
+    for(let k = 0; k < steps; k++){
+      for(let i = 0; i < n; i++){ const w = W[i], m = S.H[i].m, Pw = e.P[i], loss = S.loss ? K_LOSS * (w.T - S.T0) : 0;
+        w.W += Pw * h;
+        if(w.T >= 100){ w.T = 100; w.boil = true; }
+        else { w.T = Math.min(100, w.T + (Pw - loss) * h / (m * C_W)); }
+      }
+      S.t += h;
+    }
+    for(let i = 0; i < n; i++){ const hs = W[i].hist; if(!hs.length || S.t - hs[hs.length - 1].t >= Math.max(0.5, S.t / 400)) hs.push({ t: S.t, T: W[i].T }); }
+  }
+  // 電流の粒（見やすさのため、表示上の速さを調整）
+  if(!reduce){ const k = 6; phase[2] += e.It * k * dtr; phase[0] += e.I[0] * k * dtr; phase[1] += e.I[1] * k * dtr; }
+  draw();
+  uiT += dtr; if(uiT > 0.12){ uiT = 0; table(); drawGraph(); }
+  requestAnimationFrame(tick);
+}
+if(window.ResizeObserver){ const ro = new ResizeObserver(layout); ro.observe(cv); ro.observe(gr); } else window.addEventListener("resize", layout);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+if(mq && mq.addEventListener) mq.addEventListener("change", layout);
+
+$("qs").innerHTML = [
+  ["電熱線1本（6.0 Ω）に 6.0 V をかけて、水 100 g を 5 分間温めた。発生したジュール熱と、水の温度上昇はいくらか（熱は逃げないとする）。", "電流 1.0 A、電力 6.0 W。ジュール熱 ＝ 電力量 ＝ 6.0 × 300 ＝ 1800 J。Δt ＝ 1800 ÷ (100 × 4.2) ≒ 4.3 K。シミュレーターで確かめよう。"],
+  ["電圧を 2 倍にすると、同じ時間での水の温度上昇は何倍になるか。", "4 倍になります。電流も 2 倍になるので、電力 P ＝ VI は 4 倍（P ＝ V²/R）。"],
+  ["水の質量を 2 倍にすると、同じ時間での温度上昇はどうなるか。水が得た熱量はどうか。", "温度上昇は 1/2 倍になります。水が得た熱量 Q ＝ mcΔt は変わりません（ジュール熱が同じだから）。"],
+  ["6.0 Ω と 3.0 Ω の電熱線を直列につなぐと、どちらの水が速く温まるか。並列ではどうか。", "直列では電流が共通なので P ＝ RI² が大きい 6.0 Ω のほう、並列では電圧が共通なので P ＝ V²/R が大きい 3.0 Ω のほうが速く温まります（水の質量が同じとき）。"],
+  ["同じ物質で、長さが同じで断面積が 2 倍の電熱線にかえると、電源の電圧が同じとき、電力はどうなるか。", "抵抗が 1/2 になるので、電流が 2 倍になり、電力は 2 倍になります（P ＝ V²/R）。太い電熱線のほうが発熱が大きくなります。"],
+  ["「熱が周りに逃げる」をオンにすると、水が得た熱量が電力量より小さくなるのはなぜか。どうすれば差を小さくできるか。", "水温が室温より高くなると、カップや空気に熱が逃げるからです。断熱性のよいカップを使う、水をかき混ぜる、温度上昇が小さいうちに測る、などで差を小さくできます。"]
+].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
+
+const h0 = location.hash.slice(1); if(["one", "series", "parallel"].includes(h0)){ S.mode = h0; document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-pressed", x.dataset.m === h0 ? "true" : "false")); }
+reset(); layout(); requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
