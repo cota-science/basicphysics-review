@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>波を3次元で見る</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: one-column worksheet on graph paper — a 3D surface y(x, t) with two cutting planes (t = t0, x = x0) and view buttons, then the two cut sections (y-x and y-t graphs) with ghost + shift readout, controls, questions. */
+:root{
+  --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
+  --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
+  --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3; --green:#1F7A4D; --orange:#C26A00;
+  --body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --math:"Times New Roman",Times,"Noto Serif",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+    --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+    --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --green:#5FD39A; --orange:#F0A040; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+  --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+  --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --green:#5FD39A; --orange:#F0A040; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qv{font-family:var(--math);font-style:italic;font-size:1.08em}
+sub{font-size:.7em;line-height:0}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.top-inner{max-width:760px;margin:0 auto;padding:10px 16px 10px}
+.back{font-size:14px;color:var(--blue);text-decoration:none}
+h1{font-size:19px;margin:2px 0 0;line-height:1.4;text-wrap:balance}
+.nav{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin-top:2px}
+.nav a{color:var(--blue);text-decoration:none}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:700}
+main{max-width:760px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px;min-width:0}
+h2{font-size:20px;margin:0 0 4px;line-height:1.4;text-wrap:balance}
+.lead{margin:0 0 12px;color:var(--muted);font-size:15px}
+.views{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:8px}
+.views button{border:1.5px solid var(--line);background:var(--sheet);border-radius:8px;padding:6px 4px;min-height:44px;cursor:pointer;font-size:14px;line-height:1.3}
+.views button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft);font-weight:700}
+.stage{position:relative;width:100%;background:var(--sheet);border:1px solid var(--line);border-radius:4px}
+.stage.s3{aspect-ratio:1.7/1}
+.stage.s2{aspect-ratio:3/1}
+@media (max-width:520px){.stage.s3{aspect-ratio:1.35/1}.stage.s2{aspect-ratio:2.1/1}}
+canvas{display:block;width:100%;height:100%}
+.cap{font-size:14px;margin:12px 0 4px;font-weight:700}
+.cap .tag{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.shift{font-size:14px;margin:4px 0 0;min-height:1.6em;font-variant-numeric:tabular-nums}
+.shift b{color:var(--blue)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.btn{border:0;border-radius:8px;padding:9px 16px;min-height:44px;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.btn.ghost{background:none;color:var(--blue);border:1.5px solid var(--blue)}
+.opts{display:grid;gap:12px;margin-top:14px}
+.seg{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.seg-label{font-size:14px;color:var(--muted);min-width:5.5em}
+.seg button{border:1.5px solid var(--line);background:var(--sheet);border-radius:999px;padding:6px 12px;min-height:40px;cursor:pointer;font-size:15px}
+.seg button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft);font-weight:700}
+.slider{display:grid;grid-template-columns:8.5em minmax(0,1fr) 5em;align-items:center;gap:10px}
+.slider label{font-size:15px;line-height:1.35}
+.slider input{width:100%;accent-color:var(--blue);min-height:32px}
+.slider output{font-variant-numeric:tabular-nums;text-align:right;font-weight:700}
+@media (max-width:520px){.slider{grid-template-columns:6.8em minmax(0,1fr) 4.6em}}
+.checks{display:flex;flex-wrap:wrap;gap:6px 18px}
+.checks label{display:flex;align-items:center;gap:8px;font-size:15px;min-height:40px;cursor:pointer}
+.checks input{width:20px;height:20px;accent-color:var(--blue)}
+.hint{font-size:13px;color:var(--muted);margin:10px 0 0}
+.readv{font-size:15px;margin:0 0 8px;font-variant-numeric:tabular-nums}
+h3{font-size:17px;margin:0 0 8px}
+.qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
+.qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
+.ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <a class="back" id="backLink" href="../index.html#/u/waves/1" hidden>‹ 波の性質（Webテスト）へ</a>
+    <h1>波を3次元で見る（<i class="qv">y</i>-<i class="qv">x</i> グラフと <i class="qv">y</i>-<i class="qv">t</i> グラフ）</h1>
+    <nav class="nav" id="nav" hidden aria-label="アニメーション">
+      <a href="index.html">≡ アニメーション集</a>
+      <a href="wave-speed.html">波の速さ</a>
+      <a href="wave-3d.html" aria-current="page">波を3次元で見る</a>
+      <a href="transverse.html">横波（重ね合わせ・定在波（定常波）・反射）</a>
+      <a href="longitudinal.html">縦波（疎密波）</a>
+      <a href="string.html">弦の固有振動</a>
+      <a href="air-column.html">気柱の固有振動</a>
+      <a href="beats.html">うなり</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="sheet" aria-labelledby="t1">
+    <h2 id="t1">1つの波を、位置 <i class="qv">x</i> と時刻 <i class="qv">t</i> の2つの向きで切る</h2>
+    <p class="lead">変位 <i class="qv">y</i> は位置 <i class="qv">x</i> と時刻 <i class="qv">t</i> の両方で決まるので、波は1枚の曲面で表せます。時刻を決めて切った断面が <i class="qv">y</i>-<i class="qv">x</i> グラフ（波形）、位置を決めて切った断面が <i class="qv">y</i>-<i class="qv">t</i> グラフ（その点の振動）です。</p>
+
+    <div class="views" role="group" aria-label="視点">
+      <button type="button" data-view="obl" aria-pressed="true">斜めから</button>
+      <button type="button" data-view="yx" aria-pressed="false"><i class="qv">t</i> 軸の方向から<br>（<i class="qv">y</i>-<i class="qv">x</i>）</button>
+      <button type="button" data-view="yt" aria-pressed="false"><i class="qv">x</i> 軸の方向から<br>（<i class="qv">y</i>-<i class="qv">t</i>）</button>
+      <button type="button" data-view="top" aria-pressed="false">真上から<br>（<i class="qv">x</i>-<i class="qv">t</i>）</button>
+    </div>
+    <div class="stage s3"><canvas id="cv3" role="img" aria-label="変位 y を位置 x と時刻 t の関数として表した曲面。時刻 t0 の板と位置 x0 の板で切った断面を太線で示す。"></canvas></div>
+    <p class="hint" id="viewNote"></p>
+
+    <div class="controls">
+      <button type="button" class="btn" id="playBtn">時刻を進める</button>
+      <button type="button" class="btn ghost" id="resetBtn">最初から</button>
+    </div>
+    <div class="opts">
+      <div class="slider"><label for="sT0">観測時刻 <i class="qv">t</i><sub>0</sub></label><input type="range" id="sT0" min="0" max="4" step="0.05" value="1.5"><output id="oT0"></output></div>
+      <div class="slider"><label for="sX0">観測位置 <i class="qv">x</i><sub>A</sub></label><input type="range" id="sX0" min="0" max="4" step="0.05" value="1"><output id="oX0"></output></div>
+      <div class="slider" id="rowB" hidden><label for="sXB">観測位置 <i class="qv">x</i><sub>B</sub></label><input type="range" id="sXB" min="0" max="4" step="0.05" value="1.5"><output id="oXB"></output></div>
+    </div>
+
+    <div class="cap"><span class="tag" style="background:var(--ink)"></span>時刻 <i class="qv">t</i><sub>0</sub> での断面：<i class="qv">y</i>-<i class="qv">x</i> グラフ（波形）</div>
+    <div class="stage s2"><canvas id="cvx" role="img" aria-label="時刻 t0 の波形（y-xグラフ）。"></canvas></div>
+    <p class="shift" id="shiftX"></p>
+    <div class="cap"><span class="tag" style="background:var(--green)"></span>位置 <i class="qv">x</i><sub>A</sub> での断面：<i class="qv">y</i>-<i class="qv">t</i> グラフ（点Aの振動）<span id="capB"></span></div>
+    <div class="stage s2"><canvas id="cvt" role="img" aria-label="位置 xA の点の振動（y-tグラフ）。"></canvas></div>
+    <p class="shift" id="shiftT"></p>
+  </section>
+
+  <section class="sheet" aria-labelledby="t2">
+    <h3 id="t2">波と表示の設定</h3>
+    <p class="readv" id="readV"></p>
+    <div class="opts" style="margin-top:0">
+      <div class="seg" role="group" aria-label="波の進む向き"><span class="seg-label">進む向き</span>
+        <button type="button" data-dir="1" aria-pressed="true"><i class="qv">x</i> 軸の正の向き（波源は左端）</button>
+        <button type="button" data-dir="-1" aria-pressed="false">負の向き（波源は右端）</button>
+      </div>
+      <div class="slider"><label for="sL">波長 <i class="qv">λ</i></label><input type="range" id="sL" min="0.5" max="2" step="0.25" value="1"><output id="oL"></output></div>
+      <div class="slider"><label for="sP">周期 <i class="qv">T</i></label><input type="range" id="sP" min="0.5" max="2" step="0.25" value="1"><output id="oP"></output></div>
+      <div class="checks">
+        <label><input type="checkbox" id="ckFront" checked>波源が時刻 0 に振動を始める</label>
+        <label><input type="checkbox" id="ckB">観測点 B を追加</label>
+        <label><input type="checkbox" id="ckCrest" checked>山の線</label>
+        <label><input type="checkbox" id="ckGhost" checked>動かす前の断面を残す</label>
+      </div>
+    </div>
+    <p class="hint">PC ではマウスで3次元の図をドラッグして、自由に回すこともできます。「波源が時刻 0 に振動を始める」を外すと、ずっと前から続いている波になります。</p>
+  </section>
+
+  <section class="sheet" aria-labelledby="qsTitle">
+    <h3 id="qsTitle">見てみよう</h3>
+    <ol class="qs" id="qs"></ol>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id), TAU = 2 * Math.PI, D2R = Math.PI / 180;
+const I = s => `<i class="qv">${s}</i>`;
+const XM = 4, TM = 4, YS = 0.55;           // x：0〜4 m、t：0〜4 s、変位 1 を 0.55 の高さで描く
+const st = { lam:1, T:1, dir:1, front:true, t0:1.5, xa:1, xb:1.5, useB:false, crest:true, ghost:true,
+  playing:false, view:"obl", yaw:-32, pitch:26, tyaw:-32, tpitch:26, gx:null, gt:null };
+const VIEWS = { obl:[-32, 26], yx:[0, 0], yt:[90, 0], top:[0, 90] };
+const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+if(/\/anim\//.test(location.pathname)){ $("backLink").hidden = false; $("nav").hidden = false; }
+const v = () => st.lam / st.T;
+const fmt = (x, d) => (d === undefined ? 2 : d) === 0 ? Math.round(x).toString() : x.toFixed(d === undefined ? 2 : d);
+
+// 変位：波源からの距離 s、波が届いていなければ 0
+function Y(x, t){
+  const s = st.dir > 0 ? x : XM - x;
+  if(st.front && s > v() * t + 1e-9) return 0;
+  return Math.sin(TAU * (t / st.T - s / st.lam));
+}
+
+/* ---------- colors ---------- */
+let col = {};
+function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","green","orange","sheet","grid"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
+
+/* ---------- 3D ---------- */
+const c3 = $("cv3"), g3 = c3.getContext("2d"); let W3 = 0, H3 = 0;
+const NX = 80, NT = 80; let grid = null;
+function buildGrid(){ grid = []; for(let i = 0; i <= NT; i++){ const row = []; const t = TM * i / NT; for(let j = 0; j <= NX; j++){ const x = XM * j / NX; row.push(Y(x, t)); } grid.push(row); } }
+function proj(x, y, t){
+  const X = x - XM / 2, Yv = y * YS, Z = t - TM / 2, a = st.yaw * D2R, b = st.pitch * D2R;
+  const x1 = X * Math.cos(a) + Z * Math.sin(a), z1 = -X * Math.sin(a) + Z * Math.cos(a);
+  const y2 = Yv * Math.cos(b) + z1 * Math.sin(b), d = z1 * Math.cos(b) - Yv * Math.sin(b);
+  return [x1, y2, d];
+}
+let fit = { s:1, cx:0, cy:0 };
+function computeFit(){
+  let mnx = 1e9, mxx = -1e9, mny = 1e9, mxy = -1e9;
+  [0, XM].forEach(x => [-1.35, 1.35].forEach(y => [0, TM].forEach(t => { const p = proj(x, y, t); mnx = Math.min(mnx, p[0]); mxx = Math.max(mxx, p[0]); mny = Math.min(mny, p[1]); mxy = Math.max(mxy, p[1]); })));
+  const pL = 30, pR = 58, pT = 30, pB = 26, s = Math.min((W3 - pL - pR) / (mxx - mnx), (H3 - pT - pB) / (mxy - mny));
+  fit = { s, cx:pL + (W3 - pL - pR) / 2 - s * (mnx + mxx) / 2, cy:pT + (H3 - pT - pB) / 2 + s * (mny + mxy) / 2 };
+}
+const S3 = (x, y, t) => { const p = proj(x, y, t); return [fit.cx + p[0] * fit.s, fit.cy - p[1] * fit.s, p[2]]; };
+function line3(pts, color, w, dash, alpha){ g3.save(); g3.strokeStyle = color; g3.lineWidth = w; g3.setLineDash(dash || []); g3.globalAlpha = alpha == null ? 1 : alpha; g3.lineJoin = "round"; g3.beginPath(); pts.forEach((p, i) => i ? g3.lineTo(p[0], p[1]) : g3.moveTo(p[0], p[1])); g3.stroke(); g3.restore(); }
+function text3(s, p, color, size, align, italic){ g3.save(); g3.fillStyle = color; g3.font = `${italic ? "italic " : "700 "}${size || 13}px ${italic ? '"Times New Roman",Times,serif' : 'BIZ UDPGothic,"Hiragino Sans",sans-serif'}`; g3.textAlign = "left"; g3.textBaseline = "middle"; const w = g3.measureText(s).width; let x = align === "left" ? p[0] : align === "right" ? p[0] - w : p[0] - w / 2; x = Math.max(4, Math.min(W3 - w - 4, x)); g3.fillText(s, x, Math.max(10, Math.min(H3 - 10, p[1]))); g3.restore(); }
+function axisFade(){ // 軸の方向から見ているほど 0 に近づく（重なった線を薄くする）
+  const dyx = Math.hypot(st.yaw - 0, st.pitch - 0), dyt = Math.hypot(st.yaw - 90, st.pitch);
+  return Math.min(1, Math.min(dyx, dyt) / 18);
+}
+function draw3(){
+  if(!W3) return; g3.clearRect(0, 0, W3, H3); computeFit();
+  const fade = axisFade(), dark = col.sheet && parseInt(col.sheet.slice(1, 3), 16) < 128;
+  // 面（色：山は青、谷は赤）
+  const quads = [];
+  for(let i = 0; i < NT; i++) for(let j = 0; j < NX; j++){
+    const t0 = TM * i / NT, t1 = TM * (i + 1) / NT, x0 = XM * j / NX, x1 = XM * (j + 1) / NX;
+    const ys = [grid[i][j], grid[i][j + 1], grid[i + 1][j + 1], grid[i + 1][j]];
+    const p = [S3(x0, ys[0], t0), S3(x1, ys[1], t0), S3(x1, ys[2], t1), S3(x0, ys[3], t1)];
+    quads.push({ p, d:(p[0][2] + p[1][2] + p[2][2] + p[3][2]) / 4, y:(ys[0] + ys[1] + ys[2] + ys[3]) / 4, z:ys.every(v => v === 0) });
+  }
+  quads.sort((a, b) => b.d - a.d);
+  const base = 0.1 + 0.9 * fade;
+  quads.forEach(q => { g3.save(); const a = Math.abs(q.y);
+    g3.fillStyle = q.z ? col.muted : (q.y >= 0 ? col.blue : col.red); g3.globalAlpha = base * (q.z ? 0.08 : 0.12 + 0.5 * a);
+    g3.beginPath(); q.p.forEach((pt, k) => k ? g3.lineTo(pt[0], pt[1]) : g3.moveTo(pt[0], pt[1])); g3.closePath(); g3.fill(); g3.restore(); });
+  // 時刻ごとの波形（細線）
+  for(let i = 0; i <= NT; i += 4){ const t = TM * i / NT, pts = []; for(let j = 0; j <= NX; j++) pts.push(S3(XM * j / NX, grid[i][j], t)); line3(pts, col.ink, 0.8, null, 0.35 * fade * (1 - 0.85 * Math.sin(st.pitch * D2R))); }
+  // 軸と目盛り
+  const O = S3(0, 0, 0);
+  line3([O, S3(XM + 0.3, 0, 0)], col.muted, 1.4); line3([O, S3(0, 0, TM + 0.3)], col.muted, 1.4); line3([S3(0, -1.3, 0), S3(0, 1.3, 0)], col.muted, 1.4);
+  const lenX = Math.hypot(S3(XM, 0, 0)[0] - O[0], S3(XM, 0, 0)[1] - O[1]), lenT = Math.hypot(S3(0, 0, TM)[0] - O[0], S3(0, 0, TM)[1] - O[1]);
+  if(lenX > 60) for(let k = 1; k <= XM; k++){ const p = S3(k, 0, 0); text3(`${k}`, [p[0], p[1] + 12], col.muted, 11); }
+  if(lenT > 60) for(let k = 1; k <= TM; k++){ const p = S3(0, 0, k); text3(`${k}`, [p[0] - 10, p[1] + 8], col.muted, 11); }
+  const ax = S3(XM + 0.55, 0, 0), at = S3(-0.3, 0, TM + 0.25), ay = S3(0, 1.55, 0);
+  if(Math.hypot(ax[0] - O[0], ax[1] - O[1]) > 30) text3("x〔m〕", ax, col.ink, 14, "center", true);
+  if(Math.hypot(at[0] - O[0], at[1] - O[1]) > 30) text3("t〔s〕", at, col.ink, 14, "center", true);
+  if(Math.hypot(ay[0] - O[0], ay[1] - O[1]) > 20) text3("y", ay, col.ink, 15, "center", true);
+  // 山の線：Y が最大になる点 t ＝ s/v ＋ T/4 ＋ nT
+  if(st.crest){ for(let n = -10; n < 20; n++){ const pts = []; for(let j = 0; j <= 80; j++){ const x = XM * j / 80, s = st.dir > 0 ? x : XM - x, t = s / v() + st.T / 4 + n * st.T; if(t < 0 || t > TM || (st.front && t < s / v())){ if(pts.length > 1){ line3(pts, col.blue, 1.8, [5, 3]); } pts.length = 0; continue; } pts.push(S3(x, 1, t)); } if(pts.length > 1) line3(pts, col.blue, 1.8, [5, 3]); } }
+  // 板：t ＝ t0（x 方向に広がる）、x ＝ xA, xB（t 方向に広がる）
+  const plane = (pts, color) => { g3.save(); g3.fillStyle = color; g3.globalAlpha = .1; g3.beginPath(); pts.forEach((p, k) => k ? g3.lineTo(p[0], p[1]) : g3.moveTo(p[0], p[1])); g3.closePath(); g3.fill(); g3.globalAlpha = .55; g3.strokeStyle = color; g3.lineWidth = 1; g3.stroke(); g3.restore(); };
+  plane([S3(0, -1.25, st.t0), S3(XM, -1.25, st.t0), S3(XM, 1.25, st.t0), S3(0, 1.25, st.t0)], col.ink);
+  plane([S3(st.xa, -1.25, 0), S3(st.xa, -1.25, TM), S3(st.xa, 1.25, TM), S3(st.xa, 1.25, 0)], col.green);
+  if(st.useB) plane([S3(st.xb, -1.25, 0), S3(st.xb, -1.25, TM), S3(st.xb, 1.25, TM), S3(st.xb, 1.25, 0)], col.orange);
+  // 断面の線
+  const cutT = []; for(let j = 0; j <= 200; j++){ const x = XM * j / 200; cutT.push(S3(x, Y(x, st.t0), st.t0)); } line3(cutT, col.ink, 3);
+  const cutX = []; for(let i = 0; i <= 200; i++){ const t = TM * i / 200; cutX.push(S3(st.xa, Y(st.xa, t), t)); } line3(cutX, col.green, 3);
+  if(st.useB){ const cb = []; for(let i = 0; i <= 200; i++){ const t = TM * i / 200; cb.push(S3(st.xb, Y(st.xb, t), t)); } line3(cb, col.orange, 3); }
+  // 交点
+  const P = S3(st.xa, Y(st.xa, st.t0), st.t0); g3.save(); g3.fillStyle = col.red; g3.beginPath(); g3.arc(P[0], P[1], 5.5, 0, TAU); g3.fill(); g3.restore();
+  const lt = S3(XM, 1.32, st.t0); text3(`t＝${fmt(st.t0)}`, [lt[0] + 4, lt[1] - 8], col.ink, 12, "left", true);
+  const lx = S3(st.xa, 1.32, TM); text3(`A：x＝${fmt(st.xa)}`, [lx[0], lx[1] - 10], col.green, 12, "center", true);
+  if(st.useB){ const lb = S3(st.xb, 1.32, TM); text3(`B：x＝${fmt(st.xb)}`, [lb[0], lb[1] + (Math.abs(st.xb - st.xa) < 0.8 ? 14 : -10)], col.orange, 12, "center", true); }
+}
+
+/* ---------- 2D 断面 ---------- */
+const C2 = { x:$("cvx"), t:$("cvt") }, G2 = { x:C2.x.getContext("2d"), t:C2.t.getContext("2d") }, Z2 = { x:{}, t:{} };
+function fit2(k){ const c = C2[k], r = c.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); Z2[k] = { w:Math.max(1, Math.round(r.width)), h:Math.max(1, Math.round(r.height)) }; c.width = Math.round(Z2[k].w * d); c.height = Math.round(Z2[k].h * d); G2[k].setTransform(d, 0, 0, d, 0, 0); }
+function draw2(k){
+  const g = G2[k], { w, h } = Z2[k]; if(!w) return; g.clearRect(0, 0, w, h);
+  const pl = 30, pr = 14, pt = 10, pb = 22, M = k === "x" ? XM : TM;
+  const X = u => pl + u / M * (w - pl - pr), Yp = y => pt + (h - pt - pb) / 2 - y * (h - pt - pb) / 2.3;
+  const L = (pts, color, lw, dash) => { g.save(); g.strokeStyle = color; g.lineWidth = lw; g.setLineDash(dash || []); g.lineJoin = "round"; g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.stroke(); g.restore(); };
+  const T = (s, x, y, color, size, align) => { g.save(); g.fillStyle = color; g.font = `${size || 11}px BIZ UDPGothic,"Hiragino Sans",sans-serif`; g.textAlign = align || "center"; g.textBaseline = "middle"; g.fillText(s, x, y); g.restore(); };
+  for(let u = 0; u <= M; u += 0.5){ L([[X(u), pt], [X(u), h - pb]], col.grid, 1); if(Math.abs(u - Math.round(u)) < 1e-9) T(`${u} ${k === "x" ? "m" : "s"}`, X(u), h - 9, col.muted); }
+  L([[pl, Yp(0)], [w - pr, Yp(0)]], col.line, 1.2);
+  T("1", pl - 10, Yp(1), col.muted); T("−1", pl - 12, Yp(-1), col.muted);
+  const curve = (fn, color, lw, dash) => { const pts = []; for(let i = 0; i <= 400; i++){ const u = M * i / 400; pts.push([X(u), Yp(fn(u))]); } L(pts, color, lw, dash); };
+  if(k === "x"){
+    if(st.ghost && st.gt != null && Math.abs(st.gt - st.t0) > 1e-9) curve(x => Y(x, st.gt), col.muted, 1.6, [5, 4]);
+    curve(x => Y(x, st.t0), col.ink, 2.6);
+    [[st.xa, col.green, "A"]].concat(st.useB ? [[st.xb, col.orange, "B"]] : []).forEach(([x, c, n]) => { L([[X(x), pt], [X(x), h - pb]], c, 1.2, [3, 3]); g.save(); g.fillStyle = c; g.beginPath(); g.arc(X(x), Yp(Y(x, st.t0)), 5, 0, TAU); g.fill(); g.restore(); T(n, X(x) + 9, pt + 6, c, 12, "left"); });
+  } else {
+    if(st.ghost && st.gx != null && Math.abs(st.gx - st.xa) > 1e-9) curve(t => Y(st.gx, t), col.muted, 1.6, [5, 4]);
+    if(st.useB) curve(t => Y(st.xb, t), col.orange, 2.2);
+    curve(t => Y(st.xa, t), col.green, 2.6);
+    L([[X(st.t0), pt], [X(st.t0), h - pb]], col.ink, 1.2, [3, 3]);
+    g.save(); g.fillStyle = col.red; g.beginPath(); g.arc(X(st.t0), Yp(Y(st.xa, st.t0)), 5, 0, TAU); g.fill(); g.restore();
+    T(`t₀`, X(st.t0) + 9, pt + 6, col.ink, 12, "left");
+  }
+}
+
+/* ---------- ずれの説明 ---------- */
+function near(a, b){ return Math.abs(a - b) < 1e-6; }
+function phaseWord(dx){ const r = Math.abs(dx) / st.lam, f = r - Math.floor(r);
+  if(near(f, 0) || near(f, 1)) return `${fmtR(r)} 波長 → 同位相（同じ形）`;
+  if(near(f, 0.5)) return `${fmtR(r)} 波長 → 逆位相（上下が逆の形）`;
+  return `${fmtR(r)} 波長`; }
+const fmtR = r => Number.isInteger(Math.round(r * 100) / 100) ? `${Math.round(r)}` : (Math.round(r * 100) / 100).toString();
+function updateShift(){
+  const V = v(), sx = st.dir > 0 ? "右" : "左";
+  if(st.ghost && st.gt != null && !near(st.gt, st.t0)){ const dt = st.t0 - st.gt;
+    $("shiftX").innerHTML = `破線は ${I("t")} ＝ ${fmt(st.gt)} s の波形。${I("Δt")} ＝ ${fmt(dt)} s ${dt > 0 ? "後" : "前"}の波形は、<b>${I("v")}|${I("Δt")}| ＝ ${fmt(V)} × ${fmt(Math.abs(dt))} ＝ ${fmt(V * Math.abs(dt))} m</b> だけ${dt > 0 ? sx : (sx === "右" ? "左" : "右")}へずれた。`;
+  } else $("shiftX").innerHTML = `観測時刻 ${I("t")}<sub>0</sub> を動かすと、波形がどれだけずれるかが表示されます。`;
+  let tx = "";
+  if(st.ghost && st.gx != null && !near(st.gx, st.xa)){ const dx = st.xa - st.gx, farther = (st.dir > 0) === (dx > 0);
+    tx = `破線は ${I("x")} ＝ ${fmt(st.gx)} m の点の振動。波源から${farther ? "遠い" : "近い"}側へ ${fmt(Math.abs(dx))} m 動かしたので、振動は <b>|${I("Δx")}|/${I("v")} ＝ ${fmt(Math.abs(dx))} ÷ ${fmt(V)} ＝ ${fmt(Math.abs(dx) / V)} s ${farther ? "遅れる" : "早まる"}</b>（グラフが${farther ? "右" : "左"}へずれる）。`;
+  } else tx = `観測位置 ${I("x")}<sub>A</sub> を動かすと、振動がどれだけ遅れる（早まる）かが表示されます。`;
+  if(st.useB){ const dx = st.xb - st.xa; tx += `<br>A と B の距離 ${fmt(Math.abs(dx))} m ＝ ${phaseWord(dx)}。`; }
+  if(st.front){ const s = st.dir > 0 ? st.xa : XM - st.xa; tx += `<br>点Aに波が届くのは ${I("t")} ＝ ${fmt(s)} ÷ ${fmt(V)} ＝ ${fmt(s / V)} s。`; }
+  $("shiftT").innerHTML = tx;
+}
+const VIEW_NOTE = {
+  obl:"斜めから見た曲面。黒い太線（時刻の板の断面）と緑の太線（位置の板の断面）が、下の2つのグラフです。",
+  yx:"時刻の軸の方向から見ると、時刻の板の断面がそのまま y-x グラフに見えます。緑の板は、観測点の位置を示す縦の線に見えます。",
+  yt:"位置の軸の方向から見ると、位置の板の断面がそのまま y-t グラフに見えます（横軸が時刻）。黒い板は、観測時刻を示す縦の線に見えます。",
+  top:"真上から見ると、山（青）と谷（赤）が斜めの縞に見えます。破線の山の線を横（x）に λ 進むと、縦（t）には T 進みます。この傾きが波の速さ v ＝ λ/T を表します。"
+};
+
+/* ---------- UI ---------- */
+function sync(){
+  $("oT0").textContent = `${fmt(st.t0)} s`; $("oX0").textContent = `${fmt(st.xa)} m`; $("oXB").textContent = `${fmt(st.xb)} m`;
+  $("oL").textContent = `${fmt(st.lam)} m`; $("oP").textContent = `${fmt(st.T)} s`;
+  $("readV").innerHTML = `波の速さ ${I("v")} ＝ ${I("λ")}/${I("T")} ＝ ${fmt(st.lam)} ÷ ${fmt(st.T)} ＝ <b>${fmt(v())} m/s</b>`;
+  $("rowB").hidden = !st.useB; $("capB").innerHTML = st.useB ? `、<span style="color:var(--orange)">橙は点B</span>` : "";
+  document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === st.view));
+  document.querySelectorAll("[data-dir]").forEach(b => b.setAttribute("aria-pressed", +b.dataset.dir === st.dir));
+  $("viewNote").textContent = st.view ? VIEW_NOTE[st.view] : "ドラッグで回転中。";
+  $("playBtn").textContent = st.playing ? "一時停止" : "時刻を進める";
+  updateShift(); drawAll();
+}
+function drawAll(){ readColors(); draw3(); draw2("x"); draw2("t"); }
+// スライダーを動かし始めた時点の値を「残像」として覚える
+function track(id, key, gkey){
+  const el = $(id); let idle = null;
+  el.addEventListener("input", e => {
+    if(gkey && idle == null) st[gkey] = st[key];
+    clearTimeout(idle); idle = setTimeout(() => { idle = null; }, 1500);
+    st[key] = +e.target.value; sync(); });
+}
+track("sT0", "t0", "gt"); track("sX0", "xa", "gx"); track("sXB", "xb", null);
+$("sL").addEventListener("input", e => { st.lam = +e.target.value; buildGrid(); st.gx = st.gt = null; sync(); });
+$("sP").addEventListener("input", e => { st.T = +e.target.value; buildGrid(); st.gx = st.gt = null; sync(); });
+document.querySelectorAll("[data-dir]").forEach(b => b.addEventListener("click", () => { st.dir = +b.dataset.dir; buildGrid(); st.gx = st.gt = null; sync(); }));
+$("ckFront").addEventListener("change", e => { st.front = e.target.checked; buildGrid(); sync(); });
+$("ckB").addEventListener("change", e => { st.useB = e.target.checked; if(st.useB){ st.xb = Math.min(4, Math.round((st.xa + 0.5) * 20) / 20); if(st.xb - st.xa < 0.5) st.xb = Math.max(0, st.xa - 0.5); $("sXB").value = st.xb; } sync(); });
+$("ckCrest").addEventListener("change", e => { st.crest = e.target.checked; sync(); });
+$("ckGhost").addEventListener("change", e => { st.ghost = e.target.checked; sync(); });
+document.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => { st.view = b.dataset.view; [st.tyaw, st.tpitch] = VIEWS[st.view]; if(reduce){ st.yaw = st.tyaw; st.pitch = st.tpitch; } sync(); }));
+$("playBtn").addEventListener("click", () => { st.playing = !st.playing; if(st.playing){ st.gt = null; } sync(); });
+$("resetBtn").addEventListener("click", () => { st.playing = false; st.t0 = 0; $("sT0").value = 0; st.gt = st.gx = null; sync(); });
+// PC：マウスでドラッグして回す
+let drag = null;
+c3.addEventListener("pointerdown", e => { if(e.pointerType !== "mouse") return; drag = { x:e.clientX, y:e.clientY, yaw:st.yaw, pitch:st.pitch }; c3.setPointerCapture(e.pointerId); });
+c3.addEventListener("pointermove", e => { if(!drag) return; st.yaw = st.tyaw = drag.yaw + (e.clientX - drag.x) * 0.4; st.pitch = st.tpitch = Math.max(0, Math.min(90, drag.pitch + (e.clientY - drag.y) * 0.4)); st.view = null; sync(); });
+c3.addEventListener("pointerup", () => { drag = null; });
+
+let last = null;
+function tick(ts){ if(last == null) last = ts; const dt = Math.min(0.05, (ts - last) / 1000); last = ts; let dirty = false;
+  if(Math.abs(st.yaw - st.tyaw) > 0.05 || Math.abs(st.pitch - st.tpitch) > 0.05){ const k = 1 - Math.pow(0.002, dt); st.yaw += (st.tyaw - st.yaw) * k; st.pitch += (st.tpitch - st.pitch) * k; dirty = true; }
+  else if(st.yaw !== st.tyaw || st.pitch !== st.tpitch){ st.yaw = st.tyaw; st.pitch = st.tpitch; dirty = true; }
+  if(st.playing){ st.t0 += dt * 0.5; if(st.t0 > TM){ st.t0 = 0; } $("sT0").value = st.t0; $("oT0").textContent = `${fmt(st.t0)} s`; updateShift(); dirty = true; }
+  if(dirty) drawAll();
+  requestAnimationFrame(tick); }
+function resize(){ const r = c3.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W3 = Math.max(1, Math.round(r.width)); H3 = Math.max(1, Math.round(r.height)); c3.width = Math.round(W3 * d); c3.height = Math.round(H3 * d); g3.setTransform(d, 0, 0, d, 0, 0); fit2("x"); fit2("t"); drawAll(); }
+const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+if(mq && mq.addEventListener) mq.addEventListener("change", drawAll);
+new MutationObserver(drawAll).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+if(window.ResizeObserver){ const ro = new ResizeObserver(resize); [c3, C2.x, C2.t].forEach(c => ro.observe(c)); } else window.addEventListener("resize", resize);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(drawAll);
+
+$("qs").innerHTML = [
+  ["「真上から」を押そう。山の線（青の破線）はどんな線になっているか。", `斜めの直線です。山の線にそって横（${I("x")}）に ${I("λ")} 進むと、縦（${I("t")}）にはちょうど ${I("T")} 進みます。つまり山は時間 ${I("T")} の間に距離 ${I("λ")} 進むので、波の速さは ${I("v")} ＝ ${I("λ")}/${I("T")} です。`],
+  [`観測時刻 ${I("t")}<sub>0</sub> を 0.25 s だけ大きくしよう。${I("y")}-${I("x")} グラフ（波形）はどう変わるか。`, `形は変わらず、波の進む向きに ${I("v")} × 0.25 s だけずれます（${I("v")} ＝ 1 m/s なら 0.25 m）。これが「波が進む」ということです。`],
+  [`観測位置 ${I("x")}<sub>A</sub> を波源から遠ざけよう。${I("y")}-${I("t")} グラフはどう変わるか。`, `形は変わらず、右（時間の遅い向き）へずれます。ずれは距離 ÷ 速さ（|${I("Δx")}|/${I("v")}）です。遠い点ほど、同じ振動が遅れてやってきます。`],
+  ["「波源が時刻 0 に振動を始める」をオンにして、観測位置を遠くにしよう。点Aが振動を始めるのはいつか。", `波が届くまで（${I("t")} ＝ 距離 ÷ ${I("v")}）は ${I("y")}-${I("t")} グラフが平らです。曲面でも、波がまだ届いていない平らな部分として見えます。`],
+  ["「観測点 B を追加」して、B を A から 0.5 m（半波長）離そう。2つの y-t グラフを比べよう。1 m（1波長）離すとどうなるか。", "半波長離れた2点は、いつも上下が逆に振動します（逆位相）。1波長離れた2点は、まったく同じように振動します（同位相）。"],
+  [`同じ波の ${I("y")}-${I("x")} グラフと ${I("y")}-${I("t")} グラフを比べると、形が左右反転したように見えることがある。なぜか。`, `波が ${I("x")} 軸の正の向きに進むとき、山の線は「${I("x")} が大きいほど ${I("t")} も大きい」向きに傾いています。そのため、位置を先へ進めることは、時刻を前に戻すことと同じ変化になり、2つのグラフの形が左右反転の関係になります。進む向きを負にすると、山の線の傾きも逆になります。`]
+].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
+
+buildGrid(); sync(); resize(); requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
