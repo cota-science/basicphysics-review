@@ -93,7 +93,7 @@ const UNITQ = ["A（電流）","Ω（抵抗）","W（電力）","J（電力量�
 
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:`電流は「流れる」もの、電圧は2点の間に「かかる」もの。言い方まで含めて正確に覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/ohm.html#idef","電流の定義")}${ANIM("anim/ohm.html#one","オームの法則と電力")}${ANIM("anim/ohm.html#series","直列")}${ANIM("anim/ohm.html#parallel","並列")}${ANIM("anim/ohm.html#rho","抵抗と抵抗率")}${ANIM("anim/circuit.html","回路シミュレーター")}`,
+  intro:`電流は「流れる」もの、電圧は2点の間に「かかる」もの。言い方まで含めて正確に覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/ohm.html#idef","電流の定義")}${ANIM("anim/ohm.html#one","オームの法則と電力")}${ANIM("anim/ohm.html#series","直列")}${ANIM("anim/ohm.html#parallel","並列")}${ANIM("anim/ohm.html#rho","抵抗と抵抗率")}${ANIM("anim/circuit.html","回路シミュレーター")}${ANIM("anim/joule.html","電熱線で水を温める（ジュール熱）")}`,
   advice:"電流の向きの定義、オームの法則、直列と並列で共通な量を覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
@@ -201,7 +201,7 @@ const SECTIONS = [
     {id:"s23",type:"blanks",prompt:"各抵抗を流れる電流",text:`${I1}：{0}　${I2}：{1}`,options:[["0.60 A","0.40 A","1.0 A"],["0.60 A","0.40 A","1.0 A"]],answer:[0,1],
      explain:"どちらにも 6.0 V がかかるので、6.0 ÷ 10 ＝ 0.60 A、6.0 ÷ 15 ＝ 0.40 A。和は 1.0 A で、全体の電流と一致します。"}
   ]},
-  { title:"問題3（電力と電力量）", quote:"100 V で使うと消費電力が 1000 W になる電気ヒーターがある。", qs:[
+  { title:"問題3（電力と電力量）", lead:ANIM("anim/joule.html","電熱線で水を温めるシミュレーター（電力量 ＝ ジュール熱）"), quote:"100 V で使うと消費電力が 1000 W になる電気ヒーターがある。", qs:[
     {id:"s31",type:"num",prompt:"流れる電流",answer:10,tol:0.05,unit:"A",traps:{"100000":"<i class='qv'>P</i> ＝ <i class='qv'>VI</i> から <i class='qv'>I</i> ＝ <i class='qv'>P</i>/<i class='qv'>V</i> です。","0.1":"<i class='qv'>I</i> ＝ <i class='qv'>P</i>/<i class='qv'>V</i>（1000 ÷ 100）です。"},explain:`${It} ＝ ${P}/${V} ＝ 1000 ÷ 100 ＝ 10 A。`},
     {id:"s32",type:"num",prompt:"ヒーターの抵抗",answer:10,tol:0.05,unit:"Ω",explain:`${R} ＝ ${V}/${It} ＝ 100 ÷ 10 ＝ 10 Ω。`},
     {id:"s33",type:"choice",prompt:"30 分間使ったときの電力量はどれか。",options:["0.50 kWh ＝ 1.8 × 10⁶ J","500 kWh","3.0 × 10⁴ J"],answer:0,
