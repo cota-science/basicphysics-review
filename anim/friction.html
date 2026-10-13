@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>摩擦力</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic&family=BIZ+UDPGothic:wght@400;700&display=swap">
+<link rel="stylesheet" href="lab.css">
+<script src="lab.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="hd">
+      <nav class="nav" id="nav" aria-label="力学ラボ"></nav>
+      <h1>摩擦力<small>物理基礎・静止摩擦力／最大摩擦力／動摩擦力／摩擦力を含むつりあい</small></h1>
+    </div>
+    <div class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-mode="floor" type="button">水平面で引く</button>
+      <button class="tab" role="tab" data-mode="slope" type="button">斜面上の物体</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="colL">
+      <section class="panel stage">
+        <h2><span id="stageT">実験台</span><span class="sp"></span><span id="state" class="state"></span></h2>
+        <canvas id="cv"></canvas>
+        <div class="transport" id="tp">
+          <button class="btn primary" id="bRamp" type="button" aria-pressed="false"></button>
+          <button class="btn" id="bReset" type="button">はじめにもどす</button>
+          <label class="chip"><input type="checkbox" id="cTrail" checked> <span>グラフに軌跡を残す</span></label>
+        </div>
+        <div class="readout" id="ro"></div>
+      </section>
+    </div>
+    <div class="colR">
+      <section class="gcard">
+        <div class="ghead"><span class="gt" id="gt"></span><span class="meaning" id="gm"></span></div>
+        <canvas id="gv"></canvas>
+        <div class="gfoot" id="gf"></div>
+      </section>
+      <section class="panel"><h2>式で確かめる</h2><div class="body fx" id="fx"></div></section>
+    </div>
+  </div>
+  <section class="panel below"><h2>条件を変える</h2><div class="body" id="prm"></div></section>
+  <p class="foot">摩擦力は接触面全体にはたらく力ですが、図では接触面の中央から描いています。重力加速度 <i class="s">g</i> ＝ 9.8 m/s²。</p>
+</div>
+
+<script>
+'use strict';
+const C = L.C, g = L.g, D = L.deg;
+const cv = L.canvas(document.getElementById('cv'), () => draw());
+const gv = L.canvas(document.getElementById('gv'), () => drawGraph());
+const ctx = cv.ctx, gx = gv.ctx;
+let mode = 'floor', ro, api;
+const S = {
+  floor: { m: 2, mu: 0.5, mu2: 0.3, F: 0, phi: 0, x: 0, v: 0, moving: false, ramp: false, trail: [], Fmax: 20 },
+  slope: { m: 2, mu: 0.6, mu2: 0.4, theta: 10, Fp: 0, s: .35, v: 0, moving: false, ramp: false, trail: [], end: false, lastDir: -1 }
+};
+const eq = (main, sub, tag, hl) => `<div class="eq${hl ? ' hl' : ''}"><div class="main">${L.h(main)}</div>${sub ? `<div class="subst">${sub}</div>` : ''}${tag ? `<div class="tag">${L.h(tag)}</div>` : ''}</div>`;
+const OP = s => ` <span class="op">${s}</span> `;
+function badge(cls, txt){ const el = document.getElementById('state'); el.className = 'state ' + cls; el.textContent = txt; }
+const trailOn = () => document.getElementById('cTrail').checked;
+
+/* ---------------- physics ---------------- */
+function floorState(){
+  const s = S.floor, phi = s.phi * D;
+  const N = Math.max(0, s.m * g - s.F * Math.sin(phi)), Fh = s.F * Math.cos(phi), F0 = s.mu * N, fk = s.mu2 * N;
+  let f, kind;
+  if (!s.moving){ f = Fh; kind = Fh >= F0 * .985 && Fh > 0 ? 'edge' : 'static'; }
+  else { f = fk; kind = 'kinetic'; }
+  return { N, Fh, F0, fk, f, kind, lift: s.m * g - s.F * Math.sin(phi) < 0 };
+}
+function stepFloor(dt){
+  const s = S.floor;
+  if (s.ramp){ s.F = Math.min(s.Fmax, s.F + s.Fmax / 9 * dt); api.inputs.F.set(+s.F.toFixed(2)); if (s.F >= s.Fmax) s.ramp = false; }
+  const st = floorState();
+  if (!s.moving && st.Fh > st.F0 + 1e-9) s.moving = true;
+  if (s.moving){
+    const a = (st.Fh - st.fk) / s.m;
+    s.v += a * dt; if (s.v < 0 || (s.v === 0 && a < 0)){ s.v = 0; s.moving = false; }
+    s.x += s.v * dt;
+  }
+  const st2 = floorState();
+  if (trailOn()){ const last = s.trail[s.trail.length - 1]; if (!last || Math.abs(last[0] - s.F) > 1e-3 || Math.abs(last[1] - st2.f) > 1e-3) s.trail.push([s.F, st2.f]); if (s.trail.length > 3000) s.trail.shift(); }
+}
+function slopeState(){
+  const s = S.slope, th = s.theta * D, N = s.m * g * Math.cos(th), Wp = s.m * g * Math.sin(th);
+  const F0 = s.mu * N, fk = s.mu2 * N;
+  let f, kind;
+  if (s.end){ f = -s.lastDir * fk; kind = 'kinetic'; }
+  else if (!s.moving){ f = Wp - s.Fp; kind = Math.abs(f) >= F0 * .985 && Math.abs(f) > 1e-6 ? 'edge' : 'static'; }   // up-slope positive
+  else { f = -Math.sign(s.v) * fk; kind = 'kinetic'; }
+  return { N, Wp, F0, fk, f, kind };
+}
+const SLOPE_LEN = 2.0; // m
+let slopeLpx = 600;
+function stepSlope(dt){
+  const s = S.slope;
+  if (s.ramp && !s.moving){ s.theta = Math.min(60, s.theta + 4 * dt); api.inputs.theta.set(+s.theta.toFixed(2)); if (s.theta >= 60) s.ramp = false; }
+  let st = slopeState();
+  if (!s.moving && !s.end && Math.abs(st.Wp - s.Fp) > st.F0 + 1e-9){ s.moving = true; s.v = 1e-6 * Math.sign(s.Fp - st.Wp); s.ramp = false; }
+  if (s.moving){
+    st = slopeState();
+    const a = (s.Fp - st.Wp + st.f) / s.m, v0 = s.v;
+    s.v += a * dt;
+    if (v0 * s.v < 0){ s.v = 0; s.moving = false; }
+    s.s += s.v * dt;
+    if (s.v) s.lastDir = Math.sign(s.v);
+    const lim = SLOPE_LEN / 2 * (1 - 120 / Math.max(240, slopeLpx / 2));
+    if (Math.abs(s.s) > lim){ s.s = L.clamp(s.s, -lim, lim); s.v = 0; s.moving = false; s.end = true; }
+  }
+  const st2 = slopeState();
+  if (trailOn()){ const last = s.trail[s.trail.length - 1]; if (!last || Math.abs(last[0] - s.theta) > 1e-3 || Math.abs(last[1] - st2.f) > 1e-3) s.trail.push([s.theta, st2.f]); if (s.trail.length > 3000) s.trail.shift(); }
+}
+const loop = L.loop(dt => {
+  for (let i = 0; i < 4; i++) (mode === 'floor' ? stepFloor : stepSlope)(dt / 4);
+  draw(); drawGraph(); syncBtn();
+  const s = S[mode];
+  if (!s.ramp && !s.moving) return false;
+});
+function kick(){ loop.start(); }
+
+/* ---------------- drawing ---------------- */
+function draw(){
+  cv.clear();
+  const W = cv.w, H = cv.h;
+  if (mode === 'floor'){
+    const s = S.floor, st = floorState(), phi = s.phi * D;
+    const yg = H * .60, bx = W * .40, bw = 130, bh = 74, sc = 150 / (5 * g) * 1.6;  // px per N
+    // scrolling floor
+    L.ground(ctx, 10, yg, W - 10, 16);
+    ctx.save(); ctx.fillStyle = C.ink3; const off = (s.x * 120) % 60;
+    for (let x = W - off + 60; x > 0; x -= 60){ ctx.fillRect(x, yg + 18, 2, 6); } ctx.restore();
+    L.rich(ctx, '床', 18, yg + 30, { size: 12, color: C.ink3 });
+    L.block(ctx, bx, yg - bh / 2, bw, bh, 0, { fill: C.ui_soft, stroke: C.ui, text: `${L.f(s.m,1)} kg` });
+    const px = bx + bw / 2, py = yg - bh / 2;
+    // rope + hand
+    const rl = 40 + s.F * sc;
+    L.line(ctx, px, py, px + Math.cos(phi) * (rl + 20), py - Math.sin(phi) * (rl + 20), C.ink3, 1.5);
+    L.arrow(ctx, bx, yg - bh / 2, bx, yg - bh / 2 + s.m * g * sc, { color: C.Fg, w: 3.5, dot: true, label: '$mg$', lside: -1 });
+    L.arrow(ctx, bx + 16, yg, bx + 16, yg - st.N * sc, { color: C.FN, w: 3.5, dot: true, label: '$N$', lside: -1 });
+    if (s.F > .01) L.arrow(ctx, px, py, px + Math.cos(phi) * s.F * sc, py - Math.sin(phi) * s.F * sc, { color: C.FT, w: 3.5, dot: true, label: '$F$', lside: -1 });
+    if (st.f > .01) L.arrow(ctx, bx - 10, yg, bx - 10 - st.f * sc, yg, { color: C.Ff, w: 4, dot: true, label: st.kind === 'kinetic' ? "$f$'" : '$f$', lside: 1, ldist: 16 });
+    if (s.v > 0) L.arrow(ctx, bx - bw / 2, yg - bh - 44, bx - bw / 2 + Math.min(150, 40 * s.v), yg - bh - 44, { color: C.vel, w: 2.5, label: '$v$', lside: -1, lpos: 1 });
+    if (s.phi > 0) L.angleArc(ctx, px, py, 30, -phi, 0, C.ink2, '$θ$');
+    if (st.lift) L.rich(ctx, '物体が床から浮き上がる（$N$ ＝ 0）', W / 2, 24, { color: C.ng, align: 'center', bg: C.surface });
+    const kindTxt = { static: '静止摩擦力', edge: '最大摩擦力（すべり出す直前）', kinetic: '動摩擦力' }[st.kind];
+    if (s.F === 0 && !s.moving) badge('', '引いていない（摩擦力 0）');
+    else badge(st.kind === 'kinetic' ? 'ng' : 'ok', st.kind === 'kinetic' ? 'すべっている' : st.kind === 'edge' ? 'すべり出す直前' : '静止している');
+    ro && ro({ F: `${L.f(s.F, 1)} N`, f: `${L.f(st.f, 1)} N<span class="note"> ${s.F === 0 && !s.moving ? '' : kindTxt}</span>`, N: `${L.f(st.N, 1)} N`, v: `${L.f(s.v, 2)} m/s` });
+    eqFloor(st);
+  } else {
+    const s = S.slope, st = slopeState(), th = s.theta * D;
+    const Ls = Math.min((W - 60) / Math.cos(th), (H - 40) / Math.max(.01, Math.sin(th))), x0 = W / 2 - Ls * Math.cos(th) / 2, yb = H - 22;
+    const ux = Math.cos(th), uy = -Math.sin(th), nx = -Math.sin(th), ny = -Math.cos(th);
+    const tx = x0 + Ls * ux, ty = yb + Ls * uy;
+    L.poly(ctx, [[x0, yb], [tx, yb], [tx, ty]], C.surface2, C.ground, 2); L.ground(ctx, 10, yb, W - 10, 10);
+    L.angleArc(ctx, x0, yb, 38, -th, 0, C.ink2, '$θ$');
+    slopeLpx = Ls; const ppm = Ls / SLOPE_LEN, bw = 100, bh = 56, sp = Ls / 2 + s.s * ppm;
+    const px = x0 + ux * sp, py = yb + uy * sp, cx = px + nx * bh / 2, cy = py + ny * bh / 2;
+    L.block(ctx, cx, cy, bw, bh, -th, { fill: C.ui_soft, stroke: C.ui, text: `${L.f(s.m,1)} kg` });
+    const sc = 150 / (5 * g) * 1.6;
+    L.arrow(ctx, cx, cy, cx, cy + s.m * g * sc, { color: C.Fg, w: 3.5, dot: true, label: '$mg$', lside: -1 });
+    L.arrow(ctx, px - ux * 16, py - uy * 16, px - ux * 16 + nx * st.N * sc, py - uy * 16 + ny * st.N * sc, { color: C.FN, w: 3.5, dot: true, label: '$N$', lside: 1 });
+    if (Math.abs(st.f) > .01) L.arrow(ctx, px + ux * 14, py + uy * 14, px + ux * 14 + ux * st.f * sc, py + uy * 14 + uy * st.f * sc, { color: C.Ff, w: 4, dot: true, label: st.kind === 'kinetic' ? "$f$'" : '$f$', lside: -1, ldist: 16 });
+    if (Math.abs(s.Fp) > .01){
+      const ax = cx + ux * bw / 2 * Math.sign(s.Fp), ay = cy + uy * bw / 2 * Math.sign(s.Fp);
+      L.arrow(ctx, ax, ay, ax + ux * s.Fp * sc, ay + uy * s.Fp * sc, { color: C.FT, w: 3.5, dot: true, label: '$F$', lside: 1 });
+    }
+    if (s.v !== 0) L.arrow(ctx, cx + nx * 50, cy + ny * 50, cx + nx * 50 + ux * Math.sign(s.v) * Math.min(140, 40 * Math.abs(s.v)), cy + ny * 50 + uy * Math.sign(s.v) * Math.min(140, 40 * Math.abs(s.v)), { color: C.vel, w: 2.5, label: '$v$', lside: -1 });
+    if (s.end) L.rich(ctx, '斜面の端に着いたので止めました（表示は止まる直前のようす。「はじめにもどす」）', W / 2, 20, { size: 12.5, color: C.ink2, align: 'center', bg: C.surface });
+    if (s.moving || s.end) badge('ng', s.end ? 'すべった' : (s.v < 0 ? 'すべり下りている' : 'すべり上がっている'));
+    else badge('ok', st.kind === 'edge' ? 'すべり出す直前' : '静止している');
+    const kindTxt = { static: '静止摩擦力', edge: '最大摩擦力', kinetic: '動摩擦力' }[st.kind];
+    ro && ro({ F: `${L.f(s.theta, 1)}°`, f: `${L.f(st.f, 1)} N<span class="note"> ${kindTxt}</span>`, N: `${L.f(st.N, 1)} N`, v: `${L.f(s.v, 2)} m/s` });
+    eqSlope(st);
+  }
+}
+
+function drawGraph(){
+  gv.clear();
+  if (mode === 'floor'){
+    const s = S.floor, phi = s.phi * D, X1 = s.Fmax;
+    const Nf = F => Math.max(0, s.m * g - F * Math.sin(phi));
+    const ymax = Math.max(4, s.mu * s.m * g * 1.25);
+    const P = L.plot(gx, gv.w, gv.h, { x0: 0, x1: X1, y0: 0, y1: ymax, xl: '引く力 $F$ [N]', yl: '摩擦力の大きさ [N]' });
+    P.clip();
+    // theory
+    let F0x = null; for (let F = 0; F <= X1; F += X1 / 2000){ if (F * Math.cos(phi) > s.mu * Nf(F)){ F0x = F; break; } }
+    L.fn(gx, P, F => s.mu * Nf(F), 0, X1, C.Ff, 1.2, [6, 4]);
+    L.fn(gx, P, F => s.mu2 * Nf(F), 0, X1, C.Ff, 1.2, [2, 3]);
+    L.fn(gx, P, F => F * Math.cos(phi), 0, F0x == null ? X1 : F0x, C.ink3, 1.2, [3, 3]);
+    if (F0x != null){
+      const y0 = s.mu * Nf(F0x);
+      L.line(gx, P.X(F0x), P.Y(0), P.X(F0x), P.Y(y0), C.ink3, 1, [2, 3]);
+      L.dot(gx, P.X(F0x), P.Y(y0), 4, C.Ff);
+      L.rich(gx, '最大摩擦力 $F$_0 ＝ $μN$', P.X(F0x) - 6, P.Y(y0) - 14, { size: 12, color: C.Ff, align: 'right', bg: C.surface });
+    }
+    L.rich(gx, "動摩擦力 $f$' ＝ $μ$'$N$", P.X(X1) - 6, P.Y(s.mu2 * Nf(X1)) - 12, { size: 12, color: C.Ff, align: 'right', bg: C.surface });
+    if (s.trail.length > 1) L.path(gx, P, s.trail, C.Ff, 3.2);
+    const st = floorState();
+    L.dot(gx, P.X(s.F), P.Y(st.f), 6, C.Ff, true);
+    P.unclip();
+    L.set('gt', '摩擦力の大きさ と 引く力');
+    L.set('gm', '静止している間は「引く力（の水平成分）＝静止摩擦力」。最大摩擦力をこえるとすべり出し、動摩擦力（一定）にかわる。');
+    L.set('gf', `<span>太線：実験の軌跡　破線：最大摩擦力 ${L.h('$μN$')}　点線：動摩擦力 ${L.h("$μ$'$N$")}</span>`);
+  } else {
+    const s = S.slope, mg = s.m * g, Fp = s.Fp;
+    const ymax = Math.max(mg * .9, Math.abs(Fp) + 2, 4);
+    const P = L.plot(gx, gv.w, gv.h, { x0: 0, x1: 60, y0: -ymax, y1: ymax, xl: '斜面の角度 $θ$ [°]', yl: '摩擦力 [N]（斜面上向きを正）', xs: 10 });
+    P.clip();
+    gx.save(); gx.fillStyle = C.ok; gx.globalAlpha = .07; gx.beginPath();
+    for (let t = 0; t <= 60; t += 1) gx.lineTo(P.X(t), P.Y(s.mu * mg * Math.cos(t * D)));
+    for (let t = 60; t >= 0; t -= 1) gx.lineTo(P.X(t), P.Y(-s.mu * mg * Math.cos(t * D)));
+    gx.fill(); gx.restore();
+    L.fn(gx, P, t => s.mu * mg * Math.cos(t * D), 0, 60, C.Ff, 1.2, [6, 4]);
+    L.fn(gx, P, t => -s.mu * mg * Math.cos(t * D), 0, 60, C.Ff, 1.2, [6, 4]);
+    L.fn(gx, P, t => s.mu2 * mg * Math.cos(t * D), 0, 60, C.Ff, 1.2, [2, 3]);
+    L.fn(gx, P, t => -s.mu2 * mg * Math.cos(t * D), 0, 60, C.Ff, 1.2, [2, 3]);
+    L.fn(gx, P, t => mg * Math.sin(t * D) - Fp, 0, 60, C.ink3, 1.2, [3, 3]);
+    if (Math.abs(Fp) < .01){
+      const t0 = Math.atan(s.mu) / D;
+      if (t0 < 60){ L.line(gx, P.X(t0), P.Y(-ymax), P.X(t0), P.Y(ymax), C.hl2, 1.2, [4, 3]);
+        L.rich(gx, `摩擦角 ${L.f(t0, 1)}°（tan$θ$_0 ＝ $μ$）`, P.X(t0) + 4, P.Y(-ymax * .82), { size: 11.5, color: C.hl2, bg: C.surface }); }
+    }
+    if (s.trail.length > 1) L.path(gx, P, s.trail, C.Ff, 3.2);
+    const st = slopeState();
+    L.dot(gx, P.X(s.theta), P.Y(st.f), 6, C.Ff, true);
+    P.unclip();
+    L.set('gt', '摩擦力 と 斜面の角度');
+    L.set('gm', '静止できるのは、点線（$mg$ sin$θ$ − $F$）が緑の帯（±最大摩擦力）の中にあるとき。'.replace(/\$[^$]+\$/g, m => L.h(m)));
+    L.set('gf', `<span>太線：実験の軌跡　破線：±最大摩擦力 ${L.h('$μN$')}　細点線：±動摩擦力 ${L.h("$μ$'$N$")}</span>`);
+  }
+}
+
+function eqFloor(st){
+  const s = S.floor, phi = s.phi;
+  let h = '';
+  h += eq(`$N$${OP('=')}$mg$${phi ? OP('−') + '$F$ sin$θ$' : ''}`, `${L.f(st.N,2)} N${phi ? `＝ ${L.f(s.m*g,2)} − ${L.f(s.F*Math.sin(phi*D),2)}` : ` ＝ ${L.f(s.m,1)} × 9.8`}`, '鉛直方向のつりあい（引く力が斜め上だと $N$ は小さくなる）');
+  if (st.kind !== 'kinetic'){
+    h += eq(`$f$${OP('=')}$F$${phi ? ' cos$θ$' : ''} <span class="jp">（静止摩擦力）</span>`, `${L.f(st.f,2)} N`, '水平方向のつりあい：静止摩擦力は引く力に合わせて変わる', true);
+    h += eq(`$F$_0${OP('=')}$μN$ <span class="jp">（最大摩擦力）</span>`, `${s.mu} × ${L.f(st.N,2)} ＝ ${L.f(st.F0,2)} N　→　あと ${L.f(Math.max(0, st.F0 - st.f),2)} N ですべり出す`, '静止摩擦力の上限。$μ$ は静止摩擦係数');
+  } else {
+    h += eq(`$f$'${OP('=')}$μ$'$N$ <span class="jp">（動摩擦力）</span>`, `${s.mu2} × ${L.f(st.N,2)} ＝ ${L.f(st.fk,2)} N（速さによらず一定）`, '$μ$\' は動摩擦係数（ふつう $μ$\' ＜ $μ$）', true);
+    const a = (st.Fh - st.fk) / s.m;
+    h += eq(`$ma$${OP('=')}$F$${phi ? ' cos$θ$' : ''}${OP('−')}$μ$'$N$`, `a ＝ (${L.f(st.Fh,2)} − ${L.f(st.fk,2)}) ÷ ${L.f(s.m,1)} ＝ ${L.f(a,2)} m/s²`, '運動方程式（くわしくは「運動の三法則」ページ）');
+  }
+  L.set('fx', h);
+}
+function eqSlope(st){
+  const s = S.slope;
+  let h = eq(`$N$${OP('=')}$mg$ cos$θ$`, `${L.f(s.m*g,2)} × cos${L.f(s.theta,1)}° ＝ ${L.f(st.N,2)} N`, '斜面に垂直な方向のつりあい');
+  if (st.kind !== 'kinetic'){
+    const Fp = s.Fp ? OP('−') + '$F$' : '';
+    h += eq(`$f$${OP('=')}$mg$ sin$θ$${Fp}`, `${L.f(st.Wp,2)}${s.Fp ? ' − ' + L.f(s.Fp,1) : ''} ＝ ${L.f(st.f,2)} N（${st.f >= 0 ? '斜面上向き' : '斜面下向き'}）`, '斜面に平行な方向のつりあい', true);
+    h += eq(`|$f$|${OP('≦')}$μN$`, `${L.f(Math.abs(st.f),2)} N ≦ ${s.mu} × ${L.f(st.N,2)} ＝ ${L.f(st.F0,2)} N`, '静止できる条件（$F$ ＝ 0 なら tan$θ$ ≦ $μ$）');
+  } else {
+    const sg = s.end ? s.lastDir : Math.sign(s.v);
+    h += eq(`$f$'${OP('=')}$μ$'$N$`, `${s.mu2} × ${L.f(st.N,2)} ＝ ${L.f(st.fk,2)} N（${sg < 0 ? '斜面上向き' : '斜面下向き'}）`, '動摩擦力は運動と逆向き', true);
+    const a = (s.Fp - st.Wp + st.f) / s.m;
+    h += eq(`$ma$${OP('=')}${s.Fp ? '$F$' + OP('−') : '−'}$mg$ sin$θ$${OP(sg < 0 ? '+' : '−')}$μ$'$N$`, `a ＝ ${L.f(a,2)} m/s²（斜面上向きを正）`, '運動方程式');
+  }
+  L.set('fx', h);
+}
+
+/* ---------------- UI ---------------- */
+function syncBtn(){
+  const b = document.getElementById('bRamp'), s = S[mode];
+  b.setAttribute('aria-pressed', String(!!s.ramp));
+  b.textContent = s.ramp ? '一時停止' : (mode === 'floor' ? 'だんだん強く引く ▶' : 'だんだん傾ける ▶');
+}
+document.getElementById('bRamp').onclick = () => { const s = S[mode]; s.ramp = !s.ramp; syncBtn(); if (s.ramp) kick(); };
+document.getElementById('bReset').onclick = () => {
+  loop.stop();
+  if (mode === 'floor') Object.assign(S.floor, { F: 0, x: 0, v: 0, moving: false, ramp: false, trail: [] }), api.inputs.F.set(0);
+  else Object.assign(S.slope, { theta: S.slope.Fp ? S.slope.theta : 5, s: .35, v: 0, moving: false, ramp: false, trail: [], end: false }), api.inputs.theta.set(S.slope.theta);
+  syncBtn(); draw(); drawGraph();
+};
+function fmaxFloor(){ const s = S.floor; return Math.max(10, Math.ceil(s.mu * s.m * g * 1.6 / 5) * 5); }
+function build(){
+  document.getElementById('stageT').textContent = mode === 'floor' ? 'あらい水平面上の物体を引く' : 'あらい斜面上の物体';
+  ro = L.readout('ro', [
+    { k: 'F', lab: mode === 'floor' ? '引く力 $F$' : '角度 $θ$', c: mode === 'floor' ? 'FT' : '' },
+    { k: 'f', lab: '摩擦力', c: 'Ff' }, { k: 'N', lab: '垂直抗力 $N$', c: 'FN' }, { k: 'v', lab: '速さ $v$', c: 'vel' }]);
+  const onCh = k => {
+    const s = S[mode];
+    if (k === 'mu2' && s.mu2 >= s.mu) api.inputs.mu2.set(+(s.mu - .05).toFixed(2));
+    if (k === 'mu' && s.mu2 >= s.mu) api.inputs.mu2.set(+Math.max(.05, s.mu - .05).toFixed(2));
+    if (mode === 'floor' && (k === 'm' || k === 'mu' || k === 'phi')){ s.Fmax = fmaxFloor(); api.inputs.F.setMax(s.Fmax); s.trail = []; }
+    if (mode === 'slope' && k !== 'theta'){ s.trail = []; s.end = false; }
+    if (mode === 'slope' && k === 'theta') s.end = false;
+    draw(); drawGraph(); kick();
+  };
+  if (mode === 'floor'){
+    S.floor.Fmax = fmaxFloor();
+    api = L.params('prm', [
+      { k: 'F', lab: '引く力 $F$', min: 0, max: S.floor.Fmax, step: .1, unit: 'N', hint: 'スライダーを動かすか「だんだん強く引く」' },
+      { k: 'm', lab: '質量 $m$', min: .5, max: 5, step: .1, unit: 'kg' },
+      { k: 'mu', lab: '静止摩擦係数 $μ$', min: .1, max: 1, step: .05, unit: '', d: 2 },
+      { k: 'mu2', lab: "動摩擦係数 $μ$'", min: .05, max: .95, step: .05, unit: '', d: 2, hint: "$μ$' ＜ $μ$ になるように自動で調整" },
+      { k: 'phi', lab: '引く向き（水平からの角度 $θ$）', min: 0, max: 60, step: 5, unit: '°', d: 0 },
+    ], S.floor, onCh);
+  } else {
+    api = L.params('prm', [
+      { k: 'theta', lab: '斜面の角度 $θ$', min: 0, max: 60, step: .5, unit: '°', hint: 'スライダーを動かすか「だんだん傾ける」' },
+      { k: 'Fp', lab: '斜面に沿って加える力 $F$（上向き正）', min: -15, max: 30, step: .5, unit: 'N', hint: '0 なら物体だけ。正：斜面上向きに押す、負：下向きに押す' },
+      { k: 'm', lab: '質量 $m$', min: .5, max: 5, step: .1, unit: 'kg' },
+      { k: 'mu', lab: '静止摩擦係数 $μ$', min: .1, max: 1, step: .05, unit: '', d: 2 },
+      { k: 'mu2', lab: "動摩擦係数 $μ$'", min: .05, max: .95, step: .05, unit: '', d: 2 },
+    ], S.slope, onCh);
+  }
+  syncBtn();
+}
+L.tabs('tabs', m => { loop.stop(); S.floor.ramp = S.slope.ramp = false; mode = m; build(); draw(); drawGraph(); });
+</script>
+</body>
+</html>

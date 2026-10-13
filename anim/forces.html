@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>力の作図・合成・分解</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic&family=BIZ+UDPGothic:wght@400;700&display=swap">
+<link rel="stylesheet" href="lab.css">
+<script src="lab.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="hd">
+      <nav class="nav" id="nav" aria-label="力学ラボ"></nav>
+      <h1>力の作図・合成・分解<small>物理基礎・力のつりあい</small></h1>
+    </div>
+    <div class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-mode="draw" type="button">力の作図</button>
+      <button class="tab" role="tab" data-mode="compose" type="button">力の合成</button>
+      <button class="tab" role="tab" data-mode="resolve" type="button">力の分解</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="colL">
+      <section class="panel stage">
+        <h2 id="stageT">実験台<span class="sp"></span><span class="note" id="stageNote"></span></h2>
+        <canvas id="cv"></canvas>
+        <div class="transport" id="tp"></div>
+        <div class="readout" id="ro"></div>
+      </section>
+    </div>
+    <div class="colR">
+      <section class="panel"><h2 id="listT">はたらく力</h2><div class="body" id="side"></div></section>
+      <section class="panel"><h2>式で確かめる</h2><div class="body fx" id="fx"></div></section>
+    </div>
+  </div>
+  <section class="panel below"><h2>条件を変える</h2><div class="body" id="prm"></div></section>
+  <p class="foot">矢印の長さは力の大きさに比例（1マス＝1 N の方眼は「力の合成」タブ）。重力加速度 <i class="s">g</i> ＝ 9.8 m/s² としています。</p>
+</div>
+
+<script>
+'use strict';
+const C = L.C, g = L.g, D = L.deg;
+const cv = L.canvas(document.getElementById('cv'), () => draw());
+const ctx = cv.ctx;
+let mode = 'draw';
+const S = {
+  draw:   { scene: 'floor', m: 3.0, M: 3.0, focus: 'A', step: 99, theta: 30, offset: true },
+  compose:{ F1: { x: 4, y: 1 }, F2: { x: 1, y: 3.5 }, F3: { x: -2, y: 1.5 }, use3: false, para: true, tri: false, comp: false },
+  resolve:{ sub: 'slope', theta: 30, m: 2.0, F: 20, phi: 30, tri: true }
+};
+const setRO = (items) => L.readout('ro', items);
+let ro = null;
+
+/* ======================= 力の作図 ======================= */
+const SCENES = {
+  floor: '床に置いた物体', hang: '糸でつるした物体', push: '床の上で押しても動かない物体', slope: '斜面上で糸で支えた物体', stack: '重ねた2つの物体'
+};
+function drawForces(){
+  const s = S.draw, W = cv.w, H = cv.h;
+  const m = s.m, M = s.M, Wa = m * g, Wb = M * g;
+  const out = [];  // {name, who, val, col, x0,y0,dx,dy, label, side}
+  let maxF = Wa;
+  const bw = 120, bh = 70;
+  ctx.save();
+  if (s.scene === 'floor' || s.scene === 'push'){
+    const yg = H * .66, cx = W / 2;
+    L.ground(ctx, 30, yg, W - 30);
+    L.block(ctx, cx, yg - bh / 2, bw, bh, 0, { fill: C.ui_soft, stroke: C.ui, text: `${L.f(m,1)} kg` });
+    const off = s.offset ? 14 : 0;
+    out.push({ name: '重力 $W$', who: '地球が物体を引く力', val: Wa, col: C.Fg, x: cx, y: yg - bh / 2, dx: 0, dy: Wa, side: -1, lab: '$W$' });
+    out.push({ name: '垂直抗力 $N$', who: '床が物体を押す力', val: Wa, col: C.FN, x: cx + off, y: yg, dx: 0, dy: -Wa, side: -1, lab: '$N$' });
+    if (s.scene === 'push'){
+      const F = Wa * .35;
+      // hand
+      ctx.save(); ctx.fillStyle = C.surface2; ctx.strokeStyle = C.ink3; ctx.lineWidth = 1.5;
+      L.rrect(ctx, cx - bw / 2 - 64, yg - bh / 2 - 12, 60, 24, 10); ctx.fill(); ctx.stroke();
+      L.rich(ctx, '手', cx - bw / 2 - 34, yg - bh / 2, { size: 12, align: 'center', color: C.ink2 }); ctx.restore();
+      out.push({ name: '押す力 $F$', who: '手が物体を押す力', val: F, col: C.FT, x: cx - bw / 2, y: yg - bh / 2, dx: F, dy: 0, side: -1, lab: '$F$' });
+      out.push({ name: '静止摩擦力 $f$', who: '床が物体に及ぼす力（面に平行）', val: F, col: C.Ff, x: cx, y: yg, dx: -F, dy: 0, side: 1, lab: '$f$' });
+    }
+  } else if (s.scene === 'hang'){
+    const cx = W / 2, yc = 26, ytop = H * .58 - bh / 2;
+    L.line(ctx, cx - 110, yc, cx + 110, yc, C.ground, 2); L.hatchSeg(ctx, cx - 110, yc, cx + 110, yc);
+    L.line(ctx, cx, yc, cx, ytop, C.ink2, 2);
+    L.block(ctx, cx, ytop + bh / 2, bw, bh, 0, { fill: C.ui_soft, stroke: C.ui, text: `${L.f(m,1)} kg` });
+    out.push({ name: '重力 $W$', who: '地球が物体を引く力', val: Wa, col: C.Fg, x: cx, y: ytop + bh / 2, dx: 0, dy: Wa, side: -1, lab: '$W$' });
+    out.push({ name: '張力 $T$', who: '糸が物体を引く力', val: Wa, col: C.FT, x: cx, y: ytop, dx: 0, dy: -Wa, side: -1, lab: '$T$', start: true });
+  } else if (s.scene === 'slope'){
+    const th = s.theta * D, Ls = Math.min((W - 80) / Math.cos(th), (H - 60) / Math.sin(th)), x0 = W / 2 - Ls * Math.cos(th) / 2, yb = H - 30;
+    const ux = Math.cos(th), uy = -Math.sin(th), nx = -Math.sin(th), ny = -Math.cos(th);
+    const tx = x0 + Ls * ux, ty = yb + Ls * uy;
+    L.poly(ctx, [[x0, yb], [tx, yb], [tx, ty]], C.surface2, C.ground, 2);
+    L.ground(ctx, 20, yb, W - 20, 10);
+    L.angleArc(ctx, x0, yb, 34, -th, 0, C.ink2, '$θ$');
+    const sp = Ls * .5, bw2 = 96, bh2 = 56;
+    const px = x0 + ux * sp, py = yb + uy * sp, cx = px + nx * bh2 / 2, cy = py + ny * bh2 / 2;
+    // post at top
+    L.line(ctx, tx, ty, tx, ty - 34, C.ink2, 4);
+    const ax = cx + ux * bw2 / 2, ay = cy + uy * bw2 / 2;
+    const tt = (tx - ax) / ux; L.line(ctx, ax, ay, ax + ux * tt, ay + uy * tt, C.ink2, 2);
+    L.block(ctx, cx, cy, bw2, bh2, -th, { fill: C.ui_soft, stroke: C.ui, text: `${L.f(m,1)} kg` });
+    const T = Wa * Math.sin(th), N = Wa * Math.cos(th);
+    out.push({ name: '重力 $W$', who: '地球が物体を引く力', val: Wa, col: C.Fg, x: cx, y: cy, dx: 0, dy: Wa, side: -1, lab: '$W$' });
+    out.push({ name: '垂直抗力 $N$', who: '斜面が物体を押す力', val: N, col: C.FN, x: px + (s.offset ? -ux * 14 : 0), y: py + (s.offset ? -uy * 14 : 0), dx: nx * N, dy: ny * N, side: 1, lab: '$N$' });
+    out.push({ name: '張力 $T$', who: '糸が物体を引く力', val: T, col: C.FT, x: ax, y: ay, dx: ux * T, dy: uy * T, side: 1, lab: '$T$' });
+  } else { // stack
+    const yg = H * .78, cx = W / 2, bwB = 150, bhB = 70, bwA = 90, bhA = 52;
+    L.ground(ctx, 30, yg, W - 30);
+    const yB = yg - bhB / 2, yA = yg - bhB - bhA / 2;
+    const fA = s.focus === 'A';
+    L.block(ctx, cx, yB, bwB, bhB, 0, fA ? { text: `B ${L.f(M,1)} kg` } : { fill: C.ui_soft, stroke: C.ui, text: `B ${L.f(M,1)} kg` });
+    L.block(ctx, cx, yA, bwA, bhA, 0, fA ? { fill: C.ui_soft, stroke: C.ui, text: `A ${L.f(m,1)} kg` } : { text: `A ${L.f(m,1)} kg` });
+    const off = s.offset ? 14 : 0;
+    if (fA){
+      out.push({ name: '重力 $W$_A', who: '地球がAを引く力', val: Wa, col: C.Fg, x: cx, y: yA, dx: 0, dy: Wa, side: -1, lab: '$W$_A' });
+      out.push({ name: '垂直抗力 $N$_A', who: 'BがAを押す力', val: Wa, col: C.FN, x: cx + off, y: yg - bhB, dx: 0, dy: -Wa, side: -1, lab: '$N$_A' });
+    } else {
+      out.push({ name: '重力 $W$_B', who: '地球がBを引く力', val: Wb, col: C.Fg, x: cx, y: yB, dx: 0, dy: Wb, side: -1, lab: '$W$_B' });
+      out.push({ name: '垂直抗力 $N$_B', who: '床がBを押す力', val: Wa + Wb, col: C.FN, x: cx + off + 30, y: yg, dx: 0, dy: -(Wa + Wb), side: -1, lab: '$N$_B' });
+      out.push({ name: 'Aから受ける力 $N$_A\'', who: 'AがBを押す力', val: Wa, col: C.Fx, x: cx - 34, y: yg - bhB, dx: 0, dy: Wa, side: 1, lab: '$N$_A\'' });
+    }
+    maxF = Math.max(maxF, fA ? Wa : Wa + Wb);
+  }
+  // scale so that the largest arrow ≤ 150px
+  const sc = s.scene === 'stack' ? 190 / (10 * g) : (s.scene === 'floor' || s.scene === 'push' ? 185 : 150) / (5 * g);
+  const shown = s.step >= 99 ? out.length : Math.max(0, s.step);
+  out.forEach((o, i) => {
+    if (i >= shown) return;
+    L.arrow(ctx, o.x, o.y, o.x + o.dx * sc, o.y + o.dy * sc, { color: o.col, w: 3.5, dot: true, label: o.lab, lside: o.side, lpos: 1, lsize: 15 });
+  });
+  ctx.restore();
+  return { out, shown };
+}
+
+function stepMsg(out){
+  const s = S.draw, n = out.length;
+  const contacts = out.slice(1).map(o => o.who.replace(/(が|に).*/, '')).filter((v, i, a) => a.indexOf(v) === i);
+  if (s.step >= 99) return `力は全部で <b>${n} 本</b>。「重力」＋「ふれているもの（${contacts.join('・')}）から受ける力」以外の力ははたらかない。`;
+  if (s.step === 0) return '① 着目する物体を決める（色のついた物体）。力は「だれが・だれに」及ぼすかをはっきりさせる。';
+  if (s.step === 1) return '② 重力をかく：地球が物体を引く力。作用点は物体の中心（重心）。';
+  const o = out[s.step - 1];
+  return `③ ふれているものから受ける力：<b>${o.who}</b>。作用点はふれている点（面）。`;
+}
+
+/* ======================= 力の合成 ======================= */
+let cGrid = null;
+function composeGeom(){
+  const W = cv.w, H = cv.h, u = Math.max(18, Math.min(34, Math.min(W, H) / 13));
+  return { ox: W * .36, oy: H * .70, u };
+}
+function drawCompose(){
+  const s = S.compose, W = cv.w, H = cv.h, { ox, oy, u } = composeGeom();
+  // grid
+  ctx.save(); ctx.lineWidth = 1;
+  for (let x = ox % u; x < W; x += u){ ctx.strokeStyle = Math.round((x - ox) / u) % 5 === 0 ? C.grid2 : C.grid; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = oy % u; y < H; y += u){ ctx.strokeStyle = Math.round((y - oy) / u) % 5 === 0 ? C.grid2 : C.grid; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  L.line(ctx, 0, oy, W, oy, C.ink3, 1.2); L.line(ctx, ox, 0, ox, H, C.ink3, 1.2);
+  L.rich(ctx, '$x$', W - 12, oy - 12, { color: C.ink3 }); L.rich(ctx, '$y$', ox + 12, 12, { color: C.ink3 });
+  L.rich(ctx, '1マス＝1 N', W - 10, H - 12, { size: 11.5, align: 'right', color: C.ink3, bg: C.surface });
+  ctx.restore();
+  const P = v => [ox + v.x * u, oy - v.y * u];
+  const F1 = s.F1, F2 = s.F2, F3 = s.F3;
+  const R = { x: F1.x + F2.x + (s.use3 ? F3.x : 0), y: F1.y + F2.y + (s.use3 ? F3.y : 0) };
+  const R12 = { x: F1.x + F2.x, y: F1.y + F2.y };
+  const [x1, y1] = P(F1), [x2, y2] = P(F2), [x3, y3] = P(F3), [xr, yr] = P(R), [x12, y12] = P(R12);
+  if (s.para){
+    L.line(ctx, x1, y1, x12, y12, C.ink3, 1.2, [5, 4]); L.line(ctx, x2, y2, x12, y12, C.ink3, 1.2, [5, 4]);
+    if (s.use3){ L.line(ctx, x12, y12, xr, yr, C.ink3, 1.2, [5, 4]); L.line(ctx, x3, y3, xr, yr, C.ink3, 1.2, [5, 4]);
+      L.arrow(ctx, ox, oy, x12, y12, { color: C.ghost, w: 2, dash: [6, 4], label: '$F$_1+$F$_2', lpos: .6, lside: 1, lsize: 12 }); }
+  }
+  if (s.tri){ // tip-to-tail
+    L.arrow(ctx, x1, y1, x1 + (x2 - ox), y1 + (y2 - oy), { color: C.FN, w: 2, alpha: .55, dash: [6, 4] });
+    if (s.use3) L.arrow(ctx, x12, y12, x12 + (x3 - ox), y12 + (y3 - oy), { color: C.Fk, w: 2, alpha: .55, dash: [6, 4] });
+  }
+  if (s.comp){
+    L.line(ctx, xr, yr, xr, oy, C.Fx, 1.4, [3, 3]); L.line(ctx, xr, yr, ox, yr, C.Fx, 1.4, [3, 3]);
+    L.arrow(ctx, ox, oy, xr, oy, { color: C.Fx, w: 2.5, label: '$F$_x', lside: R.y >= 0 ? -1 : 1, lpos: .5 });
+    L.arrow(ctx, ox, oy, ox, yr, { color: C.Fx, w: 2.5, label: '$F$_y', lside: R.x >= 0 ? 1 : -1, lpos: .5 });
+  }
+  L.arrow(ctx, ox, oy, x1, y1, { color: C.Fg, w: 3.5, label: '$F$_1' });
+  L.arrow(ctx, ox, oy, x2, y2, { color: C.FN, w: 3.5, label: '$F$_2' });
+  if (s.use3) L.arrow(ctx, ox, oy, x3, y3, { color: C.Fk, w: 3.5, label: '$F$_3' });
+  L.arrow(ctx, ox, oy, xr, yr, { color: C.Fnet, w: 4.5, label: '合力 $F$', lbold: true, lpos: 1 });
+  // handles
+  for (const [x, y, c] of [[x1, y1, C.Fg], [x2, y2, C.FN]].concat(s.use3 ? [[x3, y3, C.Fk]] : [])){
+    ctx.save(); ctx.strokeStyle = c; ctx.lineWidth = 2; ctx.fillStyle = C.surface; ctx.beginPath(); ctx.arc(x, y, 7, 0, 7); ctx.fill(); ctx.stroke(); ctx.restore();
+  }
+  L.dot(ctx, ox, oy, 4, C.ink);
+  return R;
+}
+L.drag(cv.cv, {
+  hit(x, y){
+    if (mode !== 'compose') return null;
+    const { ox, oy, u } = composeGeom(), s = S.compose;
+    const ks = ['F1', 'F2'].concat(s.use3 ? ['F3'] : []);
+    let best = null, bd = 22;
+    for (const k of ks){ const d = Math.hypot(ox + s[k].x * u - x, oy - s[k].y * u - y); if (d < bd){ bd = d; best = k; } }
+    return best;
+  },
+  move(k, x, y){
+    const { ox, oy, u } = composeGeom();
+    S.compose[k] = { x: L.clamp(Math.round((x - ox) / u * 2) / 2, -12, 16), y: L.clamp(Math.round((oy - y) / u * 2) / 2, -8, 14) };
+    draw();
+  }
+});
+
+/* ======================= 力の分解 ======================= */
+function drawResolve(){
+  const s = S.resolve, W = cv.w, H = cv.h;
+  if (s.sub === 'slope'){
+    const th = s.theta * D, Ls = Math.min((W - 70) / Math.cos(th), (H - 50) / Math.max(.01, Math.sin(th))), x0 = W / 2 - Ls * Math.cos(th) / 2 - 10, yb = H - 26;
+    const ux = Math.cos(th), uy = -Math.sin(th), nx = -Math.sin(th), ny = -Math.cos(th);
+    const tx = x0 + Ls * ux, ty = yb + Ls * uy;
+    L.poly(ctx, [[x0, yb], [tx, yb], [tx, ty]], C.surface2, C.ground, 2);
+    L.ground(ctx, 14, yb, W - 14, 10);
+    L.angleArc(ctx, x0, yb, 40, -th, 0, C.ink, '$θ$', 16);
+    const bw = 104, bh = 60, sp = Ls * .5;
+    const px = x0 + ux * sp, py = yb + uy * sp, cx = px + nx * bh / 2, cy = py + ny * bh / 2;
+    L.block(ctx, cx, cy, bw, bh, -th, { fill: C.ui_soft, stroke: C.ui });
+    const Wv = s.m * g, sc = Math.min(H * .4, 190) / Wv;
+    const wl = Wv * sc, a = Wv * Math.sin(th) * sc, b = Wv * Math.cos(th) * sc;
+    const ex = cx, ey = cy + wl;                   // tip of W
+    const ax = cx - ux * a, ay = cy - uy * a;       // along slope (down)
+    const bx = cx - nx * b, by = cy - ny * b;       // into slope
+    L.line(ctx, ax, ay, ex, ey, C.ink3, 1.2, [5, 4]); L.line(ctx, bx, by, ex, ey, C.ink3, 1.2, [5, 4]);
+    if (s.tri && s.theta > 2){
+      // right triangle W, W cosθ, W sinθ (shade) and angle θ between W and the normal component
+      L.poly(ctx, [[cx, cy], [bx, by], [ex, ey]], C.hl2_a, null);
+      const aW = Math.PI / 2, aN = Math.atan2(-ny, -nx);
+      L.angleArc(ctx, cx, cy, 30, aN, aW, C.hl2, '$θ$', 15);
+      // right angle mark at (bx,by)
+      const r = 9; const p1 = [bx + nx * r, by + ny * r], p3 = [bx - ux * r, by - uy * r], p2 = [p1[0] - ux * r, p1[1] - uy * r];
+      ctx.save(); ctx.strokeStyle = C.hl2; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(...p1); ctx.lineTo(...p2); ctx.lineTo(...p3); ctx.stroke(); ctx.restore();
+    }
+    L.arrow(ctx, cx, cy, ax, ay, { color: C.Fx, w: 3, label: '$mg$ sin$θ$', lside: 1, lpos: .55, ldist: 22 });
+    L.arrow(ctx, cx, cy, bx, by, { color: C.FN, w: 3, label: '$mg$ cos$θ$', lside: -1, lpos: .6, ldist: 26 });
+    L.arrow(ctx, cx, cy, ex, ey, { color: C.Fg, w: 4, dot: true, label: '$mg$', lside: -1 });
+    return { a: Wv * Math.sin(th), b: Wv * Math.cos(th), W: Wv };
+  }
+  // pull at angle
+  const yg = H * .72, cx = W * .40, bw = 120, bh = 66, phi = s.phi * D;
+  L.ground(ctx, 20, yg, W - 20);
+  L.block(ctx, cx, yg - bh / 2, bw, bh, 0, { fill: C.ui_soft, stroke: C.ui });
+  const px = cx + bw / 2, py = yg - bh / 2, sc = Math.min(5, 200 / Math.max(10, s.F));
+  const F = s.F * sc, fx = F * Math.cos(phi), fy = F * Math.sin(phi);
+  // rope
+  L.line(ctx, px, py, px + Math.cos(phi) * (F + 40), py - Math.sin(phi) * (F + 40), C.ink3, 1.5);
+  L.line(ctx, px + fx, py, px + fx, py - fy, C.ink3, 1.2, [5, 4]); L.line(ctx, px, py - fy, px + fx, py - fy, C.ink3, 1.2, [5, 4]);
+  L.line(ctx, px, py, px + 70, py, C.ink3, 1, [2, 3]);
+  if (s.phi > 2) L.angleArc(ctx, px, py, 34, -phi, 0, C.ink, '$θ$', 15);
+  L.arrow(ctx, px, py, px + fx, py, { color: C.Fx, w: 3, label: '$F$ cos$θ$', lside: 1, lpos: .55, ldist: 18 });
+  L.arrow(ctx, px, py, px, py - fy, { color: C.FN, w: 3, label: '$F$ sin$θ$', lside: 1, lpos: .6, ldist: 34 });
+  L.arrow(ctx, px, py, px + fx, py - fy, { color: C.FT, w: 4, dot: true, label: '$F$', lside: -1 });
+  return { a: s.F * Math.cos(phi), b: s.F * Math.sin(phi) };
+}
+
+/* ======================= 共通 ======================= */
+function draw(){
+  cv.clear();
+  if (mode === 'draw'){
+    const { out } = drawForces();
+    const s = S.draw;
+    const shown = s.step >= 99 ? out.length : Math.max(0, s.step);
+    L.set('side', `<ul class="fl">${out.map((o, i) => `<li style="--c:${o.col};opacity:${i < shown ? 1 : .35}"><span class="sw"></span><span>${L.h(o.name)}<br><span class="note">${o.who}</span></span><span class="val">${i < shown ? L.f(o.val, 1) + ' N' : '？'}</span></li>`).join('')}</ul>`);
+    L.set('stepMsg', stepMsg(out));
+    const Wa = s.m * g;
+    let fx = '';
+    if (s.scene === 'floor') fx = eq('$N$ <span class="op">=</span> $W$ <span class="op">=</span> $mg$', `${L.f(Wa,1)} N ＝ ${L.f(s.m,1)} kg × 9.8 m/s²`, '上下の力がつりあう（静止している）');
+    if (s.scene === 'hang') fx = eq('$T$ <span class="op">=</span> $W$ <span class="op">=</span> $mg$', `${L.f(Wa,1)} N`, '糸の張力と重力がつりあう');
+    if (s.scene === 'push') fx = eq('$f$ <span class="op">=</span> $F$ ， $N$ <span class="op">=</span> $mg$', `f ＝ ${L.f(Wa*.35,1)} N，N ＝ ${L.f(Wa,1)} N`, '横：押す力と静止摩擦力、縦：重力と垂直抗力がつりあう（くわしくは「摩擦力」ページ）');
+    if (s.scene === 'slope') fx = eq('$T$ <span class="op">=</span> $mg$ sin$θ$ ， $N$ <span class="op">=</span> $mg$ cos$θ$', `T ＝ ${L.f(Wa*Math.sin(s.theta*D),1)} N，N ＝ ${L.f(Wa*Math.cos(s.theta*D),1)} N`, '重力を斜面に平行・垂直に分解して考える（「力の分解」タブ）');
+    if (s.scene === 'stack') fx = s.focus === 'A'
+      ? eq('$N$_A <span class="op">=</span> $m$_A$g$', `${L.f(Wa,1)} N`, 'Aにはたらく力は2本だけ。「床」はAにふれていない')
+      : eq('$N$_B <span class="op">=</span> $m$_B$g$ <span class="op">+</span> $N$_A\'', `${L.f(Wa + s.M*g,1)} N ＝ ${L.f(s.M*g,1)} N ＋ ${L.f(Wa,1)} N`, 'Bには「Aの重力」ははたらかない。AがBを押す力 N<sub>A</sub>\' がはたらく（N<sub>A</sub> と作用・反作用）');
+    L.set('fx', fx + `<div class="explain"><div class="ttl">力を見つけるコツ</div>①着目する物体を決める → ②重力（離れていてもはたらく） → ③ふれているもの1つにつき力を探す。ふれていないもの（遠くの手、前に押した勢いなど）からは力を受けない。</div>`);
+    ro && ro({ n: `${out.length} 本`, W: L.f(s.scene === 'stack' && s.focus === 'B' ? s.M * g : Wa, 1) + ' N', sc: SCENES[s.scene] });
+  } else if (mode === 'compose'){
+    const R = drawCompose(), s = S.compose;
+    const mag = v => Math.hypot(v.x, v.y);
+    const Rm = mag(R), sum = mag(s.F1) + mag(s.F2) + (s.use3 ? mag(s.F3) : 0);
+    const ang = Math.atan2(R.y, R.x) / D;
+    ro && ro({ F1: L.f(mag(s.F1), 2) + ' N', F2: L.f(mag(s.F2), 2) + ' N', R: `<b>${L.f(Rm, 2)} N</b>`, ang: Rm > 0.01 ? L.f(ang, 0) + '°' : '—' });
+    const ks = ['F1', 'F2'].concat(s.use3 ? ['F3'] : []);
+    const cols = { F1: C.Fg, F2: C.FN, F3: C.Fk };
+    L.set('side', `<ul class="fl">${ks.map(k => `<li style="--c:${cols[k]}"><span class="sw"></span><span>${L.h('$F$_' + k[1])}　( ${L.f(s[k].x,1)} , ${L.f(s[k].y,1)} ) N</span><span class="val">${L.f(mag(s[k]),2)} N</span></li>`).join('')}
+      <li style="--c:${C.Fnet}"><span class="sw"></span><span><b>合力 ${L.h('$F$')}</b>　( ${L.f(R.x,1)} , ${L.f(R.y,1)} ) N</span><span class="val"><b>${L.f(Rm,2)} N</b></span></li></ul>
+      <p class="note" style="margin:8px 0 0">○の点をドラッグして力を変えられます（0.5 N きざみ）。</p>`);
+    const x = ks.map(k => L.f(s[k].x, 1)).join(' ＋ '), y = ks.map(k => L.f(s[k].y, 1)).join(' ＋ ');
+    L.set('fx', eq('$F$ <span class="op">=</span> ' + ks.map(k => '$F$_' + k[1]).join(' <span class="op">+</span> ') + ' <span class="jp">（ベクトルの和）</span>', `${L.f(Rm,2)} N（矢印の長さの単純な和 ${L.f(sum,2)} N とは一般に一致しない）`, '平行四辺形の対角線、または矢印を「つないで」始点から終点へ')
+      + eq('$F$_x <span class="op">=</span> ' + ks.map(k => '$F$_{' + k[1] + 'x}').join(' + ') + '，　$F$_y <span class="op">=</span> ' + ks.map(k => '$F$_{' + k[1] + 'y}').join(' + '), `Fx ＝ ${x} ＝ ${L.f(R.x,1)} N，Fy ＝ ${y} ＝ ${L.f(R.y,1)} N`, '成分どうしなら、ふつうの足し算でよい')
+      + eq('$F$ <span class="op">=</span> √($F$_x² <span class="op">+</span> $F$_y²)', `√(${L.f(R.x,1)}² ＋ ${L.f(R.y,1)}²) ＝ ${L.f(Rm,2)} N`, '三平方の定理'));
+  } else {
+    const r = drawResolve(), s = S.resolve;
+    if (s.sub === 'slope'){
+      ro && ro({ W: L.f(r.W, 1) + ' N', a: L.f(r.a, 1) + ' N', b: L.f(r.b, 1) + ' N', th: s.theta + '°' });
+      L.set('side', `<ul class="fl">
+        <li style="--c:${C.Fg}"><span class="sw"></span><span>重力 ${L.h('$mg$')}</span><span class="val">${L.f(r.W,1)} N</span></li>
+        <li style="--c:${C.Fx}"><span class="sw"></span><span>斜面に平行な分力 ${L.h('$mg$ sin$θ$')}<br><span class="note">物体を斜面に沿ってすべり下ろそうとする</span></span><span class="val">${L.f(r.a,1)} N</span></li>
+        <li style="--c:${C.FN}"><span class="sw"></span><span>斜面に垂直な分力 ${L.h('$mg$ cos$θ$')}<br><span class="note">物体を斜面に押しつける</span></span><span class="val">${L.f(r.b,1)} N</span></li></ul>
+        <p class="note" style="margin:8px 0 0">分力は重力を「置きかえた」もの。重力と分力を同時に数えないこと。</p>`);
+      L.set('fx', eq('$mg$ sin$θ$ <span class="op">=</span> ' + L.f(s.m,1) + '×9.8×sin' + s.theta + '°', `＝ ${L.f(r.a,2)} N`, '平行な分力')
+        + eq('$mg$ cos$θ$ <span class="op">=</span> ' + L.f(s.m,1) + '×9.8×cos' + s.theta + '°', `＝ ${L.f(r.b,2)} N`, '垂直な分力')
+        + `<div class="explain"><div class="ttl">なぜ「θ」が重力と斜面の垂線の間に出てくる？</div>重力は水平面に垂直、斜面の垂線は斜面に垂直。2つの面のなす角が θ なので、それぞれに垂直な線どうしのなす角も θ になります（色をつけた直角三角形）。θ を 0° や 90° に近づけて、sin・cos のどちらが大きくなるか確かめよう。</div>`);
+    } else {
+      ro && ro({ W: L.f(s.F, 1) + ' N', a: L.f(r.a, 1) + ' N', b: L.f(r.b, 1) + ' N', th: s.phi + '°' });
+      L.set('side', `<ul class="fl">
+        <li style="--c:${C.FT}"><span class="sw"></span><span>引く力 ${L.h('$F$')}</span><span class="val">${L.f(s.F,1)} N</span></li>
+        <li style="--c:${C.Fx}"><span class="sw"></span><span>水平な分力 ${L.h('$F$ cos$θ$')}<br><span class="note">物体を横に動かそうとする</span></span><span class="val">${L.f(r.a,1)} N</span></li>
+        <li style="--c:${C.FN}"><span class="sw"></span><span>鉛直な分力 ${L.h('$F$ sin$θ$')}<br><span class="note">物体を持ち上げようとする（垂直抗力が減る）</span></span><span class="val">${L.f(r.b,1)} N</span></li></ul>`);
+      L.set('fx', eq('$F$_x <span class="op">=</span> $F$ cos$θ$', `${L.f(s.F,1)}×cos${s.phi}° ＝ ${L.f(r.a,2)} N`, '水平成分')
+        + eq('$F$_y <span class="op">=</span> $F$ sin$θ$', `${L.f(s.F,1)}×sin${s.phi}° ＝ ${L.f(r.b,2)} N`, '鉛直成分')
+        + `<div class="explain"><div class="ttl">角 θ に「となり合う」辺が cos</div>分解する向きと力のなす角が θ のとき、その向きの分力は <i class="s">F</i> cos<i class="s">θ</i>。もう一方は <i class="s">F</i> sin<i class="s">θ</i>。</div>`);
+    }
+  }
+}
+function eq(main, sub, tag){
+  return `<div class="eq"><div class="main">${L.h(main)}</div>${sub ? `<div class="subst">${sub}</div>` : ''}${tag ? `<div class="tag">${L.h(tag)}</div>` : ''}</div>`;
+}
+
+function build(){
+  const tp = document.getElementById('tp');
+  const note = document.getElementById('stageNote');
+  if (mode === 'draw'){
+    document.getElementById('stageT').firstChild.textContent = '力を見つける';
+    note.textContent = '';
+    tp.innerHTML = `<div class="steps" style="width:100%"><button class="btn" id="bPrev" type="button">◀ もどる</button><button class="btn primary" id="bNext" type="button">次の手順 ▶</button><button class="btn" id="bAll" type="button">すべて表示</button><span class="stepmsg" id="stepMsg"></span></div>`;
+    document.getElementById('bNext').onclick = () => { const s = S.draw; s.step = s.step >= 99 ? 0 : s.step + 1; if (s.step > nForces()) s.step = 99; draw(); };
+    document.getElementById('bPrev').onclick = () => { const s = S.draw; s.step = s.step >= 99 ? nForces() : Math.max(0, s.step - 1); draw(); };
+    document.getElementById('bAll').onclick = () => { S.draw.step = 99; draw(); };
+    ro = setRO([{ k: 'sc', lab: '場面', c: 'ink' }, { k: 'n', lab: 'はたらく力の数' }, { k: 'W', lab: '重力 $W$', c: 'Fg' }]);
+    document.getElementById('listT').textContent = 'はたらく力（だれが → だれに）';
+    const defs = [
+      { t: 'seg', k: 'scene', lab: '場面', opts: Object.entries(SCENES), wide: true },
+      { k: 'm', lab: S.draw.scene === 'stack' ? 'Aの質量 $m$_A' : '質量 $m$', min: .5, max: 5, step: .1, unit: 'kg' },
+    ];
+    if (S.draw.scene === 'stack'){ defs.push({ k: 'M', lab: 'Bの質量 $m$_B', min: .5, max: 5, step: .1, unit: 'kg' }); defs.push({ t: 'seg', k: 'focus', lab: '着目する物体', opts: [['A', '上の物体A'], ['B', '下の物体B']] }); }
+    if (S.draw.scene === 'slope') defs.push({ k: 'theta', lab: '斜面の角度 $θ$', min: 5, max: 60, step: 1, unit: '°', d: 0 });
+    defs.push({ t: 'check', k: 'offset', lab: '重なる矢印を少しずらして描く', hint: '同じ作用線上の力は、見やすくするため少しずらして描くことが多い' });
+    L.params('prm', defs, S.draw, k => { if (k === 'scene' || k === 'focus'){ S.draw.step = 0; build(); } draw(); });
+  } else if (mode === 'compose'){
+    document.getElementById('stageT').firstChild.textContent = '力の合成（方眼 1マス＝1 N）';
+    tp.innerHTML = `<button class="btn" type="button" id="bEx1">同じ向き</button><button class="btn" type="button" id="bEx2">逆向き</button><button class="btn" type="button" id="bEx3">直角（3 N と 4 N）</button><button class="btn" type="button" id="bEx4">鈍角</button>`;
+    const ex = (a, b) => { S.compose.F1 = a; S.compose.F2 = b; S.compose.use3 = false; build(); draw(); };
+    document.getElementById('bEx1').onclick = () => ex({ x: 3, y: 0 }, { x: 4, y: 0 });
+    document.getElementById('bEx2').onclick = () => ex({ x: 6, y: 0 }, { x: -2, y: 0 });
+    document.getElementById('bEx3').onclick = () => ex({ x: 4, y: 0 }, { x: 0, y: 3 });
+    document.getElementById('bEx4').onclick = () => ex({ x: 4, y: 0 }, { x: -2, y: 3.5 });
+    ro = setRO([{ k: 'F1', lab: '$F$_1 の大きさ' }, { k: 'F2', lab: '$F$_2 の大きさ' }, { k: 'R', lab: '合力 $F$ の大きさ' }, { k: 'ang', lab: '合力の向き（$x$軸から）' }]);
+    document.getElementById('listT').textContent = '力（成分と大きさ）';
+    L.params('prm', [
+      { t: 'check', k: 'para', lab: '平行四辺形をかく' },
+      { t: 'check', k: 'tri', lab: '矢印をつなぐ（三角形・多角形）' },
+      { t: 'check', k: 'comp', lab: '合力の $x$・$y$ 成分を表示' },
+      { t: 'check', k: 'use3', lab: '3つ目の力 $F$_3 を加える' },
+    ], S.compose, () => draw());
+  } else {
+    document.getElementById('stageT').firstChild.textContent = '力の分解';
+    tp.innerHTML = '';
+    ro = setRO([{ k: 'W', lab: S.resolve.sub === 'slope' ? '重力 $mg$' : '引く力 $F$', c: S.resolve.sub === 'slope' ? 'Fg' : 'FT' }, { k: 'a', lab: S.resolve.sub === 'slope' ? '平行な分力' : '水平な分力', c: 'Fx' }, { k: 'b', lab: S.resolve.sub === 'slope' ? '垂直な分力' : '鉛直な分力', c: 'FN' }, { k: 'th', lab: '角度 $θ$' }]);
+    document.getElementById('listT').textContent = '分力';
+    const defs = [{ t: 'seg', k: 'sub', lab: '分解する力', opts: [['slope', '斜面上の物体の重力'], ['pull', '斜め上に引く力']], wide: true }];
+    if (S.resolve.sub === 'slope') defs.push({ k: 'theta', lab: '斜面の角度 $θ$', min: 0, max: 80, step: 1, unit: '°', d: 0 }, { k: 'm', lab: '質量 $m$', min: .5, max: 5, step: .1, unit: 'kg' }, { t: 'check', k: 'tri', lab: '重力と分力の直角三角形・角 θ を表示' });
+    else defs.push({ k: 'phi', lab: '水平からの角度 $θ$', min: 0, max: 90, step: 1, unit: '°', d: 0 }, { k: 'F', lab: '引く力の大きさ $F$', min: 2, max: 40, step: 1, unit: 'N', d: 0 });
+    L.params('prm', defs, S.resolve, k => { if (k === 'sub') build(); draw(); });
+  }
+}
+function nForces(){ const s = S.draw; return { floor: 2, hang: 2, push: 4, slope: 3, stack: s.focus === 'A' ? 2 : 3 }[s.scene]; }
+
+L.tabs('tabs', m => { mode = m; if (m === 'draw') S.draw.step = 99; build(); draw(); });
+</script>
+</body>
+</html>

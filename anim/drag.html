@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>空気抵抗と落下</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic&family=BIZ+UDPGothic:wght@400;700&display=swap">
+<link rel="stylesheet" href="lab.css">
+<script src="lab.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="hd">
+      <nav class="nav" id="nav" aria-label="力学ラボ"></nav>
+      <h1>空気抵抗を受けて落下する物体<small>物理基礎・空気抵抗と終端速度</small></h1>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="colL">
+      <section class="panel stage">
+        <h2><span>落下のようす（物体についていくカメラ）</span><span class="sp"></span><span id="state" class="state"></span></h2>
+        <canvas id="cv"></canvas>
+        <div class="transport">
+          <button class="btn primary" id="bRun" type="button">落とす ▶</button>
+          <button class="btn" id="bRst" type="button">はじめにもどす</button>
+          <button class="btn" id="bKeep" type="button">この結果を残して比較</button>
+          <span class="note" id="speed"></span>
+        </div>
+        <div class="readout" id="ro"></div>
+      </section>
+    </div>
+    <div class="colR">
+      <section class="gcard">
+        <div class="ghead"><span class="gt" id="gt"></span><span class="meaning" id="gm"></span><span id="gsel"></span></div>
+        <canvas id="gv"></canvas>
+        <div class="gfoot" id="gf"></div>
+      </section>
+      <section class="panel"><h2>式で確かめる</h2><div class="body fx" id="fx"></div></section>
+    </div>
+  </div>
+  <section class="panel below"><h2>条件を変える</h2><div class="body" id="prm"></div></section>
+  <p class="foot">鉛直下向きを正とします。重力加速度 <i class="s">g</i> ＝ 9.8 m/s²。浮力は無視しています。アニメーションは見やすい速さに調整して再生しています（グラフの時刻は実際の時刻）。</p>
+</div>
+
+<script>
+'use strict';
+const C = L.C, g = L.g;
+const cv = L.canvas(document.getElementById('cv'), () => draw());
+const gv = L.canvas(document.getElementById('gv'), () => drawGraph());
+const ctx = cv.ctx, gx = gv.ctx;
+const S = { law: 'lin', m: 1, k: 1, k2: .05, v0: 0, vac: true, tangent: true, view: 'vt',
+  t: 0, y: 0, v: 0, hist: [], run: false, done: false, ghosts: [] };
+const GC = ['#8a96a3', '#b58b00', '#2f9e8f', '#9a5bd1'];
+const eq = (main, sub, tag, hl) => `<div class="eq${hl ? ' hl' : ''}"><div class="main">${L.h(main)}</div>${sub ? `<div class="subst">${sub}</div>` : ''}${tag ? `<div class="tag">${L.h(tag)}</div>` : ''}</div>`;
+const OP = s => ` <span class="op">${s}</span> `;
+
+const R = v => S.law === 'lin' ? S.k * v : S.k2 * v * Math.abs(v);
+const vf = () => S.law === 'lin' ? S.m * g / S.k : Math.sqrt(S.m * g / S.k2);
+const acc = v => g - R(v) / S.m;
+function tEnd(){ const tau = vf() / g; return L.clamp(Math.ceil(Math.max(5 * tau, (S.v0 ? 5 * tau : 0), 3)), 3, 40); }
+function playRate(){ return Math.max(1, tEnd() / 8); }
+
+const loop = L.loop(dt => {
+  if (!S.run) return false;
+  const T = dt * playRate(), n = 40, h = T / n;
+  for (let i = 0; i < n; i++){
+    // RK2
+    const a1 = acc(S.v), vm = S.v + a1 * h / 2, a2 = acc(vm);
+    S.y += vm * h; S.v += a2 * h; S.t += h;
+    const l = S.hist[S.hist.length - 1]; if (!l || S.t - l[0] > tEnd() / 400) S.hist.push([S.t, S.v, acc(S.v)]);
+    if (S.t >= tEnd()){ S.run = false; S.done = true; break; }
+  }
+  draw(); drawGraph(); sync();
+});
+function reset(){ Object.assign(S, { t: 0, y: 0, v: S.v0, hist: [[0, S.v0, acc(S.v0)]], run: false, done: false }); }
+
+let streak = [];
+function draw(){
+  cv.clear();
+  const W = cv.w, H = cv.h, cx = W * .40, cy = H * .36;
+  const vmax = Math.max(vf(), S.v0, 1);
+  const ppm = L.clamp(H / (vmax * 1.2), 3, 40);   // px per m（速いほど縮小）
+  // sky background marks (height scale)
+  ctx.save(); ctx.fillStyle = C.air; ctx.fillRect(0, 0, W, H); ctx.restore();
+  const step = L.nice(H / ppm / 6, 1);
+  const y0 = S.y - cy / ppm, y1 = S.y + (H - cy) / ppm;
+  for (let m = Math.ceil(y0 / step) * step; m <= y1; m += step){
+    const Y = cy + (m - S.y) * ppm;
+    L.line(ctx, 0, Y, 26, Y, C.ink3, 1); L.line(ctx, W - 26, Y, W, Y, C.ink3, 1);
+    L.rich(ctx, `${L.f(m, step < 1 ? 1 : 0)} m`, 30, Y, { size: 10.5, color: C.ink3, num: true });
+  }
+  L.rich(ctx, '落下距離', 30, 12, { size: 10.5, color: C.ink3 });
+  // air streaks moving upward relative to the object
+  if (streak.length === 0) for (let i = 0; i < 26; i++) streak.push([Math.random(), Math.random()]);
+  ctx.save(); ctx.strokeStyle = C.ink3; ctx.globalAlpha = .35; ctx.lineWidth = 1;
+  const sl = Math.min(60, S.v * 3);
+  for (const p of streak){ const X = 60 + p[0] * (W - 120), Y = ((p[1] * H - S.y * ppm) % H + H) % H; if (sl > 2){ ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X, Y + sl); ctx.stroke(); } }
+  ctx.restore();
+  // vacuum ghost
+  if (S.vac){
+    const yv = S.v0 * S.t + .5 * g * S.t * S.t, Yv = cy + (yv - S.y) * ppm, gxp = cx + 190;
+    if (Yv < H - 20){ ctx.save(); ctx.strokeStyle = C.ghost; ctx.setLineDash([4, 3]); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(gxp, Yv, 16, 0, 7); ctx.stroke(); ctx.restore();
+      L.rich(ctx, '空気抵抗なし', gxp + 22, Yv, { size: 11.5, color: C.ink3 }); }
+    else { L.arrow(ctx, gxp, H - 46, gxp, H - 12, { color: C.ghost, w: 2 }); L.rich(ctx, `空気抵抗なし：${L.f(yv - S.y, 1)} m 下`, gxp + 12, H - 30, { size: 11.5, color: C.ink3, bg: C.surface }); }
+  }
+  // object
+  ctx.save(); ctx.fillStyle = C.ui_soft; ctx.strokeStyle = C.ui; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, 18, 0, 7); ctx.fill(); ctx.stroke(); ctx.restore();
+  const Fs = 90 / (S.m * g);   // mg を 90px に
+  L.arrow(ctx, cx, cy, cx, cy + S.m * g * Fs, { color: C.Fg, w: 3.5, dot: true, label: '重力 $mg$', lside: -1, ldist: 40, lpos: .8 });
+  const r = R(S.v);
+  if (r > .001) L.arrow(ctx, cx, cy - 18, cx, cy - 18 - r * Fs, { color: C.Fb, w: 3.5, dot: true, label: S.law === 'lin' ? '空気抵抗 $kv$' : '空気抵抗 $kv$^2', lside: 1, ldist: 46, lpos: .8 });
+  const a = acc(S.v);
+  if (Math.abs(a) > .02) L.arrow(ctx, cx - 70, cy, cx - 70, cy + a * 9, { color: C.acc, w: 3, label: '$a$', lside: 1 });
+  if (S.v > .01) L.arrow(ctx, cx + 120, cy - 60, cx + 120, cy - 60 + Math.min(150, S.v * 150 / vmax), { color: C.vel, w: 2.5, label: '$v$', lside: -1 });
+  const near = Math.abs(S.v - vf()) / vf() < .01;
+  const st = document.getElementById('state');
+  st.className = 'state ' + (near ? 'ok' : '');
+  st.textContent = S.t === 0 ? '落とす前' : near ? 'ほぼ終端速度（等速）' : (a > 0 ? '加速している' : '減速している');
+  L.set('speed', `再生速度 ×${L.f(playRate(), 1)}`);
+  ro({ t: `${L.f(S.t, 2)} s`, v: `${L.f(S.v, 2)} m/s`, a: `${L.f(a, 2)} m/s²`, R: `${L.f(r, 2)} N` });
+  equations();
+}
+function drawGraph(){
+  gv.clear();
+  const T = tEnd(), V = vf();
+  L.set('gsel', `<span class="seg">${[['vt', 'v-t'], ['at', 'a-t']].map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${S.view === v}">${l}</button>`).join('')}</span>`);
+  document.querySelectorAll('#gsel button').forEach(b => b.onclick = () => { S.view = b.dataset.v; drawGraph(); });
+  if (S.view === 'vt'){
+    const ymax = Math.max(V, S.v0, ...S.ghosts.map(gh => Math.max(...gh.pts.map(p => p[1])))) * 1.25;
+    const P = L.plot(gx, gv.w, gv.h, { x0: 0, x1: T, y0: 0, y1: ymax, xl: '時刻 $t$ [s]', yl: '速さ $v$ [m/s]' });
+    P.clip();
+    S.ghosts.forEach((gh, i) => L.path(gx, P, gh.pts.map(p => [p[0], p[1]]), GC[i % 4], 1.6, [5, 4]));
+    L.line(gx, P.X(0), P.Y(V), P.X(T), P.Y(V), C.Fb, 1.2, [6, 4]);
+    L.rich(gx, `終端速度 $v$_f ＝ ${L.f(V, 1)} m/s`, P.X(T) - 6, P.Y(V) - 12, { size: 12, color: C.Fb, align: 'right', bg: C.surface });
+    if (S.vac) L.fn(gx, P, t => S.v0 + g * t, 0, T, C.ghost, 1.4, [3, 3]);
+    if (S.tangent){ const a0 = acc(S.v0); L.fn(gx, P, t => S.v0 + a0 * t, 0, Math.min(T, Math.abs((V - S.v0) / (a0 || 1)) * 1.3), C.acc, 1.4, [2, 3]); }
+    L.path(gx, P, S.hist.map(p => [p[0], p[1]]), C.vel, 2.6);
+    L.dot(gx, P.X(S.t), P.Y(S.v), 5, C.vel, true);
+    P.unclip();
+    L.set('gt', L.h('$v$-$t$ グラフ'));
+    L.set('gm', '傾き（加速度）はしだいに小さくなり、速さは終端速度に近づく');
+    L.set('gf', `<div class="legend"><span><i class="sw" style="--c:${C.vel}"></i>空気抵抗あり</span>${S.vac ? `<span><i class="sw" style="--c:${C.ghost}"></i>空気抵抗なし（${L.h('$v$ ＝ $gt$')}）</span>` : ''}${S.tangent ? `<span><i class="sw" style="--c:${C.acc}"></i>${L.h('$t$ ＝ 0')} での接線（傾き ${L.f(acc(S.v0), 1)}）</span>` : ''}${S.ghosts.length ? '<span>点線：残した結果</span>' : ''}</div>`);
+  } else {
+    const amin = Math.min(0, acc(S.v0)), amax = Math.max(g, acc(S.v0));
+    const P = L.plot(gx, gv.w, gv.h, { x0: 0, x1: T, y0: amin < 0 ? amin * 1.2 : 0, y1: amax * 1.15, xl: '時刻 $t$ [s]', yl: '加速度 $a$ [m/s²]' });
+    P.clip();
+    S.ghosts.forEach((gh, i) => L.path(gx, P, gh.pts.map(p => [p[0], p[2]]), GC[i % 4], 1.6, [5, 4]));
+    L.line(gx, P.X(0), P.Y(g), P.X(T), P.Y(g), C.ghost, 1.2, [3, 3]);
+    L.rich(gx, '$g$ ＝ 9.8（空気抵抗なし）', P.X(T) - 6, P.Y(g) - 11, { size: 11.5, color: C.ink3, align: 'right', bg: C.surface });
+    L.path(gx, P, S.hist.map(p => [p[0], p[2]]), C.acc, 2.6);
+    L.dot(gx, P.X(S.t), P.Y(acc(S.v)), 5, C.acc, true);
+    P.unclip();
+    L.set('gt', L.h('$a$-$t$ グラフ'));
+    L.set('gm', '速くなるほど空気抵抗が大きくなり、加速度は 0 に近づく');
+    L.set('gf', '');
+  }
+}
+function equations(){
+  const lin = S.law === 'lin', k = lin ? S.k : S.k2, a = acc(S.v), r = R(S.v), V = vf();
+  let h = eq(`$ma$${OP('=')}$mg$${OP('−')}${lin ? '$kv$' : '$kv$^2'}`, `${L.f(S.m,2)} × ${L.f(a,2)} ＝ ${L.f(S.m*g,2)} − ${L.f(r,2)}　（いま v ＝ ${L.f(S.v,2)} m/s）`, '運動方程式（下向きを正）。速くなるほど右辺が小さくなる', true);
+  h += eq(lin ? `0${OP('=')}$mg$${OP('−')}$kv$_f　→　$v$_f${OP('=')}$mg$ / $k$` : `0${OP('=')}$mg$${OP('−')}$kv$_f^2　→　$v$_f${OP('=')}√($mg$ / $k$)`,
+    lin ? `v_f ＝ ${L.f(S.m,2)} × 9.8 ÷ ${L.f(k,2)} ＝ ${L.f(V,2)} m/s` : `v_f ＝ √(${L.f(S.m,2)} × 9.8 ÷ ${L.f(k,3)}) ＝ ${L.f(V,2)} m/s`, '終端速度：重力と空気抵抗がつりあう（$a$ ＝ 0）');
+  h += eq(`$t$${OP('=')}0 のとき　$a$${OP('=')}$g$${S.v0 ? OP('−') + (lin ? '$kv$_0' : '$kv$_0^2') + ' / $m$' : ''}`, `${L.f(acc(S.v0),2)} m/s²`, S.v0 ? '初速度があると、はじめから空気抵抗がはたらく' : 'はじめは速さ 0 なので空気抵抗 0 → 自由落下と同じ傾き');
+  h += `<div class="explain"><div class="ttl">質量や抵抗の係数を変えると？</div>質量が大きいほど、また ${L.h('$k$')} が小さいほど終端速度は大きい（重い雨粒ほど速く落ちる）。終端速度より速い初速度で投げ下ろすと、空気抵抗が重力より大きくなり、減速しながら終端速度に近づく。</div>`;
+  L.set('fx', h);
+}
+function sync(){ document.getElementById('bRun').textContent = S.run ? '一時停止' : (S.t > 0 && !S.done ? '再開 ▶' : '落とす ▶'); }
+const ro = L.readout('ro', [{ k: 't', lab: '時刻 $t$' }, { k: 'v', lab: '速さ $v$', c: 'vel' }, { k: 'a', lab: '加速度 $a$', c: 'acc' }, { k: 'R', lab: '空気抵抗の大きさ', c: 'Fb' }]);
+document.getElementById('bRun').onclick = () => { if (S.done) reset(); S.run = !S.run; if (S.run) loop.start(); sync(); draw(); };
+document.getElementById('bRst').onclick = () => { loop.stop(); reset(); sync(); draw(); drawGraph(); };
+document.getElementById('bKeep').onclick = () => { if (S.hist.length > 2){ S.ghosts.push({ pts: S.hist.slice() }); if (S.ghosts.length > 4) S.ghosts.shift(); } loop.stop(); reset(); sync(); draw(); drawGraph(); };
+function buildParams(){
+  const defs = [
+    { t: 'seg', k: 'law', lab: '空気抵抗の大きさ', opts: [['lin', '速さに比例 $kv$（教科書の基本）'], ['quad', '速さの2乗に比例 $kv$^2']], wide: true },
+    { k: 'm', lab: '質量 $m$', min: .1, max: 3, step: .1, unit: 'kg' },
+    S.law === 'lin' ? { k: 'k', lab: '比例定数 $k$', min: .2, max: 3, step: .05, unit: 'kg/s', d: 2, hint: '物体の形・大きさで決まる（N·s/m ＝ kg/s）' }
+                    : { k: 'k2', lab: '比例定数 $k$', min: .005, max: .3, step: .005, unit: 'kg/m', d: 3, hint: '単位は N·s²/m² ＝ kg/m' },
+    { k: 'v0', lab: '初速度 $v$_0（下向き）', min: 0, max: 40, step: 1, unit: 'm/s', d: 0 },
+    { t: 'check', k: 'vac', lab: '空気抵抗なしの場合と比べる' },
+    { t: 'check', k: 'tangent', lab: '$t$ ＝ 0 での接線を表示' },
+  ];
+  L.params('prm', defs, S, k => { if (k === 'law'){ S.ghosts = []; buildParams(); } loop.stop(); reset(); sync(); draw(); drawGraph(); });
+}
+buildParams(); reset(); sync(); draw(); drawGraph();
+</script>
+</body>
+</html>

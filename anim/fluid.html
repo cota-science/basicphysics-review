@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>水圧・浮力・パスカルの原理</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic&family=BIZ+UDPGothic:wght@400;700&display=swap">
+<link rel="stylesheet" href="lab.css">
+<script src="lab.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="hd">
+      <nav class="nav" id="nav" aria-label="力学ラボ"></nav>
+      <h1>水圧・浮力・パスカルの原理<small>物理基礎・流体から受ける力</small></h1>
+    </div>
+    <div class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-mode="pressure" type="button">水圧（液体の圧力）</button>
+      <button class="tab" role="tab" data-mode="buoy" type="button">浮力（アルキメデスの原理）</button>
+      <button class="tab" role="tab" data-mode="pascal" type="button">パスカルの原理</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="colL">
+      <section class="panel stage">
+        <h2><span id="stageT">実験台</span><span class="sp"></span><span id="state" class="state" hidden></span></h2>
+        <canvas id="cv"></canvas>
+        <div class="transport" id="tp"></div>
+        <div class="readout" id="ro"></div>
+      </section>
+    </div>
+    <div class="colR">
+      <section class="gcard">
+        <div class="ghead"><span class="gt" id="gt"></span><span class="meaning" id="gm"></span></div>
+        <canvas id="gv"></canvas>
+        <div class="gfoot" id="gf"></div>
+      </section>
+      <section class="panel"><h2>式で確かめる</h2><div class="body fx" id="fx"></div></section>
+    </div>
+  </div>
+  <section class="panel below"><h2>条件を変える</h2><div class="body" id="prm"></div></section>
+  <p class="foot" id="foot"></p>
+</div>
+
+<script>
+'use strict';
+const C = L.C, g = L.g;
+const cv = L.canvas(document.getElementById('cv'), () => draw());
+const gv = L.canvas(document.getElementById('gv'), () => drawGraph());
+const ctx = cv.ctx, gx = gv.ctx;
+let mode = 'pressure', ro, api;
+const FL = { water: ['水', 1000], sea: ['海水', 1025], oil: ['食用油', 920], eth: ['エタノール', 789], hg: ['水銀', 13600], custom: ['自由に設定', 0] };
+const ATM = { earth: ['地上', 1.013e5], fuji: ['富士山頂', 0.64e5], none: ['考えない', 0] };
+const OBJ = { wood: ['木', 500], al: ['アルミニウム', 2700], fe: ['鉄', 7900], custom: ['自由', 0] };
+const S = {
+  fluid: 'water', rhoC: 2000, atm: 'earth',
+  pressure: { h: 4, column: true, wall: false },
+  buoy: { d: .15, Lh: .2, obj: 'al', rhoO: 3000, atmB: 'none' },
+  pascal: { S1: 5, S2: 500, F1: 40, M: 300, z: 0, run: false }
+};
+const rho = () => S.fluid === 'custom' ? S.rhoC : FL[S.fluid][1];
+const p0 = (k) => ATM[k || S.atm][1];
+const eq = (main, sub, tag, hl) => `<div class="eq${hl ? ' hl' : ''}"><div class="main">${L.h(main)}</div>${sub ? `<div class="subst">${sub}</div>` : ''}${tag ? `<div class="tag">${L.h(tag)}</div>` : ''}</div>`;
+const OP = s => ` <span class="op">${s}</span> `;
+const SUP = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+function sci(v, d = 2){
+  if (v === 0) return '0';
+  const e = Math.floor(Math.log10(Math.abs(v))); const m = v / Math.pow(10, e);
+  if (e >= -1 && e <= 3) return L.f(v, e >= 2 ? 0 : 2);
+  return `${m.toFixed(d)}×10${String(e).split('').map(c => SUP[c]).join('')}`;
+}
+const fP = p => `${sci(p, 3)} Pa`;
+function badge(cls, txt){ const el = document.getElementById('state'); el.hidden = !txt; el.className = 'state ' + cls; el.textContent = txt || ''; }
+
+/* ======================= 水圧 ======================= */
+const HT = 10; // tank depth (m)
+function tankGeom(){ const W = cv.w, H = cv.h; const top = 54, bot = H - 26; return { x0: 50, x1: W * .64, top, bot, ppm: (bot - top) / HT }; }
+function drawPressure(){
+  const s = S.pressure, W = cv.w, H = cv.h, G = tankGeom(), r = rho(), P0 = p0();
+  // air
+  ctx.save(); ctx.fillStyle = C.air; ctx.fillRect(0, 0, W, G.top); ctx.restore();
+  if (P0 > 0){ for (let i = 0; i < 7; i++){ const x = G.x0 + 20 + i * (G.x1 - G.x0 - 40) / 6; L.arrow(ctx, x, G.top - 34, x, G.top - 4, { color: C.ink3, w: 1.6, head: 7 }); }
+    L.rich(ctx, `大気圧 $p$_0 ＝ ${fP(P0)}`, G.x1 + 8, G.top - 22, { size: 12, color: C.ink2 }); }
+  // fluid
+  const alpha = L.clamp(.18 + Math.log10(r / 700) * .25, .12, .7);
+  ctx.save(); ctx.fillStyle = S.fluid === 'hg' ? 'rgba(150,160,175,.55)' : S.fluid === 'oil' ? 'rgba(220,170,40,.30)' : C.water; ctx.globalAlpha = 1; ctx.fillRect(G.x0, G.top, G.x1 - G.x0, G.bot - G.top); ctx.restore();
+  L.line(ctx, G.x0, G.top - 30, G.x0, G.bot, C.ink2, 2); L.line(ctx, G.x1, G.top - 30, G.x1, G.bot, C.ink2, 2); L.line(ctx, G.x0, G.bot, G.x1, G.bot, C.ink2, 2);
+  L.line(ctx, G.x0, G.top, G.x1, G.top, C.ui, 1.2);
+  // depth scale
+  for (let m = 0; m <= HT; m++){ const y = G.top + m * G.ppm; L.line(ctx, G.x0 - 8, y, G.x0, y, C.ink3, 1); if (m % 2 === 0) L.rich(ctx, m + ' m', G.x0 - 11, y, { size: 10.5, align: 'right', color: C.ink3, num: true }); }
+  L.rich(ctx, FL[S.fluid][0] + `（ρ ＝ ${r} kg/m³）`, G.x0 + 8, G.bot - 12, { size: 12, color: C.ink2 });
+  const px = (G.x0 + G.x1) / 2 + 40, py = G.top + s.h * G.ppm, p = P0 + r * g * s.h;
+  const pmax = P0 + r * g * HT, Lp = v => 12 + 44 * v / pmax;
+  // column
+  if (s.column){
+    const cw = 44, cx0 = px - 110;
+    ctx.save(); ctx.fillStyle = C.hl2_a; ctx.fillRect(cx0 - cw / 2, G.top, cw, s.h * G.ppm); ctx.strokeStyle = C.hl2; ctx.setLineDash([4, 3]); ctx.strokeRect(cx0 - cw / 2, G.top, cw, s.h * G.ppm); ctx.restore();
+    L.rich(ctx, '液柱（断面積 $S$）', cx0, G.top + 14, { size: 11.5, align: 'center', color: C.hl2, bg: C.surface });
+    if (s.h > .3){
+      if (P0 > 0) L.arrow(ctx, cx0 - 12, G.top - 26, cx0 - 12, G.top, { color: C.ink2, w: 2.5, label: '$p$_0$S$', lside: 1, lpos: .2, lsize: 12 });
+      L.arrow(ctx, cx0 + 6, G.top + s.h * G.ppm / 2, cx0 + 6, G.top + s.h * G.ppm / 2 + 26, { color: C.Fg, w: 2.5, dot: true, label: '$ρShg$', lside: -1, lpos: .5, lsize: 12, ldist: 28 });
+      L.arrow(ctx, cx0, G.top + s.h * G.ppm + 30, cx0, G.top + s.h * G.ppm, { color: C.Fb, w: 2.5, label: '$pS$', lside: 1, lpos: 0, lsize: 12 });
+    }
+  }
+  // wall arrows (gauge)
+  if (s.wall){
+    const gm = r * g * HT;
+    for (let m = .5; m < HT; m += 1){ const y = G.top + m * G.ppm, l = 70 * (r * g * m) / gm; L.arrow(ctx, G.x1, y, G.x1 + l, y, { color: C.Fb, w: 2, head: 7 }); }
+    L.rich(ctx, '壁が受ける力（$ρgh$ の分）', G.x1 + 6, G.bot - 4, { size: 11, color: C.Fb });
+  }
+  // probe
+  for (let i = 0; i < 8; i++){ const a = i * Math.PI / 4, l = Lp(p), ex = px + Math.cos(a) * 9, ey = py + Math.sin(a) * 9;
+    L.arrow(ctx, ex + Math.cos(a) * l, ey + Math.sin(a) * l, ex, ey, { color: C.Fb, w: 2.2, head: 7 }); }
+  ctx.save(); ctx.fillStyle = C.surface; ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px, py, 8, 0, 7); ctx.fill(); ctx.stroke(); ctx.restore();
+  L.line(ctx, px + 70, G.top, px + 70, py, C.pos, 1.5); L.line(ctx, px + 64, py, px + 76, py, C.pos, 1.5);
+  L.rich(ctx, `$h$ ＝ ${L.f(s.h, 1)} m`, px + 78, (G.top + py) / 2, { size: 12.5, color: C.pos, bg: C.surface });
+  L.rich(ctx, 'ドラッグで深さを変える', px, Math.min(G.bot - 10, py + 64), { size: 11, color: C.ink3, align: 'center' });
+  ro && ro({ h: `${L.f(s.h, 2)} m`, g: fP(r * g * s.h), p: fP(p), a: `${L.f(p / 1.013e5, 2)} 気圧` });
+  badge('', '');
+  L.set('fx', eq(`$p$${OP('=')}$p$_0${OP('+')}$ρgh$`, `${fP(P0)} ＋ ${r}×9.8×${L.f(s.h,2)} ＝ ${fP(p)}`, '深さ $h$ での圧力（大気圧＋液柱の重さによる圧力）', true)
+    + eq(`$pS$${OP('=')}$p$_0$S$${OP('+')}$ρShg$`, '液柱にはたらく力のつりあい（両辺を S で割ると上の式）', '下面が押し上げる力＝上から押す力＋液柱の重さ')
+    + `<div class="explain"><div class="ttl">圧力はあらゆる向きに同じ大きさ</div>同じ深さなら、向きにも容器の形にもよらない。深さに比例して大きくなり、水なら約 10 m で1気圧分ふえる。密度の大きい流体（水銀）ほど深さによる変化が大きい。</div>`);
+}
+L.drag(cv.cv, {
+  hit(x, y){ if (mode !== 'pressure') return null; const G = tankGeom(), px = (G.x0 + G.x1) / 2 + 40, py = G.top + S.pressure.h * G.ppm; return Math.hypot(x - px, y - py) < 40 ? 'probe' : null; },
+  move(k, x, y){ const G = tankGeom(); S.pressure.h = L.clamp(Math.round((y - G.top) / G.ppm * 10) / 10, 0, HT); api && api.inputs.h && api.inputs.h.set(S.pressure.h); draw(); drawGraph(); }
+});
+
+/* ======================= 浮力 ======================= */
+const SA = .01, TD = .5; // 底面積 m², 水槽の深さ m
+const rhoObj = () => S.buoy.obj === 'custom' ? S.buoy.rhoO : OBJ[S.buoy.obj][1];
+function buoyCalc(){
+  const b = S.buoy, r = rho(), P0 = p0(b.atmB);
+  const h2 = b.d, h1 = b.d - b.Lh, hs = L.clamp(b.d, 0, b.Lh);
+  const p1 = P0 + r * g * Math.max(0, h1), p2 = P0 + r * g * Math.max(0, h2);
+  const F1 = p1 * SA, F2 = p2 * SA, Fb = F2 - F1, Wt = rhoObj() * SA * b.Lh * g, T = Wt - Fb;
+  return { r, P0, h1, h2, hs, p1, p2, F1, F2, Fb, Wt, T, V: SA * b.Lh, Vs: SA * hs };
+}
+function drawBuoy(){
+  const b = S.buoy, W = cv.w, H = cv.h, c = buoyCalc();
+  const top = 120, ppm = (H - top - 24) / TD, x0 = 30, x1 = W * .60, surf = top;
+  ctx.save(); ctx.fillStyle = C.air; ctx.fillRect(0, 0, W, surf); ctx.restore();
+  ctx.save(); ctx.fillStyle = S.fluid === 'hg' ? 'rgba(150,160,175,.55)' : S.fluid === 'oil' ? 'rgba(220,170,40,.30)' : C.water; ctx.fillRect(x0, surf, x1 - x0, TD * ppm); ctx.restore();
+  L.line(ctx, x0, surf - 40, x0, surf + TD * ppm, C.ink2, 2); L.line(ctx, x1, surf - 40, x1, surf + TD * ppm, C.ink2, 2); L.line(ctx, x0, surf + TD * ppm, x1, surf + TD * ppm, C.ink2, 2);
+  L.line(ctx, x0, surf, x1, surf, C.ui, 1.2);
+  L.rich(ctx, `${FL[S.fluid][0]}（ρ ＝ ${c.r} kg/m³）`, x0 + 8, surf + TD * ppm - 12, { size: 12, color: C.ink2 });
+  // object
+  const cx = (x0 + x1) / 2, bw = Math.sqrt(SA) * ppm, bh = b.Lh * ppm, yb = surf + b.d * ppm, yt = yb - bh;
+  // spring scale
+  const sy = 16, sh = 50;
+  ctx.save(); ctx.fillStyle = C.surface2; ctx.strokeStyle = C.ink3; ctx.lineWidth = 1.5; L.rrect(ctx, cx - 48, sy, 96, sh, 8); ctx.fill(); ctx.stroke(); ctx.restore();
+  L.rich(ctx, 'ばねばかり', cx, sy + 13, { size: 11, align: 'center', color: C.ink3 });
+  L.rich(ctx, c.T >= 0 ? `${L.f(c.T, 2)} N` : '糸がたるむ', cx, sy + 33, { size: 15, align: 'center', color: c.T >= 0 ? C.FT : C.ng, num: true, bold: true });
+  L.line(ctx, cx, sy + sh, cx, yt, c.T >= 0 ? C.ink2 : C.ink3, 1.5, c.T >= 0 ? null : [3, 3]);
+  L.block(ctx, cx, yt + bh / 2, bw, bh, 0, { fill: C.block, stroke: C.block2 });
+  // pressure force arrows: p0 part (faded) + ρgh part
+  const kN = 110 / Math.max(1, c.r * g * TD * SA), base = c.P0 > 0 ? 26 : 0;
+  const gauge1 = c.F1 - c.P0 * SA, gauge2 = c.F2 - c.P0 * SA;
+  const ax1 = cx - bw / 4, ax2 = cx + bw / 4;
+  // top (down)
+  if (base) L.arrow(ctx, ax1, yt - base - gauge1 * kN, ax1, yt - gauge1 * kN, { color: C.ghost, w: 3, head: 0.1 });
+  L.arrow(ctx, ax1, yt - (base + gauge1 * kN), ax1, yt, { color: C.Fx, w: 3, head: 9, label: `$F$_1 ${L.f(c.F1, 1)} N`, lside: 1, lpos: .1, ldist: 14, lsize: 12.5 });
+  // bottom (up)
+  if (base) L.arrow(ctx, ax2, yb + base + gauge2 * kN, ax2, yb + gauge2 * kN, { color: C.ghost, w: 3, head: .1 });
+  L.arrow(ctx, ax2, yb + base + gauge2 * kN, ax2, yb, { color: C.FN, w: 3, head: 9, label: `$F$_2 ${L.f(c.F2, 1)} N`, lside: -1, lpos: .1, ldist: 14, lsize: 12.5 });
+  if (base){ L.rich(ctx, '灰色：大気圧 $p$_0$S$ の分', x1 + 10, surf + TD * ppm - 12, { size: 11, color: C.ink3 }); }
+  // side arrows (cancel)
+  for (let i = 1; i <= 3; i++){
+    const y = yt + bh * i / 4, depth = (y - surf) / ppm; if (depth <= 0) continue;
+    const l = 4 + c.r * g * depth * SA * kN * .6;
+    L.arrow(ctx, cx - bw / 2 - l, y, cx - bw / 2, y, { color: C.Fb, w: 1.6, head: 6 });
+    L.arrow(ctx, cx + bw / 2 + l, y, cx + bw / 2, y, { color: C.Fb, w: 1.6, head: 6 });
+  }
+  // depth marks
+  L.line(ctx, x0 + 14, surf, x0 + 14, yb, C.pos, 1.2); L.line(ctx, x0 + 8, yb, cx - bw / 2 - 6, yb, C.pos, 1, [2, 3]);
+  L.rich(ctx, `$h$_2 ＝ ${L.f(Math.max(0, c.h2) * 100, 0)} cm`, x0 + 18, (surf + yb) / 2 + 10, { size: 12, color: C.pos, bg: C.surface });
+  if (c.h1 > 0){ L.line(ctx, x0 + 8, yt, cx - bw / 2 - 6, yt, C.pos, 1, [2, 3]); L.rich(ctx, `$h$_1 ＝ ${L.f(c.h1 * 100, 0)} cm`, x0 + 18, (surf + yt) / 2 - 6, { size: 12, color: C.pos, bg: C.surface }); }
+  // displaced fluid ghost
+  const gx0 = x1 + 34, gy = surf + 30;
+  if (c.Vs > 0){
+    const gh = c.hs * ppm;
+    ctx.save(); ctx.fillStyle = S.fluid === 'hg' ? 'rgba(150,160,175,.55)' : C.water2; ctx.strokeStyle = C.ui; ctx.setLineDash([4, 3]); ctx.fillRect(gx0, gy, bw, gh); ctx.strokeRect(gx0, gy, bw, gh); ctx.restore();
+    L.arrow(ctx, gx0 + bw / 2, gy + gh / 2, gx0 + bw / 2, gy + gh / 2 + c.Fb * kN * 1, { color: C.Fg, w: 2.5, dot: true });
+    const narrow = W < 520, tx = narrow ? gx0 - 4 : gx0 + bw + 6, ty = narrow ? gy + gh + 14 : gy + 8;
+    L.rich(ctx, '押しのけた', tx, ty, { size: 11.5, color: C.ink2 });
+    L.rich(ctx, `${FL[S.fluid][0]}の重さ`, tx, ty + 16, { size: 11.5, color: C.ink2 });
+    L.rich(ctx, `${L.f(c.Fb, 2)} N`, tx, ty + 32, { size: 11.5, color: C.Fg, num: true });
+  }
+  ro && ro({ W: `${L.f(c.Wt, 2)} N`, F: `${L.f(c.Fb, 2)} N`, T: c.T >= 0 ? `${L.f(c.T, 2)} N` : `${L.f(c.T, 2)} N`, V: `${L.f(c.Vs * 1e6, 0)} cm³` });
+  badge(c.T >= 0 ? '' : 'ng', c.T >= 0 ? '' : '浮力が重さより大きい（手で押し込む必要あり）');
+  const hs = c.hs;
+  L.set('fx',
+    eq(`$F$_1${OP('=')}($p$_0${OP('+')}$ρgh$_1)$S$`, c.h1 > 0 ? `(${fP(c.P0)} ＋ ${c.r}×9.8×${L.f(c.h1,3)}) × ${SA} ＝ ${L.f(c.F1,2)} N` : `上面は液面より上 → 大気圧だけ：${L.f(c.F1,2)} N`, '① 上面が下向きに押される力')
+    + eq(`$F$_2${OP('=')}($p$_0${OP('+')}$ρgh$_2)$S$`, `(${fP(c.P0)} ＋ ${c.r}×9.8×${L.f(Math.max(0,c.h2),3)}) × ${SA} ＝ ${L.f(c.F2,2)} N`, '② 下面が上向きに押される力（深いので大きい）')
+    + eq(`$F$${OP('=')}$F$_2${OP('−')}$F$_1${OP('=')}$ρ$($h$_2${OP('−')}$h$_1)$Sg$${OP('=')}$ρVg$`, `${c.r}×${L.f(hs,3)}×${SA}×9.8 ＝ ${L.f(c.Fb,2)} N`, '③ 側面の力は左右でうち消しあう。差し引き上向きの力＝浮力。$p$_0 も消える', true)
+    + eq(`$T$${OP('=')}$W$${OP('−')}$F$`, `${L.f(c.Wt,2)} − ${L.f(c.Fb,2)} ＝ ${L.f(c.T,2)} N`, 'ばねばかりの値（物体のつりあい）')
+    + `<div class="explain"><div class="ttl">アルキメデスの原理</div>浮力の大きさ ${L.h('$ρVg$')} は「物体が押しのけた流体の重さ」に等しい。全部しずむと、深さを変えても ${L.h('$h$_2−$h$_1')} は一定なので浮力は変わらない。浮力は物体の密度にはよらない（流体の密度と体積で決まる）。</div>`);
+}
+
+/* ======================= パスカル ======================= */
+function pascalCalc(){ const s = S.pascal, dp = s.F1 / (s.S1 * 1e-4), F2 = dp * s.S2 * 1e-4, Wl = s.M * g; return { dp, F2, Wl, ratio: s.S2 / s.S1, need: Wl * s.S1 / s.S2 }; }
+const ZMAX = .25; // m (large piston travel range shown)
+const loopP = L.loop(dt => {
+  const s = S.pascal, c = pascalCalc();
+  const diff = c.F2 - c.Wl;
+  if (Math.abs(diff) < c.Wl * .005 + .01) return false;
+  const dir = Math.sign(diff), z1 = s.z * s.S2 / s.S1;
+  const nz = s.z + dir * .25 * s.S1 / s.S2 * dt;
+  if (nz < 0 || nz * s.S2 / s.S1 > .9 || nz > ZMAX){ draw(); drawGraph(); return false; }
+  s.z = nz; draw(); drawGraph();
+});
+function drawPascal(){
+  const s = S.pascal, W = cv.w, H = cv.h, c = pascalCalc();
+  const yb = H - 40, h0 = H * .48;                // fluid baseline level
+  const w1 = L.clamp(Math.sqrt(s.S1) * 9, 16, 80), w2 = L.clamp(Math.sqrt(s.S2) * 9, 60, W * .42);
+  const x1 = W * .20, x2 = W * .64;
+  const ppm1 = 220, d1 = s.z * s.S2 / s.S1;   // small piston descends d1 (m)
+  const yp1 = h0 - 60 + d1 * ppm1, yp2 = h0 - 60 - s.z * ppm1;
+  // container
+  const intensity = L.clamp(c.dp / 4e6, 0, 1);
+  const fill = `rgba(220,170,40,${(.22 + intensity * .4).toFixed(2)})`;
+  ctx.save(); ctx.fillStyle = fill;
+  ctx.fillRect(x1 - w1 / 2, yp1, w1, yb - yp1);
+  ctx.fillRect(x2 - w2 / 2, yp2, w2, yb - yp2);
+  ctx.fillRect(x1 - w1 / 2, yb - 40, x2 - x1 + (w1 + w2) / 2, 40);
+  ctx.restore();
+  ctx.save(); ctx.strokeStyle = C.ink2; ctx.lineWidth = 2; ctx.beginPath();
+  ctx.moveTo(x1 - w1 / 2, 40); ctx.lineTo(x1 - w1 / 2, yb); ctx.lineTo(x2 + w2 / 2, yb); ctx.lineTo(x2 + w2 / 2, 40);
+  ctx.moveTo(x1 + w1 / 2, 40); ctx.lineTo(x1 + w1 / 2, yb - 40); ctx.lineTo(x2 - w2 / 2, yb - 40); ctx.lineTo(x2 - w2 / 2, 40); ctx.stroke(); ctx.restore();
+  // pistons
+  L.block(ctx, x1, yp1 - 8, w1 - 2, 16, 0, { fill: C.block2, stroke: C.ink2 });
+  L.block(ctx, x2, yp2 - 10, w2 - 2, 20, 0, { fill: C.block2, stroke: C.ink2 });
+  // load (car-like box)
+  const lw = Math.min(w2 * .8, 140), lh = 30 + Math.min(40, s.M / 15);
+  L.block(ctx, x2, yp2 - 20 - lh / 2, lw, lh, 0, { fill: C.ui_soft, stroke: C.ui, text: `${s.M} kg` });
+  // forces
+  L.arrow(ctx, x1, yp1 - 16 - 70, x1, yp1 - 16, { color: C.FT, w: 3.5, label: `$F$_1 ＝ ${L.f(s.F1, 0)} N`, lside: 1, lpos: .2, lsize: 13 });
+  const Lf2 = L.clamp(70 * c.F2 / Math.max(c.F2, c.Wl), 10, 70), Lw = L.clamp(70 * c.Wl / Math.max(c.F2, c.Wl), 10, 70);
+  L.arrow(ctx, x2 - lw / 2 - 18, yp2, x2 - lw / 2 - 18, yp2 - Lf2, { color: C.FN, w: 3.5, dot: true, label: `$F$_2 ＝ ${sci(c.F2, 2)} N`, lside: 1, lpos: 1, lsize: 13 });
+  L.arrow(ctx, x2 + lw / 2 + 18, yp2 - 20 - lh / 2, x2 + lw / 2 + 18, yp2 - 20 - lh / 2 + Lw, { color: C.Fg, w: 3.5, dot: true, label: `$Mg$ ＝ ${sci(c.Wl, 2)} N`, lside: 1, lpos: 1, lsize: 13 });
+  L.rich(ctx, `$S$_1 ＝ ${s.S1} cm²`, x1, yb + 16, { size: 12, align: 'center', color: C.ink2 });
+  L.rich(ctx, `$S$_2 ＝ ${s.S2} cm²`, x2, yb + 16, { size: 12, align: 'center', color: C.ink2 });
+  // gauges (pressure increase)
+  const pts = [[x1, (yp1 + yb) / 2 + 10], [(x1 + x2) / 2, yb - 20], [x2, (yp2 + yb) / 2]];
+  pts.forEach(([x, y], i) => { L.dot(ctx, x, y, 4, C.ink); L.rich(ctx, `${'ABC'[i]}：＋${sci(c.dp, 2)} Pa`, x + 8, y - 12, { size: 11.5, color: C.ink, bg: C.surface }); });
+  const diff = c.F2 - c.Wl;
+  badge(Math.abs(diff) < c.Wl * .005 + .01 ? 'ok' : diff > 0 ? 'ok' : 'ng', Math.abs(diff) < c.Wl * .005 + .01 ? 'つりあっている' : diff > 0 ? 'おもりが持ち上がる' : '力が足りない（おもりが下がる）');
+  ro && ro({ dp: `${sci(c.dp, 2)} Pa`, F2: `${sci(c.F2, 3)} N`, r: `${L.f(c.ratio, 0)} 倍`, need: `${sci(c.need, 3)} N` });
+  L.set('fx', eq(`$Δp$${OP('=')}$F$_1 / $S$_1`, `${s.F1} N ÷ ${L.f(s.S1 * 1e-4, 4)} m² ＝ ${sci(c.dp, 3)} Pa`, '小さいピストンで加えた圧力の増加', true)
+    + eq(`$F$_2${OP('=')}$Δp$$S$_2${OP('=')}$F$_1 × $S$_2 / $S$_1`, `${sci(c.dp, 3)} × ${L.f(s.S2 * 1e-4, 4)} ＝ ${sci(c.F2, 3)} N（${L.f(c.ratio,0)} 倍）`, 'パスカルの原理：圧力の増加は流体のどこにも同じだけ伝わる', true)
+    + eq(`$F$_1$d$_1${OP('=')}$F$_2$d$_2`, `大きいピストンを ${L.f(s.z * 100, 1)} cm 上げるのに、小さいピストンを ${L.f(s.z * s.S2 / s.S1 * 100, 0)} cm 押し下げる`, '押しのける体積が等しい（$S$_1$d$_1 ＝ $S$_2$d$_2）→ 力は得をしても仕事は得をしない')
+    + `<div class="explain"><div class="ttl">油圧ジャッキ・ブレーキのしくみ</div>小さな力で重い物を持ち上げられる。ただし、その分だけ長い距離を押す必要がある。</div>`);
+}
+
+/* ======================= common ======================= */
+function draw(){ cv.clear(); if (mode === 'pressure') drawPressure(); else if (mode === 'buoy') drawBuoy(); else drawPascal(); }
+function drawGraph(){
+  gv.clear();
+  if (mode === 'pressure'){
+    const r = rho(), P0 = p0(), ymax = (P0 + Math.max(r, 1000) * g * HT) / 1e5 * 1.1;
+    const P = L.plot(gx, gv.w, gv.h, { x0: 0, x1: HT, y0: 0, y1: ymax, xl: '深さ $h$ [m]', yl: '圧力 $p$ [×10⁵ Pa]', xs: 2 });
+    P.clip();
+    if (S.fluid !== 'water') L.fn(gx, P, h => (P0 + 1000 * g * h) / 1e5, 0, HT, C.ghost, 1.4, [5, 4]);
+    L.fn(gx, P, h => (P0 + r * g * h) / 1e5, 0, HT, C.Fb, 2.6);
+    if (P0 > 0) L.line(gx, P.X(0), P.Y(P0 / 1e5), P.X(HT), P.Y(P0 / 1e5), C.ink3, 1, [2, 3]);
+    const h = S.pressure.h; L.dot(gx, P.X(h), P.Y((P0 + r * g * h) / 1e5), 5.5, C.Fb, true);
+    P.unclip();
+    L.set('gt', L.h('$p$-$h$ グラフ'));
+    L.set('gm', `直線の傾き＝ρg、切片＝大気圧 $p$_0`.replace(/\$p\$_0/, L.h('$p$_0')));
+    L.set('gf', `<div class="legend"><span><i class="sw" style="--c:${C.Fb}"></i>${FL[S.fluid][0]}</span>${S.fluid !== 'water' ? `<span><i class="sw" style="--c:${C.ghost}"></i>水（比較）</span>` : ''}${P0 ? '<span>点線：大気圧</span>' : ''}</div>`);
+  } else if (mode === 'buoy'){
+    const b = S.buoy, r = rho(), Wt = rhoObj() * SA * b.Lh * g, Fmax = r * g * SA * b.Lh;
+    const ymax = Math.max(Wt, Fmax) * 1.2, ymin = Math.min(0, Wt - Fmax) * 1.2;
+    const P = L.plot(gx, gv.w, gv.h, { x0: 0, x1: TD, y0: ymin, y1: ymax, xl: '下面の深さ $h$_2 [m]', yl: '力 [N]', xs: .1 });
+    P.clip();
+    const Fb = d => r * g * SA * L.clamp(d, 0, b.Lh);
+    L.line(gx, P.X(b.Lh), P.Y(ymin), P.X(b.Lh), P.Y(ymax), C.ink3, 1, [2, 3]);
+    L.rich(gx, '全部しずむ', P.X(b.Lh) + 4, P.Y(ymax) + 12, { size: 11, color: C.ink3 });
+    L.fn(gx, P, d => Wt, 0, TD, C.Fg, 1.6, [5, 4]);
+    L.fn(gx, P, Fb, 0, TD, C.FN, 2.6);
+    L.fn(gx, P, d => Wt - Fb(d), 0, TD, C.FT, 2.2);
+    const c = buoyCalc(); L.dot(gx, P.X(b.d), P.Y(c.Fb), 5, C.FN, true); L.dot(gx, P.X(b.d), P.Y(c.T), 5, C.FT, true);
+    P.unclip();
+    L.set('gt', '浮力・ばねばかりの値 と 深さ');
+    L.set('gm', '全部しずむまでは深さに比例して浮力が増え、しずんだ後は一定');
+    L.set('gf', `<div class="legend"><span><i class="sw" style="--c:${C.FN}"></i>浮力 ${L.h('$F$')}</span><span><i class="sw" style="--c:${C.FT}"></i>ばねばかり ${L.h('$T$')}</span><span><i class="sw" style="--c:${C.Fg}"></i>重さ ${L.h('$W$')}</span></div>`);
+  } else {
+    const s = S.pascal, c = pascalCalc(), Fx = 200;
+    const ymax = Math.max(c.Wl * 1.4, Fx * c.ratio * .5);
+    const P = L.plot(gx, gv.w, gv.h, { x0: 0, x1: Fx, y0: 0, y1: ymax, xl: '$F$_1 [N]', yl: '$F$_2 [N]', pad: { l: 64 } });
+    P.clip();
+    L.fn(gx, P, F => F * c.ratio, 0, Fx, C.FN, 2.4);
+    L.line(gx, P.X(0), P.Y(c.Wl), P.X(Fx), P.Y(c.Wl), C.Fg, 1.4, [5, 4]);
+    L.rich(gx, `おもりの重さ $Mg$`, P.X(Fx) - 6, P.Y(c.Wl) - 11, { size: 11.5, color: C.Fg, align: 'right', bg: C.surface });
+    L.dot(gx, P.X(s.F1), P.Y(c.F2), 5.5, C.FN, true);
+    P.unclip();
+    L.set('gt', L.h('$F$_2-$F$_1 グラフ'));
+    L.set('gm', `傾き＝$S$_2/$S$_1 ＝ ${L.f(c.ratio, 0)}。破線より上なら持ち上がる`.replace(/\$S\$_(\d)/g, (m, d) => L.h('$S$_' + d)));
+    L.set('gf', '');
+  }
+}
+function fluidDefs(withAtm = true, atmKey = 'atm'){
+  const d = [{ t: 'seg', k: 'fluid', lab: '流体', opts: Object.entries(FL).map(([k, v]) => [k, v[1] ? `${v[0]}` : v[0]]), wide: true }];
+  if (S.fluid === 'custom') d.push({ k: 'rhoC', lab: '流体の密度 $ρ$', min: 100, max: 15000, step: 50, unit: 'kg/m³', d: 0 });
+  if (withAtm) d.push({ t: 'seg', k: atmKey, lab: '大気圧 $p$_0', opts: Object.entries(ATM).map(([k, v]) => [k, v[1] ? `${v[0]}（${sci(v[1], 3)} Pa）` : v[0]]) });
+  return d;
+}
+function build(){
+  const tp = document.getElementById('tp');
+  document.getElementById('stageT').textContent = { pressure: '液体中の圧力', buoy: '液体中の物体が受ける力', pascal: '油圧ジャッキ（密閉した液体）' }[mode];
+  tp.innerHTML = '';
+  let defs;
+  const onCh = (k) => { if (k === 'fluid' || k === 'obj') build(); if (mode === 'pascal'){ loopP.start(); } draw(); drawGraph(); };
+  if (mode === 'pressure'){
+    ro = L.readout('ro', [{ k: 'h', lab: '深さ $h$', c: 'pos' }, { k: 'g', lab: '$ρgh$（液体による分）' }, { k: 'p', lab: '圧力 $p$', c: 'Fb' }, { k: 'a', lab: '（気圧で表すと）' }]);
+    defs = [{ k: 'h', lab: '深さ $h$', min: 0, max: HT, step: .1, unit: 'm' }, ...fluidDefs(), { t: 'check', k: 'column', lab: '液柱で考える' }, { t: 'check', k: 'wall', lab: '壁が受ける力を表示' }];
+    api = L.params('prm', defs, new Proxy(S, { get: (o, k) => k in o.pressure ? o.pressure[k] : o[k], set: (o, k, v) => { if (k in o.pressure) o.pressure[k] = v; else o[k] = v; return true; } }), onCh);
+    document.getElementById('foot').innerHTML = '圧力の単位 1 Pa ＝ 1 N/m²。1気圧 ＝ 1.013×10⁵ Pa。重力加速度 <i class="s">g</i> ＝ 9.8 m/s²。密度は代表的な値（温度などで変わる）。';
+  } else if (mode === 'buoy'){
+    ro = L.readout('ro', [{ k: 'W', lab: '物体の重さ $W$', c: 'Fg' }, { k: 'F', lab: '浮力 $F$', c: 'FN' }, { k: 'T', lab: 'ばねばかり $T$', c: 'FT' }, { k: 'V', lab: '液中の体積' }]);
+    defs = [{ k: 'd', lab: '下面の深さ $h$_2', min: 0, max: .48, step: .01, unit: 'm', d: 2 }, { k: 'Lh', lab: '物体の高さ（底面 10 cm × 10 cm）', min: .05, max: .3, step: .01, unit: 'm', d: 2 },
+      { t: 'seg', k: 'obj', lab: '物体の材質', opts: Object.entries(OBJ).map(([k, v]) => [k, v[1] ? `${v[0]}（${v[1]}）` : v[0]]) }];
+    if (S.buoy.obj === 'custom') defs.push({ k: 'rhoO', lab: '物体の密度', min: 100, max: 12000, step: 100, unit: 'kg/m³', d: 0 });
+    defs.push(...fluidDefs(true, 'atmB'));
+    api = L.params('prm', defs, new Proxy(S, { get: (o, k) => k in o.buoy ? o.buoy[k] : o[k], set: (o, k, v) => { if (k in o.buoy) o.buoy[k] = v; else o[k] = v; return true; } }), onCh);
+    document.getElementById('foot').innerHTML = '物体の底面積は 1.0×10⁻² m²（10 cm × 10 cm）。大気圧を入れても、上面と下面で同じだけ加わるので浮力は変わらない。重力加速度 <i class="s">g</i> ＝ 9.8 m/s²。';
+  } else {
+    tp.innerHTML = '<button class="btn" id="bRz" type="button">ピストンの位置をもどす</button>';
+    document.getElementById('bRz').onclick = () => { loopP.stop(); S.pascal.z = 0; draw(); drawGraph(); };
+    ro = L.readout('ro', [{ k: 'dp', lab: '圧力の増加 $Δp$', c: 'Fb' }, { k: 'F2', lab: '大きいピストンが受ける力', c: 'FN' }, { k: 'r', lab: '$S$_2/$S$_1' }, { k: 'need', lab: '持ち上げに必要な $F$_1', c: 'FT' }]);
+    defs = [{ k: 'F1', lab: '小さいピストンを押す力 $F$_1', min: 0, max: 200, step: 1, unit: 'N', d: 0 }, { k: 'M', lab: 'のせた物体の質量 $M$', min: 10, max: 2000, step: 10, unit: 'kg', d: 0 },
+      { k: 'S1', lab: '小さいピストンの断面積 $S$_1', min: 1, max: 50, step: 1, unit: 'cm²', d: 0 }, { k: 'S2', lab: '大きいピストンの断面積 $S$_2', min: 50, max: 2000, step: 10, unit: 'cm²', d: 0 }];
+    api = L.params('prm', defs, S.pascal, onCh);
+    document.getElementById('foot').innerHTML = 'A・B・C の数字は、F₁ を加えたことによる圧力の増加。ピストンの重さ・摩擦、2つのピストンの高さの差による圧力の差は無視しています。重力加速度 <i class="s">g</i> ＝ 9.8 m/s²。';
+    loopP.start();
+  }
+}
+L.tabs('tabs', m => { loopP.stop(); mode = m; build(); draw(); drawGraph(); });
+</script>
+</body>
+</html>

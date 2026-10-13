@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>フックの法則</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic&family=BIZ+UDPGothic:wght@400;700&display=swap">
+<link rel="stylesheet" href="lab.css">
+<script src="lab.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="hd">
+      <nav class="nav" id="nav" aria-label="力学ラボ"></nav>
+      <h1>フックの法則<small>物理基礎・いろいろな力（弾性力）</small></h1>
+    </div>
+    <div class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-mode="hang" type="button">おもりをつるす</button>
+      <button class="tab" role="tab" data-mode="pull" type="button">手で引く・押す</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="colL">
+      <section class="panel stage">
+        <h2 id="stageT">実験台</h2>
+        <canvas id="cv"></canvas>
+        <div class="transport" id="tp">
+          <button class="btn primary" id="bRec" type="button">測定値を記録</button>
+          <button class="btn" id="bKeep" type="button">このばねを残して比較</button>
+          <button class="btn" id="bClr" type="button">記録を消す</button>
+        </div>
+        <div class="readout" id="ro"></div>
+      </section>
+    </div>
+    <div class="colR">
+      <section class="gcard">
+        <div class="ghead"><span class="gt" id="gt"></span><span class="meaning" id="gm"></span></div>
+        <canvas id="gv"></canvas>
+        <div class="gfoot" id="gf"></div>
+      </section>
+      <section class="panel"><h2>式で確かめる</h2><div class="body fx" id="fx"></div></section>
+    </div>
+  </div>
+  <section class="panel below"><h2>条件を変える</h2><div class="body" id="prm"></div></section>
+  <p class="foot">ばねの質量は無視しています。おもりは1個 50 g、重力加速度 <i class="s">g</i> ＝ 9.8 m/s²。つるした直後の振動は、見やすくするため少しずつ小さくなるようにしています。</p>
+</div>
+
+<script>
+'use strict';
+const C = L.C, g = L.g;
+const cv = L.canvas(document.getElementById('cv'), () => draw());
+const gv = L.canvas(document.getElementById('gv'), () => drawGraph());
+const ctx = cv.ctx, gx = gv.ctx;
+let mode = 'hang';
+const S = {
+  hang: { k: 20, n: 4, hide: false, x: 0, v: 0, rec: [], ghosts: [] },
+  pull: { k: 20, F: 3, x: 0, rec: [], ghosts: [] }
+};
+const L0 = 0.15, L0p = 0.40; // 自然の長さ [m]
+let ro;
+const GCOL = ['#8a96a3', '#b58b00', '#2f9e8f', '#9a5bd1'];
+
+function target(){ const s = S[mode]; return mode === 'hang' ? s.n * 0.05 * g / s.k : s.F / s.k; }
+
+const loop = L.loop(dt => {
+  const s = S[mode];
+  if (mode === 'hang'){
+    const m = s.n * 0.05;
+    if (m === 0){ s.x += (0 - s.x) * Math.min(1, dt * 8); s.v = 0; }
+    else {
+      const w = Math.sqrt(s.k / m), c = 2 * .12 * w;
+      const nsub = 20, h = dt / nsub;
+      for (let i = 0; i < nsub; i++){ const a = g - (s.k / m) * s.x - c * s.v; s.v += a * h; s.x += s.v * h; }
+    }
+    if (Math.abs(s.x - target()) < 2e-4 && Math.abs(s.v) < 2e-3){ s.x = target(); s.v = 0; draw(); drawGraph(); return false; }
+  } else {
+    s.x += (target() - s.x) * Math.min(1, dt * 7);
+    if (Math.abs(s.x - target()) < 1e-4){ s.x = target(); draw(); drawGraph(); return false; }
+  }
+  draw(); drawGraph();
+});
+
+function draw(){
+  cv.clear();
+  const s = S[mode], W = cv.w, H = cv.h;
+  if (mode === 'hang'){
+    const top = 30, sc = (H - top - 90) / (L0 + 0.5);  // px per m
+    const cx = W * .42;
+    L.line(ctx, cx - 120, top, cx + 120, top, C.ground, 2); L.hatchSeg(ctx, cx - 120, top, cx + 120, top);
+    const yEnd = top + (L0 + s.x) * sc;
+    L.spring(ctx, cx, top, cx, yEnd, { coils: 14, width: 13, color: C.ink2 });
+    // natural length mark
+    const yN = top + L0 * sc;
+    L.line(ctx, cx - 90, yN, cx + 150, yN, C.ink3, 1, [4, 4]);
+    L.rich(ctx, '自然の長さ', cx - 94, yN, { size: 12, align: 'right', color: C.ink3 });
+    // ruler
+    const rx = cx + 120;
+    L.line(ctx, rx, top, rx, H - 20, C.ink3, 1);
+    for (let i = 0; i <= 70; i++){ const y = top + i * 0.01 * sc; if (y > H - 20) break; const big = i % 10 === 0; L.line(ctx, rx, y, rx + (big ? 12 : i % 5 === 0 ? 8 : 4), y, C.ink3, 1);
+      if (big) L.rich(ctx, (i * 1) + '', rx + 15, y, { size: 10.5, color: C.ink3, num: true }); }
+    L.rich(ctx, '[cm]', rx + 15, top - 12, { size: 10.5, color: C.ink3 });
+    // extension bracket
+    if (s.x > 0.004){
+      const bx = cx + 60;
+      L.line(ctx, bx, yN, bx, yEnd, C.pos, 2);
+      L.line(ctx, bx - 5, yN, bx + 5, yN, C.pos, 2); L.line(ctx, bx - 5, yEnd, bx + 5, yEnd, C.pos, 2);
+      L.rich(ctx, `伸び $x$ ＝ ${L.f(s.x * 100, 1)} cm`, bx + 10, (yN + yEnd) / 2, { size: 13, color: C.pos, bg: C.surface });
+    }
+    // hook + weights
+    const n = s.n, wh = 14, ww = 44;
+    L.line(ctx, cx, yEnd, cx, yEnd + 8, C.ink2, 2);
+    for (let i = 0; i < n; i++){
+      const y = yEnd + 8 + i * wh;
+      ctx.save(); ctx.fillStyle = C.block; ctx.strokeStyle = C.block2; ctx.lineWidth = 1.2; L.rrect(ctx, cx - ww / 2, y, ww, wh - 1, 3); ctx.fill(); ctx.stroke(); ctx.restore();
+    }
+    if (n > 0){
+      const yc = yEnd + 8 + n * wh / 2, m = n * 0.05, scF = Math.min(30, H / 15);
+      L.arrow(ctx, cx, yc, cx, yc + m * g * scF, { color: C.Fg, w: 3.5, dot: true, label: '$mg$', lside: 1 });
+      L.line(ctx, cx, yEnd + 8, cx + 24, yEnd + 8, C.Fk, 1, [2, 2]);
+      L.arrow(ctx, cx + 24, yEnd + 8, cx + 24, yEnd + 8 - s.k * s.x * scF, { color: C.Fk, w: 3.5, dot: true, label: '弾性力 $kx$', lside: -1, lpos: .6, ldist: 34 });
+      L.rich(ctx, `${n}個（${L.f(m * 1000, 0)} g）`, cx - ww / 2 - 10, yEnd + 8 + n * wh / 2, { size: 12, align: 'right', color: C.ink2 });
+    }
+    if (s.hide) L.rich(ctx, 'ばね定数は？', 16, H - 16, { size: 13, color: C.ink3 });
+    ro && ro({ k: s.hide ? '？' : `${s.k} N/m`, m: `${L.f(s.n * 50, 0)} g`, x: `${L.f(s.x * 100, 1)} cm`, F: `${L.f(s.k * s.x, 2)} N` });
+  } else {
+    const yc = H * .46, wallX = 30, sc = (W - 110) / (L0p + 0.6);  // px per m
+    const x0 = wallX, xN = wallX + L0p * sc, xE = xN + s.x * sc;
+    L.line(ctx, wallX, yc - 70, wallX, yc + 70, C.ground, 2); L.hatchSeg(ctx, wallX, yc - 70, wallX, yc + 70);
+    L.line(ctx, xN, yc - 60, xN, yc + 90, C.ink3, 1, [4, 4]);
+    L.rich(ctx, '自然の長さ', xN, yc - 70, { size: 12, align: 'center', color: C.ink3 });
+    L.spring(ctx, x0, yc, xE, yc, { coils: 14, width: 13, color: C.Fk });
+    // hand (grip)
+    ctx.save(); ctx.fillStyle = C.surface2; ctx.strokeStyle = C.ink3; ctx.lineWidth = 1.5; L.rrect(ctx, xE, yc - 16, 46, 32, 12); ctx.fill(); ctx.stroke();
+    L.rich(ctx, '手', xE + 23, yc, { size: 12, align: 'center', color: C.ink2 }); ctx.restore();
+    const scF = 22, dir = Math.sign(s.F);
+    if (Math.abs(s.F) > 0.05){
+      L.arrow(ctx, xE, yc - 44, xE + s.F * scF, yc - 44, { color: C.FT, w: 3.5, dot: true, label: s.F > 0 ? '手がばねを引く力 $F$' : '手がばねを押す力 $F$', lside: -dir, lpos: .5, lsize: 13, ldist: 16 });
+      L.arrow(ctx, xE, yc + 44, xE - s.k * s.x * scF, yc + 44, { color: C.Fk, w: 3.5, dot: true, label: 'ばねが手に及ぼす力（弾性力）', lside: -dir, lpos: .5, lsize: 13, ldist: 16 });
+      L.line(ctx, xE, yc - 44, xE, yc + 44, C.ink3, 1, [2, 3]);
+    }
+    if (Math.abs(s.x) > 0.003){
+      const by = yc + 100;
+      L.line(ctx, xN, by, xE, by, C.pos, 2); L.line(ctx, xN, by - 5, xN, by + 5, C.pos, 2); L.line(ctx, xE, by - 5, xE, by + 5, C.pos, 2);
+      L.rich(ctx, `${s.x > 0 ? '伸び' : '縮み'} ${L.f(Math.abs(s.x) * 100, 1)} cm`, (xN + xE) / 2, by + 16, { size: 13, color: C.pos, align: 'center' });
+    }
+    ro && ro({ k: `${s.k} N/m`, m: `${L.f(s.F, 1)} N`, x: `${L.f(s.x * 100, 1)} cm`, F: `${L.f(-s.k * s.x, 2)} N` });
+  }
+  equations();
+}
+
+function drawGraph(){
+  gv.clear();
+  const s = S[mode], hang = mode === 'hang';
+  const xm = hang ? 50 : 60, Fm = hang ? 5 : 6;
+  const P = L.plot(gx, gv.w, gv.h, { x0: hang ? 0 : -30, x1: xm, y0: hang ? 0 : -3, y1: Fm, xl: hang ? '伸び $x$ [cm]' : '伸び $x$ [cm]（負は縮み）', yl: hang ? '弾性力の大きさ $F$ [N]' : '手が加える力 $F$ [N]', xs: 10, ys: 1 });
+  P.clip();
+  s.ghosts.forEach((gk, i) => { if (!s.hide) L.fn(gx, P, x => gk * x / 100, -xm, xm, GCOL[i % 4], 1.5, [5, 4]); });
+  if (!(hang && s.hide)) L.fn(gx, P, x => s.k * x / 100, -xm, xm, C.Fk, 2.2);
+  s.rec.forEach(p => { gx.save(); gx.strokeStyle = C.ink; gx.lineWidth = 1.6; const x = P.X(p[0] * 100), y = P.Y(p[1]);
+    gx.beginPath(); gx.moveTo(x - 4, y - 4); gx.lineTo(x + 4, y + 4); gx.moveTo(x + 4, y - 4); gx.lineTo(x - 4, y + 4); gx.stroke(); gx.restore(); });
+  const Fnow = hang ? s.k * s.x : s.k * s.x;
+  L.dot(gx, P.X(s.x * 100), P.Y(Fnow), 5.5, C.Fk, true);
+  P.unclip();
+  L.set('gt', L.h('$F$-$x$ グラフ'));
+  L.set('gm', hang && s.hide ? '記録した点（×）を結ぶ直線の傾きからばね定数を求めよう' : '原点を通る直線（比例）。傾き＝ばね定数 ' + L.h('$k$'));
+  const g2 = s.ghosts.length ? `<span>点線：比較のために残したばね（${s.hide ? '値はかくしています' : s.ghosts.map(v => v + ' N/m').join('、')}）</span>` : '';
+  L.set('gf', `<span>記録した点：${s.rec.length} 個</span>${g2}`);
+}
+
+function equations(){
+  const s = S[mode];
+  let h = '';
+  if (mode === 'hang'){
+    const m = s.n * 0.05, xe = target();
+    h += eq('$F$ <span class="op">=</span> $kx$', s.hide ? `F ＝ k × ${L.f(s.x,3)} m` : `${L.f(s.k * s.x, 2)} N ＝ ${s.k} N/m × ${L.f(s.x, 3)} m`, 'フックの法則：弾性力の大きさは伸び（縮み）に比例');
+    h += eq('$kx$ <span class="op">=</span> $mg$ <span class="jp">（つりあい）</span>', `${s.hide ? 'k' : s.k} × ${L.f(xe, 3)} ＝ ${L.f(m, 2)} × 9.8 ＝ ${L.f(m * g, 2)} N`, '静止したとき、弾性力と重力がつりあう');
+    h += `<div class="explain"><div class="ttl">注意：$x$ は「ばねの長さ」ではなく「伸び」</div>伸び＝（そのときの長さ）−（自然の長さ）。おもりを2倍にすると伸びも2倍。ばね定数が大きい（かたい）ばねほど伸びにくい。単位 N/m は「1 m 伸ばすのに必要な力」。</div>`;
+  } else {
+    h += eq('$F$ <span class="op">=</span> $kx$', `${L.f(s.F, 1)} N ＝ ${s.k} N/m × (${L.f(target(), 3)} m)`, '縮めるとき（F＜0）は x も負。弾性力はいつも「自然の長さにもどる向き」');
+    h += `<div class="explain"><div class="ttl">2つの力の関係</div>手がばねを引く力と、ばねが手を引く力（弾性力）は、向きが反対で大きさが等しい（作用・反作用）。弾性力はばねの両端で、ばねにふれている物体に「自然の長さにもどる向き」にはたらく。</div>`;
+  }
+  L.set('fx', h.replace(/\$x\$/g, '<i class="s">x</i>'));
+}
+function eq(main, sub, tag){
+  return `<div class="eq"><div class="main">${L.h(main)}</div>${sub ? `<div class="subst">${sub}</div>` : ''}${tag ? `<div class="tag">${L.h(tag)}</div>` : ''}</div>`;
+}
+
+function build(){
+  const s = S[mode];
+  document.getElementById('stageT').textContent = mode === 'hang' ? 'ばねにおもりをつるす' : 'ばねを手で引く・押す';
+  ro = L.readout('ro', [
+    { k: 'k', lab: 'ばね定数 $k$' },
+    { k: 'm', lab: mode === 'hang' ? 'おもりの質量' : '手が加える力 $F$', c: mode === 'hang' ? 'Fg' : 'FT' },
+    { k: 'x', lab: mode === 'hang' ? '伸び $x$' : '伸び $x$（負は縮み）', c: 'pos' },
+    { k: 'F', lab: mode === 'hang' ? '弾性力 $kx$' : '弾性力（右向き正）', c: 'Fk' }]);
+  const defs = [{ k: 'k', lab: 'ばね定数 $k$', min: 10, max: 80, step: 1, unit: 'N/m', d: 0, hint: '大きいほど「かたい」ばね' }];
+  if (mode === 'hang'){
+    defs.push({ k: 'n', lab: 'おもりの数（1個 50 g）', min: 0, max: 10, step: 1, unit: '個', d: 0 });
+    defs.push({ t: 'check', k: 'hide', lab: 'ばね定数をかくす（測定して求める）', hint: 'おもりを変えて「測定値を記録」→ グラフの傾きから k を求めよう' });
+  } else {
+    defs.push({ k: 'F', lab: '手が加える力 $F$（右向き正）', min: -3, max: 6, step: .2, unit: 'N', hint: '負にすると押して縮める' });
+  }
+  L.params('prm', defs, s, (k) => { if (k === 'hide'){ drawGraph(); draw(); return; } s.v = s.v || 0; loop.start(); });
+}
+document.getElementById('bRec').onclick = () => {
+  const s = S[mode]; const xe = target();
+  s.rec.push([xe, mode === 'hang' ? s.k * xe : s.F]); drawGraph();
+};
+document.getElementById('bKeep').onclick = () => { const s = S[mode]; if (!s.ghosts.includes(s.k)) s.ghosts.push(s.k); if (s.ghosts.length > 4) s.ghosts.shift(); drawGraph(); };
+document.getElementById('bClr').onclick = () => { const s = S[mode]; s.rec = []; s.ghosts = []; drawGraph(); };
+
+L.tabs('tabs', m => { mode = m; build(); loop.start(); draw(); drawGraph(); });
+</script>
+</body>
+</html>
