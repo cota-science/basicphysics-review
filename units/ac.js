@@ -84,12 +84,13 @@ const DIM_TABLE = `<div class="tbl"><table>
 <tr><td>巻数 ${I("N")}</td><td>単位なし（回）</td></tr>
 <tr><td>電磁波の速さ ${c}、波長 ${L}</td><td>m/s、m</td></tr></table></div>`;
 const STEPS = `<p>1 与えられた量（巻数・電圧・電力・抵抗）を整理する → 2 変圧器では「電圧の比 ＝ 巻数の比」 → 3 理想的なら1次側と2次側の電力が等しい → 4 電流 ＝ 電力 ÷ 電圧 → 5 送電線の損失 ＝ ${R}${It}² → 6 単位をそろえて代入 → 7 妥当性（電圧を上げると電流は下がるか）</p>`;
+const ANIM = (href, label) => `<a href='${href}' style='display:inline-block;margin:8px 6px 0 0;padding:6px 12px;border:1.5px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:700;text-decoration:none;line-height:1.5'>▶ ${label}</a>`;
 const TF = ["正しい","誤り"];
 const UNITQ = ["m（波長）","W（電力）","s（周期）","V（電圧）"];
 
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:"電流と磁場は互いに関係し合います。法則の「向き」を言葉で正確に言えるようにします。",
+  intro:`電流と磁場は互いに関係し合います。法則の「向き」を言葉で正確に言えるようにします。<br>アニメーションで確かめよう：<br>${ANIM("anim/magnetic.html#field","磁場と磁力線")}${ANIM("anim/magnetic.html#line","直線電流")}${ANIM("anim/magnetic.html#loop","円形電流")}${ANIM("anim/magnetic.html#sol","ソレノイド")}`,
   advice:"右ねじの法則、レンツの法則、変圧器の関係、実効値の意味を覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
@@ -118,7 +119,7 @@ const SECTIONS = [
   intro:"向きを言葉で読む練習と、電磁誘導がいつ・どの向きに起こるかを読む練習です。",
   advice:"電磁誘導は「変化」があるときだけ。向きは「変化を妨げる」で考えよう。",
   groups:[
-  { title:"A. 右ねじの法則を読む", qs:[
+  { title:"A. 右ねじの法則を読む", lead:ANIM("anim/magnetic.html#line","直線電流がつくる磁場のアニメーション（⊙・⊗ と回る向き）"), qs:[
     {id:"ra1",type:"choice",prompt:"紙面の裏から表へ（読んでいる人に向かって）流れる直線電流のまわりの磁場は、紙面上で見てどちら向きに回るか。",
      options:["反時計回り","時計回り","電流と同じ向き"],answer:0,explain:"右ねじを手前に進めるには、反時計回りに回します。"},
     {id:"ra2",type:"choice",prompt:"紙面上を下から上へ流れる直線電流がある。電流の右側の点での磁場の向きは？",
