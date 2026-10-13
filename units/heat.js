@@ -75,7 +75,7 @@ const UNITQ = ["J（熱量）","J/K（熱容量）","J/(g·K)（比熱）","K（
 
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:`「熱」は物体がもっているものではなく、移動するエネルギーです。言葉と式を正確に覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/heat-equilibrium.html","熱の移動と熱平衡")}${ANIM("anim/heat-motion.html","熱運動と状態変化")}${ANIM("anim/phase-equilibrium.html#lv","蒸発と凝縮（気液平衡）")}${ANIM("anim/phase-equilibrium.html#sl","融解と凝固（固液平衡）")}`,
+  intro:`「熱」は物体がもっているものではなく、移動するエネルギーです。言葉と式を正確に覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/heat-equilibrium.html","熱の移動と熱平衡")}${ANIM("anim/heat-motion.html","熱運動と状態変化")}${ANIM("anim/phase-equilibrium.html#lv","蒸発と凝縮（気液平衡）")}${ANIM("anim/phase-equilibrium.html#sl","融解と凝固（固液平衡）")}${ANIM("anim/first-law.html","熱力学第一法則")}`,
   advice:`熱量・熱容量・比熱の違いと、熱力学第一法則の ${W} が「された仕事」であることを覚え直そう。`,
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
@@ -111,7 +111,7 @@ const SECTIONS = [
   intro:"「仕事をする・される」「熱を吸収する・放出する」を、符号つきの数値に置き換える練習です。",
   advice:`「気体が〜した」「気体が〜された」を読み分け、${Q} と ${W} の符号を先に決めよう。`,
   groups:[
-  { title:"A. 「する」「される」を符号にする", lead:`Δ${U} ＝ ${Q} ＋ ${W}（${Q}：気体が吸収した熱量、${W}：気体が外部からされた仕事）で考える。`, qs:[
+  { title:"A. 「する」「される」を符号にする", lead:`Δ${U} ＝ ${Q} ＋ ${W}（${Q}：気体が吸収した熱量、${W}：気体が外部からされた仕事）で考える。${ANIM("anim/first-law.html","熱力学第一法則のアニメーション")}`, qs:[
     {id:"ra1",type:"num",prompt:`「気体が外部に 50 J の仕事をした」とき、${W} はいくらか。`,answer:-50,tol:0.01,unit:"J",
      traps:{"50":`気体が仕事を「した」ので、「された」仕事 ${W} は負です。`},
      explain:`外部にした仕事が 50 J なら、外部からされた仕事は ${W} ＝ −50 J。`},
@@ -207,7 +207,7 @@ const SECTIONS = [
      options:["水の熱容量（840 J/K）が金属球の熱容量（45 J/K）よりずっと大きいから","金属は熱を通しやすいから","水の質量が金属球の2倍だから"],answer:0,
      explain:"温度の変わりにくさは熱容量（質量 × 比熱）で決まります。質量の比だけでは説明できません。"}
   ]},
-  { title:"問題2（熱力学第一法則）", quote:"気体に 3.0 × 10² J の熱を加えたところ、気体は膨張して外部に 1.2 × 10² J の仕事をした。", qs:[
+  { title:"問題2（熱力学第一法則）", lead:ANIM("anim/first-law.html","熱力学第一法則のアニメーション（「④手順 問題2」で確かめる）"), quote:"気体に 3.0 × 10² J の熱を加えたところ、気体は膨張して外部に 1.2 × 10² J の仕事をした。", qs:[
     {id:"s21",type:"blanks",prompt:`${Q} と ${W} を符号つきで書く。`,text:`${Q} ＝ {0}　${W} ＝ {1}`,
      options:[["＋3.0 × 10² J","−3.0 × 10² J"],["＋1.2 × 10² J","−1.2 × 10² J"]],answer:[0,1],
      explain:`熱を加えた（吸収した）ので ${Q} ＞ 0。外部に仕事を「した」ので ${W} ＜ 0。`},
