@@ -8,13 +8,16 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
 <style>
+/* Ω（オーム）だけは端末のフォントで表示する（Web フォントでは Ω が別の字に化けることがあるため） */
+@font-face{font-family:"OhmFix";font-weight:400;src:local("Segoe UI"),local("SegoeUI"),local("Meiryo"),local("Yu Gothic UI"),local("Hiragino Sans W3"),local("HiraginoSans-W3"),local("Helvetica Neue"),local("Roboto"),local("Arial"),local("ArialMT");unicode-range:U+03A9,U+2126}
+@font-face{font-family:"OhmFix";font-weight:700;src:local("Segoe UI Bold"),local("SegoeUI-Bold"),local("Meiryo Bold"),local("Meiryo-Bold"),local("Yu Gothic UI Bold"),local("Hiragino Sans W6"),local("HiraginoSans-W6"),local("Helvetica Neue Bold"),local("Roboto Bold"),local("Roboto-Bold"),local("Arial Bold"),local("Arial-BoldMT");unicode-range:U+03A9,U+2126}
 /* Layout: mode tabs (1つの抵抗 / 直列 / 並列) → wide stage: circuit with moving charges | potential ("electric height") graph with the same charges (phone: stacked). Sliders under it, then a step card (4 steps) with Back/Next. Second sheet: I-V graph | value table + power bar. Last: questions. */
 :root{
   --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
   --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
   --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3; --shade:#EEF2F6;
   --r1:#2A62C9; --r2:#C2780F; --bat:#CF2A2A; --hi:#D2452F; --lo:#2A7BC9; --tot:#1C2430; --net:#1E8A4C;
-  --body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --body:"OhmFix","BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
   --math:"Times New Roman",Times,"Noto Serif",serif;
 }
 @media (prefers-color-scheme:dark){
@@ -295,7 +298,7 @@ function stepInfo(st){
 /* ---------- 描画の道具 ---------- */
 const cv = $("cv"), ctx = cv.getContext("2d"), ivc = $("iv"), ictx = ivc.getContext("2d");
 let W = 0, H = 0, IW = 0, IH = 0, col = {}, LY = null, segs = [], st = calc(), spFactor = 1;
-const FONT = `"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`, MF = `"Times New Roman",Times,serif`;
+const FONT = `"OhmFix","BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`, MF = `"Times New Roman",Times,serif`;
 function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","shade","sheet","r1","r2","bat","hi","lo","tot","net","paper","blue-soft"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
 // {R}₁ のように { } の中を斜体で書く
 function mt(c, str, x, y, color, size, align, bold, bg){
@@ -616,6 +619,7 @@ if(mq && mq.addEventListener) mq.addEventListener("change", () => { draw(); draw
 new MutationObserver(() => { draw(); drawIV(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 if(window.ResizeObserver){ const ro = new ResizeObserver(resize); ro.observe(cv); ro.observe(ivc); } else window.addEventListener("resize", resize);
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { draw(); drawIV(); });
+if(document.fonts && document.fonts.load) Promise.all([document.fonts.load('13px "OhmFix"', "Ω"), document.fonts.load('700 13px "OhmFix"', "Ω")]).then(() => { draw(); drawIV(); }, () => {});
 
 $("qs").innerHTML = [
   ["1つの抵抗で、電圧を 2 倍にすると電流と電力はそれぞれ何倍になるか。", "電流は 2 倍（オームの法則、電流は電圧に比例）、電力は 4 倍です。<i class='qv'>P</i> ＝ <i class='qv'>VI</i> で、<i class='qv'>V</i> も <i class='qv'>I</i> も 2 倍になるからです（<i class='qv'>P</i> ＝ <i class='qv'>V</i>²/<i class='qv'>R</i>）。"],

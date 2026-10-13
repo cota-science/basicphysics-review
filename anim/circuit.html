@@ -8,13 +8,16 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
 <style>
+/* Ω（オーム）だけは端末のフォントで表示する（Web フォントでは Ω が別の字に化けることがあるため） */
+@font-face{font-family:"OhmFix";font-weight:400;src:local("Segoe UI"),local("SegoeUI"),local("Meiryo"),local("Yu Gothic UI"),local("Hiragino Sans W3"),local("HiraginoSans-W3"),local("Helvetica Neue"),local("Roboto"),local("Arial"),local("ArialMT");unicode-range:U+03A9,U+2126}
+@font-face{font-family:"OhmFix";font-weight:700;src:local("Segoe UI Bold"),local("SegoeUI-Bold"),local("Meiryo Bold"),local("Meiryo-Bold"),local("Yu Gothic UI Bold"),local("Hiragino Sans W6"),local("HiraginoSans-W6"),local("Helvetica Neue Bold"),local("Roboto Bold"),local("Roboto-Bold"),local("Arial Bold"),local("Arial-BoldMT");unicode-range:U+03A9,U+2126}
 /* Layout: workbench. Wide: grid canvas (left, the circuit board) | side panel (tools, selected part editor, presets/options). Phone: tool strip, canvas, panel stacked. Below: table of every part (R, V, I, P) with power totals, then usage notes and questions. */
 :root{
   --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
   --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
   --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3; --shade:#EEF2F6;
   --res:#2A62C9; --bulb:#C98A00; --bat:#CF2A2A; --hi:#D2452F; --lo:#2A7BC9; --net:#1E8A4C; --sel:#7A4FC4; --dot:#9AA6B5;
-  --body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --body:"OhmFix","BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
   --math:"Times New Roman",Times,"Noto Serif",serif;
 }
 @media (prefers-color-scheme:dark){
@@ -388,7 +391,7 @@ $("tools").addEventListener("click", e => { const b = e.target.closest(".tool");
 /* ---------- 描画 ---------- */
 const cv = $("cv"), ctx = cv.getContext("2d");
 let W = 0, H = 0, g = 60, ox = 0, oy = 0, col = {};
-const FONT = `"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`, MF = `"Times New Roman",Times,serif`;
+const FONT = `"OhmFix","BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`, MF = `"Times New Roman",Times,serif`;
 function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","shade","sheet","res","bulb","bat","hi","lo","net","sel","dot","paper","blue-soft"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
 function resize(){ const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0);
   g = Math.min(W / COLS, H / ROWS); ox = (W - g * COLS) / 2 + g / 2; oy = (H - g * ROWS) / 2 + g / 2; draw(); }
@@ -701,6 +704,7 @@ if(mq && mq.addEventListener) mq.addEventListener("change", draw);
 new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 if(window.ResizeObserver) new ResizeObserver(resize).observe(cv); else window.addEventListener("resize", resize);
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+if(document.fonts && document.fonts.load) Promise.all([document.fonts.load('13px "OhmFix"', "Ω"), document.fonts.load('700 13px "OhmFix"', "Ω")]).then(draw, () => {});
 
 $("qs").innerHTML = [
   ["「並列（抵抗2つ）」に、同じつなぎ方でもう1つ抵抗を並列に足すと、電池から流れ出る電流はどうなるか。", "大きくなります。並列につなぐ抵抗が増えると電流の通り道が増え、合成抵抗が小さくなるからです。もとからあった抵抗の電流は変わりません（電圧が電池の電圧のまま）。"],
