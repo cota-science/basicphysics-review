@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>平均と瞬間（速度・加速度）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: one-column worksheet on graph paper — tabs (速度 / 加速度), a track strip with the moving object, the main graph (secant vs tangent), Δt controls + convergence table, then the derivative graph (average = equal-area height), questions last. */
+:root{
+  --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
+  --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
+  --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3;
+  --pos:#1d64d8; --vel:#dd5a12; --acc:#22863a; --sec:#CF2A2A; --tan:#6B3FB5;
+  --body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --math:"Times New Roman",Times,"Noto Serif",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+    --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+    --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0;
+    --pos:#62a3ff; --vel:#ff9150; --acc:#5dd27a; --sec:#FF7A70; --tan:#C3A2FF; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+  --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+  --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0;
+  --pos:#62a3ff; --vel:#ff9150; --acc:#5dd27a; --sec:#FF7A70; --tan:#C3A2FF; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qv{font-family:var(--math);font-style:italic;font-size:1.08em}
+.bar{text-decoration:overline}
+sub{font-size:.7em;line-height:0}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.top-inner{max-width:760px;margin:0 auto;padding:10px 16px 0}
+.back{font-size:14px;color:var(--blue);text-decoration:none}
+h1{font-size:19px;margin:2px 0 0;line-height:1.4;text-wrap:balance}
+.nav{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin-top:2px}
+.nav a{color:var(--blue);text-decoration:none}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:700}
+.tabs{display:flex;gap:4px;padding-top:4px}
+.tab{flex:1 1 0;border:0;background:none;padding:8px 4px 10px;font-size:15px;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer;line-height:1.35}
+.tab[aria-selected="true"]{color:var(--ink);font-weight:700;border-bottom-color:var(--blue)}
+main{max-width:760px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px;min-width:0}
+h2{font-size:20px;margin:0 0 4px;line-height:1.4;text-wrap:balance}
+.lead{margin:0 0 12px;color:var(--muted);font-size:15px}
+.seg{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:10px}
+.seg-label{font-size:14px;color:var(--muted);min-width:5.5em}
+.seg button{border:1.5px solid var(--line);background:var(--sheet);border-radius:999px;padding:6px 12px;min-height:40px;cursor:pointer;font-size:15px}
+.seg button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft);font-weight:700}
+.stage{position:relative;width:100%;background:var(--sheet);border:1px solid var(--line);border-radius:4px}
+.stage.strip{aspect-ratio:5/1}.stage.g1{aspect-ratio:2/1}.stage.g2{aspect-ratio:2.6/1}
+@media (max-width:520px){.stage.strip{aspect-ratio:3/1}.stage.g1{aspect-ratio:1.3/1}.stage.g2{aspect-ratio:1.7/1}}
+canvas{display:block;width:100%;height:100%}
+.cap{font-size:14px;margin:12px 0 4px;font-weight:700}
+.read{margin:10px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:6px;display:grid;gap:4px;font-variant-numeric:tabular-nums}
+.read p{margin:0;font-size:15px}
+.read .s{color:var(--sec);font-weight:700}
+.read .tn{color:var(--tan);font-weight:700}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.btn{border:0;border-radius:8px;padding:9px 16px;min-height:44px;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.btn.ghost{background:none;color:var(--blue);border:1.5px solid var(--blue)}
+.slider{display:grid;grid-template-columns:8.5em minmax(0,1fr) 5em;align-items:center;gap:10px;margin-top:10px}
+.slider label{font-size:15px}
+.slider input{width:100%;accent-color:var(--blue);min-height:32px}
+.slider output{font-variant-numeric:tabular-nums;text-align:right;font-weight:700}
+@media (max-width:520px){.slider{grid-template-columns:6.8em minmax(0,1fr) 4.6em}}
+.dts{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}
+.dts .lab{font-size:14px;color:var(--muted);margin-right:4px}
+.dts button{border:1.5px solid var(--line);background:var(--sheet);border-radius:8px;min-width:52px;min-height:40px;cursor:pointer;font-variant-numeric:tabular-nums}
+.dts button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft);font-weight:700}
+.tbl{overflow-x:auto;margin-top:12px}
+table{border-collapse:collapse;font-size:14px;min-width:100%;font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th{background:var(--blue-soft);font-weight:700;text-align:center}
+tr.cur td{background:var(--red-soft);font-weight:700}
+.hint{font-size:13px;color:var(--muted);margin:8px 0 0}
+h3{font-size:17px;margin:0 0 8px}
+.qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
+.qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
+.ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <a class="back" id="backLink" href="../index.html#/u/kinematics/0" hidden>‹ 速度・加速度（Webテスト）へ</a>
+    <h1>平均と瞬間（速度・加速度）</h1>
+    <nav class="nav" id="nav" hidden aria-label="アニメーション">
+      <a href="index.html#motion">≡ アニメーション集</a>
+      <a href="average.html" aria-current="page">平均と瞬間</a>
+      <a href="kinematics.html">直線運動ラボ</a>
+      <a href="relative.html">合成速度と相対速度</a>
+      <a href="projectile.html">投射運動ラボ</a>
+      <a href="monkey.html">モンキーハンティング</a>
+    </nav>
+    <div class="tabs" role="tablist" aria-label="量">
+      <button class="tab" role="tab" id="tab-v" data-scene="v" type="button">速度（<i class="qv">x</i>-<i class="qv">t</i> 図）</button>
+      <button class="tab" role="tab" id="tab-a" data-scene="a" type="button">加速度（<i class="qv">v</i>-<i class="qv">t</i> 図）</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="sheet" aria-labelledby="t1">
+    <h2 id="t1"></h2>
+    <p class="lead" id="lead"></p>
+    <div class="seg" role="group" aria-label="運動" id="segP"><span class="seg-label">運動</span></div>
+    <div class="stage strip"><canvas id="cvS" role="img" aria-label="直線上を動く物体。時刻 t1 の位置 A と時刻 t2 の位置 B を示す。"></canvas></div>
+    <div class="cap" id="cap1"></div>
+    <div class="stage g1"><canvas id="cv1" role="img" aria-label="グラフ上の2点 A、B を結ぶ直線（傾き＝平均）と、A での接線（傾き＝瞬間）。"></canvas></div>
+    <div class="read" aria-live="polite"><p id="rAvg"></p><p id="rIns"></p></div>
+
+    <div class="dts" role="group" aria-label="時間の幅"><span class="lab">時間の幅 Δ<i class="qv">t</i></span></div>
+    <div class="slider"><label for="sT1">時刻 <i class="qv">t</i><sub>1</sub>（点A）</label><input type="range" id="sT1" min="0" max="4" step="0.05" value="1"><output id="oT1"></output></div>
+    <div class="controls">
+      <button type="button" class="btn" id="limBtn">Δ<i class="qv">t</i> を 0 に近づける</button>
+      <button type="button" class="btn ghost" id="playBtn">動きを見る</button>
+    </div>
+    <div class="tbl"><table id="tbl"></table></div>
+    <p class="hint" id="tblNote"></p>
+
+    <div class="cap" id="cap2"></div>
+    <div class="stage g2"><canvas id="cv2" role="img" aria-label="変化の割合のグラフ。t1 から t2 までの面積と、同じ面積になる長方形の高さ（平均）。"></canvas></div>
+    <p class="hint" id="note2"></p>
+  </section>
+
+  <section class="sheet" aria-labelledby="qsTitle">
+    <h3 id="qsTitle">見てみよう</h3>
+    <ol class="qs" id="qs"></ol>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id), TAU = 2 * Math.PI;
+const I = s => `<i class="qv">${s}</i>`, BAR = s => `<span class="bar">${I(s)}</span>`;
+const TMAX = 6;
+if(/\/anim\//.test(location.pathname)){ $("backLink").hidden = false; $("nav").hidden = false; }
+const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- 運動のプリセット（f：グラフの量、g：その変化の割合、pos：位置、vel：速度） ---------- */
+const S6 = t => t / 6;
+const SCENES = {
+  v:{ title:"平均の速度と瞬間の速度", qty:"x", rate:"v", unitF:"m", unitG:"m/s",
+      lead:`平均の速度は「変位 ÷ かかった時間」で、${I("x")}-${I("t")} 図の2点を結ぶ直線（赤）の傾きです。時間の幅 Δ${I("t")} を小さくしていくと、その直線は点Aでの接線（紫）に近づきます。この接線の傾きが、時刻 ${I("t")}<sub>1</sub> の瞬間の速度です。`,
+      cap1:`${I("x")}-${I("t")} 図（位置と時刻）`, cap2:`${I("v")}-${I("t")} 図（速度と時刻）：${I("t")}<sub>1</sub>〜${I("t")}<sub>2</sub> の面積 ＝ 変位 Δ${I("x")}`,
+      note2:`色をつけた部分の面積は変位 Δ${I("x")} です。赤い破線の長方形は、同じ面積になる高さ、つまり平均の速度 ${BAR("v")} ＝ Δ${I("x")}/Δ${I("t")} を表します。`,
+      presets:{
+        acc:{ name:"だんだん速くなる", f:t => 0.3 * t * t, g:t => 0.6 * t },
+        sc: { name:"速くなってから遅くなる", f:t => { const s = S6(t); return 12 * (3 * s * s - 2 * s * s * s); }, g:t => { const s = S6(t); return 12 * s * (1 - s); } },
+        back:{ name:"行って戻る", f:t => 4.8 * t - 0.8 * t * t, g:t => 4.8 - 1.6 * t }
+      }, def:"sc" },
+  a:{ title:"平均の加速度と瞬間の加速度", qty:"v", rate:"a", unitF:"m/s", unitG:"m/s²",
+      lead:`平均の加速度は「速度の変化 ÷ かかった時間」で、${I("v")}-${I("t")} 図の2点を結ぶ直線（赤）の傾きです。時間の幅 Δ${I("t")} を小さくしていくと、その直線は点Aでの接線（紫）に近づきます。この接線の傾きが、時刻 ${I("t")}<sub>1</sub> の瞬間の加速度です。`,
+      cap1:`${I("v")}-${I("t")} 図（速度と時刻）`, cap2:`${I("a")}-${I("t")} 図（加速度と時刻）：${I("t")}<sub>1</sub>〜${I("t")}<sub>2</sub> の面積 ＝ 速度の変化 Δ${I("v")}`,
+      note2:`色をつけた部分の面積は速度の変化 Δ${I("v")} です。赤い破線の長方形は、同じ面積になる高さ、つまり平均の加速度 ${BAR("a")} ＝ Δ${I("v")}/Δ${I("t")} を表します。`,
+      presets:{
+        uni:{ name:"等加速度", f:t => 1 + 0.5 * t, g:() => 0.5, pos:t => t + 0.25 * t * t },
+        weak:{ name:"加速がだんだん弱くなる", f:t => 4 * (1 - Math.exp(-t / 1.5)), g:t => 8 / 3 * Math.exp(-t / 1.5), pos:t => 4 * (t - 1.5 * (1 - Math.exp(-t / 1.5))) },
+        sc:{ name:"速くなってから遅くなる", f:t => { const s = S6(t); return 4 * (3 * s * s - 2 * s * s * s); }, g:t => { const s = S6(t); return 4 * s * (1 - s); }, pos:t => { const s = S6(t); return 24 * (s * s * s - 0.5 * s * s * s * s); } }
+      }, def:"weak" }
+};
+const DTS = [4, 2, 1, 0.5, 0.1, 0.01, 0.001];
+const st = { scene:"v", preset:{ v:"sc", a:"weak" }, t1:1, dt:2, tp:null, playing:false, lim:null };
+const sc = () => SCENES[st.scene], pr = () => sc().presets[st.preset[st.scene]];
+const posOf = t => st.scene === "v" ? pr().f(t) : pr().pos(t);
+const velOf = t => st.scene === "v" ? pr().g(t) : pr().f(t);
+const t2 = () => st.t1 + st.dt;
+const avg = dt => (pr().f(st.t1 + dt) - pr().f(st.t1)) / dt;
+const fmt = (x, d) => { const v = Math.abs(x) < 5e-10 ? 0 : x; return v.toFixed(d === undefined ? 2 : d); };
+const fdt = dt => dt >= 0.1 ? fmt(dt, dt >= 1 ? 1 : 2) : dt >= 0.01 ? fmt(dt, 2) : fmt(dt, 3);
+
+/* ---------- canvas ---------- */
+const CV = { S:$("cvS"), g1:$("cv1"), g2:$("cv2") }, CX = {}, SZ = {};
+Object.keys(CV).forEach(k => CX[k] = CV[k].getContext("2d"));
+let col = {};
+function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","grid","sheet","pos","vel","acc","sec","tan","red-soft","blue-soft"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
+function fit(k){ const c = CV[k], r = c.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); SZ[k] = { w:Math.max(1, Math.round(r.width)), h:Math.max(1, Math.round(r.height)) }; c.width = Math.round(SZ[k].w * d); c.height = Math.round(SZ[k].h * d); CX[k].setTransform(d, 0, 0, d, 0, 0); }
+function L(g, pts, color, w, dash, alpha){ g.save(); g.strokeStyle = color; g.lineWidth = w; g.setLineDash(dash || []); if(alpha != null) g.globalAlpha = alpha; g.lineJoin = "round"; g.lineCap = "round"; g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.stroke(); g.restore(); }
+function T(g, s, x, y, color, size, align, opt){ g.save(); g.fillStyle = color; g.font = `${opt === "i" ? "italic " : opt === "b" ? "700 " : ""}${size || 12}px ${opt === "i" ? '"Times New Roman",Times,serif' : 'BIZ UDPGothic,"Hiragino Sans",sans-serif'}`; g.textAlign = align || "center"; g.textBaseline = "middle"; g.fillText(s, x, y); g.restore(); }
+function dot(g, x, y, r, color){ g.save(); g.fillStyle = color; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); g.restore(); }
+function range(fn){ let mn = 1e9, mx = -1e9; for(let i = 0; i <= 300; i++){ const v = fn(TMAX * i / 300); mn = Math.min(mn, v); mx = Math.max(mx, v); } mn = Math.min(mn, 0); mx = Math.max(mx, 0); const p = (mx - mn) * 0.12 || 1; return [mn - (mn < 0 ? p : 0), mx + p]; }
+function frame(k, fn){ const { w, h } = SZ[k], pl = 40, pr = 14, pt = 12, pb = 24, [mn, mx] = range(fn);
+  return { w, h, pl, pr, pt, pb, X:t => pl + t / TMAX * (w - pl - pr), Y:v => pt + (mx - v) / (mx - mn) * (h - pt - pb), mn, mx }; }
+function niceStep(span){ const raw = span / 5, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p; return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10) * p; }
+function axes(g, F, unit, sym){
+  for(let t = 0; t <= TMAX; t++){ L(g, [[F.X(t), F.pt], [F.X(t), F.h - F.pb]], col.grid, 1); T(g, `${t}`, F.X(t), F.h - 10, col.muted, 11); }
+  const s = niceStep(F.mx - F.mn); for(let v = Math.ceil(F.mn / s) * s; v <= F.mx + 1e-9; v += s){ L(g, [[F.pl, F.Y(v)], [F.w - F.pr, F.Y(v)]], col.grid, 1); T(g, fmt(v, s < 1 ? 1 : 0), F.pl - 6, F.Y(v), col.muted, 11, "right"); }
+  L(g, [[F.pl, F.Y(0)], [F.w - F.pr, F.Y(0)]], col.muted, 1.2); L(g, [[F.pl, F.pt], [F.pl, F.h - F.pb]], col.muted, 1.2);
+  T(g, `t〔s〕`, F.w - F.pr - 2, F.h - F.pb - 9, col.muted, 11, "right", "i");
+  T(g, `${sym}〔${unit}〕`, F.pl + 4, F.pt + 2, col.muted, 11, "left", "i");
+}
+function drawG1(){
+  const g = CX.g1; if(!SZ.g1 || !SZ.g1.w) return; const P = pr(), F = frame("g1", P.f), S = sc(); g.clearRect(0, 0, F.w, F.h);
+  axes(g, F, S.unitF, S.qty);
+  const curve = []; for(let i = 0; i <= 400; i++){ const t = TMAX * i / 400; curve.push([F.X(t), F.Y(P.f(t))]); }
+  L(g, curve, st.scene === "v" ? col.pos : col.vel, 2.8);
+  const ta = st.t1, tb = t2(), fa = P.f(ta), fb = P.f(tb), m = (fb - fa) / (tb - ta), k = P.g(ta);
+  // 接線（瞬間）
+  const tl = Math.max(0, ta - 1.6), tr = Math.min(TMAX, ta + 1.6);
+  L(g, [[F.X(tl), F.Y(fa + k * (tl - ta))], [F.X(tr), F.Y(fa + k * (tr - ta))]], col.tan, 2, [6, 4]);
+  // 割線（平均）：AB を延長した線は薄く、AB は太く
+  const sl = Math.max(0, ta - 0.8), sr = Math.min(TMAX, tb + 0.8);
+  L(g, [[F.X(sl), F.Y(fa + m * (sl - ta))], [F.X(sr), F.Y(fa + m * (sr - ta))]], col.sec, 1.4, null, .45);
+  L(g, [[F.X(ta), F.Y(fa)], [F.X(tb), F.Y(fb)]], col.sec, 3);
+  // 傾きの三角形
+  if(F.X(tb) - F.X(ta) > 18){
+    L(g, [[F.X(ta), F.Y(fa)], [F.X(tb), F.Y(fa)], [F.X(tb), F.Y(fb)]], col.sec, 1.2, [3, 3]);
+    T(g, `Δt＝${fdt(st.dt)}`, (F.X(ta) + F.X(tb)) / 2, F.Y(fa) + (fb >= fa ? 11 : -11), col.sec, 11, "center");
+    T(g, `Δ${S.qty}`, F.X(tb) + 5, (F.Y(fa) + F.Y(fb)) / 2, col.sec, 12, "left", "i");
+  }
+  dot(g, F.X(ta), F.Y(fa), 5.5, col.ink); T(g, "A", F.X(ta) - 9, F.Y(fa) - 11, col.ink, 13, "center", "b");
+  if(Math.abs(F.X(tb) - F.X(ta)) > 6){ dot(g, F.X(tb), F.Y(fb), 5, col.sec); T(g, "B", F.X(tb) + 9, F.Y(fb) - 11, col.sec, 13, "center", "b"); }
+  if(st.tp != null) { L(g, [[F.X(st.tp), F.pt], [F.X(st.tp), F.h - F.pb]], col.muted, 1, [2, 3]); dot(g, F.X(st.tp), F.Y(P.f(st.tp)), 4, col.muted); }
+}
+function drawG2(){
+  const g = CX.g2; if(!SZ.g2 || !SZ.g2.w) return; const P = pr(), F = frame("g2", P.g), S = sc(); g.clearRect(0, 0, F.w, F.h);
+  axes(g, F, S.unitG, S.rate);
+  const ta = st.t1, tb = t2(), m = avg(st.dt), colG = st.scene === "v" ? col.vel : col.acc;
+  // 面積（t1〜t2）
+  g.save(); g.fillStyle = colG; g.globalAlpha = .22; g.beginPath(); g.moveTo(F.X(ta), F.Y(0));
+  for(let i = 0; i <= 120; i++){ const t = ta + (tb - ta) * i / 120; g.lineTo(F.X(t), F.Y(P.g(t))); } g.lineTo(F.X(tb), F.Y(0)); g.closePath(); g.fill(); g.restore();
+  const curve = []; for(let i = 0; i <= 400; i++){ const t = TMAX * i / 400; curve.push([F.X(t), F.Y(P.g(t))]); }
+  L(g, curve, colG, 2.6);
+  // 同じ面積の長方形（高さ＝平均）
+  L(g, [[F.X(ta), F.Y(0)], [F.X(ta), F.Y(m)], [F.X(tb), F.Y(m)], [F.X(tb), F.Y(0)]], col.sec, 2, [5, 3]);
+  T(g, `平均 ${fmt(m)}`, Math.min(F.X(tb) + 4, F.w - F.pr - 60), F.Y(m) - 10, col.sec, 11, "left", "b");
+  dot(g, F.X(ta), F.Y(P.g(ta)), 5, col.tan);
+  if(st.tp != null) L(g, [[F.X(st.tp), F.pt], [F.X(st.tp), F.h - F.pb]], col.muted, 1, [2, 3]);
+}
+function car(g, x, y, color, alpha, label){
+  g.save(); g.globalAlpha = alpha; g.fillStyle = color; const w = 30, h = 14;
+  g.beginPath(); g.roundRect ? g.roundRect(x - w / 2, y - h, w, h, 4) : g.rect(x - w / 2, y - h, w, h); g.fill();
+  g.fillStyle = col.ink; g.beginPath(); g.arc(x - 8, y + 1, 3.5, 0, TAU); g.arc(x + 8, y + 1, 3.5, 0, TAU); g.fill(); g.restore();
+  if(label) T(g, label, x, y - h - 9, color, 12, "center", "b");
+}
+function arrowH(g, x0, x1, y, color, lw){ L(g, [[x0, y], [x1, y]], color, lw || 2); if(Math.abs(x1 - x0) > 5){ const s = Math.sign(x1 - x0); L(g, [[x1 - 7 * s, y - 4], [x1, y], [x1 - 7 * s, y + 4]], color, lw || 2); } }
+function drawS(){
+  const g = CX.S; if(!SZ.S || !SZ.S.w) return; const { w, h } = SZ.S; g.clearRect(0, 0, w, h);
+  let mn = 1e9, mx = -1e9; for(let i = 0; i <= 300; i++){ const x = posOf(TMAX * i / 300); mn = Math.min(mn, x); mx = Math.max(mx, x); } mn = Math.min(mn, 0);
+  const pl = 22, pr = 22, X = x => pl + (x - mn) / (mx - mn || 1) * (w - pl - pr), yT = h * 0.62;
+  L(g, [[pl - 10, yT + 6], [w - pr + 10, yT + 6]], col.muted, 2);
+  const step = niceStep(mx - mn); for(let x = Math.ceil(mn / step) * step; x <= mx + 1e-9; x += step){ L(g, [[X(x), yT + 6], [X(x), yT + 11]], col.muted, 1); T(g, `${fmt(x, 0)}`, X(x), yT + 20, col.muted, 10); }
+  T(g, "x〔m〕", w - pr + 8, yT - 6, col.muted, 10, "right", "i");
+  const xa = posOf(st.t1), xb = posOf(t2());
+  car(g, X(xa), yT + 2, col.ink, .35, "A"); car(g, X(xb), yT + 2, col.sec, .45, "B");
+  if(st.scene === "v"){ // 変位 Δx
+    const yy = yT - 34; if(Math.abs(X(xb) - X(xa)) > 4){ arrowH(g, X(xa), X(xb), yy, col.sec, 2); T(g, `Δx ＝ ${fmt(xb - xa)} m`, (X(xa) + X(xb)) / 2, yy - 10, col.sec, 11, "center"); }
+  } else { // 速度の矢印（A と B）
+    const k = (w * 0.12) / Math.max(1, ...[0, 1, 2, 3, 4, 5, 6].map(t => Math.abs(velOf(t)))), yy = yT - 34;
+    arrowH(g, X(xa), X(xa) + velOf(st.t1) * k, yy, col.vel, 2.2); T(g, `v₁`, X(xa) - 10, yy, col.vel, 12, "center", "i");
+    arrowH(g, X(xb), X(xb) + velOf(t2()) * k, yy - 2, col.vel, 2.2); T(g, `v₂`, X(xb) - 10, yy - 2, col.vel, 12, "center", "i");
+  }
+  const tp = st.tp == null ? st.t1 : st.tp; car(g, X(posOf(tp)), yT + 2, st.scene === "v" ? col.pos : col.vel, 1, "");
+  T(g, `t ＝ ${fmt(tp)} s`, pl, 12, col.muted, 11, "left");
+}
+function drawAll(){ readColors(); drawS(); drawG1(); drawG2(); }
+
+/* ---------- 表示の更新 ---------- */
+function sync(){
+  const S = sc(), P = pr(), ta = st.t1, tb = t2(), fa = P.f(ta), fb = P.f(tb), m = avg(st.dt), k = P.g(ta);
+  document.querySelectorAll("[data-scene]").forEach(b => b.setAttribute("aria-selected", b.dataset.scene === st.scene));
+  $("t1").textContent = S.title; $("lead").innerHTML = S.lead; $("cap1").innerHTML = S.cap1; $("cap2").innerHTML = S.cap2; $("note2").innerHTML = S.note2;
+  const seg = $("segP"); seg.querySelectorAll("button").forEach(b => b.remove());
+  Object.entries(S.presets).forEach(([key, p]) => { const b = document.createElement("button"); b.type = "button"; b.textContent = p.name; b.setAttribute("aria-pressed", key === st.preset[st.scene]); b.addEventListener("click", () => { st.preset[st.scene] = key; stopAll(); sync(); }); seg.appendChild(b); });
+  $("sT1").max = fmt(TMAX - Math.max(st.dt, 0.05)); $("oT1").textContent = `${fmt(ta)} s`; $("sT1").value = ta;
+  const q = S.qty, r = S.rate, uF = S.unitF, uG = S.unitG;
+  const name = st.scene === "v" ? "速度" : "加速度";
+  const nd = st.dt < 0.01 ? 5 : st.dt < 0.1 ? 4 : st.dt < 1 ? 3 : 2;
+  $("rAvg").innerHTML = `<span class="s">平均の${name}</span> ${BAR(r)} ＝ Δ${I(q)}/Δ${I("t")} ＝ (${fmt(fb, nd)} − ${fmt(fa, nd)}) ${uF} ÷ ${fdt(st.dt)} s ＝ <b class="s">${fmt(m, 3)} ${uG}</b>（直線 AB の傾き）`;
+  $("rIns").innerHTML = `<span class="tn">瞬間の${name}</span>（${I("t")} ＝ ${fmt(ta)} s）${I(r)} ＝ <b class="tn">${fmt(k, 3)} ${uG}</b>（点Aでの接線の傾き）`;
+  document.querySelectorAll("[data-dt]").forEach(b => b.setAttribute("aria-pressed", Math.abs(+b.dataset.dt - st.dt) < 1e-9));
+  let h = `<tr><th>Δ${I("t")}〔s〕</th><th>Δ${I(q)}〔${uF}〕</th><th>平均の${name} Δ${I(q)}/Δ${I("t")}〔${uG}〕</th></tr>`;
+  DTS.forEach(d => { const dq = P.f(ta + d) - fa; h += `<tr class="${Math.abs(d - st.dt) < 1e-9 ? "cur" : ""}"><td>${fdt(d)}</td><td>${fmt(dq, d < 0.01 ? 5 : d < 0.1 ? 4 : 3)}</td><td>${fmt(dq / d, 4)}</td></tr>`; });
+  h += `<tr><td>→ 0</td><td>→ 0</td><td><b class="tn" style="color:var(--tan)">→ ${fmt(k, 4)}（瞬間の${name}）</b></td></tr>`;
+  $("tbl").innerHTML = h;
+  $("tblNote").innerHTML = `時刻 ${I("t")}<sub>1</sub> ＝ ${fmt(ta)} s から測った値です。Δ${I("t")} を小さくすると Δ${I(q)} も小さくなりますが、その比（平均の${name}）は一定の値（瞬間の${name}）に近づきます。`;
+  drawAll();
+}
+function stopAll(){ st.playing = false; st.tp = null; st.lim = null; $("playBtn").textContent = "動きを見る"; }
+$("sT1").addEventListener("input", e => { st.t1 = Math.min(+e.target.value, TMAX - st.dt); sync(); });
+const dtsBox = document.querySelector(".dts");
+DTS.forEach(d => { const b = document.createElement("button"); b.type = "button"; b.dataset.dt = d; b.textContent = fdt(d); b.addEventListener("click", () => { st.lim = null; st.dt = d; st.t1 = Math.min(st.t1, TMAX - d); sync(); }); dtsBox.appendChild(b); });
+$("limBtn").addEventListener("click", () => { st.lim = { t:0 }; st.dt = 2; st.t1 = Math.min(st.t1, TMAX - 2); if(reduce){ st.lim = null; st.dt = 0.001; } sync(); });
+$("playBtn").addEventListener("click", () => { if(st.playing){ stopAll(); sync(); return; } st.playing = true; st.tp = 0; $("playBtn").textContent = "止める"; });
+document.querySelectorAll("[data-scene]").forEach(b => b.addEventListener("click", () => { st.scene = b.dataset.scene; history.replaceState(null, "", "#" + st.scene); stopAll(); sync(); }));
+
+let last = null;
+function tick(ts){ if(last == null) last = ts; const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
+  if(st.lim){ st.lim.t += dt; const u = Math.min(1, st.lim.t / 4); st.dt = Math.max(0.001, 2 * Math.pow(0.0005, u)); if(u >= 1){ st.dt = 0.001; st.lim = null; } sync(); }
+  if(st.playing){ st.tp += dt; if(st.tp > TMAX){ stopAll(); } drawAll(); if(!st.playing) sync(); }
+  requestAnimationFrame(tick); }
+function resize(){ Object.keys(CV).forEach(fit); drawAll(); }
+const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+if(mq && mq.addEventListener) mq.addEventListener("change", drawAll);
+new MutationObserver(drawAll).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+if(window.ResizeObserver){ const ro = new ResizeObserver(resize); Object.values(CV).forEach(c => ro.observe(c)); } else window.addEventListener("resize", resize);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(drawAll);
+
+$("qs").innerHTML = [
+  ["「Δt を 0 に近づける」を押そう。赤い直線 AB はどうなっていくか。表の平均の値はどうなるか。", `直線 AB は、点Aでの接線（紫の破線）に重なっていきます。表の平均の値も、瞬間の値に近づいていきます。瞬間の速度は「Δ${I("t")} を限りなく 0 に近づけたときの平均の速度」です。`],
+  [`「速度」の「行って戻る」で、${I("t")}<sub>1</sub> ＝ 1 s、Δ${I("t")} ＝ 4 s にしよう。1〜5 s の平均の速度はいくらか。`, `物体は 3 s で折り返して、5 s にはもとの位置（1 s のときと同じ位置）に戻るので、変位は 0 m、平均の速度は 0 m/s です。動いていても平均の速度が 0 になることがあります。平均の速度は「道のり ÷ 時間」（平均の速さ）とは違います。`],
+  [`下の ${I("v")}-${I("t")} 図で、色をつけた部分の面積と、赤い破線の長方形の面積を比べよう。平均の速度は、グラフのどんな高さか。`, `2つの面積は等しく、どちらも変位 Δ${I("x")} です。平均の速度は、「その時間の間ずっとその速度で動いたとしたら、同じ変位になる速度」です。`],
+  ["「加速度」の「等加速度」を選ぶと、Δt をどう変えても赤い直線と接線が重なっている。なぜか。", `${I("v")}-${I("t")} 図が直線なので、どの2点を結んでも傾きは同じで、接線の傾きとも等しいからです。等加速度直線運動では、平均の加速度と瞬間の加速度がいつも等しくなります。`],
+  ["「加速がだんだん弱くなる」で、時刻 t₁ を大きくしていこう。接線の傾き（瞬間の加速度）はどう変わるか。", `だんだん小さくなり、0 に近づきます。下の ${I("a")}-${I("t")} 図でも、加速度が小さくなっていくのがわかります。速度は増え続けますが、増え方がゆるやかになります。`],
+  [`「速度」の「速くなってから遅くなる」で、0〜6 s の平均の速度と等しい瞬間の速度になる時刻はあるか。`, `あります。${I("x")}-${I("t")} 図で、0 s と 6 s の2点を結ぶ直線と平行な接線が引ける時刻（この運動では約 1.3 s と約 4.7 s）で、瞬間の速度が平均の速度（2 m/s）と等しくなります。`]
+].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
+
+st.scene = /#a/.test(location.hash) ? "a" : "v";
+sync(); resize(); requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

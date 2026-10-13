@@ -1,165 +1,119 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>力学ラボ</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>アニメーション集</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic&family=BIZ+UDPGothic:wght@400;700&display=swap">
-<link rel="stylesheet" href="lab.css">
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
 <style>
-.hero{padding-block:28px 10px;max-width:820px}
-.hero h1{font-size:28px;margin:0 0 6px;letter-spacing:.03em;text-wrap:balance}
-.hero p{margin:0;color:var(--ink2);font-size:15px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-top:18px}
-.card{display:flex;flex-direction:column;gap:10px;text-decoration:none;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;transition:border-color .15s,transform .15s}
-.card:hover{border-color:var(--ui);transform:translateY(-2px)}
-.card:focus-visible{outline:2px solid var(--ui);outline-offset:3px}
-.card h2{margin:0;font-size:20px}
-.card .no{font-size:12px;color:var(--ink3);letter-spacing:.08em}
-.card svg{width:100%;height:auto;border-radius:10px;background:var(--surface2)}
-.card ul{margin:0;padding-left:1.2em;color:var(--ink2)}
-.card ul a{color:var(--ui)}
-.card .go{margin-top:auto;color:var(--ui);font-weight:700}
-.rules{margin-top:22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
-.rule{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
-.rule h3{margin:0 0 4px;font-size:14px}
-.rule p{margin:0;font-size:13px;color:var(--ink2)}
-.sw2{display:inline-block;width:14px;height:4px;border-radius:2px;background:var(--c);vertical-align:middle;margin-right:4px}
+/* Layout: one-column list on graph paper — five groups (運動, 波の性質, 音, 熱, 電気) of tappable cards, each card = title + one-line purpose + related Web-test section. */
+:root{
+  --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
+  --blue:#2447B3; --blue-soft:#E7EDFB; --line:#CBD5DF; --sheet:#FFFFFF;
+  --body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --math:"Times New Roman",Times,"Noto Serif",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){ --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5; --blue:#93AAFF; --blue-soft:#1F2B4B; --line:#2F3B49; --sheet:#18202B; color-scheme:dark; }
+}
+:root[data-theme="dark"]{ --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5; --blue:#93AAFF; --blue-soft:#1F2B4B; --line:#2F3B49; --sheet:#18202B; color-scheme:dark; }
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.7;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-text-size-adjust:100%}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qv{font-family:var(--math);font-style:italic;font-size:1.08em}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.top-inner{max-width:760px;margin:0 auto;padding:10px 16px}
+.back{font-size:14px;color:var(--blue);text-decoration:none}
+h1{font-size:20px;margin:2px 0 0;line-height:1.4}
+main{max-width:760px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px}
+.intro{margin:0;color:var(--muted);font-size:15px}
+h2{font-size:18px;margin:0 0 10px}
+.cards{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.card{display:block;padding:12px 14px;border:1.5px solid var(--line);border-radius:8px;background:var(--sheet);color:var(--ink);text-decoration:none}
+a.card:hover{border-color:var(--blue);background:var(--blue-soft)}
+.card .t{display:block;font-weight:700;color:var(--blue);line-height:1.5}
+.card .d{display:block;font-size:14px;margin-top:2px}
+.card .r{display:block;font-size:12px;color:var(--muted);margin-top:4px}
+html{scroll-padding-top:90px}
+.intro a{color:var(--blue)}
+.num{display:inline-block;min-width:1.6em;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header class="hero">
-    <h1>力学ラボ</h1>
-    <p>力の見つけ方・合成と分解から、つりあい、摩擦力、運動の三法則、空気抵抗、水圧と浮力まで。条件を変えながら、図・グラフ・式が同時に変わるようすを確かめるシミュレータ集です。</p>
-  </header>
-
-  <div class="cards">
-    <a class="card" href="forces.html">
-      <svg viewBox="0 0 320 120" aria-hidden="true">
-        <polygon points="20,108 300,108 300,24" fill="var(--grid2)"/>
-        <g transform="translate(170 70) rotate(-16.7)"><rect x="-26" y="-16" width="52" height="32" rx="3" fill="var(--ui-soft)" stroke="var(--ui)"/></g>
-        <line x1="166" y1="68" x2="166" y2="116" stroke="var(--Fg)" stroke-width="3"/>
-        <line x1="166" y1="68" x2="132" y2="78" stroke="var(--Fx)" stroke-width="3"/>
-        <line x1="166" y1="68" x2="180" y2="113" stroke="var(--FN)" stroke-width="3"/>
-        <line x1="132" y1="78" x2="166" y2="116" stroke="var(--ink3)" stroke-dasharray="3 3"/><line x1="180" y1="113" x2="166" y2="116" stroke="var(--ink3)" stroke-dasharray="3 3"/>
-      </svg>
-      <span class="no">1</span><h2>力の作図・合成・分解</h2>
-      <ul>
-        <li><a href="forces.html#draw">力の作図</a>：手順にそって「重力＋ふれているもの」から力を見つける（5つの場面）</li>
-        <li><a href="forces.html#compose">力の合成</a>：矢印をドラッグ、平行四辺形・つなぐ・成分</li>
-        <li><a href="forces.html#resolve">力の分解</a>：斜面の角度を変えて重力を分解／斜めに引く力</li>
-      </ul>
-      <span class="go">開く →</span>
-    </a>
-    <a class="card" href="spring.html">
-      <svg viewBox="0 0 320 120" aria-hidden="true">
-        <line x1="40" y1="12" x2="140" y2="12" stroke="var(--ground)" stroke-width="2"/>
-        <polyline points="90,12 90,20 80,25 100,31 80,37 100,43 80,49 100,55 80,61 100,67 90,72 90,78" fill="none" stroke="var(--ink2)" stroke-width="2"/>
-        <rect x="74" y="78" width="32" height="12" rx="2" fill="var(--block)" stroke="var(--block2)"/><rect x="74" y="91" width="32" height="12" rx="2" fill="var(--block)" stroke="var(--block2)"/>
-        <line x1="180" y1="104" x2="300" y2="104" stroke="var(--ink3)"/><line x1="180" y1="104" x2="180" y2="14" stroke="var(--ink3)"/>
-        <line x1="180" y1="104" x2="290" y2="26" stroke="var(--Fk)" stroke-width="2.5"/>
-        <g stroke="var(--ink)" stroke-width="1.6"><path d="M209 80l6 6m0-6l-6 6M237 60l6 6m0-6l-6 6M265 40l6 6m0-6l-6 6"/></g>
-      </svg>
-      <span class="no">2</span><h2>フックの法則</h2>
-      <ul>
-        <li>ばね定数を変えて、おもりをつるす／手で引く・押す</li>
-        <li><i class="s">F</i>-<i class="s">x</i> グラフに測定値を記録 → 傾きからばね定数を求める</li>
-        <li>伸びと縮み、弾性力の向き</li>
-      </ul>
-      <span class="go">開く →</span>
-    </a>
-    <a class="card" href="balance.html">
-      <svg viewBox="0 0 320 120" aria-hidden="true">
-        <line x1="20" y1="10" x2="300" y2="10" stroke="var(--ground)" stroke-width="2"/>
-        <line x1="70" y1="10" x2="140" y2="60" stroke="var(--ink2)" stroke-width="2"/><line x1="230" y1="10" x2="140" y2="60" stroke="var(--ink2)" stroke-width="2"/>
-        <line x1="140" y1="60" x2="140" y2="86" stroke="var(--ink2)" stroke-width="2"/><rect x="122" y="86" width="36" height="26" rx="3" fill="var(--block)" stroke="var(--block2)"/>
-        <line x1="140" y1="60" x2="112" y2="40" stroke="var(--FT)" stroke-width="3"/><line x1="140" y1="60" x2="180" y2="38" stroke="var(--Fk)" stroke-width="3"/><line x1="140" y1="60" x2="140" y2="100" stroke="var(--Fg)" stroke-width="3"/>
-        <polyline points="250,40 278,60 278,100 250,40" fill="none" stroke="var(--ink3)"/>
-      </svg>
-      <span class="no">3</span><h2>力のつりあい</h2>
-      <ul>
-        <li><a href="balance.html#two">2力のつりあい</a>：大きさ・向き・作用線の3条件、手をはなすとどう動く？</li>
-        <li><a href="balance.html#three">3力のつりあい</a>：2本の糸でつるす・斜面上で支える・自由に3力、力の三角形</li>
-      </ul>
-      <span class="go">開く →</span>
-    </a>
-    <a class="card" href="friction.html">
-      <svg viewBox="0 0 320 120" aria-hidden="true">
-        <line x1="14" y1="96" x2="140" y2="96" stroke="var(--ground)" stroke-width="2"/>
-        <rect x="40" y="66" width="50" height="30" rx="3" fill="var(--ui-soft)" stroke="var(--ui)"/>
-        <line x1="90" y1="81" x2="128" y2="81" stroke="var(--FT)" stroke-width="3"/><line x1="62" y1="96" x2="32" y2="96" stroke="var(--Ff)" stroke-width="3.5"/>
-        <line x1="170" y1="106" x2="306" y2="106" stroke="var(--ink3)"/><line x1="170" y1="106" x2="170" y2="12" stroke="var(--ink3)"/>
-        <polyline points="170,106 240,36 240,64 300,64" fill="none" stroke="var(--Ff)" stroke-width="2.5"/>
-        <line x1="170" y1="36" x2="306" y2="36" stroke="var(--Ff)" stroke-dasharray="5 4"/>
-      </svg>
-      <span class="no">4</span><h2>摩擦力</h2>
-      <ul>
-        <li><a href="friction.html#floor">水平面で引く</a>：静止摩擦力 → 最大摩擦力 → 動摩擦力がグラフと連動、摩擦係数・質量・引く角度を変える</li>
-        <li><a href="friction.html#slope">斜面上の物体</a>：だんだん傾けてすべり出す角（摩擦角）、斜面に沿って押す力を含むつりあい</li>
-      </ul>
-      <span class="go">開く →</span>
-    </a>
-    <a class="card" href="newton.html">
-      <svg viewBox="0 0 320 120" aria-hidden="true">
-        <line x1="10" y1="100" x2="310" y2="100" stroke="var(--ground)" stroke-width="2"/>
-        <rect x="110" y="56" width="80" height="30" rx="3" fill="var(--ui-soft)" stroke="var(--ui)"/>
-        <circle cx="126" cy="92" r="7" fill="var(--ink2)"/><circle cx="174" cy="92" r="7" fill="var(--ink2)"/>
-        <line x1="190" y1="71" x2="250" y2="71" stroke="var(--FT)" stroke-width="3"/>
-        <line x1="130" y1="34" x2="200" y2="34" stroke="var(--acc)" stroke-width="3.5"/><polygon points="200,28 212,34 200,40" fill="var(--acc)"/>
-        <text x="216" y="38" font-size="13" fill="var(--ink2)" font-family="serif" font-style="italic">ma = F</text>
-      </svg>
-      <span class="no">5</span><h2>運動の三法則</h2>
-      <ul>
-        <li><a href="newton.html#inertia">慣性の法則</a>：力がはたらかないと等速直線運動</li>
-        <li><a href="newton.html#law2">運動の法則</a>：合力と加速度、質量・力を変えて <i class="s">a</i>-<i class="s">F</i>・<i class="s">a</i>-1/<i class="s">m</i> グラフ</li>
-        <li><a href="newton.html#action">作用・反作用</a>：押しあう台車、つりあいとのちがい</li>
-        <li><a href="newton.html#eom">摩擦を含む運動方程式</a>：水平面・斜面・滑車でつながれた2物体</li>
-      </ul>
-      <span class="go">開く →</span>
-    </a>
-    <a class="card" href="drag.html">
-      <svg viewBox="0 0 320 120" aria-hidden="true">
-        <circle cx="60" cy="50" r="14" fill="var(--ui-soft)" stroke="var(--ui)" stroke-width="2"/>
-        <line x1="60" y1="64" x2="60" y2="104" stroke="var(--Fg)" stroke-width="3"/><line x1="60" y1="36" x2="60" y2="8" stroke="var(--Fb)" stroke-width="3"/>
-        <line x1="130" y1="106" x2="306" y2="106" stroke="var(--ink3)"/><line x1="130" y1="106" x2="130" y2="10" stroke="var(--ink3)"/>
-        <line x1="130" y1="34" x2="306" y2="34" stroke="var(--Fb)" stroke-dasharray="5 4"/>
-        <path d="M130 106 C 160 50, 200 38, 306 35" fill="none" stroke="var(--vel)" stroke-width="2.5"/>
-      </svg>
-      <span class="no">6</span><h2>空気抵抗と落下</h2>
-      <ul>
-        <li>質量・抵抗の係数・初速度を変えて <i class="s">v</i>-<i class="s">t</i>・<i class="s">a</i>-<i class="s">t</i> グラフ</li>
-        <li>終端速度、空気抵抗なしとの比較、<i class="s">kv</i> と <i class="s">kv</i>² の切りかえ</li>
-      </ul>
-      <span class="go">開く →</span>
-    </a>
-    <a class="card" href="fluid.html">
-      <svg viewBox="0 0 320 120" aria-hidden="true">
-        <rect x="20" y="30" width="130" height="80" fill="var(--water)"/><path d="M20 20 V110 H150 V20" fill="none" stroke="var(--ink2)" stroke-width="2"/>
-        <rect x="68" y="48" width="30" height="36" fill="var(--block)" stroke="var(--block2)"/>
-        <line x1="78" y1="34" x2="78" y2="48" stroke="var(--Fx)" stroke-width="2.5"/><line x1="90" y1="104" x2="90" y2="84" stroke="var(--FN)" stroke-width="2.5"/>
-        <path d="M190 40 V108 H300 V30 M206 40 V92 H270 V30" fill="none" stroke="var(--ink2)" stroke-width="2"/>
-        <rect x="190" y="60" width="16" height="48" fill="rgba(220,170,40,.35)"/><rect x="206" y="92" width="94" height="16" fill="rgba(220,170,40,.35)"/><rect x="270" y="46" width="30" height="46" fill="rgba(220,170,40,.35)"/>
-      </svg>
-      <span class="no">7</span><h2>水圧・浮力・パスカルの原理</h2>
-      <ul>
-        <li><a href="fluid.html#pressure">水圧</a>：深さと圧力、大気圧あり／なし、水以外の流体（海水・油・エタノール・水銀・自由）</li>
-        <li><a href="fluid.html#buoy">浮力</a>：上面・下面が受ける力の差からアルキメデスの原理を証明</li>
-        <li><a href="fluid.html#pascal">パスカルの原理</a>：油圧ジャッキ、力は得しても仕事は得しない</li>
-      </ul>
-      <span class="go">開く →</span>
-    </a>
+<header class="top">
+  <div class="top-inner">
+    <a class="back" id="backLink" href="../index.html" hidden>‹ 単元一覧（Webテスト）へ</a>
+    <h1>アニメーション集（運動・熱・波・音・電気）</h1>
   </div>
+</header>
 
-  <div class="rules">
-    <div class="rule"><h3>力の色のきまり</h3><p><span class="sw2" style="--c:var(--Fg)"></span>重力　<span class="sw2" style="--c:var(--FN)"></span>垂直抗力　<span class="sw2" style="--c:var(--Ff)"></span>摩擦力　<span class="sw2" style="--c:var(--FT)"></span>張力・手が加える力　<span class="sw2" style="--c:var(--Fk)"></span>弾性力　<span class="sw2" style="--c:var(--Fnet)"></span>合力</p></div>
-    <div class="rule"><h3>運動の色のきまり</h3><p><span class="sw2" style="--c:var(--vel)"></span>速度（オレンジ）　<span class="sw2" style="--c:var(--acc)"></span>加速度（緑）。「運動学ラボ」と同じ色です。</p></div>
-    <div class="rule"><h3>矢印の始点＝作用点</h3><p>重力は物体の中心から、ふれている物体から受ける力はふれている点（面）から描いています。</p></div>
-    <div class="rule"><h3>式とつなげる</h3><p>右側の「式で確かめる」には、いまの条件の数値を代入した式が表示されます。太わくの式がいま成り立っている式です。</p></div>
-  </div>
-  <p class="foot">物理基礎・力と運動。重力加速度 <i class="s">g</i> ＝ 9.8 m/s²。</p>
-</div>
+<main>
+  <section class="sheet">
+    <p class="intro">Webテストに取り組む前に、目に見えない粒子や波の動きを見て確かめよう。波は上から順に見ると、「波の速さ」→「波を3次元で見る」→「重ね合わせ・反射・定在波（定常波）」→「音」の順に理解が積み上がります。運動のシミュレーターは<a href="#motion">「運動」</a>、熱のアニメーションは<a href="#heat">下の「熱」</a>、電気は<a href="#elec">「電気」</a>にあります。各ページの「見てみよう」の問いにも答えてみよう。</p>
+  </section>
+
+  <section class="sheet" id="motion" aria-labelledby="g0">
+    <h2 id="g0">運動</h2>
+    <ol class="cards" start="23">
+      <li><a class="card" href="average.html"><span class="t"><span class="num">23</span>平均と瞬間（速度・加速度）</span><span class="d">2点を結ぶ直線の傾き（平均）が、時間の幅 Δ<i class="qv">t</i> を小さくすると接線の傾き（瞬間）に近づくことを、<i class="qv">x</i>-<i class="qv">t</i> 図と <i class="qv">v</i>-<i class="qv">t</i> 図で確かめる。平均は「同じ面積になる高さ」</span><span class="r">関連：速度・加速度 ①定義・②読解 C</span></a></li>
+      <li><a class="card" href="kinematics.html"><span class="t"><span class="num">24</span>直線運動ラボ（<i class="qv">x</i>-<i class="qv">t</i>・<i class="qv">v</i>-<i class="qv">t</i>・<i class="qv">a</i>-<i class="qv">t</i> 図）</span><span class="d">等速直線運動、滑らかな斜面の等加速度直線運動（角度可変）、自由落下・鉛直投げ下ろし・鉛直投げ上げ。運動と3つのグラフが連動し、傾き・面積と式の各項が何を表すかを確かめる。重力加速度を変えて月や惑星でも</span><span class="r">関連：速度・加速度 ①定義・②読解 E・④手順、落体の運動 ①定義・②読解 B/E・④手順</span></a></li>
+      <li><a class="card" href="projectile.html"><span class="t"><span class="num">25</span>投射運動ラボ（水平投射・斜方投射）</span><span class="d">初速度・角度・投げ出す位置を変えて投げ、水平方向（等速直線運動）と鉛直方向（等加速度直線運動）に分けたグラフで、最高点・着地点を確かめる</span><span class="r">関連：落体の運動 ①定義（発展）</span></a></li>
+      <li><a class="card" href="monkey.html"><span class="t"><span class="num">26</span>モンキーハンティング</span><span class="d">枝のサルをねらって小球を発射し、同時にサルが手を離すと必ず当たるのはなぜか。小球もサルも同じ時刻に ½<i class="qv">gt</i>² だけ落ちることを、ストロボ・グラフ・「サルと一緒に落ちる視点」で確かめる。手を離さない・遅れて離す・無重力も比べられる</span><span class="r">関連：落体の運動 ①定義（発展）</span></a></li>
+      <li><a class="card" href="relative.html"><span class="t"><span class="num">27</span>合成速度と相対速度</span><span class="d">一直線上：電車の中を歩く人（合成速度 <i class="qv">v</i> ＝ <i class="qv">V</i> ＋ <i class="qv">u</i>）、2台の車（相対速度 <i class="qv">v</i><sub>AB</sub> ＝ <i class="qv">v</i><sub>B</sub> − <i class="qv">v</i><sub>A</sub>）。平面上：川を渡る船（ベクトルの和、渡る時間は流れによらない）、雨と走る人・交差点の2台の車（ベクトルの差）。「地面から見る／いっしょに動いて見る」を切りかえ、速度の矢印の図とグラフで確かめる</span><span class="r">関連：速度・加速度 ①定義</span></a></li>
+    </ol>
+  </section>
+
+  <section class="sheet" aria-labelledby="g1">
+    <h2 id="g1">波の性質</h2>
+    <ol class="cards">
+      <li><a class="card" href="wave-speed.html"><span class="t"><span class="num">1</span>波の速さ <i class="qv">v</i> ＝ <i class="qv">fλ</i></span><span class="d">振動数・周期・波長を変えて、1周期の間に1波長進むことを確かめる</span><span class="r">関連：波の性質 ①定義・④手順</span></a></li>
+      <li><a class="card" href="wave-3d.html"><span class="t"><span class="num">2</span>波を3次元で見る（<i class="qv">y</i>-<i class="qv">x</i> グラフと <i class="qv">y</i>-<i class="qv">t</i> グラフ）</span><span class="d">1つの波を曲面で表し、時刻や位置を変えて切ると2つのグラフがどう変わるかを見る</span><span class="r">関連：波の性質 ②読解</span></a></li>
+      <li><a class="card" href="transverse.html#sup"><span class="t"><span class="num">3</span>波の重ね合わせ</span><span class="d">2つのパルスが重なると変位はどうなるか、すれ違った後はどうなるか</span><span class="r">関連：波の性質 ①定義</span></a></li>
+      <li><a class="card" href="transverse.html#ref"><span class="t"><span class="num">4</span>波の反射（固定端・自由端）</span><span class="d">端で反射する波の向きと形、反射波の作図、反射でできる定在波（定常波）</span><span class="r">関連：波の性質 ②読解</span></a></li>
+      <li><a class="card" href="transverse.html#std"><span class="t"><span class="num">5</span>定在波（定常波）</span><span class="d">逆向きに進む2つの波が重なってできる、節と腹の並び</span><span class="r">関連：波の性質 ④手順</span></a></li>
+      <li><a class="card" href="longitudinal.html"><span class="t"><span class="num">6</span>縦波（疎密波）</span><span class="d">空気の粒子やつるまきばねの動きと、密・疎が伝わるようすを同時に見る</span><span class="r">関連：波の性質・音 ①定義</span></a></li>
+    </ol>
+  </section>
+
+  <section class="sheet" aria-labelledby="g2">
+    <h2 id="g2">音</h2>
+    <ol class="cards" start="7">
+      <li><a class="card" href="string.html"><span class="t"><span class="num">7</span>弦の固有振動</span><span class="d">弦の長さ・張力・線密度を変えて、固有振動数と音の高さを確かめる（音も鳴らせる）</span><span class="r">関連：音 ④手順 問題1</span></a></li>
+      <li><a class="card" href="air-column.html"><span class="t"><span class="num">8</span>気柱の固有振動</span><span class="d">閉管・開管、気温や気体の種類、開口端補正による違いを確かめる（音も鳴らせる）</span><span class="r">関連：音 ②読解・④手順 問題2</span></a></li>
+      <li><a class="card" href="beats.html"><span class="t"><span class="num">9</span>うなり</span><span class="d">振動数の少し違う2つの音を鳴らし、波形と合成波でうなりを確かめる</span><span class="r">関連：音 ④手順 問題3</span></a></li>
+    </ol>
+  </section>
+  <section class="sheet" id="heat" aria-labelledby="g3">
+    <h2 id="g3">熱</h2>
+    <ol class="cards" start="10">
+      <li><a class="card" href="heat-equilibrium.html"><span class="t"><span class="num">10</span>熱の移動と熱平衡</span><span class="d">2つの物体の温度・質量・比熱を変えて接触させ、熱平衡の温度と、失った熱量 ＝ 得た熱量を水槽のモデルとグラフで確かめる</span><span class="r">関連：熱とエネルギー ①定義・②読解 C・④手順 問題1</span></a></li>
+      <li><a class="card" href="heat-motion.html"><span class="t"><span class="num">11</span>熱運動と状態変化</span><span class="d">氷 1 g を加熱・冷却して、粒子の熱運動、温度のグラフ、融解熱・蒸発熱の大きさを確かめる</span><span class="r">関連：熱とエネルギー ①定義・②読解 D</span></a></li>
+      <li><a class="card" href="phase-equilibrium.html#lv"><span class="t"><span class="num">12</span>蒸発と凝縮（気液平衡）</span><span class="d">ふたをした容器で、蒸発と凝縮が同じ割合になるようすと、蒸発すると冷えるしくみを確かめる</span><span class="r">関連：熱とエネルギー ①定義</span></a></li>
+      <li><a class="card" href="phase-equilibrium.html#sl"><span class="t"><span class="num">13</span>融解と凝固（固液平衡）</span><span class="d">0 ℃ の氷と水。熱を加えた分だけ氷が融け、その間は温度が変わらないことを確かめる</span><span class="r">関連：熱とエネルギー ①定義・②読解 D</span></a></li>
+      <li><a class="card" href="first-law.html"><span class="t"><span class="num">14</span>熱力学第一法則 Δ<i class="qv">U</i> ＝ <i class="qv">Q</i> ＋ <i class="qv">W</i></span><span class="d">熱を出し入れし、ピストンを押し引きして、粒子の速さと内部エネルギーの変化を帯グラフで確かめる</span><span class="r">関連：熱とエネルギー ①定義・②読解 A・④手順 問題2</span></a></li>
+      <li><a class="card" href="heat-engine.html"><span class="t"><span class="num">15</span>熱機関のサイクルと熱効率</span><span class="d">加熱・膨張・冷却・圧縮を1段階ずつ進め、p-V・T-V グラフ、正味の仕事 ＝ 囲まれた面積、熱効率の分母が吸収した熱量であることを確かめる</span><span class="r">関連：熱とエネルギー ①定義・④手順 問題3</span></a></li>
+    </ol>
+  </section>
+  <section class="sheet" id="elec" aria-labelledby="g4">
+    <h2 id="g4">電気</h2>
+    <ol class="cards" start="16">
+      <li><a class="card" href="ohm.html"><span class="t"><span class="num">16</span>電流の定義・オームの法則と電力</span><span class="d">電流 <i class="qv">I</i> ＝ <i class="qv">q</i>/<i class="qv">t</i>（断面を通過する電気量を数える）、抵抗と抵抗率 <i class="qv">R</i> ＝ <i class="qv">ρL</i>/<i class="qv">S</i>（直列は流れにくさの和、並列は流れやすさの和）。1つの抵抗・直列・並列で、電荷の流れと電気的な高さ（電位）を見ながら、共通な量・合成抵抗・電力 <i class="qv">P</i> ＝ <i class="qv">VI</i> を段階ごとに確かめる</span><span class="r">関連：電流と電気抵抗 ①定義・②読解 B・③次元 D・④手順</span></a></li>
+      <li><a class="card" href="circuit.html"><span class="t"><span class="num">17</span>回路シミュレーター</span><span class="d">導線・抵抗・電球・電池・スイッチを方眼に置いて回路を組み、各部分の電圧・電流・電力と合成抵抗を調べる（電圧計つき）</span><span class="r">関連：電流と電気抵抗 ④手順</span></a></li>
+      <li><a class="card" href="joule.html"><span class="t"><span class="num">18</span>電熱線で水を温める（ジュール熱）</span><span class="d">電熱線の抵抗率・長さ・断面積と電圧を変えて水を加熱し、電力量 <i class="qv">W</i> ＝ <i class="qv">Pt</i> と水が得た熱量 <i class="qv">Q</i> ＝ <i class="qv">mc</i>Δ<i class="qv">t</i> が等しいことを確かめる。直列・並列で電力の違いを比べる</span><span class="r">関連：電流と電気抵抗 ①定義・④手順 問題3、熱とエネルギー</span></a></li>
+      <li><a class="card" href="magnetic.html"><span class="t"><span class="num">19</span>電流がつくる磁場</span><span class="d">磁石のまわりの磁力線と方位磁針で、磁場の向き・強さを確かめる。直線電流・円形電流・ソレノイドの磁場と右ねじの法則（⊙・⊗ の記号、電流・距離・半径・巻き数と磁場の強さ）</span><span class="r">関連：電流と磁場・交流 ①定義・②読解 A</span></a></li>
+      <li><a class="card" href="motor.html"><span class="t"><span class="num">20</span>電流が磁場から受ける力とモーター</span><span class="d">フレミングの左手の法則（電流と磁場の向きの4つの場合）、力が生じるわけ（電流の磁場と磁石の磁場の重ね合わせ、密な側から疎な側へ）、直流モーターと整流子のはたらき</span><span class="r">関連：電流と磁場・交流 ①定義</span></a></li>
+      <li><a class="card" href="induction.html"><span class="t"><span class="num">21</span>電磁誘導と交流発電機</span><span class="d">コイルを貫く磁力線の本数の変化の速さと誘導起電力、レンツの法則（N 極・S 極を近づける・遠ざける4つの場合）、交流発電機のしくみ（スリップリングとブラシ）</span><span class="r">関連：電流と磁場・交流 ①定義・②読解 B</span></a></li>
+      <li><a class="card" href="transformer.html"><span class="t"><span class="num">22</span>変圧器と送電</span><span class="d">1次・2次コイルの巻き数と電圧を変えて、電圧の比 ＝ 巻き数の比、電力が等しいことを確かめる（直流では電圧が生じない）。送電電圧を変えて、失われる電力 <i class="qv">rI</i>² が 1/<i class="qv">V</i>² で小さくなることを確かめる</span><span class="r">関連：電流と磁場・交流 ①定義・④手順 問題1・問題2</span></a></li>
+    </ol>
+  </section>
+</main>
+
+<script>
+if(/\/anim\//.test(location.pathname)) document.getElementById("backLink").hidden = false;
+</script>
 </body>
 </html>
