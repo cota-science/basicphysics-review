@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>原子核と放射線</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: four sheets. (1) Radiation: canvas with 4 lanes (α, β, γ, neutron) and toggleable shields, or a magnetic-field mode; property table. (2) Decay & half-life: nuclide picker, nucleus canvas + equation, population grid + N-t graph (scrubbable). (3) Fission: single-event canvas + mass bars, chain-reaction canvas with control rods + rate graph + neutron-fate bar. (4) Fusion: pair-collision canvas + potential-energy diagram, or hot plasma; equation cards. Questions last. */
+:root{
+  --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
+  --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
+  --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3; --shade:#EEF2F6;
+  --pro:#D2452F; --neu:#8A94A3; --al:#C8327A; --be:#2A62C9; --ga:#1E8A4C; --nn:#D98A0B;
+  --u5:#6E56CF; --fa:#2A8C8C; --fb:#B5651D; --heat:#E0661F; --rod:#4A5563; --he:#E0A800; --dd:#2A62C9; --tt:#C8327A; --ok:#1E8A4C;
+  --body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --math:"Times New Roman",Times,"Noto Serif",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+    --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+    --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+    --pro:#FF8068; --neu:#A3ADBA; --al:#F07AB5; --be:#7FA8FF; --ga:#5FD08F; --nn:#F2B14E;
+    --u5:#A893FF; --fa:#5CC8C8; --fb:#E39A5A; --heat:#FF9A5A; --rod:#8E99A6; --he:#F2C94E; --dd:#7FA8FF; --tt:#F07AB5; --ok:#5FD08F; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+  --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+  --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+  --pro:#FF8068; --neu:#A3ADBA; --al:#F07AB5; --be:#7FA8FF; --ga:#5FD08F; --nn:#F2B14E;
+  --u5:#A893FF; --fa:#5CC8C8; --fb:#E39A5A; --heat:#FF9A5A; --rod:#8E99A6; --he:#F2C94E; --dd:#7FA8FF; --tt:#F07AB5; --ok:#5FD08F; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qv{font-family:var(--math);font-style:italic;font-size:1.08em}
+html{scroll-padding-top:110px}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.top-inner{max-width:1080px;margin:0 auto;padding:10px 16px 10px}
+.back{font-size:14px;color:var(--blue);text-decoration:none}
+h1{font-size:19px;margin:2px 0 0;line-height:1.4}
+.nav{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin-top:2px}
+.nav a{color:var(--blue);text-decoration:none}
+main{max-width:1080px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px;min-width:0}
+h2{font-size:20px;margin:0 0 4px;line-height:1.4}
+h3{font-size:16px;margin:0 0 6px}
+.lead{margin:0 0 12px;color:var(--muted);font-size:15px}
+.toc{display:flex;flex-wrap:wrap;gap:4px 16px;margin:0;padding:0;list-style:none;font-size:15px}
+.toc a{color:var(--blue);text-decoration:none;font-weight:700}
+.box{position:relative;width:100%;aspect-ratio:2/1;background:var(--sheet);border:1px solid var(--line);border-radius:4px;touch-action:pan-y}
+.box.wide{aspect-ratio:2.4/1}
+.box.flat{aspect-ratio:3.2/1}
+.box.sq{aspect-ratio:1.25/1}
+@media (max-width:760px){.box{aspect-ratio:1.35/1}.box.wide{aspect-ratio:1.5/1}.box.flat{aspect-ratio:2/1}.box.sq{aspect-ratio:1.15/1}}
+canvas{display:block;width:100%;height:100%}
+.sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:6px 18px;margin-top:12px}
+.sl{display:grid;grid-template-columns:auto 1fr;gap:0 10px;align-items:center;font-size:14px}
+.sl output{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+.sl input[type=range]{grid-column:1/-1;width:100%;min-height:32px;accent-color:var(--blue)}
+.ctrl{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-top:10px;font-size:14px;color:var(--muted)}
+.ctrl label{display:inline-flex;align-items:center;gap:6px;min-height:40px;cursor:pointer;color:var(--ink)}
+.ctrl input[type=checkbox]{width:20px;height:20px;accent-color:var(--blue)}
+.btn{border:0;border-radius:8px;padding:6px 14px;min-height:42px;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.btn.ghost{background:none;color:var(--blue);border:1.5px solid var(--blue)}
+.seg{display:inline-flex;flex-wrap:wrap;border:1.5px solid var(--blue);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:none;color:var(--blue);padding:6px 12px;min-height:40px;font-weight:700;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--btn);color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{border:1.5px solid var(--line);background:var(--sheet);border-radius:8px;padding:4px 10px;min-height:44px;cursor:pointer;text-align:left;line-height:1.35;font-size:14px}
+.chip small{display:block;color:var(--muted);font-size:12px}
+.chip[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft);font-weight:700}
+.chip .ty{display:inline-block;min-width:1.6em;font-weight:700}
+.grpl{font-size:13px;color:var(--muted);margin:10px 0 0}
+.tbl{overflow-x:auto;margin-top:12px}
+table{border-collapse:collapse;width:100%;min-width:620px;font-size:14px}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:center;line-height:1.5}
+th{background:var(--shade);font-size:13px}
+td:first-child,th:first-child{text-align:left;white-space:nowrap}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;margin-top:12px}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+.two>div{min-width:0}
+.read{margin-top:10px;padding:8px 12px;background:var(--shade);border-radius:6px;font-size:15px;line-height:1.85;font-variant-numeric:tabular-nums}
+.read b{color:var(--blue)}
+.def{margin-top:12px;padding:12px 14px;border:1.5px solid var(--blue);border-radius:8px;background:var(--blue-soft);font-size:15px}
+.def h3{margin:0 0 4px;color:var(--blue)}
+.note{font-size:13px;color:var(--muted);margin:8px 0 0}
+.eq{font-size:20px;text-align:center;margin:10px 0 4px;line-height:1.9;font-family:var(--math)}
+.eq .j{font-family:var(--body);font-size:14px;color:var(--muted)}
+.nu{white-space:nowrap;font-family:var(--math)}
+.az{display:inline-block;text-align:right;font-size:.6em;line-height:1.05;vertical-align:-.3em;margin-right:1px}
+.az span{display:block}
+.cnt{display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:2px 10px;font-size:14px;margin-top:6px;font-variant-numeric:tabular-nums;align-items:center}
+.cnt .h{color:var(--muted);font-size:12px}
+.up{color:var(--pro);font-weight:700}.dn{color:var(--be);font-weight:700}
+.mass{display:grid;gap:8px;margin-top:10px}
+.mrow{display:grid;grid-template-columns:5.5em 1fr;gap:8px;align-items:center;font-size:14px}
+.mtr{display:flex;height:28px;background:var(--shade);border-radius:5px;overflow:hidden}
+.mtr div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden}
+.fate{display:flex;height:26px;border-radius:5px;overflow:hidden;background:var(--shade);margin-top:4px}
+.fate div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;transition:width .3s}
+.lg{display:flex;flex-wrap:wrap;gap:2px 14px;font-size:13px;color:var(--muted);margin-top:4px}
+.lg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.cards2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+@media (max-width:760px){.cards2{grid-template-columns:1fr}}
+.ec{border:1.5px solid var(--line);border-radius:8px;padding:10px 12px}
+.ec h3{margin:0 0 2px}
+.ec .eq{font-size:18px;margin:6px 0}
+.state{font-weight:700}
+.qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
+.qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
+.ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <a class="back" id="backLink" href="../index.html#/u/energy-use/0" hidden>‹ エネルギーとその利用（Webテスト）へ</a>
+    <h1>原子核と放射線</h1>
+    <nav class="nav" id="nav" hidden aria-label="アニメーション">
+      <a href="index.html#nuclear">≡ アニメーション集</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <nav class="sheet" aria-label="このページの内容" style="padding:12px 16px">
+    <ul class="toc">
+      <li><a href="#rays">1 放射線の種類と性質</a></li>
+      <li><a href="#decay">2 放射性崩壊と半減期</a></li>
+      <li><a href="#fission">3 核分裂と連鎖反応</a></li>
+      <li><a href="#fusion">4 核融合</a></li>
+    </ul>
+  </nav>
+
+  <!-- ===================== 1 放射線 ===================== -->
+  <section class="sheet" id="rays" aria-labelledby="t1">
+    <h2 id="t1">1 放射線の種類と性質</h2>
+    <p class="lead">放射線源から α線・β線・γ線・中性子線を出し、紙・アルミニウム板・鉛板・水（厚いコンクリート）でさえぎります。どの放射線がどこで止まるか（透過力）と、通り道で原子をイオンにするはたらき（電離作用）を比べよう。「磁場の中を通す」では、電荷の符号で曲がり方が変わります。</p>
+    <div class="box"><canvas id="cvR" role="img" aria-label="左の放射線源から、上から順に α線・β線・γ線・中性子線が右へ飛ぶ。途中に紙、アルミニウム板、鉛板、水の層があり、α線は紙で、β線はアルミニウム板で止まる。γ線は鉛板でほとんど止まり、中性子線は水で止まる。右端の検出器が届いた数を数える。"></canvas></div>
+    <div class="ctrl">
+      <div class="seg" role="group" aria-label="実験"><button type="button" data-rm="pass" aria-pressed="true">さえぎって比べる</button><button type="button" data-rm="mag" aria-pressed="false">磁場の中を通す</button></div>
+      <span id="shBox" style="display:inline-flex;flex-wrap:wrap;gap:0 12px">
+        <label><input type="checkbox" data-sh="paper" checked>紙</label>
+        <label><input type="checkbox" data-sh="al" checked>アルミニウム板</label>
+        <label><input type="checkbox" data-sh="pb" checked>鉛板</label>
+        <label><input type="checkbox" data-sh="water" checked>水（厚いコンクリート）</label>
+      </span>
+      <span id="magBox" hidden><label><input type="checkbox" id="magRev">磁場の向きを反対にする</label></span>
+      <label><input type="checkbox" id="ionChk" checked>電離のあと（＋−）を表示</label>
+    </div>
+    <div class="read" id="readR"></div>
+    <div class="tbl"><table>
+      <thead><tr><th>放射線</th><th>正体</th><th>電荷</th><th>電離作用</th><th>透過力</th><th>止めるもの（例）</th><th>磁場の中では</th></tr></thead>
+      <tbody>
+        <tr><td><b style="color:var(--al)">α線</b></td><td>ヘリウム原子核 <span class="nu"><span class="az"><span>4</span><span>2</span></span>He</span>（陽子2個・中性子2個）の流れ</td><td>正（＋2<i class="qv">e</i>）</td><td>大きい</td><td>小さい</td><td>紙1枚</td><td>少し曲がる（重い）</td></tr>
+        <tr><td><b style="color:var(--be)">β線</b></td><td>電子の流れ（原子核から飛び出したもの）</td><td>負（−<i class="qv">e</i>）</td><td>中くらい</td><td>中くらい</td><td>厚さ数 mm のアルミニウム板</td><td>α線と逆向きに大きく曲がる（軽い）</td></tr>
+        <tr><td><b style="color:var(--ga)">γ線</b></td><td>波長のとても短い電磁波</td><td>なし</td><td>小さい</td><td>大きい</td><td>厚い鉛板・コンクリート</td><td>曲がらない</td></tr>
+        <tr><td><b style="color:var(--nn)">中性子線</b></td><td>中性子の流れ</td><td>なし</td><td>小さい（間接的）</td><td>大きい</td><td>水・厚いコンクリート</td><td>曲がらない</td></tr>
+      </tbody>
+    </table></div>
+    <div class="def"><h3>電離作用と透過力は逆の順</h3>放射線は、通り道の原子から電子をはじき出してイオンにします（<b>電離作用</b>）。電離をたくさん起こす放射線ほど、そのたびにエネルギーを失うので、すぐに止まります。α線は電離作用が最も大きく、透過力（物質を通り抜ける能力）は最も小さい。γ線はその逆です。X線もγ線と同じく波長の短い電磁波です。</div>
+    <p class="note">距離や厚さは見やすく変えています（α線は空気中でも数 cm しか進みません）。γ線と中性子線は、厚くするほど通り抜ける数が減ります。磁場による曲がり方の大きさは誇張しています。</p>
+  </section>
+
+  <!-- ===================== 2 崩壊と半減期 ===================== -->
+  <section class="sheet" id="decay" aria-labelledby="t2">
+    <h2 id="t2">2 放射性崩壊と半減期</h2>
+    <p class="lead">放射性の原子核は、放射線を出して別の原子核に変わります（<b>放射性崩壊</b>）。原子核を選んで、崩壊で陽子と中性子の数がどう変わるかと、たくさんの原子核がどのように減っていくかを確かめよう。</p>
+    <p class="grpl">原子核を選ぶ</p>
+    <div class="chips" id="nucChips" role="group" aria-label="原子核"></div>
+    <div class="two">
+      <div>
+        <h3>1個の原子核の崩壊</h3>
+        <div class="box sq"><canvas id="cvD1" role="img" aria-label="選んだ原子核を陽子（赤）と中性子（灰色）の粒で表した図。崩壊すると放射線が飛び出し、別の原子核に変わる。"></canvas></div>
+        <div class="ctrl"><button type="button" class="btn" id="dPlay">崩壊させる ▶</button></div>
+        <div class="eq" id="dEq"></div>
+        <div class="cnt" id="dCnt"></div>
+        <p class="note" id="dNote"></p>
+      </div>
+      <div>
+        <h3>たくさんの原子核の崩壊</h3>
+        <div class="box sq"><canvas id="cvD2" role="img" aria-label="原子核を方眼に並べた図。崩壊した原子核は色が変わる。"></canvas></div>
+        <div class="ctrl">
+          <button type="button" class="btn" id="hPlay">再生 ▶</button>
+          <button type="button" class="btn ghost" id="hReset">はじめから</button>
+          <button type="button" class="btn ghost" id="hRand">別の乱数で</button>
+        </div>
+        <div class="ctrl">
+          <div class="seg" role="group" aria-label="はじめの原子核の数"><button type="button" data-n="100" aria-pressed="false">100 個</button><button type="button" data-n="400" aria-pressed="true">400 個</button><button type="button" data-n="1600" aria-pressed="false">1600 個</button></div>
+          <label><input type="checkbox" id="hStop" checked>半減期ごとに止める</label>
+        </div>
+      </div>
+    </div>
+    <div class="box flat" style="margin-top:12px"><canvas id="cvD3" role="img" aria-label="残っている原子核の数と経過時間のグラフ。点線は式 N＝N0（1/2）^(t/T) の曲線、実線はシミュレーションの数。ドラッグで時刻を動かせる。"></canvas></div>
+    <div class="read" id="readD"></div>
+    <div class="def"><h3>半減期 <i class="qv">T</i></h3>放射性原子核の数が、もとの半分になるまでの時間。どの原子核がいつ崩壊するかは決まっていません（1600 個にすると、式の曲線にいっそう近くなります）が、全体としては <b>半減期 <i class="qv">T</i> ごとに半分</b>になります：<i class="qv">N</i> ＝ <i class="qv">N</i><sub>0</sub>(1/2)<sup><i class="qv">t</i>/<i class="qv">T</i></sup>。半減期は原子核の種類で決まり、温度や圧力では変わりません。1 s 間に崩壊する数（<b>放射能の強さ</b>、単位 Bq）も、残っている原子核の数に比例するので、同じ半減期で減っていきます。</div>
+    <p class="note">崩壊してできた原子核（右の図の白い丸）がさらに崩壊する場合も、ここでは数えていません。β崩壊では電子のほかに、反ニュートリノという粒子も出ます（図では省略）。</p>
+  </section>
+
+  <!-- ===================== 3 核分裂 ===================== -->
+  <section class="sheet" id="fission" aria-labelledby="t3">
+    <h2 id="t3">3 核分裂と連鎖反応</h2>
+    <p class="lead">ウラン 235 の原子核に中性子が吸収されると、原子核は不安定になり、2つの原子核に分裂します（<b>核分裂</b>）。このとき 2〜3 個の中性子が飛び出し、反応後の質量の和はわずかに減って、その分のエネルギーが放出されます。</p>
+    <h3>1回の核分裂</h3>
+    <div class="box wide"><canvas id="cvF1" role="img" aria-label="左から中性子がウラン235の原子核に近づき、吸収されてウラン236になる。原子核はくびれて2つに分かれ、2個の破片の原子核と2〜3個の中性子が飛び出し、熱が出る。"></canvas></div>
+    <div class="ctrl">
+      <button type="button" class="btn" id="f1Play">もう一度 ▶</button>
+      <div class="seg" role="group" aria-label="分裂のしかた" id="f1Seg"></div>
+    </div>
+    <div class="eq" id="fEq"></div>
+    <div class="mass" id="fMass"></div>
+    <p class="note">質量の減少は、反応前の質量の約 0.09 % です（棒グラフでは大きく誇張しています）。1回の核分裂で約 3 × 10⁻¹¹ J のエネルギーが放出され、その多くは破片の運動エネルギーとなり、まわりの物質の熱になります。同じ質量で比べると、石油などの燃焼（化学反応）の数百万倍です。</p>
+
+    <h3 id="chain" style="margin-top:18px">連鎖反応と制御棒</h3>
+    <p class="lead" style="margin-bottom:8px">飛び出した中性子が別のウラン 235 に吸収されると、次の核分裂が起こります（<b>核分裂連鎖反応</b>）。制御棒は中性子を吸収します。制御棒の差しこみ方を変えて、核分裂の回数が増える・一定・減るようすを確かめよう。</p>
+    <div class="box"><canvas id="cvF2" role="img" aria-label="ウラン235の原子核（紫の丸）が並ぶ領域に中性子が飛び交い、吸収されると核分裂が起こって光り、新しい中性子が出る。上から灰色の制御棒が差しこまれている。"></canvas></div>
+    <div class="ctrl">
+      <button type="button" class="btn" id="f2Add">中性子を入れる</button>
+      <button type="button" class="btn ghost" id="f2Reset">はじめから</button>
+      <button type="button" class="btn ghost" id="f2Pause">一時停止</button>
+      <label><input type="checkbox" id="f2Auto">自動で臨界を保つ</label>
+    </div>
+    <div class="sliders">
+      <label class="sl" for="sRod"><span>制御棒を差しこむ深さ</span><output id="oRod"></output><input type="range" id="sRod" min="0" max="100" step="1" value="55"></label>
+    </div>
+    <div class="box flat" style="margin-top:8px"><canvas id="cvF3" role="img" aria-label="1秒あたりの核分裂の回数と時間のグラフ。"></canvas></div>
+    <div class="read" id="readF"></div>
+    <div>
+      <div class="fate" id="fate"></div>
+      <div class="lg"><span><i style="background:var(--u5)"></i>次の核分裂を起こした</span><span><i style="background:var(--rod)"></i>制御棒に吸収された</span><span><i style="background:var(--nn)"></i>外へ逃げた</span></div>
+    </div>
+    <div class="def"><h3>臨界</h3>1回の核分裂で出た中性子のうち、平均してちょうど1個が次の核分裂を起こすと、核分裂の回数は一定に保たれます。この状態を<b>臨界</b>といいます。1個より多いと回数は急激に増え、少ないと減って止まります。原子力発電では、制御棒で中性子の数を調節して臨界を保ち、核分裂で生じる熱で水を沸騰させ、タービンを回して発電します。</div>
+    <p class="note">燃料が十分にあるとみなすため、分裂した原子核はしばらくすると新しいウラン 235 に置きかわります。実際の原子炉では、燃料の大部分はウラン 238 で、ウラン 235 は 3〜5 % です。中性子は減速材（水など）で遅くすると、ウラン 235 に吸収されやすくなります。中性子の速さや原子核の大きさ・間隔は実際とは異なります。</p>
+  </section>
+
+  <!-- ===================== 4 核融合 ===================== -->
+  <section class="sheet" id="fusion" aria-labelledby="t4">
+    <h2 id="t4">4 核融合</h2>
+    <p class="lead">軽い原子核どうしが合体して、より重い原子核になる反応を<b>核融合</b>といいます。原子核はどちらも正の電荷をもつので、近づけると反発し合います。反発に打ち勝つほど速く（高温に）しないと、核融合は起こりません。</p>
+    <div class="ctrl" style="margin-top:0">
+      <div class="seg" role="group" aria-label="見かた"><button type="button" data-um="pair" aria-pressed="true">2つの原子核を近づける</button><button type="button" data-um="gas" aria-pressed="false">高温のプラズマ</button></div>
+    </div>
+    <div class="box" style="margin-top:8px"><canvas id="cvU1" role="img" aria-label="左から重水素の原子核、右から三重水素の原子核が近づく。遅いと反発して戻り、速いと合体してヘリウム原子核と中性子が飛び出す。"></canvas></div>
+    <div id="pairBox">
+      <div class="sliders">
+        <label class="sl" for="sKE"><span>近づける速さ（運動エネルギー：反発の山の高さに対して）</span><output id="oKE"></output><input type="range" id="sKE" min="10" max="150" step="5" value="60"></label>
+      </div>
+      <h3 style="margin-top:10px">2つの原子核の位置エネルギー（距離との関係）</h3>
+      <div class="box flat"><canvas id="cvU2" role="img" aria-label="横軸が原子核どうしの距離、縦軸が位置エネルギーのグラフ。遠くからは反発の山が高くなり、ごく近くで核力による谷に落ちる。運動エネルギーの水平線が山より低いと、はね返される。"></canvas></div>
+    </div>
+    <div id="gasBox" hidden>
+      <div class="ctrl"><button type="button" class="btn ghost" id="gReset">はじめから</button></div>
+      <div class="sliders">
+        <label class="sl" for="sTemp"><span>温度</span><output id="oTemp"></output><input type="range" id="sTemp" min="1" max="20" step="1" value="10"></label>
+      </div>
+    </div>
+    <div class="read" id="readU"></div>
+    <div class="cards2">
+      <div class="ec"><h3>核融合発電で利用する反応</h3>
+        <div class="eq"><span class="nu"><span class="az"><span>2</span><span>1</span></span>H</span> ＋ <span class="nu"><span class="az"><span>3</span><span>1</span></span>H</span> → <span class="nu"><span class="az"><span>4</span><span>2</span></span>He</span> ＋ <span class="nu"><span class="az"><span>1</span><span>0</span></span>n</span></div>
+        <p class="note" style="margin-top:0">重水素と三重水素（どちらも水素の同位体）。質量の減少は約 0.4 %（核分裂の約 4 倍の割合）。約 1 億 K 以上の高温のプラズマを、磁場などで閉じこめて反応させる研究が進められている。</p>
+        <div class="mass" id="uMass1"></div>
+      </div>
+      <div class="ec"><h3>太陽の中心で起こっている反応</h3>
+        <div class="eq">4 <span class="nu"><span class="az"><span>1</span><span>1</span></span>H</span> → <span class="nu"><span class="az"><span>4</span><span>2</span></span>He</span> ＋ <span class="j">（陽電子など）</span></div>
+        <p class="note" style="margin-top:0">水素の原子核（陽子）4個から、いくつかの段階を経てヘリウム原子核1個ができる。質量の減少は約 0.7 %。太陽の中心は約 1.5 × 10⁷ K の高温・高密度。</p>
+        <div class="mass" id="uMass2"></div>
+      </div>
+    </div>
+    <div class="def"><h3>核分裂と核融合のエネルギー</h3>どちらも、反応の後の質量の和が反応の前よりわずかに小さくなり、その質量の減少 Δ<i class="qv">m</i> に相当するエネルギー <i class="qv">E</i> ＝ Δ<i class="qv">m</i><i class="qv">c</i>² が放出されます（<i class="qv">c</i>：真空中の光の速さ）。重い原子核は分裂すると、軽い原子核は融合すると、エネルギーを放出します。</div>
+    <p class="note">粒子の速さ・大きさ・距離、温度との関係は見やすく変えています。実際には、山の高さより小さいエネルギーでも、まれに山を通り抜けて核融合が起こります（「高温のプラズマ」では省略）。</p>
+  </section>
+
+  <section class="sheet" aria-labelledby="qsTitle">
+    <h3 id="qsTitle">見てみよう</h3>
+    <ol class="qs" id="qs"></ol>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+if(/\/anim\//.test(location.pathname)){ $("backLink").hidden = false; $("nav").hidden = false; }
+const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+const TAU = Math.PI * 2;
+const rnd = (a, b) => a + Math.random() * (b - a);
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+
+/* ---------- 描画の道具 ---------- */
+let col = {};
+const FONT = `"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`, MF = `"Times New Roman",Times,serif`;
+const CK = ["ink","muted","blue","red","line","shade","sheet","paper","pro","neu","al","be","ga","nn","u5","fa","fb","heat","rod","he","dd","tt","ok"];
+function readColors(){ const cs = getComputedStyle(document.documentElement); CK.forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
+function hex2rgb(h){ h = (h || "#000").replace("#", ""); if(h.length === 3) h = h.split("").map(x => x + x).join(""); const n = parseInt(h, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function rgba(h, a){ const A = hex2rgb(h); return `rgba(${A[0]},${A[1]},${A[2]},${a})`; }
+function line(c, pts, color, w, dash){ c.save(); c.strokeStyle = color; c.lineWidth = w; c.setLineDash(dash || []); c.lineJoin = "round"; c.lineCap = "round"; c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke(); c.restore(); }
+function mt(c, str, x, y, color, size, align, bold, bg){
+  size = size || 13;
+  const parts = String(str).split(/(\{[^}]*\})/).filter(Boolean).map(p => p[0] === "{" ? { s: p.slice(1, -1), it: 1 } : { s: p, it: 0 });
+  const fo = p => p.it ? `italic ${Math.round(size * 1.12)}px ${MF}` : `${bold ? "700 " : ""}${size}px ${FONT}`;
+  c.save(); c.textBaseline = "middle"; let w = 0; parts.forEach(p => { c.font = fo(p); p.w = c.measureText(p.s).width; w += p.w; });
+  let x0 = align === "right" ? x - w : align === "center" ? x - w / 2 : x;
+  if(bg){ c.fillStyle = col.sheet; c.globalAlpha = .88; c.fillRect(x0 - 3, y - size * .75, w + 6, size * 1.5); c.globalAlpha = 1; }
+  c.fillStyle = color; parts.forEach(p => { c.font = fo(p); c.textAlign = "left"; c.fillText(p.s, x0, y); x0 += p.w; }); c.restore(); return w;
+}
+// 核種の記号（左上に質量数、左下に原子番号）
+function nucT(c, A, Z, sym, x, y, color, size, align, bg){
+  size = size || 15; const ss = Math.round(size * 0.62);
+  c.save(); c.textBaseline = "middle";
+  c.font = `${ss}px ${MF}`; const wa = c.measureText(String(A)).width, wz = c.measureText(String(Z)).width, ws = Math.max(wa, wz);
+  c.font = `${size}px ${MF}`; const wy = c.measureText(sym).width; const w = ws + 1 + wy;
+  let x0 = align === "right" ? x - w : align === "center" ? x - w / 2 : x;
+  if(bg){ c.fillStyle = col.sheet; c.globalAlpha = .85; c.fillRect(x0 - 3, y - size * .95, w + 6, size * 1.9); c.globalAlpha = 1; }
+  c.fillStyle = color; c.textAlign = "right"; c.font = `${ss}px ${MF}`;
+  c.fillText(String(A), x0 + ws, y - size * 0.42); c.fillText(String(Z), x0 + ws, y + size * 0.42);
+  c.textAlign = "left"; c.font = `${size}px ${MF}`; c.fillText(sym, x0 + ws + 1, y); c.restore(); return w;
+}
+function ball(c, x, y, r, color, alpha){
+  c.save(); c.globalAlpha = alpha == null ? 1 : alpha;
+  const g = c.createRadialGradient(x - r * .35, y - r * .35, r * .1, x, y, r);
+  g.addColorStop(0, rgba("#ffffff", .85)); g.addColorStop(.35, color); g.addColorStop(1, color);
+  c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); c.restore();
+}
+function flash(c, x, y, r, color, a){ c.save(); const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, rgba("#ffffff", .9 * a)); g.addColorStop(.3, rgba(color, .7 * a)); g.addColorStop(1, rgba(color, 0)); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); c.restore(); }
+function arrowHead(c, x, y, dx, dy, color, s){
+  const L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L; s = s || 7;
+  c.save(); c.fillStyle = color; c.beginPath(); c.moveTo(x + ux * s, y + uy * s); c.lineTo(x - ux * s * .7 - uy * s * .65, y - uy * s * .7 + ux * s * .65); c.lineTo(x - ux * s * .7 + uy * s * .65, y - uy * s * .7 - ux * s * .65); c.closePath(); c.fill(); c.restore();
+}
+function setupCanvas(cv){ const c = cv.getContext("2d"), r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); const W = Math.max(1, Math.round(r.width)), H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); c.setTransform(d, 0, 0, d, 0, 0); cv._W = W; cv._H = H; return c; }
+// 核子のかたまり（陽子 p 個・中性子 n 個を n 個の粒で代表）を描く。seed で並びを固定
+function clusterPos(n, seed){
+  const pts = []; let s = seed || 1; const rr = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  for(let i = 0; i < n; i++){ const a = i * 2.39996 + rr() * 0.3, r = Math.sqrt(i + 0.5) / Math.sqrt(n) ; pts.push([r * Math.cos(a), r * Math.sin(a)]); }
+  return pts;
+}
+// HTML の核種表記
+const NU = (A, Z, s) => `<span class="nu"><span class="az"><span>${A}</span><span>${Z}</span></span>${s}</span>`;
+function fmtNum(x){ // 2〜3桁の有効数字、大きいときは × 10ⁿ
+  if(x === 0) return "0"; const a = Math.abs(x);
+  if(a >= 1e4){ const e = Math.floor(Math.log10(a)), m = x / Math.pow(10, e); return `${m.toFixed(1)} × 10${sup(e)}`; }
+  if(a >= 100) return String(Math.round(x));
+  if(a >= 10) return x.toFixed(1).replace(/\.0$/, "");
+  return x.toPrecision(2);
+}
+function sup(n){ const m = "⁰¹²³⁴⁵⁶⁷⁸⁹"; return String(n).split("").map(ch => ch === "-" ? "⁻" : m[+ch]).join(""); }
+
+/* 見えている部分だけ動かす */
+const vis = {};
+if(window.IntersectionObserver){
+  const io = new IntersectionObserver(es => es.forEach(e => vis[e.target.id] = e.isIntersecting), { rootMargin: "100px" });
+  ["rays", "decay", "fission", "fusion"].forEach(id => { vis[id] = false; io.observe($(id)); });
+} else ["rays", "decay", "fission", "fusion"].forEach(id => vis[id] = true);
+
+/* ======================================================================
+   1 放射線の種類と性質
+   ====================================================================== */
+const RK = ["a", "b", "g", "n"];
+const RNAME = { a: "α線", b: "β線", g: "γ線", n: "中性子線" };
+const RV = { a: 20, b: 34, g: 52, n: 27 };                   // 表示の速さ（単位/s）
+const ION = { a: 0.75, b: 0.12, g: 0.025, n: 0.008 };        // 単位長さあたりの電離の数
+const SH = [ // さえぎる物（x：左端、w：厚さ）と、通り抜ける割合
+  { k: "paper", name: "紙", x: 33, w: 0.7, tr: { a: 0, b: 1, g: 1, n: 1 } },
+  { k: "al", name: "アルミニウム板", x: 50, w: 2, tr: { a: 0, b: 0, g: 0.95, n: 1 } },
+  { k: "pb", name: "鉛板", x: 67, w: 4.5, tr: { a: 0, b: 0, g: 0.2, n: 0.9 } },
+  { k: "water", name: "水（コンクリート）", x: 82, w: 14, tr: { a: 0, b: 0, g: 0.55, n: 0.06 } }
+];
+const R = { mode: "pass", on: { paper: 1, al: 1, pb: 1, water: 1 }, ion: true, rev: false, parts: [], ions: [], next: { a: 0, b: 0.3, g: 0.6, n: 0.9 }, em: {}, hit: {}, magNext: 0, magI: 0, magTr: [] };
+function rReset(){ R.parts = []; R.ions = []; RK.forEach(k => { R.em[k] = 0; R.hit[k] = 0; }); R.magTr = []; }
+rReset();
+const cvR = $("cvR"); let cR = null;
+function laneY(i){ return 9 + i * 14; }   // 世界座標（120 × 62）
+function rEmit(k, i){
+  const y = laneY(i) + rnd(-1.2, 1.2);
+  // どこで止まるかを先に決める
+  let stop = 113, sx = null;
+  for(const s of SH){ if(!R.on[s.k]) continue; if(Math.random() >= s.tr[k]){ stop = s.x + rnd(0.1, 0.95) * s.w; sx = s; break; } }
+  R.parts.push({ k, x: 14, y, y0: y, stop, sh: sx, dead: 0, ph: rnd(0, TAU), lane: i });
+  R.em[k]++;
+}
+function rStep(dt){
+  if(R.mode === "pass"){
+    RK.forEach((k, i) => { R.next[k] -= dt; if(R.next[k] <= 0){ R.next[k] = rnd(0.55, 1.0); rEmit(k, i); } });
+    for(const p of R.parts){
+      if(p.dead){ p.dead += dt; continue; }
+      const nx = p.x + RV[p.k] * dt;
+      // 電離のあと（空気中だけ）
+      if(R.ion){ const inSh = x => SH.some(s => R.on[s.k] && x >= s.x && x <= s.x + s.w);
+        const n = ION[p.k] * (Math.min(nx, p.stop) - p.x); if(Math.random() < n - Math.floor(n) || n >= 1){ for(let j = 0; j < Math.max(1, Math.floor(n)); j++){ const xx = rnd(p.x, Math.min(nx, p.stop)); if(!inSh(xx)) R.ions.push({ x: xx, y: p.y + rnd(-1.6, 1.6), t: 0 }); } } }
+      p.x = nx;
+      if(p.x >= p.stop){ p.x = p.stop; p.dead = 1e-6; if(p.stop >= 113) R.hit[p.k]++; }
+    }
+    R.parts = R.parts.filter(p => !p.dead || p.dead < 0.9);
+  } else {
+    R.magNext -= dt;
+    if(R.magNext <= 0){ R.magNext = 0.28; const k = RK[R.magI++ % 4];
+      const rad = k === "a" ? 300 : k === "b" ? rnd(16, 34) : 0;
+      R.parts.push({ k, x: 12, y: 31, th: 0, rad, dead: 0, ph: rnd(0, TAU), s: 0, tr: [] }); R.em[k]++; }
+    const sg = R.rev ? -1 : 1;
+    for(const p of R.parts){
+      if(p.dead){ p.dead += dt; continue; }
+      const v = RV[p.k] * 0.9, n = 4;
+      for(let j = 0; j < n; j++){
+        const h = dt / n;
+        if(p.x > 22 && p.rad){ const w = v / p.rad * (p.k === "a" ? -1 : 1) * sg; p.th += w * h; }
+        p.x += v * Math.cos(p.th) * h; p.y += v * Math.sin(p.th) * h; p.s += v * h;
+      }
+      if(R.ion && Math.random() < ION[p.k] * v * dt) R.ions.push({ x: p.x + rnd(-1, 1), y: p.y + rnd(-1, 1), t: 0 });
+      if(p.x > 117 || p.x < 10 || p.y < 1 || p.y > 61 || (p.rad && p.s > Math.PI * p.rad * 1.2)) p.dead = 1e-6;
+    }
+    R.parts = R.parts.filter(p => !p.dead || p.dead < 0.5);
+  }
+  R.ions.forEach(o => o.t += dt); R.ions = R.ions.filter(o => o.t < 2.2);
+  if(R.ions.length > 900) R.ions.splice(0, R.ions.length - 900);
+}
+function drawRayParticle(c, p, P, s, alpha){
+  const q = P(p.x, p.y), a = alpha == null ? 1 : alpha;
+  if(p.k === "a"){ const r = 0.9 * s; [[-1, -1, "pro"], [1, 1, "pro"], [1, -1, "neu"], [-1, 1, "neu"]].forEach(([dx, dy, cc]) => ball(c, q[0] + dx * r * .62, q[1] + dy * r * .62, r * .62, col[cc], a)); }
+  else if(p.k === "b"){ ball(c, q[0], q[1], 0.55 * s, col.be, a); }
+  else if(p.k === "n"){ ball(c, q[0], q[1], 0.75 * s, col.nn, a); }
+  else { // γ：短い波
+    const L = 5, pts = []; const th = p.th || 0, ux = Math.cos(th), uy = Math.sin(th);
+    for(let j = 0; j <= 24; j++){ const u = -L + j / 24 * L, w = Math.sin(u * 3.2 + p.ph) * 0.9 * Math.sin(Math.PI * j / 24); pts.push(P(p.x + u * ux - w * uy, p.y + u * uy + w * ux)); }
+    c.save(); c.globalAlpha = a; line(c, pts, col.ga, 2.2); c.restore();
+  }
+}
+function drawR(){
+  const c = cR, W = cvR._W, H = cvR._H; if(!c || W < 80) return; c.clearRect(0, 0, W, H);
+  const BW = 120, BH = 62, s = Math.min(W / BW, H / BH), ox = (W - BW * s) / 2, oy = (H - BH * s) / 2, P = (x, y) => [ox + x * s, oy + y * s];
+  const fs = s < 5 ? 11 : 13, narrow = W < 560;
+  if(R.mode === "pass"){
+    // 線源
+    const s0 = P(6, 3), s1 = P(13, 59);
+    c.save(); c.fillStyle = rgba(col.ink, .08); c.strokeStyle = col.ink; c.lineWidth = 1.5; c.fillRect(s0[0], s0[1], s1[0] - s0[0], s1[1] - s0[1]); c.strokeRect(s0[0], s0[1], s1[0] - s0[0], s1[1] - s0[1]); c.restore();
+    c.save(); c.translate(P(9.5, 31)[0], P(9.5, 31)[1]); c.rotate(-Math.PI / 2); mt(c, "放射線源", 0, 0, col.ink, fs, "center", true); c.restore();
+    // 通り道（レーン）
+    RK.forEach((k, i) => { const y = laneY(i); line(c, [P(14, y), P(113, y)], rgba(col.line, .9), 1, [3, 4]); mt(c, RNAME[k], P(14.5, y - 4.2)[0], P(0, y - 4.2)[1], col[k === "a" ? "al" : k === "b" ? "be" : k === "g" ? "ga" : "nn"], fs, "left", true, true); });
+    // 電離のあと
+    if(R.ion) R.ions.forEach(o => { const a = Math.max(0, 1 - o.t / 2.2), q = P(o.x, o.y); c.save(); c.globalAlpha = a; c.font = `700 ${Math.max(8, s * 1.6)}px ${FONT}`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillStyle = col.pro; c.fillText("+", q[0] - s * 0.5, q[1]); c.fillStyle = col.be; c.fillText("−", q[0] + s * 0.6, q[1]); c.restore(); });
+    // さえぎる物
+    SH.forEach(sh => {
+      const a = P(sh.x, 2), b = P(sh.x + sh.w, 60), on = R.on[sh.k];
+      const fill = sh.k === "paper" ? "#F4EBD0" : sh.k === "al" ? "#C9CFD6" : sh.k === "pb" ? "#6B7280" : "#7FB7E6";
+      c.save(); c.globalAlpha = on ? (sh.k === "water" ? .45 : .9) : .12; c.fillStyle = fill; c.fillRect(a[0], a[1], Math.max(2, b[0] - a[0]), b[1] - a[1]);
+      c.strokeStyle = on ? col.ink : col.line; c.lineWidth = 1; c.setLineDash(on ? [] : [3, 3]); c.strokeRect(a[0], a[1], Math.max(2, b[0] - a[0]), b[1] - a[1]); c.restore();
+      const lab = narrow && sh.k === "al" ? "アルミ" : narrow && sh.k === "water" ? "水" : sh.name;
+      mt(c, lab, P(sh.x + sh.w / 2, 0)[0], P(0, 1.2)[1] + 2, on ? col.ink : col.muted, fs - 1, "center", on, true);
+    });
+    // 検出器
+    const d0 = P(113, 3), d1 = P(119, 59);
+    c.save(); c.fillStyle = rgba(col.blue, .12); c.strokeStyle = col.blue; c.lineWidth = 1.5; c.fillRect(d0[0], d0[1], d1[0] - d0[0], d1[1] - d0[1]); c.strokeRect(d0[0], d0[1], d1[0] - d0[0], d1[1] - d0[1]); c.restore();
+    c.save(); c.translate(P(116, 31)[0], P(116, 31)[1]); c.rotate(-Math.PI / 2); mt(c, "検出器", 0, 0, col.blue, fs, "center", true); c.restore();
+    // 粒子
+    R.parts.forEach(p => drawRayParticle(c, p, P, s, p.dead ? Math.max(0, 1 - p.dead / 0.9) : 1));
+    R.parts.forEach(p => { if(p.dead && p.stop < 113 && p.dead < 0.4) flash(c, P(p.x, p.y)[0], P(p.x, p.y)[1], s * 3, col.heat, 1 - p.dead / 0.4); });
+  } else {
+    // 磁場の領域
+    const f0 = P(22, 2), f1 = P(117, 60);
+    c.save(); c.fillStyle = rgba(col.blue, .05); c.fillRect(f0[0], f0[1], f1[0] - f0[0], f1[1] - f0[1]); c.strokeStyle = rgba(col.blue, .5); c.setLineDash([4, 4]); c.strokeRect(f0[0], f0[1], f1[0] - f0[0], f1[1] - f0[1]); c.restore();
+    for(let x = 28; x < 117; x += 10) for(let y = 7; y < 60; y += 10){ const q = P(x, y), r = s * 1.1; c.save(); c.strokeStyle = rgba(col.blue, .45); c.lineWidth = 1.2; c.beginPath(); c.arc(q[0], q[1], r, 0, TAU); c.stroke();
+      if(R.rev){ c.fillStyle = rgba(col.blue, .6); c.beginPath(); c.arc(q[0], q[1], r * .3, 0, TAU); c.fill(); } else { c.beginPath(); c.moveTo(q[0] - r * .7, q[1] - r * .7); c.lineTo(q[0] + r * .7, q[1] + r * .7); c.moveTo(q[0] + r * .7, q[1] - r * .7); c.lineTo(q[0] - r * .7, q[1] + r * .7); c.stroke(); } c.restore(); }
+    mt(c, R.rev ? "磁場：紙面の裏から表の向き ⊙" : "磁場：紙面の表から裏の向き ⊗", P(116, 0)[0], P(0, 4.5)[1], col.blue, fs, "right", true, true);
+    // 線源（鉛の容器と細い穴）
+    const s0 = P(4, 25), s1 = P(13, 37);
+    c.save(); c.fillStyle = "#6B7280"; c.fillRect(s0[0], s0[1], s1[0] - s0[0], s1[1] - s0[1]); c.fillStyle = col.sheet; c.fillRect(P(7, 30.3)[0], P(0, 30.3)[1], s1[0] - P(7, 0)[0], 1.4 * s); c.restore();
+    ball(c, P(7, 31)[0], P(7, 31)[1], s * 1.2, col.heat);
+    mt(c, "放射線源", P(8.5, 39.5)[0], P(0, 39.5)[1], col.ink, fs, "center", true, true);
+    // 曲がり方の目安線
+    const guide = (k, rad) => { const pts = []; let x = 12, y = 31, th = 0; const sg = (R.rev ? -1 : 1) * (k === "a" ? -1 : 1);
+      for(let j = 0; j < 300; j++){ if(x > 22 && rad) th += sg * 0.5 / rad; x += 0.5 * Math.cos(th); y += 0.5 * Math.sin(th); pts.push(P(x, y)); if(x > 116 || y < 2 || y > 60 || x < 11) break; }
+      line(c, pts, rgba(col[k === "a" ? "al" : k === "b" ? "be" : "ga"], .35), 1.5, [5, 4]); return [x, y]; };
+    const ea = guide("a", 300), eb = guide("b", 25), eg = guide("g", 0);
+    if(R.ion) R.ions.forEach(o => { const a = Math.max(0, 1 - o.t / 2.2), q = P(o.x, o.y); c.save(); c.globalAlpha = a * .8; c.font = `700 ${Math.max(8, s * 1.5)}px ${FONT}`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillStyle = col.pro; c.fillText("+", q[0] - s * .5, q[1]); c.fillStyle = col.be; c.fillText("−", q[0] + s * .6, q[1]); c.restore(); });
+    R.parts.forEach(p => drawRayParticle(c, p, P, s, p.dead ? Math.max(0, 1 - p.dead / 0.5) : 1));
+    const up = !R.rev;
+    mt(c, "α線（正の電荷・重い）", P(114, 0)[0], P(0, ea[1] + (up ? -3.2 : 3.2))[1], col.al, fs, "right", true, true);
+    mt(c, "γ線・中性子線（電荷なし）", P(114, 0)[0], P(0, 34.5)[1], col.ga, fs, "right", true, true);
+    const bq = up ? P(40, 58) : P(40, 4); mt(c, "β線（負の電荷・軽い）", bq[0], bq[1], col.be, fs, "left", true, true);
+  }
+}
+function rRead(){
+  if(R.mode === "pass"){
+    const on = SH.filter(s => R.on[s.k]).map(s => s.name);
+    $("readR").innerHTML = `さえぎる物：<b>${on.length ? on.join("・") : "なし"}</b><br>検出器に届いた数／出た数：` + RK.map(k => `${RNAME[k]} <b>${R.hit[k]}</b>/${R.em[k]}`).join("　");
+  } else {
+    $("readR").innerHTML = `電荷をもつ粒子は磁場から力を受けて曲がります。<b>α線（正）とβ線（負）は逆向き</b>に曲がり、軽いβ線のほうが大きく曲がります。電荷をもたない <b>γ線と中性子線は曲がりません</b>。（曲がる向きは、電流が磁場から受ける力の向き（フレミングの左手の法則）と同じ考え方で決まります。β線の電子は、電流と逆向きに動く負の電荷です。）`;
+  }
+}
+document.querySelectorAll("[data-rm]").forEach(b => b.addEventListener("click", () => setRMode(b.dataset.rm)));
+function setRMode(m){ R.mode = m; document.querySelectorAll("[data-rm]").forEach(x => x.setAttribute("aria-pressed", x.dataset.rm === m)); $("shBox").hidden = m !== "pass"; $("magBox").hidden = m !== "mag"; rReset(); rRead(); drawR(); }
+document.querySelectorAll("[data-sh]").forEach(ch => ch.addEventListener("change", () => { R.on[ch.dataset.sh] = ch.checked ? 1 : 0; rReset(); rRead(); }));
+$("ionChk").addEventListener("change", e => { R.ion = e.target.checked; R.ions = []; });
+$("magRev").addEventListener("change", e => { R.rev = e.target.checked; rReset(); });
+
+/* ======================================================================
+   2 放射性崩壊と半減期
+   ====================================================================== */
+const NUCS = [
+  { id: "ra226", A: 226, Z: 88, s: "Ra", nm: "ラジウム 226", ty: "α", T: 1600, u: "年", d: { A: 222, Z: 86, s: "Rn", nm: "ラドン 222", st: "放射性" }, note: "キュリー夫妻が発見した放射性元素。" },
+  { id: "rn222", A: 222, Z: 86, s: "Rn", nm: "ラドン 222", ty: "α", T: 3.8, u: "日", d: { A: 218, Z: 84, s: "Po", nm: "ポロニウム 218", st: "放射性" }, note: "空気中にも少し含まれる気体の放射性元素。" },
+  { id: "po210", A: 210, Z: 84, s: "Po", nm: "ポロニウム 210", ty: "α", T: 138, u: "日", d: { A: 206, Z: 82, s: "Pb", nm: "鉛 206", st: "安定" }, note: "" },
+  { id: "u238", A: 238, Z: 92, s: "U", nm: "ウラン 238", ty: "α", T: 4.5e9, u: "年", d: { A: 234, Z: 90, s: "Th", nm: "トリウム 234", st: "放射性" }, note: "天然のウランの約 99.3 %。半減期は地球の年齢（約 46 億年）と同じくらい。" },
+  { id: "c14", A: 14, Z: 6, s: "C", nm: "炭素 14", ty: "β", T: 5700, u: "年", d: { A: 14, Z: 7, s: "N", nm: "窒素 14", st: "安定" }, note: "遺物の年代測定（放射性炭素年代測定）に使われる。" },
+  { id: "h3", A: 3, Z: 1, s: "H", nm: "三重水素（トリチウム）", ty: "β", T: 12, u: "年", d: { A: 3, Z: 2, s: "He", nm: "ヘリウム 3", st: "安定" }, note: "" },
+  { id: "i131", A: 131, Z: 53, s: "I", nm: "ヨウ素 131", ty: "β", T: 8.0, u: "日", d: { A: 131, Z: 54, s: "Xe", nm: "キセノン 131", st: "安定" }, note: "γ線も出す。", gam: true },
+  { id: "cs137", A: 137, Z: 55, s: "Cs", nm: "セシウム 137", ty: "β", T: 30, u: "年", d: { A: 137, Z: 56, s: "Ba", nm: "バリウム 137", st: "安定" }, note: "γ線も出す。", gam: true },
+  { id: "co60", A: 60, Z: 27, s: "Co", nm: "コバルト 60", ty: "β", T: 5.3, u: "年", d: { A: 60, Z: 28, s: "Ni", nm: "ニッケル 60", st: "安定" }, note: "γ線も出す。医療器具の滅菌などに使われる。", gam: true },
+  { id: "k40", A: 40, Z: 19, s: "K", nm: "カリウム 40", ty: "β", T: 1.3e9, u: "年", d: { A: 40, Z: 20, s: "Ca", nm: "カルシウム 40", st: "安定" }, note: "食物や人体にも含まれる（自然放射線）。" },
+  { id: "sr90", A: 90, Z: 38, s: "Sr", nm: "ストロンチウム 90", ty: "β", T: 29, u: "年", d: { A: 90, Z: 39, s: "Y", nm: "イットリウム 90", st: "放射性" }, note: "" },
+  { id: "tc99m", A: "99m", Z: 43, s: "Tc", nm: "テクネチウム 99m", ty: "γ", T: 6.0, u: "時間", d: { A: 99, Z: 43, s: "Tc", nm: "テクネチウム 99", st: "放射性（半減期 約 21 万年）" }, note: "エネルギーの高い状態の原子核（m）。γ線を出して低い状態になる。医療の検査に使われる。" }
+];
+const D = { nuc: NUCS[0], ph: 9, playing: false, N0: 400, tl: [], t: 0, run: false, stopEach: true, nextStop: 1, seed: 1, drag: false };
+const TY_COL = { "α": "al", "β": "be", "γ": "ga" };
+function fmtT(x, u){ return `${fmtNum(x)} ${u}`; }
+function buildChips(){
+  const g = { "α": "α崩壊", "β": "β崩壊", "γ": "γ線の放出" };
+  $("nucChips").innerHTML = NUCS.map(n => `<button type="button" class="chip" data-nuc="${n.id}" aria-pressed="${n === D.nuc}"><span class="ty" style="color:var(--${TY_COL[n.ty]})">${n.ty}</span>${n.nm}<small>半減期 ${fmtT(n.T, n.u)}</small></button>`).join("");
+  document.querySelectorAll("[data-nuc]").forEach(b => b.addEventListener("click", () => setNuc(b.dataset.nuc, true)));
+}
+function setNuc(id, play){
+  D.nuc = NUCS.find(n => n.id === id) || NUCS[0];
+  document.querySelectorAll("[data-nuc]").forEach(b => b.setAttribute("aria-pressed", b.dataset.nuc === D.nuc.id));
+  D.ph = play ? 0 : 9; D.playing = !!play; dTexts(); hNew(false); drawD1(); drawD2(); drawD3(); hRead();
+}
+function dTexts(){
+  const n = D.nuc, d = n.d, Am = typeof n.A === "string" ? parseInt(n.A, 10) : n.A;
+  let eq = "", ex = "";
+  if(n.ty === "α"){ eq = `${NU(n.A, n.Z, n.s)} → ${NU(d.A, d.Z, d.s)} ＋ ${NU(4, 2, "He")} <span class="j">（α線）</span>`; ex = "α崩壊：ヘリウム原子核（陽子2個・中性子2個）が飛び出す。"; }
+  else if(n.ty === "β"){ eq = `${NU(n.A, n.Z, n.s)} → ${NU(d.A, d.Z, d.s)} ＋ e<sup>−</sup> <span class="j">（β線）</span>`; ex = "β崩壊：原子核の中の中性子1個が陽子に変わり、電子が飛び出す。"; }
+  else { eq = `${NU(n.A, n.Z, n.s)} → ${NU(d.A, d.Z, d.s)} ＋ <span class="j">γ線</span>`; ex = "γ線の放出：原子核のエネルギーの状態が変わるだけで、陽子と中性子の数は変わらない。"; }
+  $("dEq").innerHTML = eq;
+  const p0 = n.Z, n0 = Am - n.Z, p1 = d.Z, n1 = d.A - d.Z;
+  const df = (a, b) => b === a ? `<span>変わらない</span>` : `<span class="${b > a ? "up" : "dn"}">${b > a ? "＋" : "−"}${Math.abs(b - a)}</span>`;
+  $("dCnt").innerHTML = `<span class="h"></span><span class="h">崩壊前</span><span class="h">崩壊後</span><span class="h">変化</span>`
+    + `<span>陽子の数（原子番号 <i class="qv">Z</i>）</span><span>${p0}</span><span>${p1}</span>${df(p0, p1)}`
+    + `<span>中性子の数</span><span>${n0}</span><span>${n1}</span>${df(n0, n1)}`
+    + `<span>質量数 <i class="qv">A</i></span><span>${Am}</span><span>${d.A}</span>${df(Am, d.A)}`;
+  $("dNote").innerHTML = `${ex}<br>${n.nm} → ${d.nm}（${d.st}）。半減期 ${fmtT(n.T, n.u)}。${n.note || ""}`;
+}
+const cvD1 = $("cvD1"), cvD2 = $("cvD2"), cvD3 = $("cvD3"); let cD1 = null, cD2 = null, cD3 = null;
+function drawD1(){
+  const c = cD1, W = cvD1._W, H = cvD1._H; if(!c || W < 60) return; c.clearRect(0, 0, W, H);
+  const n = D.nuc, d = n.d, Am = typeof n.A === "string" ? parseInt(n.A, 10) : n.A;
+  const NB = Math.min(Am, 44), cx = W * 0.4, cy = H * 0.52, R0 = Math.min(W, H) * 0.24, br = R0 / Math.sqrt(NB) * 0.95;
+  const ph = D.ph, done = ph >= 1.2, fs = W < 380 ? 12 : 14;
+  // 粒の色：陽子の割合 Z/A を保つ。崩壊で変わる粒を決めておく
+  const pos = clusterPos(NB, Am * 7 + n.Z), nP = Math.round(NB * n.Z / Am);
+  const isP = i => i % Math.round(NB / Math.max(1, nP)) === 0 && Math.floor(i / Math.round(NB / Math.max(1, nP))) < nP;
+  let pc = 0; const kinds = pos.map((_, i) => { const p = isP(i) && pc < nP; if(p) pc++; return p ? "pro" : "neu"; });
+  // 外側の粒を「出ていく粒」に使う
+  const order = pos.map((p, i) => [Math.atan2(p[1], p[0]), Math.hypot(p[0], p[1]), i]).filter(a => a[1] > 0.6).sort((a, b) => Math.abs(a[0]) - Math.abs(b[0]));
+  const shake = done ? 0 : (ph < 0.45 ? Math.sin(ph * 90) * 0.02 * ph / 0.45 : 0);
+  const glow = n.ty === "γ" ? (done ? 0 : 1 - Math.max(0, (ph - 0.5) / 0.7)) : 0;
+  if(glow > 0.02) flash(c, cx, cy, R0 * 1.8, col.ga, glow * 0.6);
+  let leave = [];
+  if(n.ty === "α"){ // 右側の外の粒 2p2n
+    const pr = order.filter(o => kinds[o[2]] === "pro").slice(0, 2).map(o => o[2]), ne = order.filter(o => kinds[o[2]] === "neu").slice(0, 2).map(o => o[2]); leave = pr.concat(ne);
+  }
+  const tA = clamp((ph - 0.5) / 0.7, 0, 1);  // 飛び出す進み具合
+  pos.forEach((p, i) => {
+    let x = cx + (p[0] + shake) * R0, y = cy + p[1] * R0, k = kinds[i];
+    if(leave.includes(i)){ if(ph >= 0.5){ return; } }
+    if(n.ty === "β" && i === order.filter(o => kinds[o[2]] === "neu")[0]?.[2] && ph >= 0.5) k = "pro";
+    ball(c, x, y, br, col[k]);
+  });
+  // 変わった中性子の印
+  if(n.ty === "β" && ph >= 0.5){ const j = order.filter(o => kinds[o[2]] === "neu")[0]; if(j){ const p = pos[j[2]], x = cx + p[0] * R0, y = cy + p[1] * R0; c.save(); c.strokeStyle = col.ink; c.lineWidth = 1.5; c.beginPath(); c.arc(x, y, br * 1.35, 0, TAU); c.stroke(); c.restore(); if(ph < 1.6) mt(c, "中性子 → 陽子", x, y - br * 2.4, col.ink, fs - 1, "center", true, true); } }
+  // 飛び出すもの
+  const ex = cx + R0 * 1.05 + tA * (W - cx - R0 * 1.05 - 20), ey = cy;
+  if(ph >= 0.5 && tA < 1){
+    if(n.ty === "α"){ const r = br; [[-1, -1, "pro"], [1, 1, "pro"], [1, -1, "neu"], [-1, 1, "neu"]].forEach(([dx, dy, cc]) => ball(c, ex + dx * r * .9, ey + dy * r * .9, r, col[cc])); mt(c, "α線", ex, ey - br * 2.8, col.al, fs, "center", true, true); }
+    else if(n.ty === "β"){ ball(c, ex, ey, br * 0.55, col.be); mt(c, "β線（電子）", ex, ey - br * 2, col.be, fs, "center", true, true); }
+    else { const pts = []; for(let j = 0; j <= 30; j++){ const u = j / 30; pts.push([ex - 30 + u * 30, ey + Math.sin(u * 14) * 6 * Math.sin(Math.PI * u)]); } line(c, pts, col.ga, 2.5); mt(c, "γ線", ex - 15, ey - 18, col.ga, fs, "center", true, true); }
+  }
+  if(n.gam && ph >= 0.75 && ph < 1.6){ const u = clamp((ph - 0.75) / 0.85, 0, 1), gx = cx + R0 + u * (W * 0.5), gy = cy + R0 * 0.5 + u * H * 0.25; const pts = []; for(let j = 0; j <= 24; j++){ const v = j / 24; pts.push([gx - 26 + v * 26, gy + Math.sin(v * 12) * 5 * Math.sin(Math.PI * v)]); } line(c, pts, col.ga, 2.2); mt(c, "γ線", gx - 13, gy + 14, col.ga, fs - 1, "center", true, true); }
+  // 核種の記号
+  const cur = ph >= 0.5 ? d : n;
+  nucT(c, cur.A, cur.Z, cur.s, cx, cy - R0 - 30, col.ink, W < 380 ? 18 : 22, "center", true);
+  mt(c, (ph >= 0.5 ? d.nm : n.nm), cx, cy + R0 + 22, col.ink, fs, "center", true, true);
+  // 凡例
+  ball(c, 14, H - 30, 6, col.pro); mt(c, "陽子", 24, H - 30, col.muted, fs - 1, "left");
+  ball(c, 14, H - 13, 6, col.neu); mt(c, "中性子", 24, H - 13, col.muted, fs - 1, "left");
+  if(Am > NB) mt(c, `粒は ${NB} 個で代表（実際は ${Am} 個）`, W - 8, H - 13, col.muted, fs - 2, "right");
+}
+// 原子核の集団：崩壊する時刻を乱数で先に決める
+function mulberry(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function hNew(newSeed){ if(newSeed) D.seed = (Math.random() * 1e9) | 0; const r = mulberry(D.seed); D.tl = []; for(let i = 0; i < D.N0; i++) D.tl.push(-Math.log(1 - r()) / Math.LN2); D.t = 0; D.run = false; D.nextStop = 1; $("hPlay").textContent = "再生 ▶"; }
+const TMAX = 5;   // 横軸：半減期の5倍まで
+function nLeft(t){ let k = 0; for(const x of D.tl) if(x > t) k++; return k; }
+function drawD2(){
+  const c = cD2, W = cvD2._W, H = cvD2._H; if(!c || W < 60) return; c.clearRect(0, 0, W, H);
+  const n = D.N0, m = Math.round(Math.sqrt(n)), pad = 10, sz = Math.min((W - 2 * pad) / m, (H - 2 * pad - 22) / m), ox = (W - sz * m) / 2, oy = pad;
+  const pc = col[TY_COL[D.nuc.ty]];
+  for(let i = 0; i < n; i++){
+    const x = ox + (i % m + 0.5) * sz, y = oy + (Math.floor(i / m) + 0.5) * sz, td = D.tl[i];
+    if(td > D.t){ c.fillStyle = pc; c.beginPath(); c.arc(x, y, sz * 0.38, 0, TAU); c.fill(); }
+    else { c.strokeStyle = rgba(col.muted, .6); c.lineWidth = Math.max(0.6, sz * 0.08); c.beginPath(); c.arc(x, y, sz * 0.3, 0, TAU); c.stroke();
+      const age = (D.t - td) * 3; if(age < 1 && D.run) flash(c, x, y, sz * 1.6, pc, 1 - age); }
+  }
+  const k = nLeft(D.t);
+  ball(c, 16, H - 12, 5, pc); mt(c, `${D.nuc.nm}（崩壊前）${k} 個`, 26, H - 12, col.ink, 12, "left");
+  c.strokeStyle = rgba(col.muted, .7); c.lineWidth = 1.2; c.beginPath(); c.arc(W * 0.62, H - 12, 4.5, 0, TAU); c.stroke(); mt(c, `崩壊した ${n - k} 個`, W * 0.62 + 9, H - 12, col.ink, 12, "left");
+}
+let G3 = null;
+function drawD3(){
+  const c = cD3, W = cvD3._W, H = cvD3._H; if(!c || W < 60) return; c.clearRect(0, 0, W, H);
+  const L = 52, Rm = 34, T = 12, B = 40, gw = W - L - Rm, gh = H - T - B, X = u => L + u / TMAX * gw, Y = f => T + (1 - f) * gh; G3 = { L, gw };
+  const nuc = D.nuc, fs = W < 500 ? 11 : 12;
+  c.strokeStyle = col.line; c.lineWidth = 1;
+  [[1, "1"], [0.5, "1/2"], [0.25, "1/4"], [0.125, "1/8"], [0.0625, "1/16"]].forEach(([f, s]) => { line(c, [[L, Y(f)], [W - Rm, Y(f)]], rgba(col.line, .8), 1, [3, 3]); mt(c, s, L - 6, Y(f), col.muted, fs, "right"); });
+  for(let k = 1; k <= TMAX; k++){ line(c, [[X(k), T], [X(k), T + gh]], rgba(col.line, .8), 1, [3, 3]); mt(c, `${k === 1 ? "" : k}{T}`, X(k), T + gh + 11, col.muted, fs, "center"); if(W > 520 || k % 2 === 1) mt(c, fmtT(k * nuc.T, nuc.u), X(k), T + gh + 26, col.muted, fs - 1, "center"); }
+  line(c, [[L, T], [L, T + gh], [W - Rm, T + gh]], col.ink, 1.4);
+  mt(c, "{N}/{N}₀", L + 4, T + 6, col.ink, fs, "left", false, true); mt(c, "0", L, T + gh + 11, col.muted, fs, "center");
+  mt(c, "経過時間 {t} →", X(2.5), T + gh - 12, col.ink, fs, "center", false, true);
+  // 式の曲線
+  const pts = []; for(let j = 0; j <= 200; j++){ const u = j / 200 * TMAX; pts.push([X(u), Y(Math.pow(0.5, u))]); } line(c, pts, col.blue, 2, [6, 4]);
+  // 半減期ごとの点
+  for(let k = 0; k <= TMAX; k++) { c.fillStyle = col.blue; c.beginPath(); c.arc(X(k), Y(Math.pow(.5, k)), 3, 0, TAU); c.fill(); }
+  // シミュレーション
+  const ts = D.tl.filter(x => x <= D.t).sort((a, b) => a - b); const sp = [[X(0), Y(1)]]; let k = D.N0;
+  ts.forEach(x => { sp.push([X(x), Y(k / D.N0)]); k--; sp.push([X(x), Y(k / D.N0)]); }); sp.push([X(D.t), Y(k / D.N0)]);
+  line(c, sp, col[TY_COL[nuc.ty]], 2.2);
+  // 現在の時刻
+  line(c, [[X(D.t), T], [X(D.t), T + gh]], col.ink, 1.2); c.fillStyle = col[TY_COL[nuc.ty]]; c.beginPath(); c.arc(X(D.t), Y(k / D.N0), 5, 0, TAU); c.fill();
+  // 凡例
+  line(c, [[W - Rm - 210, T + 10], [W - Rm - 186, T + 10]], col.blue, 2, [6, 4]); mt(c, "式 {N}₀(1/2)^({t}/{T})", W - Rm - 182, T + 10, col.ink, fs, "left", false, true);
+  line(c, [[W - Rm - 210, T + 28], [W - Rm - 186, T + 28]], col[TY_COL[nuc.ty]], 2.2); mt(c, "シミュレーション", W - Rm - 182, T + 28, col.ink, fs, "left", false, true);
+}
+function hRead(){
+  const nuc = D.nuc, u = D.t, k = nLeft(u), th = D.N0 * Math.pow(0.5, u);
+  $("readD").innerHTML = `経過時間 <i class="qv">t</i> ＝ <b>${fmtT(u * nuc.T, nuc.u)}</b>（半減期 <i class="qv">T</i> ＝ ${fmtT(nuc.T, nuc.u)} の <b>${u.toFixed(2)}</b> 倍）<br>`
+    + `残っている原子核：<b>${k}</b> 個（はじめの ${(100 * k / D.N0).toFixed(1)} %）　式：${D.N0} × (1/2)<sup>${u.toFixed(2)}</sup> ＝ ${th.toFixed(1)} 個`
+    + (Math.abs(u - Math.round(u)) < 1e-6 && u > 0 ? `<br><b>${Math.round(u)} 回</b>半分になった → (1/2)<sup>${Math.round(u)}</sup> ＝ 1/${Math.pow(2, Math.round(u))}` : "");
+}
+$("dPlay").addEventListener("click", () => { D.ph = 0; D.playing = true; });
+$("hPlay").addEventListener("click", () => { if(D.t >= TMAX) { D.t = 0; D.nextStop = 1; } D.run = !D.run; $("hPlay").textContent = D.run ? "一時停止 ❚❚" : "再生 ▶"; });
+$("hReset").addEventListener("click", () => { D.t = 0; D.run = false; D.nextStop = 1; $("hPlay").textContent = "再生 ▶"; drawD2(); drawD3(); hRead(); });
+$("hRand").addEventListener("click", () => { hNew(true); drawD2(); drawD3(); hRead(); });
+$("hStop").addEventListener("change", e => D.stopEach = e.target.checked);
+document.querySelectorAll("[data-n]").forEach(b => b.addEventListener("click", () => { D.N0 = +b.dataset.n; document.querySelectorAll("[data-n]").forEach(x => x.setAttribute("aria-pressed", x === b)); hNew(false); drawD2(); drawD3(); hRead(); }));
+function scrub(e){ if(!G3) return; const r = cvD3.getBoundingClientRect(), x = e.clientX - r.left; D.t = clamp((x - G3.L) / G3.gw * TMAX, 0, TMAX); D.nextStop = Math.floor(D.t + 1e-9) + 1; drawD2(); drawD3(); hRead(); }
+cvD3.addEventListener("pointerdown", e => { D.drag = true; D.run = false; $("hPlay").textContent = "再生 ▶"; cvD3.setPointerCapture(e.pointerId); scrub(e); });
+cvD3.addEventListener("pointermove", e => { if(D.drag) scrub(e); });
+cvD3.addEventListener("pointerup", () => D.drag = false);
+function dStep(dt){
+  if(D.playing){ D.ph += dt / 2.2; if(D.ph > 2){ D.playing = false; } }
+  if(D.run){ const sp = 1 / 3.2; let nt = D.t + dt * sp;
+    if(D.stopEach && nt >= D.nextStop - 1e-9 && D.nextStop <= TMAX){ nt = D.nextStop; D.nextStop++; D.run = false; $("hPlay").textContent = "再生 ▶"; }
+    if(nt >= TMAX){ nt = TMAX; D.run = false; $("hPlay").textContent = "再生 ▶"; }
+    D.t = nt; hRead(); }
+}
+
+/* ======================================================================
+   3 核分裂
+   ====================================================================== */
+const FCH = [
+  { a: [141, 56, "Ba", "バリウム"], b: [92, 36, "Kr", "クリプトン"], n: 3 },
+  { a: [144, 54, "Xe", "キセノン"], b: [90, 38, "Sr", "ストロンチウム"], n: 2 },
+  { a: [137, 55, "Cs", "セシウム"], b: [97, 37, "Rb", "ルビジウム"], n: 2 }
+];
+const F1 = { ch: 0, t: 0 };
+$("f1Seg").innerHTML = FCH.map((f, i) => `<button type="button" data-fc="${i}" aria-pressed="${i === 0}">${f.a[2]} ＋ ${f.b[2]}</button>`).join("");
+document.querySelectorAll("[data-fc]").forEach(b => b.addEventListener("click", () => { F1.ch = +b.dataset.fc; document.querySelectorAll("[data-fc]").forEach(x => x.setAttribute("aria-pressed", x === b)); F1.t = 0; fTexts(); }));
+$("f1Play").addEventListener("click", () => F1.t = 0);
+function massBars(el, items){ // items: [{lab, parts:[[name, frac, color]] , total}]
+  el.innerHTML = items.map(it => `<div class="mrow"><span>${it.lab}</span><div class="mtr" style="width:${it.w}%">${it.parts.map(p => `<div style="width:${p[1]}%;background:${p[2]}">${p[0]}</div>`).join("")}</div></div>`).join("");
+}
+function fTexts(){
+  const f = FCH[F1.ch];
+  $("fEq").innerHTML = `${NU(235, 92, "U")} ＋ ${NU(1, 0, "n")} → ${NU(f.a[0], f.a[1], f.a[2])} ＋ ${NU(f.b[0], f.b[1], f.b[2])} ＋ ${f.n} ${NU(1, 0, "n")}<br><span class="j">質量数：235 ＋ 1 ＝ ${f.a[0]} ＋ ${f.b[0]} ＋ ${f.n}　原子番号：92 ＝ ${f.a[1]} ＋ ${f.b[1]}（反応の前後で和は等しい）</span>`;
+  const sum = f.a[0] + f.b[0] + f.n, red = 6;  // 誇張した減少（%）
+  massBars($("fMass"), [
+    { lab: "反応前", w: 100, parts: [["²³⁵U", 235 / 236 * 100, "var(--u5)"], ["n", 1 / 236 * 100 + 1.2, "var(--nn)"]] },
+    { lab: "反応後", w: 100 - red, parts: [[`${f.a[2]}`, f.a[0] / sum * 100, "var(--fa)"], [`${f.b[2]}`, f.b[0] / sum * 100, "var(--fb)"], ["n", f.n / sum * 100 + 2, "var(--nn)"]] },
+    { lab: "", w: 100, parts: [["", 100 - red, "transparent"], ["Δm", red, "var(--heat)"]] }
+  ]);
+  $("fMass").lastElementChild.firstElementChild.innerHTML = `<span style="font-size:13px;color:var(--heat);font-weight:700">減少分</span>`;
+  $("fMass").insertAdjacentHTML("beforeend", `<p class="note" style="margin:0">反応後の質量の和は、反応前よりわずかに小さい。この質量の減少 Δ<i class="qv">m</i> に相当するエネルギー <i class="qv">E</i> ＝ Δ<i class="qv">m</i><i class="qv">c</i>² が放出される。</p>`);
+}
+const cvF1 = $("cvF1"); let cF1 = null;
+function drawF1(){
+  const c = cF1, W = cvF1._W, H = cvF1._H; if(!c || W < 80) return; c.clearRect(0, 0, W, H);
+  const f = FCH[F1.ch], t = F1.t, s = Math.min(W / 240, H / 100), cx = W * 0.5, cy = H * 0.5, fs = W < 500 ? 11 : 13;
+  const rU = 13 * s, rA = 13 * s * Math.cbrt(f.a[0] / 236), rB = 13 * s * Math.cbrt(f.b[0] / 236), rn = 2.6 * s;
+  const lab = (A, Z, sy, x, y, cc) => nucT(c, A, Z, sy, x, y, cc, W < 500 ? 14 : 17, "center", true);
+  if(t < 1.6){ // 中性子が近づく
+    const u = clamp(t / 1.5, 0, 1), nx = 14 + u * (cx - rU - 14 - rn), ny = cy;
+    ball(c, cx, cy, rU, col.u5); lab(235, 92, "U", cx, cy - rU - 18, col.u5);
+    ball(c, nx, ny, rn, col.nn); mt(c, "中性子", nx, ny - rn - 12, col.nn, fs, "center", true, true);
+    arrowHead(c, nx + rn + 8, ny, 1, 0, col.nn, 6);
+  } else if(t < 2.6){ // 吸収されて U236 が振動・くびれる
+    const u = (t - 1.6) / 1.0, e = 1 + 0.45 * u, w = Math.sin(u * 30) * 0.06 * (1 - u);
+    c.save(); c.translate(cx, cy); c.scale(e + w, 1 / Math.sqrt(e) - w);
+    ball(c, 0, 0, rU, col.u5); c.restore();
+    if(u > 0.5){ c.save(); c.fillStyle = col.sheet; c.globalAlpha = (u - 0.5) * 1.2; c.beginPath(); c.ellipse(cx, cy - rU / Math.sqrt(e) * 0.95, rU * 0.25, rU * 0.25 * u, 0, 0, TAU); c.ellipse(cx, cy + rU / Math.sqrt(e) * 0.95, rU * 0.25, rU * 0.25 * u, 0, 0, TAU); c.fill(); c.restore(); }
+    lab(236, 92, "U", cx, cy - rU - 18, col.u5); mt(c, "中性子を吸収 → 不安定になり、くびれる", cx, cy + rU + 22, col.ink, fs, "center", true, true);
+  } else { // 分裂
+    const u = t - 2.6, d = (1 - Math.exp(-u * 1.6)) * W * 0.3;
+    if(u < 0.8) flash(c, cx, cy, rU * 4 * (0.4 + u), col.heat, 1 - u / 0.8);
+    const ax = cx - rA * 0.8 - d, bx = cx + rB * 0.8 + d;
+    // 熱（破片の運動 → 熱）
+    if(u > 0.6){ const a = Math.min(1, (u - 0.6) / 0.8); for(let j = 0; j < 6; j++){ const x0 = cx - 60 * s + j * 24 * s, pts = []; for(let q = 0; q <= 16; q++){ const v = q / 16; pts.push([x0 + Math.sin(v * 9 + t * 4 + j) * 3 * s, H - 8 - v * 22 * s]); } c.save(); c.globalAlpha = a * 0.7; line(c, pts, col.heat, 2); c.restore(); } mt(c, "熱", cx + 82 * s, H - 18 * s, col.heat, fs + 1, "left", true, true); }
+    ball(c, ax, cy, rA, col.fa); lab(f.a[0], f.a[1], f.a[2], ax, cy - rA - 18, col.fa);
+    ball(c, bx, cy, rB, col.fb); lab(f.b[0], f.b[1], f.b[2], bx, cy - rB - 18, col.fb);
+    if(u < 2.4){ arrowHead(c, ax - rA - 6, cy, -1, 0, col.fa, 7); arrowHead(c, bx + rB + 6, cy, 1, 0, col.fb, 7); }
+    const angs = f.n === 3 ? [-1.95, -0.35, 2.3] : [-1.7, 1.45];
+    angs.forEach(an => { const dist = Math.min(u * 70 * s, H * 0.6), nx = cx + Math.cos(an) * dist, ny = cy + Math.sin(an) * dist; if(ny > 4 && ny < H - 4 && nx > 4 && nx < W - 4) ball(c, nx, ny, rn, col.nn); });
+    if(u > 0.4) mt(c, `中性子 ${f.n} 個`, cx, 14, col.nn, fs, "center", true, true);
+    if(u > 1.2) mt(c, "2つの原子核（破片）が大きな速さで飛び散る", cx, cy + Math.max(rA, rB) + 26, col.ink, fs, "center", true, true);
+  }
+}
+
+// ---- 連鎖反応 ----
+const FW = 160, FH = 80;
+const F2 = { U: [], N: [], fx: [], rod: 55, auto: false, pause: false, t: 0, hist: [], cnt: 0, win: 0, fates: [], rate: 0, rateS: 0, total: 0 };
+function f2Init(){
+  F2.U = []; const nx = 13, ny = 6;
+  for(let i = 0; i < nx; i++) for(let j = 0; j < ny; j++){ F2.U.push({ x: 7 + (i + 0.5) * (FW - 14) / nx + rnd(-2.5, 2.5), y: 4 + (j + 0.5) * (FH - 8) / ny + rnd(-2.5, 2.5), off: 0 }); }
+  F2.N = []; F2.fx = []; F2.hist = []; F2.t = 0; F2.cnt = 0; F2.win = 0; F2.fates = []; F2.rate = 0; F2.rateS = 0; F2.total = 0;
+  f2Add(3);
+}
+const RODX = [2, 4, 6, 8, 10, 12].map(k => 7 + k * (FW - 14) / 13), RODW = 5;
+function rodDepth(){ return F2.rod / 100 * FH; }
+function f2Add(k){ for(let j = 0; j < (k || 1); j++){ const a = rnd(0, TAU); F2.N.push({ x: rnd(10, 30), y: rnd(20, 60), vx: Math.cos(a), vy: Math.sin(a), age: 0, own: -1 }); } }
+const NSPD = 26, CAP = 2.1, NMAX = 450, UOFF = 1.2;
+function fate(k){ F2.fates.push(k); if(F2.fates.length > 400) F2.fates.shift(); }
+function f2Step(dt){
+  F2.t += dt; const dep = rodDepth();
+  F2.U.forEach(u => { if(u.off > 0) u.off = Math.max(0, u.off - dt); });
+  const born = [];
+  for(const n of F2.N){
+    if(n.dead) continue;
+    n.x += n.vx * NSPD * dt; n.y += n.vy * NSPD * dt; n.age += dt;
+    if(n.x < 0 || n.x > FW || n.y < 0 || n.y > FH){ n.dead = 1; fate("out"); continue; }
+    if(n.y < dep && RODX.some(x => Math.abs(n.x - x) < RODW / 2)){ n.dead = 1; fate("rod"); F2.fx.push({ x: n.x, y: n.y, t: 0, k: "rod" }); continue; }
+    for(let i = 0; i < F2.U.length; i++){ const u = F2.U[i]; if(u.off > 0 || i === n.own) continue;
+      const dx = n.x - u.x, dy = n.y - u.y; if(dx * dx + dy * dy < CAP * CAP){
+        n.dead = 1; fate("fis"); u.off = UOFF; F2.cnt++; F2.total++;
+        const a0 = rnd(0, TAU); F2.fx.push({ x: u.x, y: u.y, t: 0, k: "fis", a: a0 });
+        const m = Math.random() < 0.5 ? 2 : 3; for(let j = 0; j < m; j++){ const a = a0 + j * TAU / m + rnd(-0.6, 0.6); born.push({ x: u.x, y: u.y, vx: Math.cos(a), vy: Math.sin(a), age: 0, own: i }); }
+        break; } }
+  }
+  F2.N = F2.N.filter(n => !n.dead).concat(born);
+  if(F2.N.length > NMAX) F2.N.splice(0, F2.N.length - NMAX);
+  F2.fx.forEach(f => f.t += dt); F2.fx = F2.fx.filter(f => f.t < 1);
+  // 1 s ごとの回数
+  F2.win += dt; if(F2.win >= 0.5){ F2.rate = F2.cnt / F2.win; F2.cnt = 0; F2.win = 0; F2.hist.push(F2.rate); if(F2.hist.length > 120) F2.hist.shift(); }
+  F2.rateS += (F2.rate - F2.rateS) * Math.min(1, dt * 1.5);
+  // 自動制御（目標：1 s あたり約 6 回）
+  if(F2.auto){ F2.base = clamp((F2.base == null ? 55 : F2.base) + 2 * Math.log((F2.N.length + 1) / 26) * dt, 20, 90); let r = F2.base + 22 * Math.log((F2.N.length + 1) / 26); if(F2.N.length === 0){ f2Add(1); } F2.rod = clamp(r, 0, 100); $("sRod").value = Math.round(F2.rod); $("oRod").textContent = `${Math.round(F2.rod)} %`; }
+}
+const cvF2 = $("cvF2"), cvF3 = $("cvF3"); let cF2 = null, cF3 = null;
+function drawF2(){
+  const c = cF2, W = cvF2._W, H = cvF2._H; if(!c || W < 80) return; c.clearRect(0, 0, W, H);
+  const s = Math.min(W / FW, H / FH), ox = (W - FW * s) / 2, oy = (H - FH * s) / 2, P = (x, y) => [ox + x * s, oy + y * s];
+  c.save(); c.fillStyle = rgba(col.blue, .04); c.fillRect(ox, oy, FW * s, FH * s); c.restore();
+  F2.U.forEach(u => { const q = P(u.x, u.y); if(u.off > 0){ const a = 1 - u.off / UOFF; c.save(); c.globalAlpha = 0.15 + 0.4 * a; c.strokeStyle = col.u5; c.setLineDash([2, 2]); c.beginPath(); c.arc(q[0], q[1], 1.9 * s, 0, TAU); c.stroke(); c.restore(); } else ball(c, q[0], q[1], 1.9 * s, col.u5); });
+  // 制御棒
+  const dep = rodDepth(); RODX.forEach(x => { const a = P(x - RODW / 2, -2), b = P(x + RODW / 2, dep); c.save(); c.fillStyle = col.rod; c.globalAlpha = .9; c.fillRect(a[0], Math.max(0, a[1]), b[0] - a[0], b[1] - Math.max(0, a[1])); c.restore(); });
+  F2.fx.forEach(f => { const q = P(f.x, f.y); if(f.k === "fis"){ flash(c, q[0], q[1], s * (4 + 8 * f.t), col.heat, 1 - f.t); const d = f.t * 7 * s; c.save(); c.globalAlpha = 1 - f.t; ball(c, q[0] + Math.cos(f.a) * d, q[1] + Math.sin(f.a) * d, 1.3 * s, col.fa); ball(c, q[0] - Math.cos(f.a) * d, q[1] - Math.sin(f.a) * d, 1.2 * s, col.fb); c.restore(); } else flash(c, q[0], q[1], s * 2.5, col.rod, 1 - f.t); });
+  F2.N.forEach(n => { const q = P(n.x, n.y); c.fillStyle = col.nn; c.beginPath(); c.arc(q[0], q[1], Math.max(1.6, 0.75 * s), 0, TAU); c.fill(); });
+  const fs = W < 500 ? 11 : 12;
+  mt(c, `中性子 ${F2.N.length} 個${F2.N.length >= NMAX ? "（表示の上限）" : ""}`, ox + 6, oy + FH * s - 10, col.nn, fs, "left", true, true);
+  ball(c, ox + FW * s - 108, oy + FH * s - 10, 5, col.u5); mt(c, "²³⁵U", ox + FW * s - 100, oy + FH * s - 10, col.ink, fs, "left", false, true);
+  c.fillStyle = col.rod; c.fillRect(ox + FW * s - 64, oy + FH * s - 16, 6, 12); mt(c, "制御棒", ox + FW * s - 54, oy + FH * s - 10, col.ink, fs, "left", false, true);
+}
+function drawF3(){
+  const c = cF3, W = cvF3._W, H = cvF3._H; if(!c || W < 80) return; c.clearRect(0, 0, W, H);
+  const L = 44, Rm = 10, T = 10, B = 22, gw = W - L - Rm, gh = H - T - B, mx = Math.max(10, ...F2.hist.map(v => v * 1.15));
+  const X = i => L + i / 119 * gw, Y = v => T + gh - Math.min(v, mx) / mx * gh, fs = 11;
+  line(c, [[L, T], [L, T + gh], [W - Rm, T + gh]], col.ink, 1.2);
+  const step = mx > 60 ? 20 : mx > 30 ? 10 : 5; for(let v = step; v < mx; v += step){ line(c, [[L, Y(v)], [W - Rm, Y(v)]], rgba(col.line, .8), 1, [3, 3]); mt(c, String(v), L - 5, Y(v), col.muted, fs, "right"); }
+  mt(c, "核分裂の回数（1 s あたり）", L + 6, T + 6, col.ink, fs, "left", false, true); mt(c, "時間 →（最近 60 s）", W - Rm, T + gh + 12, col.muted, fs, "right");
+  if(F2.hist.length > 1){ const pts = F2.hist.map((v, i) => [X(i + 120 - F2.hist.length), Y(v)]); line(c, pts, col.heat, 2.2); }
+}
+function f2Read(){
+  const fs = F2.fates, nf = fs.length, a = fs.filter(x => x === "fis").length, r = fs.filter(x => x === "rod").length, o = nf - a - r;
+  const k = nf ? 2.5 * a / nf : 0;
+  $("fate").innerHTML = nf ? [["fis", a, "var(--u5)"], ["rod", r, "var(--rod)"], ["out", o, "var(--nn)"]].map(([kk, v, cc]) => `<div style="width:${100 * v / nf}%;background:${cc}">${v / nf > 0.08 ? Math.round(100 * v / nf) + " %" : ""}</div>`).join("") : "";
+  let st = "", cl = "";
+  if(F2.N.length === 0){ st = "連鎖反応は止まった（「中性子を入れる」で再開）"; cl = "var(--muted)"; }
+  else if(nf < 60){ st = "測定中…"; cl = "var(--muted)"; }
+  else if(k > 1.08){ st = "増えていく（臨界をこえている）"; cl = "var(--red)"; }
+  else if(k < 0.92){ st = "減っていく（臨界より下）"; cl = "var(--be)"; }
+  else { st = "ほぼ一定（臨界）"; cl = "var(--ok)"; }
+  $("readF").innerHTML = `核分裂の回数：<b>${Math.round(F2.rateS)}</b> 回/s（累計 ${F2.total} 回）　1回の核分裂で出る中性子：平均 2.5 個<br>`
+    + `そのうち次の核分裂を起こすもの：平均 <b>${nf ? k.toFixed(2) : "—"}</b> 個 → <span class="state" style="color:${cl}">${st}</span>`;
+}
+$("sRod").addEventListener("input", e => { F2.rod = +e.target.value; $("oRod").textContent = `${F2.rod} %`; if(F2.auto){ F2.auto = false; $("f2Auto").checked = false; } });
+$("f2Add").addEventListener("click", () => f2Add(3));
+$("f2Reset").addEventListener("click", () => { f2Init(); });
+$("f2Pause").addEventListener("click", () => { F2.pause = !F2.pause; $("f2Pause").textContent = F2.pause ? "再開" : "一時停止"; });
+$("f2Auto").addEventListener("change", e => { F2.auto = e.target.checked; if(F2.auto && F2.N.length === 0) f2Add(3); });
+
+/* ======================================================================
+   4 核融合
+   ====================================================================== */
+const KC = 3600, R0 = 2.6, MD = 2, MT = 3, MU = MD * MT / (MD + MT), UB = KC / R0;
+const U = { mode: "pair", ke: 0.6, ph: "go", x1: 0, x2: 0, v1: 0, v2: 0, t: 0, fx: null, temp: 10, P: [], fx2: [], cnt: 0, win: 0, rate: 0, total: 0, hist: [] };
+function uPairInit(){ // 相対運動の運動エネルギー ½μv² ＝ ke × UB
+  const vrel = Math.sqrt(2 * U.ke * UB / MU); U.vr = vrel; U.v1 = vrel * MT / (MD + MT); U.v2 = -vrel * MD / (MD + MT); U.x1 = -52; U.x2 = 52; U.ph = "go"; U.t = 0; U.fx = null; U.rmin = 1e9;
+}
+function uPairStep(dt){
+  U.t += dt;
+  if(U.ph === "go" || U.ph === "back"){
+    const n = 30, h = dt / n * 20 / U.vr;  // 表示用：はじめの近づく速さを一定に見せる
+    for(let j = 0; j < n; j++){ const r = U.x2 - U.x1; if(r <= R0){ U.ph = "fuse"; U.t = 0; break; }
+      const F = KC / (r * r); U.v1 -= F / MD * h; U.v2 += F / MT * h; U.x1 += U.v1 * h; U.x2 += U.v2 * h; }
+    if(U.ph === "go" && U.x2 - U.x1 > 112 && U.v2 - U.v1 > 0){ U.ph = "back"; U.t = 0; }
+    if(U.ph === "back" && U.t > 2.4) uPairInit();
+  } else if(U.t > 2.6) uPairInit();
+}
+const cvU1 = $("cvU1"), cvU2 = $("cvU2"); let cU1 = null, cU2 = null;
+const RD = 3.0, RT = 3.4;
+function drawNucDT(c, x, y, s, k, a){ // 重水素（p＋n）・三重水素（p＋2n）
+  const r = 1.25 * s; c.save(); c.globalAlpha = a == null ? 1 : a;
+  if(k === "D"){ ball(c, x - r * .55, y, r, col.pro); ball(c, x + r * .55, y, r, col.neu); }
+  else if(k === "T"){ ball(c, x - r * .5, y + r * .45, r, col.neu); ball(c, x + r * .5, y + r * .45, r, col.neu); ball(c, x, y - r * .5, r, col.pro); }
+  else if(k === "He"){ ball(c, x - r * .5, y - r * .5, r, col.pro); ball(c, x + r * .5, y + r * .5, r, col.pro); ball(c, x + r * .5, y - r * .5, r, col.neu); ball(c, x - r * .5, y + r * .5, r, col.neu); }
+  else if(k === "n"){ ball(c, x, y, r, col.neu); c.strokeStyle = col.nn; c.lineWidth = 2; c.beginPath(); c.arc(x, y, r * 1.4, 0, TAU); c.stroke(); }
+  c.restore();
+}
+function drawU1(){
+  const c = cU1, W = cvU1._W, H = cvU1._H; if(!c || W < 80) return; c.clearRect(0, 0, W, H);
+  const fs = W < 500 ? 11 : 13;
+  if(U.mode === "pair"){
+    const s = W / 130, cy = H * 0.5, X = x => W / 2 + x * s;
+    const lab = (A, Z, sy, x, y, cc) => nucT(c, A, Z, sy, x, y, cc, W < 500 ? 14 : 17, "center", true);
+    if(U.ph !== "fuse"){
+      const a = U.ph === "back" ? Math.max(0, 1 - U.t / 2.4) : 1;
+      drawNucDT(c, X(U.x1), cy, s * 1.8, "D", a); drawNucDT(c, X(U.x2), cy, s * 1.8, "T", a);
+      if(a > 0.3){ lab(2, 1, "H", X(U.x1), cy - 8 * s, col.dd); lab(3, 1, "H", X(U.x2), cy - 8 * s, col.tt); }
+      // 反発の力の矢印
+      const r = U.x2 - U.x1, F = KC / (r * r), L = clamp(F / 40, 0, 26) * s;
+      if(L > 3){ line(c, [[X(U.x1) - 5 * s, cy + 7 * s], [X(U.x1) - 5 * s - L, cy + 7 * s]], col.red, 2.5); arrowHead(c, X(U.x1) - 5 * s - L, cy + 7 * s, -1, 0, col.red, 7);
+        line(c, [[X(U.x2) + 5 * s, cy + 7 * s], [X(U.x2) + 5 * s + L, cy + 7 * s]], col.red, 2.5); arrowHead(c, X(U.x2) + 5 * s + L, cy + 7 * s, 1, 0, col.red, 7);
+        mt(c, "反発する力（どちらも正の電荷）", W / 2, cy + 12 * s, col.red, fs, "center", true, true); }
+      if(U.ph === "back") mt(c, "反発の山をこえられず、はね返された", W / 2, H * 0.15, col.ink, fs + 1, "center", true, true);
+      else mt(c, "重水素と三重水素の原子核を近づける", W / 2, H * 0.15, col.muted, fs, "center", false, true);
+    } else {
+      const u = U.t, d = u * 22 * s, cx = X((U.x1 + U.x2) / 2);
+      if(u < 0.9) flash(c, cx, cy, s * (6 + 22 * u), col.he, 1 - u / 0.9);
+      drawNucDT(c, cx - d * 0.25, cy, s * 1.8, "He"); lab(4, 2, "He", cx - d * 0.25, cy - 8 * s, col.he);
+      drawNucDT(c, cx + d, cy, s * 1.8, "n"); lab(1, 0, "n", cx + d, cy - 8 * s, col.nn);
+      mt(c, "核融合！ ヘリウム原子核と中性子ができ、大きなエネルギーが出る", W / 2, H * 0.15, col.ink, fs + 1, "center", true, true);
+    }
+    ball(c, 14, H - 30, 5, col.pro); mt(c, "陽子", 23, H - 30, col.muted, fs - 1, "left"); ball(c, 14, H - 14, 5, col.neu); mt(c, "中性子", 23, H - 14, col.muted, fs - 1, "left");
+  } else {
+    const s = Math.min(W / GW, H / GH), ox = (W - GW * s) / 2, oy = (H - GH * s) / 2, P = (x, y) => [ox + x * s, oy + y * s];
+    c.save(); c.fillStyle = rgba(col.heat, 0.03 + 0.01 * U.temp); c.fillRect(ox, oy, GW * s, GH * s); c.strokeStyle = col.line; c.strokeRect(ox, oy, GW * s, GH * s); c.restore();
+    const gb = (k, x, y, a) => ball(c, x, y, s * (k === "D" ? 1.3 : k === "T" ? 1.55 : k === "He" ? 1.7 : 1.0), col[k === "D" ? "dd" : k === "T" ? "tt" : k === "He" ? "he" : "nn"], a);
+    U.P.forEach(p => { const q = P(p.x, p.y); gb(p.k, q[0], q[1]); });
+    U.fx2.forEach(f => { const q = P(f.x, f.y); flash(c, q[0], q[1], s * (4 + 14 * f.t), col.he, 1 - f.t); const d = f.t * 30 * s; gb("He", q[0] - Math.cos(f.a) * d * .4, q[1] - Math.sin(f.a) * d * .4, 1 - f.t); gb("n", q[0] + Math.cos(f.a) * d, q[1] + Math.sin(f.a) * d, 1 - f.t); });
+    mt(c, `温度 約 ${tempLabel(U.temp)}`, ox + 8, oy + 12, col.ink, fs, "left", true, true);
+    const nar = W < 560, lx = nar ? ox + 10 : ox + GW * s - 210, ly = nar ? oy + GH * s - 10 : oy + 12; [["D", nar ? "²H" : "²H（重水素）"], ["T", "³H"], ["He", "⁴He"], ["n", "n"]].forEach(([k, t], i) => { const x = lx + (nar ? [0, 40, 80, 128] : [0, 100, 140, 185])[i]; gb(k, x, ly); mt(c, t, x + 9, ly, col.ink, fs, "left", false, true); });
+  }
+}
+function drawU2(){
+  const c = cU2, W = cvU2._W, H = cvU2._H; if(!c || W < 80 || U.mode !== "pair") return; c.clearRect(0, 0, W, H);
+  const L = 50, Rm = 12, T = 12, B = 24, gw = W - L - Rm, gh = H - T - B, RMAX = 30, X = r => L + r / RMAX * gw;
+  const umax = 1.6 * UB, umin = -0.7 * UB, Y = u => T + (umax - clamp(u, umin, umax)) / (umax - umin) * gh, fs = 11;
+  line(c, [[L, T], [L, T + gh], [W - Rm, T + gh]], col.ink, 1.2); line(c, [[L, Y(0)], [W - Rm, Y(0)]], rgba(col.muted, .7), 1);
+  mt(c, "0", L - 5, Y(0), col.muted, fs, "right"); mt(c, "位置エネルギー", L + 4, T + 4, col.ink, fs, "left", false, true); mt(c, "原子核どうしの距離 →", W - Rm, T + gh + 13, col.muted, fs, "right");
+  // 曲線：r>R0 はクーロンの山、r<R0 は核力の谷
+  const pts = []; for(let j = 0; j <= 300; j++){ const r = j / 300 * RMAX; let u; if(r >= R0) u = KC / r; else u = -0.6 * UB; pts.push([X(r), Y(u)]); }
+  line(c, pts, col.ink, 2);
+  line(c, [[X(R0), Y(UB)], [X(R0), Y(-0.6 * UB)]], col.ink, 2);
+  mt(c, "反発（クーロン力）の山", X(R0) + 8, Y(UB) + 2, col.red, fs, "left", true, true);
+  mt(c, "核力の谷", X(R0 / 2), Y(-0.6 * UB) - 9, col.ok, fs, "center", true, true);
+  // 運動エネルギーの水平線
+  const E = U.ke * UB; line(c, [[L, Y(E)], [W - Rm, Y(E)]], col.blue, 1.8, [6, 4]); mt(c, "はじめの運動エネルギー", W - Rm - 4, Y(E) - 9, col.blue, fs, "right", true, true);
+  // 近づけない部分
+  if(E < UB){ const rt = KC / E; c.save(); c.fillStyle = rgba(col.red, .08); c.fillRect(X(R0), T, X(rt) - X(R0), gh); c.restore(); }
+  // 現在の点
+  if(U.ph === "go" || U.ph === "back"){ const r = clamp(U.x2 - U.x1, R0, RMAX); c.fillStyle = col.blue; c.beginPath(); c.arc(X(r), Y(E), 5.5, 0, TAU); c.fill(); }
+  else { c.fillStyle = col.ok; c.beginPath(); c.arc(X(R0 * 0.5), Y(-0.6 * UB), 6, 0, TAU); c.fill(); }
+}
+// プラズマ
+const GW = 130, GH = 65;
+function tempLabel(k){ const T = k * 1e7; return T >= 1e8 ? `${(T / 1e8).toFixed(1).replace(/\.0$/, "")} 億 K` : `${(T / 1e7).toFixed(0)}000 万 K`; }
+function kT(){ return 450 * U.temp / 10; }   // 1 億 K（temp＝10）で kT＝450
+function gauss(){ let u = 0, v = 0; while(u === 0) u = Math.random(); v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * v); }
+function newIon(k, edge){ const m = k === "D" ? MD : MT, sg = Math.sqrt(kT() / m); let x = rnd(4, GW - 4), y = rnd(4, GH - 4); if(edge){ if(Math.random() < .5) x = Math.random() < .5 ? 3 : GW - 3; else y = Math.random() < .5 ? 3 : GH - 3; } return { k, m, x, y, vx: gauss() * sg, vy: gauss() * sg }; }
+function gasInit(){ U.P = []; for(let i = 0; i < 52; i++){ let p, ok = false, tries = 0; while(!ok && tries++ < 50){ p = newIon(i % 2 ? "T" : "D"); ok = U.P.every(q => (q.x - p.x) ** 2 + (q.y - p.y) ** 2 > 64); } U.P.push(p); } U.fx2 = []; U.cnt = 0; U.win = 0; U.rate = 0; U.total = 0; U.hist = []; U.refill = []; U.refillK = []; }
+function gasStep(dt){
+  const n = 8, h = dt / n * 0.9, P = U.P;
+  for(let st = 0; st < n; st++){
+    for(let i = 0; i < P.length; i++){ const a = P[i]; if(a.dead) continue;
+      for(let j = i + 1; j < P.length; j++){ const b = P[j]; if(b.dead) continue;
+        const dx = b.x - a.x, dy = b.y - a.y, r2 = dx * dx + dy * dy; if(r2 > 900) continue; const r = Math.sqrt(r2);
+        if(r < R0){ if(a.k !== b.k){ a.dead = b.dead = 1; U.cnt++; U.total++; U.fx2.push({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, t: 0, a: rnd(0, TAU) }); U.refill.push(1.2, 1.2); break; } }
+        const rr = Math.max(r, R0 * 0.9), F = KC / (rr * rr) * h, ux = dx / r, uy = dy / r;
+        a.vx -= F * ux / a.m; a.vy -= F * uy / a.m; b.vx += F * ux / b.m; b.vy += F * uy / b.m; } }
+    for(const p of P){ if(p.dead) continue; p.x += p.vx * h; p.y += p.vy * h;
+      if(p.x < 1){ p.x = 1; p.vx = Math.abs(p.vx); } if(p.x > GW - 1){ p.x = GW - 1; p.vx = -Math.abs(p.vx); }
+      if(p.y < 1){ p.y = 1; p.vy = Math.abs(p.vy); } if(p.y > GH - 1){ p.y = GH - 1; p.vy = -Math.abs(p.vy); } }
+  }
+  // 壁で温度を保つ（少しずつ目標の速さに近づける）
+  const tgt = kT(); let ek = 0, cnt = 0; P.forEach(p => { if(!p.dead){ ek += 0.5 * p.m * (p.vx * p.vx + p.vy * p.vy); cnt++; } });
+  if(cnt){ const cur = ek / cnt, f = Math.sqrt(1 + (tgt / Math.max(cur, 1) - 1) * Math.min(1, dt * 2)); P.forEach(p => { p.vx *= f; p.vy *= f; }); }
+  const deadKinds = P.filter(p => p.dead).map(p => p.k); U.P = P.filter(p => !p.dead);
+  U.refillK = (U.refillK || []).concat(deadKinds);
+  U.refill = U.refill.map(x => x - dt); while(U.refill.length && U.refill[0] <= 0){ U.refill.shift(); const k = U.refillK.shift(); if(k) U.P.push(newIon(k, true)); }
+  U.fx2.forEach(f => f.t += dt); U.fx2 = U.fx2.filter(f => f.t < 1);
+  U.win += dt; if(U.win >= 5){ U.rate = U.cnt / U.win; U.cnt = 0; U.win = 0; }
+}
+function uRead(){
+  if(U.mode === "pair"){
+    const r = U.ke >= 1;
+    $("readU").innerHTML = `はじめの運動エネルギー：反発の山の高さの <b>${Math.round(U.ke * 100)} %</b> → ${r ? `<b style="color:var(--ok)">山をこえて核融合する</b>` : `<b style="color:var(--red)">山をこえられず、はね返される</b>`}<br>`
+      + `近づくにつれて反発する力が大きくなり、運動エネルギーが位置エネルギーに変わって速さが小さくなります（グラフの青い点）。高温にして原子核を速く動かすと、山をこえて「核力の谷」に入り、核融合が起こります。`;
+  } else {
+    $("readU").innerHTML = `温度 約 <b>${tempLabel(U.temp)}</b>：核融合の回数 <b>${U.rate.toFixed(1)}</b> 回/s（累計 ${U.total} 回）<br>温度が高いほど原子核の熱運動が激しくなり、反発に打ち勝つほど速い組が増えて、核融合が起こりやすくなります。`;
+  }
+}
+document.querySelectorAll("[data-um]").forEach(b => b.addEventListener("click", () => setUMode(b.dataset.um)));
+function setUMode(m){ U.mode = m; document.querySelectorAll("[data-um]").forEach(x => x.setAttribute("aria-pressed", x.dataset.um === m)); $("pairBox").hidden = m !== "pair"; $("gasBox").hidden = m !== "gas"; if(m === "gas") gasInit(); else uPairInit(); layout(); uRead(); }
+$("sKE").addEventListener("input", e => { U.ke = e.target.value / 100; $("oKE").textContent = `${e.target.value} %`; uPairInit(); uRead(); drawU2(); });
+$("sTemp").addEventListener("input", e => { U.temp = +e.target.value; $("oTemp").textContent = tempLabel(U.temp); uRead(); });
+$("gReset").addEventListener("click", () => { gasInit(); uRead(); });
+function uMassBars(){
+  massBars($("uMass1"), [
+    { lab: "反応前", w: 100, parts: [["²H", 40, "var(--dd)"], ["³H", 60, "var(--tt)"]] },
+    { lab: "反応後", w: 92, parts: [["⁴He", 80, "var(--he)"], ["n", 20, "var(--nn)"]] } ]);
+  massBars($("uMass2"), [
+    { lab: "反応前", w: 100, parts: [["¹H", 25, "var(--pro)"], ["¹H", 25, "var(--pro)"], ["¹H", 25, "var(--pro)"], ["¹H", 25, "var(--pro)"]] },
+    { lab: "反応後", w: 88, parts: [["⁴He", 100, "var(--he)"]] } ]);
+  ["uMass1", "uMass2"].forEach(id => $(id).insertAdjacentHTML("beforeend", `<p class="note" style="margin:0">反応後の質量の和が小さい（図は誇張）→ その分のエネルギーが出る</p>`));
+}
+
+/* ---------- アニメーション ---------- */
+let last = null, tick = 0;
+function frame(ts){
+  if(last == null) last = ts; const dt = Math.min(0.05, (ts - last) / 1000); last = ts; tick++;
+  if(tick % 30 === 1) readColors();
+  if(vis.rays){ if(!reduce) rStep(dt); drawR(); if(tick % 10 === 0) rRead(); }
+  if(vis.decay){ dStep(dt); if(D.playing || D.run || tick % 20 === 0){ drawD1(); drawD2(); drawD3(); } }
+  if(vis.fission){ F1.t += dt; if(F1.t > 7.5) F1.t = 0; drawF1(); if(!F2.pause && !reduce) f2Step(dt); drawF2(); if(tick % 15 === 0){ drawF3(); f2Read(); } }
+  if(vis.fusion){ if(U.mode === "pair"){ uPairStep(dt); drawU1(); drawU2(); } else { if(!reduce) gasStep(dt); drawU1(); } if(tick % 15 === 0) uRead(); }
+  requestAnimationFrame(frame);
+}
+function layout(){
+  readColors();
+  cR = setupCanvas(cvR); cD1 = setupCanvas(cvD1); cD2 = setupCanvas(cvD2); cD3 = setupCanvas(cvD3);
+  cF1 = setupCanvas(cvF1); cF2 = setupCanvas(cvF2); cF3 = setupCanvas(cvF3); cU1 = setupCanvas(cvU1);
+  if(U.mode === "pair") cU2 = setupCanvas(cvU2);
+  drawR(); drawD1(); drawD2(); drawD3(); drawF1(); drawF2(); drawF3(); drawU1(); drawU2();
+}
+if(window.ResizeObserver){ const ro = new ResizeObserver(() => layout()); [cvR, cvD1, cvD2, cvD3, cvF1, cvF2, cvF3, cvU1, cvU2].forEach(e => ro.observe(e)); } else window.addEventListener("resize", layout);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+
+$("qs").innerHTML = [
+  ["紙だけを入れると、検出器に届かなくなる放射線はどれか。アルミニウム板を加えるとどうか。", "紙で α線が止まります。アルミニウム板を加えると β線も止まります。γ線と中性子線は、鉛板や水（厚いコンクリート）でようやく大きく減ります。"],
+  ["「電離のあと」が最も多いのはどの放射線か。それと透過力の関係は。", "α線です。電離をたくさん起こすほどエネルギーを早く失うので、透過力は小さくなります（電離作用と透過力は逆の順）。"],
+  ["磁場の中で α線とβ線が逆向きに曲がり、γ線が曲がらないのはなぜか。", "α線は正、β線は負の電荷をもつ粒子なので、磁場から受ける力の向きが逆になります。γ線（電磁波）と中性子線は電荷をもたないので、力を受けません。"],
+  ["ラジウム 226 がα崩壊すると、何になるか。陽子と中性子の数はどう変わるか。", "ラドン 222 になります。陽子 88 → 86（−2）、中性子 138 → 136（−2）、質量数 226 → 222（−4）。"],
+  ["炭素 14 がβ崩壊すると、質量数と原子番号はどうなるか。", "中性子1個が陽子に変わるので、原子番号は 6 → 7（窒素）と 1 増え、質量数 14 は変わりません。"],
+  ["半減期の3倍の時間がたつと、はじめの何分の1が残るか。100 個と 1600 個で比べると、式の曲線に近いのはどちらか。", "(1/2)³ ＝ 1/8。数が多い 1600 個のほうが式の曲線に近くなります。1個1個がいつ崩壊するかは偶然で決まりますが、数が多いと全体として式どおりに減ります。"],
+  ["ヨウ素 131（半減期 8.0 日）は、32 日後に何分の1になるか。", "32 ÷ 8.0 ＝ 4 回半分になるので、(1/2)⁴ ＝ 1/16。"],
+  ["連鎖反応で、制御棒を深く差しこむと核分裂の回数が減るのはなぜか。", "制御棒が中性子を吸収し、次の核分裂を起こす中性子の数が平均 1 個より少なくなるからです。"],
+  ["「自動で臨界を保つ」で、1回の核分裂あたり次の核分裂を起こす中性子の数は、平均いくつになっているか。", "ほぼ 1 個です。これが臨界の状態で、核分裂の回数（発生する熱）が一定に保たれます。"],
+  ["核融合を起こすのに、非常に高い温度が必要なのはなぜか。", "原子核どうしは正の電荷をもち反発し合うので、その反発（位置エネルギーの山）をこえるほど大きな運動エネルギーが必要だからです。温度が高いほど、原子核の熱運動が激しくなります。"]
+].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
+
+/* ---------- はじめの状態・URL ハッシュ ---------- */
+buildChips(); dTexts(); hNew(false); hRead(); fTexts(); f2Init(); uPairInit(); uMassBars(); rRead();
+$("oRod").textContent = `${F2.rod} %`; $("oKE").textContent = `${Math.round(U.ke * 100)} %`; $("oTemp").textContent = tempLabel(U.temp);
+function applyHash(h){
+  if(h === "rays-mag"){ setRMode("mag"); return "rays"; }
+  if(h === "rays"){ setRMode("pass"); return "rays"; }
+  const m = /^decay-(\w+)$/.exec(h); if(m && NUCS.some(n => n.id === m[1])){ setNuc(m[1], false); return "decay"; }
+  if(h === "chain") return "chain";
+  if(h === "plasma"){ setUMode("gas"); return "fusion"; }
+  if(["decay", "fission", "fusion"].includes(h)) return h;
+  return null;
+}
+const h0 = location.hash.slice(1), tgt = applyHash(h0);
+layout(); requestAnimationFrame(frame);
+if(tgt && tgt !== h0) setTimeout(() => $(tgt).scrollIntoView(), 60);
+window.addEventListener("hashchange", () => { const h = location.hash.slice(1), t = applyHash(h); if(t && t !== h) $(t).scrollIntoView(); });
+window.__nuc = { R, D, F2, U, f2Step, gasStep, gasInit, f2Init };
+})();
+</script>
+</body>
+</html>
