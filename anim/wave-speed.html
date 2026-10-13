@@ -80,7 +80,8 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair}
 .seg button{border:1.5px solid var(--line);background:var(--sheet);border-radius:999px;padding:6px 14px;min-height:40px;cursor:pointer;font-size:15px}
 .seg button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft);font-weight:700}
 .slider{display:grid;grid-template-columns:8.5em minmax(0,1fr) 5.5em;align-items:center;gap:10px}
-.slider label{font-size:15px}
+.slider label{font-size:15px;line-height:1.35}
+.slider label .sub{display:block;font-size:12px;color:var(--muted)}
 .slider input{width:100%;accent-color:var(--blue);min-height:32px}
 .slider output{font-variant-numeric:tabular-nums;text-align:right;font-weight:700}
 .slider.locked label,.slider.locked output{color:var(--muted)}
@@ -146,7 +147,7 @@ h3{font-size:17px;margin:0 0 8px}
       </div>
       <div class="slider" id="rowF"><label for="sF">振動数 <i class="qv">f</i></label><input type="range" id="sF" min="0.5" max="2" step="0.25" value="1"><output id="oF" for="sF"></output></div>
       <div class="slider" id="rowL"><label for="sL">波長 <i class="qv">λ</i></label><input type="range" id="sL" min="0.5" max="2" step="0.25" value="1"><output id="oL" for="sL"></output></div>
-      <div class="slider" id="rowV"><label for="sV">媒質の速さ <i class="qv">v</i></label><input type="range" id="sV" min="0.5" max="2" step="0.5" value="1"><output id="oV" for="sV"></output></div>
+      <div class="slider" id="rowV"><label for="sV"><small class="sub">媒質中を伝わる</small>波の速さ <i class="qv">v</i></label><input type="range" id="sV" min="0.5" max="2" step="0.5" value="1"><output id="oV" for="sV"></output></div>
       <div class="slider" id="rowA"><label for="sA">振幅 <i class="qv">A</i></label><input type="range" id="sA" min="0.3" max="1" step="0.1" value="0.7"><output id="oA" for="sA"></output></div>
     </div>
     <p class="hint">条件を変えると、波は最初から出直します。波形の図をタップすると、その位置の点の振動が下のグラフに描かれます（はじめは波源の点）。</p>
@@ -300,7 +301,7 @@ $("qs").innerHTML = [
   [`${I("f")} ＝ 2.00 Hz のとき、1 s 間に波源は何回振動するか。その間に波はどれだけ進むか。`, `2 回振動し、1回ごとに1波長進むので 2${I("λ")} 進みます。1 s 間に進む距離が速さなので ${I("v")} ＝ ${I("f")}${I("λ")}。`],
   [`振幅 ${I("A")} を変えると、波長や速さは変わるか。`, "変わりません。振幅は波の速さにも波長にも関係しません。"],
   [`下の ${I("y")}-${I("t")} グラフで、山と山の間隔は何を表すか。上の ${I("y")}-${I("x")} グラフの山と山の間隔と比べよう。`, `${I("y")}-${I("t")} グラフの間隔は周期 ${I("T")}（時間）、${I("y")}-${I("x")} グラフの間隔は波長 ${I("λ")}（距離）です。`],
-  [`「同じ媒質」で、媒質の速さ ${I("v")} を大きくすると（振動数はそのまま）、波長はどうなるか。`, `長くなります。${I("λ")} ＝ ${I("v")}/${I("f")}。音が空気から水に入ると、振動数は変わらず波長が長くなるのはこのためです。`]
+  [`「同じ媒質」で、媒質中を伝わる波の速さ ${I("v")} を大きくすると（振動数はそのまま）、波長はどうなるか。`, `長くなります。${I("λ")} ＝ ${I("v")}/${I("f")}。音が空気から水に入ると、振動数は変わらず波長が長くなるのはこのためです。`]
 ].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
 
 syncUI(); setPlaying(st.playing); resize(); requestAnimationFrame(tick);
