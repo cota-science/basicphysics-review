@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>熱運動と状態変化のアニメーション</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: one wide stage — particle box (left) + heating curve (right) on PC, stacked on phones; readouts, controls, "what's happening now", heat-use bars, then questions. */
+:root{
+  --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
+  --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
+  --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3; --shade:#EEF2F6;
+  --solid:#2447B3; --liquid:#11817E; --gas:#C2780F; --cold:#2A7BC9;
+  --body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --math:"Times New Roman",Times,"Noto Serif",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+    --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+    --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+    --solid:#93AAFF; --liquid:#4FC7C1; --gas:#E8B45A; --cold:#7DBBF5; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+  --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+  --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+  --solid:#93AAFF; --liquid:#4FC7C1; --gas:#E8B45A; --cold:#7DBBF5; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qv{font-family:var(--math);font-style:italic;font-size:1.08em}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.top-inner{max-width:1000px;margin:0 auto;padding:10px 16px 10px}
+.back{font-size:14px;color:var(--blue);text-decoration:none}
+h1{font-size:19px;margin:2px 0 0;line-height:1.4;text-wrap:balance}
+.nav{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin-top:2px}
+.nav a{color:var(--blue);text-decoration:none}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:700}
+
+main{max-width:1000px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px;min-width:0}
+h2{font-size:20px;margin:0 0 4px;line-height:1.4;text-wrap:balance}
+.lead{margin:0 0 12px;color:var(--muted);font-size:15px}
+.stage{position:relative;width:100%;aspect-ratio:2/1;background:var(--sheet);border:1px solid var(--line);border-radius:4px}
+@media (max-width:640px){.stage{aspect-ratio:10/16}}
+canvas{display:block;width:100%;height:100%;touch-action:manipulation}
+.keys{display:flex;flex-wrap:wrap;gap:4px 16px;margin:10px 0 0;padding:0;list-style:none;font-size:14px;color:var(--muted)}
+.keys li{display:flex;align-items:center;gap:6px}
+.dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+
+.read{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
+@media (max-width:640px){.read{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.read div{border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;min-width:0}
+.read .k{display:block;font-size:12px;color:var(--muted);line-height:1.4}
+.read .v{display:block;font-weight:700;font-size:18px;font-variant-numeric:tabular-nums;line-height:1.5}
+.read .v small{font-size:13px;font-weight:400;color:var(--muted)}
+
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.seg{display:inline-flex;border:1.5px solid var(--blue);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:none;color:var(--blue);padding:9px 14px;min-height:44px;font-weight:700;cursor:pointer}
+.seg button+button{border-left:1.5px solid var(--blue)}
+.seg button[aria-pressed="true"]{background:var(--btn);color:#fff}
+.seg button.cool[aria-pressed="true"]{background:var(--cold)}
+.seg button.heat[aria-pressed="true"]{background:var(--red)}
+.btn{border:0;border-radius:8px;padding:9px 16px;min-height:44px;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.btn.ghost{background:none;color:var(--blue);border:1.5px solid var(--blue)}
+.opts{display:grid;gap:12px;margin-top:14px}
+.slider{display:grid;grid-template-columns:10em minmax(0,1fr) 5.5em;align-items:center;gap:10px}
+.slider label{font-size:15px;line-height:1.4}
+.slider input{width:100%;accent-color:var(--blue);min-height:32px}
+.slider output{font-variant-numeric:tabular-nums;text-align:right;font-weight:700}
+@media (max-width:520px){.slider{grid-template-columns:7.5em minmax(0,1fr) 4.8em}}
+.checks{display:flex;flex-wrap:wrap;gap:4px 18px}
+.checks label{display:flex;align-items:center;gap:8px;min-height:40px;cursor:pointer;font-size:15px}
+.checks input{width:20px;height:20px;accent-color:var(--blue)}
+.now{margin-top:14px;padding:10px 14px;border-left:4px solid var(--blue);background:var(--blue-soft);border-radius:0 6px 6px 0}
+.now b{display:block;font-size:15px}
+.now p{margin:2px 0 0;font-size:15px}
+.hint{font-size:13px;color:var(--muted);margin:10px 0 0}
+
+.bars{display:grid;gap:10px;margin-top:6px}
+.bar .lab{display:flex;justify-content:space-between;gap:8px;font-size:14px;line-height:1.5}
+.bar .lab span:last-child{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar .track{height:16px;border-radius:4px;background:var(--shade);overflow:hidden;display:flex;margin-top:3px}
+.bar .fill{height:100%;transition:width .12s linear}
+.sub{font-size:13px;color:var(--muted);margin:4px 0 0}
+
+h3{font-size:17px;margin:0 0 8px}
+.qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
+.qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
+.ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <a class="back" id="backLink" href="../index.html#/u/heat/0" hidden>‹ 熱とエネルギー（Webテスト）へ</a>
+    <h1>熱運動と状態変化</h1>
+    <nav class="nav" id="nav" hidden aria-label="アニメーション">
+      <a href="index.html#heat">≡ アニメーション集</a>
+      <a href="heat-motion.html" aria-current="page">熱運動と状態変化</a>
+      <a href="phase-equilibrium.html#lv">蒸発と凝縮（気液平衡）</a>
+      <a href="phase-equilibrium.html#sl">融解と凝固（固液平衡）</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="sheet" aria-labelledby="t1">
+    <h2 id="t1">氷 1 g を加熱すると、粒子はどう動くか</h2>
+    <p class="lead">−50 ℃ の氷 1 g に、1気圧のもとで一定の割合で熱を加えます。水分子の熱運動のモデルと、温度のグラフを並べて表示します。「加熱する」を押して、温度・状態・粒子の動きがどう変わるか観察しよう。</p>
+    <div class="stage"><canvas id="cv" role="img" aria-label="容器の中の粒子のモデルと、加えた熱量と温度のグラフ。固体では粒子が決まった位置で振動し、液体では位置を入れかえ、気体では自由に飛び回る。"></canvas></div>
+    <ul class="keys">
+      <li><span class="dot" style="background:var(--solid)"></span>固体の粒子</li>
+      <li><span class="dot" style="background:var(--liquid)"></span>液体の粒子</li>
+      <li><span class="dot" style="background:var(--gas)"></span>気体の粒子</li>
+      <li><span class="dot" style="background:var(--red)"></span>注目する粒子</li>
+    </ul>
+    <div class="read" aria-live="polite">
+      <div><span class="k">温度</span><span class="v" id="rT"></span></div>
+      <div><span class="k">状態</span><span class="v" id="rPh"></span></div>
+      <div><span class="k">加えた熱量 <i class="qv">Q</i></span><span class="v" id="rQ"></span></div>
+      <div><span class="k">結びつき（線）の数</span><span class="v" id="rB"></span></div>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="熱の出入り">
+        <button type="button" class="cool" id="mCool" aria-pressed="false">冷やす</button>
+        <button type="button" id="mStop" aria-pressed="true">止める</button>
+        <button type="button" class="heat" id="mHeat" aria-pressed="false">加熱する</button>
+      </div>
+      <button type="button" class="btn ghost" id="resetBtn">最初から</button>
+    </div>
+    <div class="opts">
+      <div class="slider"><label for="sP">熱の出入りの速さ</label><input type="range" id="sP" min="10" max="200" step="10" value="40"><output id="oP" for="sP"></output></div>
+      <div class="checks">
+        <label for="ckBond"><input type="checkbox" id="ckBond" checked>結びつき（引力）を線で表す</label>
+        <label for="ckTrail"><input type="checkbox" id="ckTrail" checked>注目する粒子の通り道</label>
+        <label for="ckAll"><input type="checkbox" id="ckAll">グラフの全体を先に表示</label>
+        <label for="ckZoom"><input type="checkbox" id="ckZoom">グラフの前半（0〜900&nbsp;J）を拡大</label>
+      </div>
+    </div>
+    <div class="now" id="now"><b></b><p></p></div>
+    <p class="hint">容器の中をタップすると、その粒子を赤で追いかけます。グラフをタップすると、その状態に移ります。粒子の数や体積の変化は実際とは違い、温度による動きの違いは見やすく誇張しています。（参考：水分子の平均の速さは、0&nbsp;℃ で約 6×10²&nbsp;m/s。<span id="vReal"></span>）</p>
+  </section>
+
+  <section class="sheet" aria-labelledby="t2">
+    <h2 id="t2">加えた熱は何に使われたか</h2>
+    <p class="lead">−50 ℃ の氷に加えた熱量 <i class="qv">Q</i> を、温度を上げるのに使われた分と、状態変化（粒子どうしの結びつきを断つこと）に使われた分に分けて表します。</p>
+    <div class="bars">
+      <div class="bar"><div class="lab"><span>温度を上げるのに使われた熱（熱運動が激しくなる）</span><span id="bS"></span></div><div class="track"><div class="fill" id="fS" style="background:var(--red)"></div></div></div>
+      <div class="bar"><div class="lab"><span>状態変化に使われた熱（結びつきを断つ）</span><span id="bL"></span></div><div class="track"><div class="fill" id="fLf" style="background:var(--liquid)"></div><div class="fill" id="fLv" style="background:var(--gas)"></div></div></div>
+    </div>
+    <p class="sub" id="bNote"></p>
+    <p class="sub">比熱：氷 2.1&nbsp;J/(g·K)、水 4.2&nbsp;J/(g·K)、水蒸気 約 2.0&nbsp;J/(g·K)。融解熱 3.3×10²&nbsp;J/g、蒸発熱 2.3×10³&nbsp;J/g（100&nbsp;℃）。</p>
+  </section>
+
+  <section class="sheet" aria-labelledby="qsTitle">
+    <h3 id="qsTitle">見てみよう</h3>
+    <ol class="qs" id="qs"></ol>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id), TAU = 2 * Math.PI;
+const I = s => `<i class="qv">${s}</i>`;
+if(/\/anim\//.test(location.pathname)){ $("backLink").hidden = false; $("nav").hidden = false; }
+
+/* ---------- 熱量と温度（1 g の水、1気圧） ---------- */
+const C_ICE = 2.1, C_W = 4.2, C_V = 2.0, LF = 334, LV = 2257, T0 = -50;
+const Q1 = C_ICE * 50, Q2 = Q1 + LF, Q3 = Q2 + C_W * 100, Q4 = Q3 + LV, QM = Q4 + C_V * 50;
+function stateAt(Q){
+  if(Q <= Q1) return { t: T0 + Q / C_ICE, fm: 0, fv: 0, sens: Q, lf: 0, lv: 0, ph: 0 };
+  if(Q <= Q2) return { t: 0, fm: (Q - Q1) / LF, fv: 0, sens: Q1, lf: Q - Q1, lv: 0, ph: 1 };
+  if(Q <= Q3) return { t: (Q - Q2) / C_W, fm: 1, fv: 0, sens: Q1 + (Q - Q2), lf: LF, lv: 0, ph: 2 };
+  if(Q <= Q4) return { t: 100, fm: 1, fv: (Q - Q3) / LV, sens: Q1 + C_W * 100, lf: LF, lv: Q - Q3, ph: 3 };
+  return { t: 100 + (Q - Q4) / C_V, fm: 1, fv: 1, sens: Q1 + C_W * 100 + (Q - Q4), lf: LF, lv: LV, ph: 4 };
+}
+const CURVE = [[0, T0], [Q1, 0], [Q2, 0], [Q3, 100], [Q4, 100], [QM, 150]];
+
+/* ---------- 粒子モデル ---------- */
+const BW = 20, BH = 15, R = 0.5, ROWS = 8, COLS = 8, N = ROWS * COLS;
+const XC = BW / 2;
+const KS = 1600, GS = 7, KR = 3000, KA = 1500, GL = 30, GAML = 7, GAMG = 0.4, U0 = 6.0;
+let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const gauss = () => { let u = 0, v = 0; while(u === 0) u = Math.random(); v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * v); };
+
+// 固体の格子点（三角格子）。外側から融ける順をつける
+const sites = [];
+for(let r = 0; r < ROWS; r++) for(let c = 0; c < COLS; c++){
+  const x = XC + (c - (COLS - 1) / 2 + (r % 2 ? 0.25 : -0.25)) * 1.0, y = R + r * 0.866;
+  const expo = Math.min(c, COLS - 1 - c, ROWS - 1 - r) + rnd() * 0.9;
+  sites.push({ x, y, expo });
+}
+const order = sites.map((s, i) => i).sort((a, b) => sites[b].expo - sites[a].expo);   // 内側（融けにくい）→ 外側
+const nbr = sites.map((s, i) => sites.map((u, j) => j).filter(j => j !== i && Math.hypot(sites[j].x - s.x, sites[j].y - s.y) < 1.1));
+
+const P = [];      // {x,y,vx,vy,ph(0固1液2気),site,snap}
+const occ = new Array(N).fill(-1);
+let nSol = 0, nGas = 0;
+const st = { Q: 0, mode: 0, pw: 40, bond: true, trail: true, all: false, zoom: false, hl: 0, lastMode: 1 };
+let trail = [];
+const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const tK = () => stateAt(st.Q).t + 273;
+const uOf = () => U0 * tK() / 273;          // 見やすさのため温度に比例させて誇張（実際は √T に比例）
+const counts = Q => { const s = stateAt(Q); return { nS: N - Math.round(s.fm * N), nG: Math.round(s.fv * N) }; };
+
+function rebuild(){
+  const { nS, nG } = counts(st.Q), nL = N - nS - nG, u = uOf();
+  occ.fill(-1); P.length = 0;
+  for(let k = 0; k < nS; k++){ const s = order[k], h = sites[s]; occ[s] = P.length; P.push({ x: h.x, y: h.y, vx: 0, vy: 0, ph: 0, site: s, snap: false }); }
+  // 液体：床から順に、固体と重ならない位置へ
+  const cand = [];
+  for(let r = 0; r < 30; r++) for(let c = 0; c < 22; c++){
+    const x = R + 0.1 + c * 1.02 + (r % 2 ? 0.5 : 0), y = R + r * 0.9;
+    if(x > BW - R) continue;
+    if(P.some(p => Math.hypot(p.x - x, p.y - y) < 1.0)) continue;
+    cand.push([x, y]);
+  }
+  cand.sort((a, b) => a[1] - b[1] || a[0] - b[0]);
+  for(let k = 0; k < nL; k++){ const [x, y] = cand[k]; P.push({ x, y, vx: gauss() * u * .7, vy: gauss() * u * .7, ph: 1, site: -1, snap: false }); }
+  for(let k = 0; k < nG; k++){ const a = Math.random() * TAU; P.push({ x: R + Math.random() * (BW - 2 * R), y: BH * .45 + Math.random() * (BH * .55 - R), vx: u * Math.cos(a), vy: u * Math.sin(a), ph: 2, site: -1, snap: false }); }
+  nSol = nS; nGas = nG; trail = [];
+  if(st.hl >= N) st.hl = 0;
+}
+function adjust(){
+  const { nS, nG } = counts(st.Q), u = uOf();
+  let g = 0;
+  while(nGas > nG && g++ < 99){    // 凝縮：いちばん低い気体の粒子 → 液体
+    let b = -1; P.forEach((p, i) => { if(p.ph === 2 && (b < 0 || p.y < P[b].y)) b = i; });
+    if(b < 0) break; P[b].ph = 1; nGas--;
+  }
+  while(nSol > nS && g++ < 199){   // 融解：外側の格子点から
+    const s = order[nSol - 1], i = occ[s]; occ[s] = -1; nSol--;
+    if(i >= 0){ const p = P[i]; p.ph = 1; p.site = -1; p.snap = false; p.vx += gauss() * u * .5; p.vy += Math.abs(gauss()) * u * .3; }
+  }
+  while(nSol < nS && g++ < 299){   // 凝固：内側の格子点から、いちばん近い液体の粒子が入る
+    const s = order[nSol], h = sites[s]; let b = -1, bd = 1e9;
+    P.forEach((p, i) => { if(p.ph === 1){ const d = Math.hypot(p.x - h.x, p.y - h.y); if(d < bd){ bd = d; b = i; } } });
+    if(b < 0) break; const p = P[b]; p.ph = 0; p.site = s; p.snap = true; occ[s] = b; nSol++;
+  }
+  while(nGas < nG && g++ < 399){   // 沸騰：液体の表面（いちばん高い粒子）から
+    let b = -1; P.forEach((p, i) => { if(p.ph === 1 && (b < 0 || p.y > P[b].y)) b = i; });
+    if(b < 0) break; const p = P[b]; p.ph = 2; nGas++; p.vy = u * (0.8 + Math.random() * .4); p.vx = gauss() * u * .5;
+  }
+}
+function physics(dt){
+  const u = uOf(), n = P.length;
+  const ax = new Float64Array(n), ay = new Float64Array(n);
+  for(let i = 0; i < n; i++){
+    const a = P[i];
+    for(let j = i + 1; j < n; j++){
+      const b = P[j];
+      if(a.ph === 0 && b.ph === 0) continue;
+      const dx = b.x - a.x, dy = b.y - a.y, d2 = dx * dx + dy * dy;
+      if(d2 > 2.25 || d2 < 1e-8) continue;
+      const d = Math.sqrt(d2), nx = dx / d, ny = dy / d;
+      let f = 0;
+      if(d < 1) f = -KR * (1 - d);                       // 反発（重ならない）
+      else if(a.ph < 2 && b.ph < 2) f = KA * 4 * (d - 1) * (1.5 - d);   // 液体どうし・液体と固体の引力
+      if(a.ph !== 0){ ax[i] += f * nx; ay[i] += f * ny; }
+      if(b.ph !== 0){ ax[j] -= f * nx; ay[j] -= f * ny; }
+    }
+  }
+  for(let i = 0; i < n; i++){
+    const p = P[i];
+    if(p.ph === 0){
+      const h = sites[p.site];
+      if(p.snap){ const k = Math.min(1, dt * 7); p.x += (h.x - p.x) * k; p.y += (h.y - p.y) * k; p.vx = p.vy = 0; if(Math.hypot(h.x - p.x, h.y - p.y) < 0.08) p.snap = false; continue; }
+      ax[i] += -KS * (p.x - h.x); ay[i] += -KS * (p.y - h.y);
+      langevin(p, GS, u, dt);
+    } else if(p.ph === 1){ ay[i] -= GL; langevin(p, GAML, u, dt); }
+    else langevin(p, GAMG, u, dt);
+    p.vx += ax[i] * dt; p.vy += ay[i] * dt;
+    const vm = 6 * u, sp = Math.hypot(p.vx, p.vy); if(sp > vm){ p.vx *= vm / sp; p.vy *= vm / sp; }
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    if(p.x < R){ p.x = R; p.vx = Math.abs(p.vx); } if(p.x > BW - R){ p.x = BW - R; p.vx = -Math.abs(p.vx); }
+    if(p.y < R){ p.y = R; p.vy = Math.abs(p.vy); } if(p.y > BH - R){ p.y = BH - R; p.vy = -Math.abs(p.vy); }
+  }
+}
+function langevin(p, g, u, dt){ const s = Math.sqrt(g * u * u * dt); p.vx += -g * p.vx * dt + s * gauss(); p.vy += -g * p.vy * dt + s * gauss(); }
+
+/* ---------- 描画 ---------- */
+const cv = $("cv"), ctx = cv.getContext("2d"); let W = 0, H = 0, col = {}, LY = null;
+function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","grid","shade","solid","liquid","gas","cold","sheet","blue-soft"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
+function resize(){ const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0); LY = layout(); draw(); }
+function L(pts, color, w, dash){ ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore(); }
+function T(s, x, y, color, size, align, bold){ ctx.save(); ctx.fillStyle = color; ctx.font = `${bold ? "700 " : ""}${size || 12}px "BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`; ctx.textAlign = align || "left"; ctx.textBaseline = "middle"; ctx.fillText(s, x, y); ctx.restore(); }
+function arrow(x0, y0, x1, y1, color, w){ L([[x0, y0], [x1, y1]], color, w || 2); const a = Math.atan2(y1 - y0, x1 - x0), h = 6; L([[x1 - h * Math.cos(a - .5), y1 - h * Math.sin(a - .5)], [x1, y1], [x1 - h * Math.cos(a + .5), y1 - h * Math.sin(a + .5)]], color, w || 2); }
+function layout(){
+  const wide = W / H > 1.25;
+  let box, gr;
+  if(wide){
+    const bh = H - 62, bw = bh * BW / BH;
+    box = { x: 14, y: 30, w: bw, h: bh };
+    gr = { x: box.x + bw + 58, y: 30, w: W - (box.x + bw + 58) - 14, h: H - 30 - 46 };
+  } else {
+    const bw = W - 28, bh = bw * BH / BW;
+    box = { x: 14, y: 30, w: bw, h: bh };
+    const gy = box.y + bh + 52;
+    gr = { x: 52, y: gy, w: W - 52 - 14, h: H - gy - 40 };
+  }
+  box.s = box.w / BW;
+  return { box, gr };
+}
+const PX = x => LY.box.x + x * LY.box.s, PY = y => LY.box.y + LY.box.h - y * LY.box.s;
+const phName = ["固体", "固体＋液体", "液体", "液体＋気体", "気体"];
+function draw(){
+  if(!W || !LY) return; readColors(); ctx.clearRect(0, 0, W, H);
+  const { box } = LY, s = stateAt(st.Q), sc = box.s;
+  // 容器
+  ctx.save(); ctx.fillStyle = col.shade; ctx.globalAlpha = .35; ctx.fillRect(box.x, box.y, box.w, box.h); ctx.restore();
+  L([[box.x, box.y], [box.x, box.y + box.h], [box.x + box.w, box.y + box.h], [box.x + box.w, box.y]], col.ink, 2.5);
+  L([[box.x, box.y], [box.x + box.w, box.y]], col.muted, 1.2, [5, 4]);
+  T(`${fmtT(s.t)} ℃`, box.x, 13, s.ph === 1 || s.ph === 3 ? col.red : col.ink, 17, "left", true);
+  T(phName[s.ph], box.x + box.w, 13, col.muted, 13, "right", true);
+  // 加熱・冷却の矢印（床の下）
+  if(st.mode !== 0){
+    const c = st.mode > 0 ? col.red : col.cold, yb = box.y + box.h;
+    for(let k = 1; k <= 5; k++){ const x = box.x + box.w * k / 6;
+      if(st.mode > 0) arrow(x, yb + 22, x, yb + 6, c, 2.2); else arrow(x, yb + 6, x, yb + 22, c, 2.2); }
+  }
+  // 結びつきの線
+  let bonds = 0;
+  ctx.save(); ctx.lineWidth = Math.max(1, sc * .09); ctx.strokeStyle = col.muted; ctx.globalAlpha = .55; ctx.beginPath();
+  for(let i = 0; i < P.length; i++){ const a = P[i]; if(a.ph === 2) continue;
+    for(let j = i + 1; j < P.length; j++){ const b = P[j]; if(b.ph === 2) continue;
+      let on;
+      if(a.ph === 0 && b.ph === 0) on = !a.snap && !b.snap && nbr[a.site].includes(b.site);
+      else on = Math.hypot(a.x - b.x, a.y - b.y) < 1.22;
+      if(on){ bonds++; if(st.bond){ ctx.moveTo(PX(a.x), PY(a.y)); ctx.lineTo(PX(b.x), PY(b.y)); } }
+    } }
+  ctx.stroke(); ctx.restore();
+  $("rB").textContent = `${bonds} 本`;
+  // 通り道
+  const hp = P[st.hl];
+  if(st.trail && trail.length > 1) L(trail.map(q => [PX(q[0]), PY(q[1])]), col.red, 1.6);
+  // 粒子
+  const rr = Math.max(2.5, sc * .40), cc = [col.solid, col.liquid, col.gas];
+  P.forEach((p, i) => { if(i === st.hl) return; ctx.save(); ctx.fillStyle = cc[p.ph]; ctx.beginPath(); ctx.arc(PX(p.x), PY(p.y), rr, 0, TAU); ctx.fill(); ctx.restore(); });
+  if(hp){ ctx.save(); ctx.fillStyle = col.red; ctx.strokeStyle = col.sheet; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(PX(hp.x), PY(hp.y), rr * 1.08, 0, TAU); ctx.fill(); ctx.stroke(); ctx.restore(); }
+  drawGraph(s);
+}
+function fmtT(t){ const r = Math.round(t); return (r < 0 ? "−" : "") + Math.abs(r); }
+function drawGraph(s){
+  const g = LY.gr, qmax = st.zoom ? 900 : QM;
+  const X = q => g.x + Math.min(q, qmax) / qmax * g.w, Y = t => g.y + g.h - (t + 60) / 220 * g.h;
+  ctx.save(); ctx.beginPath(); ctx.rect(g.x, g.y - 2, g.w + 2, g.h + 4); ctx.clip();
+  // 目盛り
+  [-50, 0, 50, 100, 150].forEach(t => L([[g.x, Y(t)], [g.x + g.w, Y(t)]], col.line, 1, t === 0 || t === 100 ? [] : [3, 4]));
+  const stp = st.zoom ? 100 : 500;
+  for(let q = stp; q <= qmax; q += stp) L([[X(q), g.y], [X(q), g.y + g.h]], col.line, 1, [3, 4]);
+  ctx.restore();
+  L([[g.x, g.y], [g.x, g.y + g.h], [g.x + g.w, g.y + g.h]], col.ink, 1.4);
+  [-50, 0, 50, 100, 150].forEach(t => T(fmtT(t), g.x - 6, Y(t), col.muted, 11, "right"));
+  for(let q = 0; q <= qmax; q += stp) T(`${q}`, X(q), g.y + g.h + 11, col.muted, 11, "center");
+  T("温度 t〔℃〕", g.x - 4, g.y - 14, col.muted, 11, "left");
+  T("加えた熱量 Q〔J〕", g.x + g.w, g.y + g.h + 27, col.muted, 11, "right");
+  // 曲線
+  const clipPts = q => { const out = []; for(const [a, t] of CURVE){ if(a <= q) out.push([a, t]); else { const k = CURVE.indexOf(CURVE.find(c => c[0] === a)); const [a0, t0] = CURVE[k - 1]; out.push([q, t0 + (t - t0) * (q - a0) / (a - a0)]); break; } } return out; };
+  ctx.save(); ctx.beginPath(); ctx.rect(g.x, g.y - 6, g.w + 4, g.h + 8); ctx.clip();
+  if(st.all) L(CURVE.map(([q, t]) => [X(q), Y(t)]), col.muted, 2, [5, 4]);
+  L(clipPts(st.Q).map(([q, t]) => [X(q), Y(t)]), col.blue, 3);
+  // 区間の名前
+  const lab = (q0, q1, t, txt, c, up) => { if(X(q0) >= g.x + g.w - 4) return; const xm = (X(q0) + Math.min(X(q1), g.x + g.w)) / 2; T(txt, xm, Y(t) + (up ? -13 : 13), c, 11, "center", true); };
+  if((st.all || st.Q > Q1) && !(st.all || st.Q >= Q2)) lab(Q1, Q2, 0, "融解", col.liquid, true);
+  if(st.all || st.Q > Q3) lab(Q3, Q4, 100, "沸騰（100 ℃で一定）", col.gas, false);
+  ctx.restore();
+  // 融解熱・蒸発熱の幅
+  const brace = (q0, q1, t, txt, c) => { const x0 = X(q0), x1 = Math.min(X(q1), g.x + g.w), y = Y(t) - 30; if(x1 - x0 < 6) return;
+    L([[x0, y + 6], [x0, y], [x1, y], [x1, y + 6]], c, 1.5); T(txt, (x0 + x1) / 2, y - 9, c, 11, "center", true); };
+  if(st.all || st.Q >= Q2) brace(Q1, Q2, 0, st.zoom ? "融解熱 3.3×10² J" : "融解熱", col.liquid);
+  if(st.all || st.Q >= Q4) brace(Q3, Q4, 100, "蒸発熱 2.3×10³ J", col.gas);
+  // 現在の点
+  const px = X(st.Q), py = Y(s.t);
+  if(st.Q <= qmax){
+    L([[px, py], [px, g.y + g.h]], col.red, 1, [2, 3]);
+    ctx.save(); ctx.fillStyle = col.red; ctx.beginPath(); ctx.arc(px, py, 5, 0, TAU); ctx.fill(); ctx.restore();
+  } else T("→ 拡大を外すと続きが見えます", g.x + g.w, g.y + 10, col.red, 11, "right", true);
+}
+
+/* ---------- 文章・表示 ---------- */
+const NOW = {
+  0: ["固体（氷）", "粒子は結びつき合い、決まった位置（つり合いの位置）を中心に振動しています。熱を加えると振動が激しくなり、温度が上がります。"],
+  1: ["融解（固体＋液体）", "加えた熱は、粒子どうしの結びつきをゆるめ、粒子が位置を入れかえられるようにするのに使われます。熱運動の激しさは変わらないので、氷が融け終わるまで温度は 0 ℃ のままです。1 g の氷を融かすのに必要な熱が融解熱です。"],
+  "1c": ["凝固（液体＋固体）", "水が凍るとき、粒子が結びついて、融解熱と同じ量の熱（凝固熱）を放出します。そのため冷やしても、すべて凍るまで温度は 0 ℃ のままです。"],
+  2: ["液体（水）", "粒子は結びつきを保ちながら、たがいに位置を入れかえて動き回っています。熱を加えると熱運動が激しくなり、温度が上がります。水は比熱が大きいので、氷よりも温度が上がりにくくなります。"],
+  3: ["沸騰（液体＋気体）", "加えた熱は、粒子どうしの結びつきをすべて断ち切って、粒子を液体から引き離すのに使われます。温度は 100 ℃ のままです。結びつきを全部断つので、蒸発熱は融解熱よりずっと大きくなります。"],
+  "3c": ["凝縮（気体＋液体）", "水蒸気が水になるとき、粒子が結びついて、蒸発熱と同じ量の熱（凝縮熱）を放出します。そのため冷やしても、すべて水になるまで温度は 100 ℃ のままです。"],
+  4: ["気体（水蒸気）", "粒子どうしの結びつきはほとんどなく、粒子は自由に飛び回っています。熱を加えると粒子が速くなり、温度が上がります。"]
+};
+function ui(){
+  const s = stateAt(st.Q), K = s.t + 273;
+  $("rT").innerHTML = `${fmtT(s.t)} ℃ <small>（${Math.round(K)} K）</small>`;
+  $("rPh").textContent = phName[s.ph];
+  $("rQ").innerHTML = `${Math.round(st.Q)} J`;
+  const key = (s.ph === 1 || s.ph === 3) && st.lastMode < 0 ? s.ph + "c" : s.ph;
+  const [h, p] = NOW[key]; $("now").querySelector("b").textContent = `いま：${h}`; $("now").querySelector("p").textContent = p;
+  const M = LF + LV;
+  $("fS").style.width = `${s.sens / M * 100}%`; $("fLf").style.width = `${s.lf / M * 100}%`; $("fLv").style.width = `${s.lv / M * 100}%`;
+  $("bS").textContent = `${Math.round(s.sens)} J`;
+  $("bL").textContent = `${Math.round(s.lf + s.lv)} J`;
+  $("bNote").innerHTML = `状態変化の内訳：融解 <b style="color:var(--liquid)">${Math.round(s.lf)} J</b>（最大 ${LF} J）＋ 蒸発 <b style="color:var(--gas)">${Math.round(s.lv)} J</b>（最大 ${LV} J）`;
+  $("vReal").textContent = `いまの温度では約 ${(Math.sqrt(3 * 8.31 * K / 0.018) / 100).toFixed(1)}×10² m/s`;
+}
+function setMode(m){
+  st.mode = m; if(m !== 0) st.lastMode = m;
+  [["mCool", -1], ["mStop", 0], ["mHeat", 1]].forEach(([id, v]) => $(id).setAttribute("aria-pressed", String(v === m)));
+}
+$("mCool").addEventListener("click", () => setMode(-1));
+$("mStop").addEventListener("click", () => setMode(0));
+$("mHeat").addEventListener("click", () => setMode(1));
+$("resetBtn").addEventListener("click", () => { setMode(0); st.Q = 0; st.lastMode = 1; rebuild(); ui(); draw(); });
+$("sP").addEventListener("input", e => { st.pw = +e.target.value; $("oP").textContent = `${st.pw} J/s`; });
+[["ckBond","bond"],["ckTrail","trail"],["ckAll","all"],["ckZoom","zoom"]].forEach(([id, k]) => $(id).addEventListener("change", e => { st[k] = e.target.checked; if(k === "trail") trail = []; draw(); }));
+cv.addEventListener("pointerdown", e => {
+  const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, { box, gr } = LY;
+  if(x >= box.x && x <= box.x + box.w && y >= box.y && y <= box.y + box.h){
+    let b = 0, bd = 1e9; P.forEach((p, i) => { const d = Math.hypot(PX(p.x) - x, PY(p.y) - y); if(d < bd){ bd = d; b = i; } });
+    st.hl = b; trail = []; draw();
+  } else if(x >= gr.x - 10 && x <= gr.x + gr.w + 10 && y >= gr.y - 10 && y <= gr.y + gr.h + 20){
+    const qmax = st.zoom ? 900 : QM, q = Math.max(0, Math.min(QM, (x - gr.x) / gr.w * qmax));
+    const old = st.Q; st.Q = q; st.lastMode = q >= old ? 1 : -1; setMode(0);
+    if(Math.abs(q - old) > 60) rebuild(); else adjust();
+    ui(); draw();
+  }
+});
+
+let last = null, uiT = 0;
+function tick(ts){
+  if(last == null) last = ts; const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
+  if(st.mode !== 0){
+    st.Q = Math.max(0, Math.min(QM, st.Q + st.mode * st.pw * dt));
+    if(st.Q === QM && st.mode > 0) setMode(0);
+    if(st.Q === 0 && st.mode < 0) setMode(0);
+    adjust();
+  }
+  if(!reduce || st.mode !== 0){ const nsub = 8; for(let k = 0; k < nsub; k++) physics(dt / nsub); }
+  const hp = P[st.hl]; if(hp){ trail.push([hp.x, hp.y]); if(trail.length > 110) trail.shift(); }
+  draw();
+  uiT += dt; if(uiT > 0.1){ uiT = 0; ui(); }
+  requestAnimationFrame(tick);
+}
+const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+if(mq && mq.addEventListener) mq.addEventListener("change", draw);
+new MutationObserver(draw).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+if(window.ResizeObserver) new ResizeObserver(resize).observe(cv); else window.addEventListener("resize", resize);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+
+$("qs").innerHTML = [
+  ["氷（固体）の粒子はどんな動きをしているか。加熱して温度が上がると、動きはどう変わるか。", "決まった位置を中心に振動しています。温度が上がるほど、振動が激しくなります（熱運動が激しくなる）。"],
+  ["融解中は、熱を加え続けているのに温度が上がらない。加えた熱は何に使われているか。", "粒子どうしの結びつきをゆるめ、固体を液体に変えるのに使われています。熱運動を激しくすることには使われないので、温度は 0 ℃ のままです。これが融解熱です。"],
+  ["融解中の 0 ℃ の氷の粒子と 0 ℃ の水の粒子で、熱運動の激しさに違いはあるか。", "違いはありません。温度が同じなら、熱運動の激しさ（粒子の平均の運動エネルギー）は同じです。違うのは、粒子どうしの結びつき方（並び方）です。"],
+  [`グラフの水平な部分の長さを比べよう。蒸発熱が融解熱よりずっと大きいのはなぜか。「結びつき（線）の数」の変化に注目しよう。`, "融解では結びつきが一部ゆるむだけで、液体の粒子はまだ結びつき合っています。蒸発（沸騰）では、残っている結びつきをすべて断ち切って粒子をばらばらにするので、ずっと多くの熱が必要です。"],
+  ["氷の区間と水の区間で、グラフの傾きが違うのはなぜか。", `比熱が違うからです。同じ熱量を加えても、比熱の大きい水（4.2 J/(g·K)）は、氷（2.1 J/(g·K)）より温度が上がりにくく、傾きがゆるやかになります（${I("Q")} ＝ ${I("m")}${I("c")}Δ${I("T")}）。`],
+  ["「冷やす」を押して、水蒸気を水に戻そう。100 ℃ のまま温度が下がらない間、熱はどうなっているか。", "粒子が結びつくときに、蒸発熱と同じ量の熱（凝縮熱）を放出しています。100 ℃ の水蒸気によるやけどが 100 ℃ の湯よりひどくなりやすいのは、皮膚の上で凝縮して、この大きな熱を出すからです。"]
+].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
+
+$("oP").textContent = `${st.pw} J/s`;
+st.hl = 40; rebuild(); setMode(0); ui(); resize(); requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

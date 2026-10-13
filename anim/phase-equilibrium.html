@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>相平衡（蒸発と凝縮・融解と凝固）のアニメーション</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: two worksheets (#lv 気液平衡, #sl 固液平衡). Each = wide stage (container left, time graph right; stacked on phones), readouts, controls, "what's happening now", questions. */
+:root{
+  --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
+  --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
+  --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3; --shade:#EEF2F6;
+  --solid:#2447B3; --liquid:#11817E; --gas:#C2780F; --cold:#2A7BC9;
+  --body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --math:"Times New Roman",Times,"Noto Serif",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+    --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+    --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+    --solid:#93AAFF; --liquid:#4FC7C1; --gas:#E8B45A; --cold:#7DBBF5; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+  --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+  --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+  --solid:#93AAFF; --liquid:#4FC7C1; --gas:#E8B45A; --cold:#7DBBF5; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:110px}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qv{font-family:var(--math);font-style:italic;font-size:1.08em}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.top-inner{max-width:1000px;margin:0 auto;padding:10px 16px 10px}
+.back{font-size:14px;color:var(--blue);text-decoration:none}
+h1{font-size:19px;margin:2px 0 0;line-height:1.4;text-wrap:balance}
+.nav{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin-top:2px}
+.nav a{color:var(--blue);text-decoration:none}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:700}
+
+main{max-width:1000px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px;min-width:0}
+h2{font-size:20px;margin:0 0 4px;line-height:1.4;text-wrap:balance}
+h2 .no{display:inline-block;margin-right:.4em;color:var(--blue)}
+.lead{margin:0 0 12px;color:var(--muted);font-size:15px}
+.stage{position:relative;width:100%;aspect-ratio:2/1;background:var(--sheet);border:1px solid var(--line);border-radius:4px}
+@media (max-width:640px){.stage{aspect-ratio:10/15}}
+canvas{display:block;width:100%;height:100%}
+.keys{display:flex;flex-wrap:wrap;gap:4px 16px;margin:10px 0 0;padding:0;list-style:none;font-size:14px;color:var(--muted)}
+.keys li{display:flex;align-items:center;gap:6px}
+.dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+.ring{width:12px;height:12px;border-radius:50%;display:inline-block;border:2.5px solid}
+
+.read{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
+@media (max-width:640px){.read{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.read div{border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;min-width:0}
+.read .k{display:block;font-size:12px;color:var(--muted);line-height:1.4}
+.read .v{display:block;font-weight:700;font-size:18px;font-variant-numeric:tabular-nums;line-height:1.5}
+.read .v small{font-size:13px;font-weight:400;color:var(--muted)}
+
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.seg{display:inline-flex;border:1.5px solid var(--blue);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:none;color:var(--blue);padding:9px 14px;min-height:44px;font-weight:700;cursor:pointer}
+.seg button+button{border-left:1.5px solid var(--blue)}
+.seg button[aria-pressed="true"]{background:var(--btn);color:#fff}
+.seg button.cool[aria-pressed="true"]{background:var(--cold)}
+.seg button.heat[aria-pressed="true"]{background:var(--red)}
+.btn{border:0;border-radius:8px;padding:9px 16px;min-height:44px;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.btn.ghost{background:none;color:var(--blue);border:1.5px solid var(--blue)}
+.opts{display:grid;gap:12px;margin-top:14px}
+.slider{display:grid;grid-template-columns:10em minmax(0,1fr) 5.5em;align-items:center;gap:10px}
+.slider label{font-size:15px;line-height:1.4}
+.slider input{width:100%;accent-color:var(--blue);min-height:32px}
+.slider output{font-variant-numeric:tabular-nums;text-align:right;font-weight:700}
+@media (max-width:520px){.slider{grid-template-columns:7.5em minmax(0,1fr) 4.8em}}
+.checks{display:flex;flex-wrap:wrap;gap:4px 18px}
+.checks label{display:flex;align-items:center;gap:8px;min-height:40px;cursor:pointer;font-size:15px}
+.checks input{width:20px;height:20px;accent-color:var(--blue)}
+.now{margin-top:14px;padding:10px 14px;border-left:4px solid var(--blue);background:var(--blue-soft);border-radius:0 6px 6px 0}
+.now > b{display:block;font-size:15px}
+.now p{margin:2px 0 0;font-size:15px}
+.now p.heat{margin-top:6px;font-size:14px}
+.hint{font-size:13px;color:var(--muted);margin:10px 0 0}
+
+h3{font-size:17px;margin:20px 0 8px}
+.qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
+.qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
+.ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <a class="back" id="backLink" href="../index.html#/u/heat/0" hidden>‹ 熱とエネルギー（Webテスト）へ</a>
+    <h1>相平衡（蒸発と凝縮・融解と凝固）</h1>
+    <nav class="nav" id="nav" hidden aria-label="アニメーション">
+      <a href="index.html#heat">≡ アニメーション集</a>
+      <a href="heat-motion.html">熱運動と状態変化</a>
+      <a href="#lv" id="navLv">蒸発と凝縮（気液平衡）</a>
+      <a href="#sl" id="navSl">融解と凝固（固液平衡）</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- ================= A. 気液平衡 ================= -->
+  <section class="sheet" id="lv" aria-labelledby="tA">
+    <h2 id="tA"><span class="no">A</span>蒸発と凝縮（気液平衡）</h2>
+    <p class="lead">液体の表面では、熱運動で勢いのついた粒子が飛び出し（蒸発）、気体の粒子が液面にぶつかって戻ってきます（凝縮）。ふたをした容器で、気体の粒子の数と、1秒あたりの蒸発・凝縮の数がどう変わるか観察しよう。</p>
+    <div class="stage"><canvas id="cvA" role="img" aria-label="容器の底に液体、その上に気体の粒子。右に、気体の粒子の数と、1秒あたりの蒸発と凝縮の数の時間変化のグラフ。"></canvas></div>
+    <ul class="keys">
+      <li><span class="dot" style="background:var(--liquid)"></span>液体の粒子</li>
+      <li><span class="dot" style="background:var(--gas)"></span>気体の粒子</li>
+      <li><span class="ring" style="border-color:var(--gas)"></span>蒸発（飛び出した）</li>
+      <li><span class="ring" style="border-color:var(--liquid)"></span>凝縮（液体に戻った）</li>
+    </ul>
+    <div class="read" aria-live="polite">
+      <div><span class="k">液体の温度</span><span class="v" id="aT"></span></div>
+      <div><span class="k">気体の粒子の数</span><span class="v" id="aN"></span></div>
+      <div><span class="k">蒸発の数（1秒あたり）</span><span class="v" id="aE" style="color:var(--gas)"></span></div>
+      <div><span class="k">凝縮の数（1秒あたり）</span><span class="v" id="aC" style="color:var(--liquid)"></span></div>
+    </div>
+    <div class="controls">
+      <button type="button" class="btn" id="aPlay">一時停止</button>
+      <button type="button" class="btn ghost" id="aReset">最初から（気体なし）</button>
+    </div>
+    <div class="opts">
+      <div class="slider"><label for="aSt">液体の温度 <i class="qv">t</i></label><input type="range" id="aSt" min="20" max="100" step="5" value="60"><output id="aOt" for="aSt"></output></div>
+      <div class="checks">
+        <label for="aLid"><input type="checkbox" id="aLid" checked>ふたをする</label>
+        <label for="aKeep"><input type="checkbox" id="aKeep" checked>温度を一定に保つ（外から熱を補う）</label>
+      </div>
+    </div>
+    <div class="now" id="aNow"><b></b><p></p><p class="heat"></p></div>
+    <p class="hint">粒子の数や速さは実際とは違うモデルです。温度による違いは見やすくしてあります（実際の水では、100&nbsp;℃ の飽和水蒸気圧は 20&nbsp;℃ の約40倍）。<span id="aPs"></span></p>
+
+    <h3>見てみよう</h3>
+    <ol class="qs" id="qsA"></ol>
+  </section>
+
+  <!-- ================= B. 固液平衡 ================= -->
+  <section class="sheet" id="sl" aria-labelledby="tB">
+    <h2 id="tB"><span class="no">B</span>融解と凝固（固液平衡）</h2>
+    <p class="lead">外から熱が出入りしない容器に、0 ℃ の氷と水（あわせて 20 g）が入っています。氷の表面では、粒子が離れたり（融解）くっついたり（凝固）しています。熱を加えたり奪ったりすると、氷の量と温度はどうなるか観察しよう。</p>
+    <div class="stage"><canvas id="cvB" role="img" aria-label="容器の中に氷のかたまりと水の粒子。右に、温度と氷の質量の時間変化のグラフ。"></canvas></div>
+    <ul class="keys">
+      <li><span class="dot" style="background:var(--solid)"></span>氷（固体）の粒子</li>
+      <li><span class="dot" style="background:var(--liquid)"></span>水（液体）の粒子</li>
+      <li><span class="ring" style="border-color:var(--liquid)"></span>融解（氷から離れた）</li>
+      <li><span class="ring" style="border-color:var(--solid)"></span>凝固（氷にくっついた）</li>
+    </ul>
+    <div class="read" aria-live="polite">
+      <div><span class="k">温度</span><span class="v" id="bT"></span></div>
+      <div><span class="k">氷 ／ 水</span><span class="v" id="bM"></span></div>
+      <div><span class="k">融解の数（1秒あたり）</span><span class="v" id="bR1" style="color:var(--liquid)"></span></div>
+      <div><span class="k">凝固の数（1秒あたり）</span><span class="v" id="bR2" style="color:var(--solid)"></span></div>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="熱の出入り">
+        <button type="button" class="cool" id="bCool" aria-pressed="false">熱を奪う</button>
+        <button type="button" id="bStop" aria-pressed="true">出入りなし</button>
+        <button type="button" class="heat" id="bHeat" aria-pressed="false">熱を加える</button>
+      </div>
+      <button type="button" class="btn ghost" id="bPlay">一時停止</button>
+      <button type="button" class="btn ghost" id="bReset">最初から</button>
+    </div>
+    <div class="opts">
+      <div class="slider"><label for="bSp">熱の出入りの速さ</label><input type="range" id="bSp" min="10" max="100" step="10" value="30"><output id="bOp" for="bSp"></output></div>
+    </div>
+    <div class="now" id="bNow"><b></b><p></p><p class="heat"></p></div>
+    <p class="hint">粒子1個を氷または水 0.1&nbsp;g として描いたモデルです（融解熱 334&nbsp;J/g、水の比熱 4.2&nbsp;J/(g·K)、氷の比熱 2.1&nbsp;J/(g·K)）。実際の氷は水に浮きますが、ここでは容器の底に固定して描いています。</p>
+
+    <h3>見てみよう</h3>
+    <ol class="qs" id="qsB"></ol>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id), TAU = 2 * Math.PI;
+const I = s => `<i class="qv">${s}</i>`;
+if(/\/anim\//.test(location.pathname)){ $("backLink").hidden = false; $("nav").hidden = false; }
+function markNav(){ const h = location.hash === "#sl" ? "navSl" : "navLv"; ["navLv","navSl"].forEach(id => id === h ? $(id).setAttribute("aria-current", "page") : $(id).removeAttribute("aria-current")); }
+window.addEventListener("hashchange", markNav); markNav();
+const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+const gauss = () => { let u = 0; while(u === 0) u = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * Math.random()); };
+const expWait = r => r > 0 ? -Math.log(1 - Math.random()) / r : 1e9;
+const fmtT = t => { const r = Math.round(t); return (r < 0 ? "−" : "") + Math.abs(r); };
+
+/* ---------- 共通の描画 ---------- */
+let col = {};
+function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","shade","solid","liquid","gas","cold","sheet"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
+function mk(cv){
+  const o = { cv, ctx: cv.getContext("2d"), W: 0, H: 0 };
+  o.resize = () => { const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); o.W = Math.max(1, Math.round(r.width)); o.H = Math.max(1, Math.round(r.height)); cv.width = Math.round(o.W * d); cv.height = Math.round(o.H * d); o.ctx.setTransform(d, 0, 0, d, 0, 0); };
+  o.L = (pts, color, w, dash) => { const c = o.ctx; c.save(); c.strokeStyle = color; c.lineWidth = w; c.setLineDash(dash || []); c.lineJoin = "round"; c.lineCap = "round"; c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke(); c.restore(); };
+  o.T = (s, x, y, color, size, align, bold) => { const c = o.ctx; c.save(); c.fillStyle = color; c.font = `${bold ? "700 " : ""}${size || 12}px "BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`; c.textAlign = align || "left"; c.textBaseline = "middle"; c.fillText(s, x, y); c.restore(); };
+  o.dot = (x, y, r, color) => { const c = o.ctx; c.save(); c.fillStyle = color; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); c.restore(); };
+  o.ring = (x, y, r, color, a) => { const c = o.ctx; c.save(); c.globalAlpha = a; c.strokeStyle = color; c.lineWidth = 2.5; c.beginPath(); c.arc(x, y, r, 0, TAU); c.stroke(); c.restore(); };
+  o.arrow = (x0, y0, x1, y1, color) => { o.L([[x0, y0], [x1, y1]], color, 2.2); const a = Math.atan2(y1 - y0, x1 - x0), h = 6; o.L([[x1 - h * Math.cos(a - .5), y1 - h * Math.sin(a - .5)], [x1, y1], [x1 - h * Math.cos(a + .5), y1 - h * Math.sin(a + .5)]], color, 2.2); };
+  // 容器（左）とグラフ（右）の配置。スマホでは上下
+  o.layout = (BW, BH) => {
+    const W = o.W, H = o.H, wide = W / H > 1.25; let box, gr;
+    if(wide){ const bh = H - 62, bw = Math.min(bh * BW / BH, W * .58), bh2 = bw * BH / BW; box = { x: 14, y: 30 + (bh - bh2), w: bw, h: bh2 }; gr = { x: box.x + bw + 60, y: 26, w: W - (box.x + bw + 60) - 14, h: H - 26 - 40 }; }
+    else { const bw = W - 28, bh = bw * BH / BW; box = { x: 14, y: 30, w: bw, h: bh }; const gy = box.y + bh + 44; gr = { x: 52, y: gy, w: W - 52 - 14, h: H - gy - 34 }; }
+    box.s = box.w / BW; o.box = box; o.gr = gr; o.BH = BH;
+  };
+  o.PX = x => o.box.x + x * o.box.s; o.PY = y => o.box.y + o.box.h - y * o.box.s;
+  // 時間変化のグラフ（パネルを縦に並べる）
+  o.chart = (hist, span, panels) => {
+    const g = o.gr, gap = 26, ph = (g.h - gap * (panels.length - 1)) / panels.length, tNow = hist.length ? hist[hist.length - 1].t : 0, t0 = Math.max(0, tNow - span);
+    const X = t => g.x + (t - t0) / span * g.w;
+    panels.forEach((p, k) => {
+      const y0 = g.y + k * (ph + gap), Y = v => y0 + ph - (v - p.min) / (p.max - p.min) * ph;
+      p.ticks.forEach(v => { o.L([[g.x, Y(v)], [g.x + g.w, Y(v)]], col.line, 1, v === 0 ? [] : [3, 4]); o.T(p.fmt ? p.fmt(v) : `${v}`, g.x - 6, Y(v), col.muted, 11, "right"); });
+      o.L([[g.x, y0], [g.x, y0 + ph], [g.x + g.w, y0 + ph]], col.ink, 1.3);
+      o.T(p.title, g.x, y0 - 10, col.muted, 11, "left", true);
+      p.series.forEach(s => {
+        const pts = hist.filter(h => h.t >= t0).map(h => [X(h.t), Y(Math.max(p.min, Math.min(p.max, h[s.key])))]);
+        if(pts.length > 1) o.L(pts, s.color, 2.4, s.dash);
+        if(s.label && pts.length) o.T(s.label, g.x + g.w - 2, s.ly != null ? y0 + s.ly : pts[pts.length - 1][1] - 10, s.color, 11, "right", true);
+      });
+    });
+    o.T(`時間（直近 ${span} 秒）→`, g.x + g.w, g.y + g.h + 14, col.muted, 11, "right");
+  };
+  return o;
+}
+
+/* =========================================================
+   A. 蒸発と凝縮
+   ========================================================= */
+const A = { BW: 20, BH: 15, COLS: 20, N0: 100, R: 0.45 };
+const perm = Array.from({ length: A.COLS }, (_, i) => i).sort(() => Math.random() - .5);
+const sa = { nL: A.N0, vap: [], t: 60, lid: true, keep: true, playing: !reduce, time: 0, ev: [], cd: [], cumE: 0, cumC: 0, esc: 0, hist: [], nextE: 0, fl: [], histT: 0, sinceChange: 0 };
+// 水の飽和水蒸気圧〔kPa〕（Antoine の式）
+const psat = t => Math.pow(10, 8.07131 - 1730.63 / (233.426 + t)) * 0.133322;
+const uA = () => 8 * (sa.t + 273) / 373;                    // 粒子の速さ（モデル）
+const rateE = () => 9.5 * Math.pow(psat(sa.t) / psat(100), 0.6);   // 1秒あたりの蒸発（誇張して圧縮）
+const slot = k => { const r = Math.floor(k / A.COLS), c = perm[k % A.COLS]; return { x: c + 0.5 + (r % 2 ? 0.22 : -0.22), y: 0.5 + r * 0.88, r, c }; };
+const colTop = c => { const full = Math.floor(sa.nL / A.COLS), rem = sa.nL % A.COLS; return (full + (perm.indexOf(c) < rem ? 1 : 0)) * 0.88; };
+function resetA(){ sa.nL = A.N0; sa.vap = []; sa.ev = []; sa.cd = []; sa.cumE = sa.cumC = sa.esc = 0; sa.hist = []; sa.time = 0; sa.fl = []; sa.t = +$("aSt").value; sa.nextE = expWait(rateE()); sa.sinceChange = 0; }
+function stepA(dt){
+  sa.time += dt; sa.sinceChange += dt;
+  const u = uA(), sc = u / Math.SQRT2;
+  sa.nextE -= dt;
+  while(sa.nextE <= 0){
+    if(sa.nL > 0){
+      const p = slot(sa.nL - 1); sa.nL--;
+      const vy = sc * Math.sqrt(-2 * Math.log(1 - Math.random()));   // 液面から飛び出す粒子の速さの分布
+      sa.vap.push({ x: p.x, y: p.y + 0.9, vx: gauss() * sc, vy });
+      sa.ev.push(sa.time); sa.cumE++; sa.fl.push({ x: p.x, y: p.y + 0.5, c: "gas", a: 1 });
+      if(!sa.keep) sa.t = Math.max(5, sa.t - 0.35);     // 蒸発熱を液体から奪う → 冷える
+    }
+    sa.nextE += expWait(rateE());
+  }
+  for(let i = sa.vap.length - 1; i >= 0; i--){
+    const p = sa.vap[i];
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    if(p.x < A.R){ p.x = A.R; p.vx = Math.abs(p.vx); } if(p.x > A.BW - A.R){ p.x = A.BW - A.R; p.vx = -Math.abs(p.vx); }
+    if(sa.lid){ if(p.y > A.BH - A.R){ p.y = A.BH - A.R; p.vy = -Math.abs(p.vy); } }
+    else if(p.y > A.BH + 1.5){ sa.vap.splice(i, 1); sa.esc++; continue; }
+    const c = Math.max(0, Math.min(A.COLS - 1, Math.floor(p.x)));
+    if(p.vy < 0 && p.y - A.R <= colTop(c) + 0.1){      // 液面にぶつかった → 凝縮
+      sa.vap.splice(i, 1); sa.cd.push(sa.time); sa.cumC++;
+      const q = slot(sa.nL); sa.nL++; sa.fl.push({ x: p.x, y: colTop(c) + 0.2, c: "liquid", a: 1 });
+      if(!sa.keep) sa.t = Math.min(100, sa.t + 0.35);   // 凝縮熱を放出 → 温まる
+    }
+  }
+  sa.fl.forEach(f => f.a -= dt * 1.6); sa.fl = sa.fl.filter(f => f.a > 0);
+  const w = 3; sa.ev = sa.ev.filter(t => t > sa.time - 8); sa.cd = sa.cd.filter(t => t > sa.time - 8);
+  sa.histT += dt;
+  if(sa.histT > 0.2){ sa.histT = 0;
+    sa.hist.push({ t: sa.time, n: sa.vap.length, re: sa.ev.filter(t => t > sa.time - w).length / Math.min(w, Math.max(sa.time, .2)), rc: sa.cd.filter(t => t > sa.time - w).length / Math.min(w, Math.max(sa.time, .2)) });
+    if(sa.hist.length > 400) sa.hist.shift(); }
+}
+const oA = mk($("cvA"));
+function drawA(){
+  const o = oA; if(!o.W) return; readColors(); o.ctx.clearRect(0, 0, o.W, o.H); o.layout(A.BW, A.BH);
+  const b = o.box, s = b.s, ctx = o.ctx;
+  ctx.save(); ctx.fillStyle = col.shade; ctx.globalAlpha = .35; ctx.fillRect(b.x, b.y, b.w, b.h); ctx.restore();
+  o.L([[b.x, b.y], [b.x, b.y + b.h], [b.x + b.w, b.y + b.h], [b.x + b.w, b.y]], col.ink, 2.5);
+  if(sa.lid){ o.L([[b.x - 4, b.y], [b.x + b.w + 4, b.y]], col.ink, 4); o.T("ふた", b.x + b.w, b.y - 10, col.muted, 11, "right"); }
+  else o.T("ふたなし（気体は外へ逃げる）", b.x + b.w, b.y - 10, col.muted, 11, "right");
+  o.T(`${fmtT(sa.t)} ℃`, b.x, 13, col.ink, 17, "left", true);
+  // 液体
+  const amp = 0.05 + 0.06 * (sa.t + 273) / 373, tt = sa.time;
+  for(let k = 0; k < sa.nL; k++){ const p = slot(k), jx = amp * Math.sin(tt * 9 + k * 1.7), jy = amp * Math.cos(tt * 11 + k * 2.3);
+    o.dot(o.PX(p.x + jx), o.PY(p.y + jy), Math.max(2.2, s * .42), col.liquid); }
+  sa.vap.forEach(p => { if(p.y > A.BH + 0.5) return; o.dot(o.PX(p.x), o.PY(p.y), Math.max(2.2, s * .42), col.gas); });
+  sa.fl.forEach(f => o.ring(o.PX(f.x), o.PY(f.y), s * (0.6 + (1 - f.a) * 1.2), col[f.c], f.a));
+  // 熱の出入り（温度を保つとき）
+  const ne = sa.ev.filter(t => t > sa.time - 3).length - sa.cd.filter(t => t > sa.time - 3).length;
+  if(sa.keep && ne > 0){ for(let k = 1; k <= 4; k++){ const x = b.x + b.w * k / 5; o.arrow(x, b.y + b.h + 22, x, b.y + b.h + 6, col.red); } }
+  o.chart(sa.hist, 30, [
+    { title: "気体の粒子の数", min: 0, max: 60, ticks: [0, 20, 40, 60], series: [{ key: "n", color: col.gas }] },
+    { title: "1秒あたりの数", min: 0, max: 15, ticks: [0, 5, 10, 15], series: [{ key: "re", color: col.gas, label: "蒸発", ly: 8 }, { key: "rc", color: col.liquid, label: "凝縮", dash: [6, 3], ly: 22 }] }
+  ]);
+}
+function stableA(){   // 直近 6 秒で気体の粒子の数がほぼ一定か（前半と後半の平均を比べる）
+  const h = sa.hist.filter(x => x.t > sa.time - 6); if(h.length < 20) return false;
+  const m = h.length >> 1, av = a => a.reduce((s, x) => s + x.n, 0) / a.length, a1 = av(h.slice(0, m)), a2 = av(h.slice(m));
+  return Math.abs(a2 - a1) <= Math.max(1.5, 0.08 * a2);
+}
+function uiA(){
+  // 平均を少し長めにとる（表示用）
+  const w = Math.min(5, Math.max(sa.time, .5)), re = sa.ev.filter(t => t > sa.time - w).length / w, rc = sa.cd.filter(t => t > sa.time - w).length / w;
+  $("aT").textContent = `${fmtT(sa.t)} ℃`;
+  $("aN").textContent = `${sa.vap.length} 個`;
+  $("aE").textContent = re.toFixed(1); $("aC").textContent = rc.toFixed(1);
+  let head, body;
+  if(!sa.lid){ head = "蒸発が続く（ふたなし）"; body = "飛び出した気体の粒子は外へ逃げて、ほとんど戻ってきません。蒸発の数が凝縮の数を上回り続けるので、液体はしだいに減っていきます（洗濯物が乾くのと同じ）。"; }
+  else if(sa.sinceChange > 6 && stableA() && Math.abs(re - rc) <= Math.max(0.8, 0.2 * re)){ head = "気液平衡"; body = "蒸発と凝縮が同じ割合で起こっているので、気体の粒子の数も液体の量も変わらず、見かけ上は変化が止まっています。粒子の出入りは止まっていません。"; }
+  else if(re > rc){ head = "蒸発 ＞ 凝縮（気体が増えていく）"; body = "飛び出す粒子のほうが多いので、気体の粒子が増えています。気体が増えるほど液面にぶつかる粒子が増え、凝縮の数も増えていきます。"; }
+  else { head = "凝縮 ＞ 蒸発（気体が減っていく）"; body = "戻ってくる粒子のほうが多いので、気体の粒子が減っています（温度を下げた直後など）。"; }
+  $("aNow").querySelector("b").textContent = `いま：${head}`; $("aNow").querySelector("p").textContent = body;
+  const net = sa.cumE - sa.cumC;
+  $("aNow").querySelector(".heat").innerHTML = sa.keep
+    ? `熱の出入り：蒸発 ${sa.cumE} − 凝縮 ${sa.cumC} ＝ <strong>${net}</strong> 個ぶんの蒸発熱を、外から補いました。蒸発する粒子は液体から熱（蒸発熱）を持ち去り、凝縮する粒子は同じ量の熱（凝縮熱）を液体に置いていきます。`
+    : `外から熱を補っていないので、粒子が蒸発するたびに液体は冷え（蒸発熱を奪われる）、凝縮するたびに温まります（凝縮熱を受け取る）。`;
+  $("aPs").textContent = `参考：${fmtT(sa.t)} ℃ の水の飽和水蒸気圧は約 ${psat(sa.t).toFixed(psat(sa.t) < 10 ? 1 : 0)} kPa。`;
+}
+$("aPlay").addEventListener("click", () => { sa.playing = !sa.playing; $("aPlay").textContent = sa.playing ? "一時停止" : "再生"; });
+$("aReset").addEventListener("click", () => { resetA(); drawA(); uiA(); });
+$("aSt").addEventListener("input", e => { sa.t = +e.target.value; $("aOt").textContent = `${sa.t} ℃`; sa.sinceChange = 0; uiA(); });
+$("aLid").addEventListener("change", e => { sa.lid = e.target.checked; sa.sinceChange = 0; });
+$("aKeep").addEventListener("change", e => { sa.keep = e.target.checked; if(sa.keep){ sa.t = +$("aSt").value; } sa.sinceChange = 0; });
+
+/* =========================================================
+   B. 融解と凝固
+   ========================================================= */
+const B = { BW: 20.5, BH: 10.2, ROWS: 10, COLS: 20, G: 0.1, LF: 334, CW: 4.2, CI: 2.1 };
+const sites = [];
+for(let r = 0; r < B.ROWS; r++) for(let c = 0; c < B.COLS; c++) sites.push({ x: c + 0.5 + (r % 2 ? 0.5 : 0), y: 0.5 + r * 0.866 });
+const nb = sites.map((s, i) => sites.map((_, j) => j).filter(j => j !== i && Math.hypot(sites[j].x - s.x, sites[j].y - s.y) < 1.1));
+const sb = { ice: [], pos: [], t: 0, acc: 0, mode: 0, pw: 30, playing: !reduce, time: 0, m1: [], m2: [], cum1: 0, cum2: 0, Q: 0, hist: [], histT: 0, fl: [], next1: 0, next2: 0, swapT: 0, lastMode: 0 };
+const R0 = 2.5;   // 0 ℃ で、熱の出入りがなくても起こる融解・凝固（それぞれ1秒あたり）
+function resetB(){
+  sb.ice = sites.map((s, i) => { const r = Math.floor(i / B.COLS), c = i % B.COLS; return r < 6 && c >= 6 && c < 14; });
+  sb.who = sites.map((_, i) => i);     // 各位置にいる粒子の番号（水の粒子は入れかわる）
+  sb.disp = sites.map(s => ({ x: s.x, y: s.y }));
+  sb.t = 0; sb.acc = 0; sb.time = 0; sb.m1 = []; sb.m2 = []; sb.cum1 = sb.cum2 = 0; sb.Q = 0; sb.hist = []; sb.fl = [];
+  sb.next1 = expWait(2 * R0); sb.flip = false;
+}
+const nIce = () => sb.ice.filter(Boolean).length;
+function pick(cands, wfun){ if(!cands.length) return -1; const w = cands.map(wfun), s = w.reduce((a, b) => a + b, 0); let r = Math.random() * s; for(let k = 0; k < cands.length; k++){ r -= w[k]; if(r <= 0) return cands[k]; } return cands[cands.length - 1]; }
+function melt(){
+  const c = []; sb.ice.forEach((v, i) => { if(v && nb[i].some(j => !sb.ice[j])) c.push(i); });
+  const i = pick(c, i => Math.exp(1.3 * nb[i].filter(j => !sb.ice[j]).length)); if(i < 0) return false;
+  sb.ice[i] = false; sb.m1.push(sb.time); sb.cum1++; sb.fl.push({ i, c: "liquid", a: 1 }); return true;
+}
+function freeze(){
+  const c = []; sb.ice.forEach((v, i) => { if(!v && nb[i].some(j => sb.ice[j])) c.push(i); });
+  if(!c.length && nIce() === 0){ sites.forEach((_, i) => { if(Math.floor(i / B.COLS) === 0 && i % B.COLS === 10) c.push(i); }); }
+  const i = pick(c, i => Math.exp(1.3 * nb[i].filter(j => sb.ice[j]).length)); if(i < 0) return false;
+  sb.ice[i] = true; sb.m2.push(sb.time); sb.cum2++; sb.fl.push({ i, c: "solid", a: 1 }); return true;
+}
+function stepB(dt){
+  sb.time += dt;
+  const N = sites.length, ni = nIce(), nw = N - ni, Lp = B.LF * B.G;
+  // 熱の出入り
+  const dQ = sb.mode * sb.pw * dt; sb.Q += dQ;
+  if(sb.t > 0 || (sb.t === 0 && ni === 0 && dQ > 0)){ sb.t += dQ / (N * B.G * B.CW); if(sb.t < 0){ sb.acc += sb.t * N * B.G * B.CW; sb.t = 0; } }
+  else if(sb.t < 0 || (sb.t === 0 && nw === 0 && dQ < 0)){ sb.t += dQ / (N * B.G * B.CI); if(sb.t > 0){ sb.acc += sb.t * N * B.G * B.CI; sb.t = 0; } }
+  else sb.acc += dQ;
+  // 加えた熱の分だけ融解（奪った熱の分だけ凝固）
+  let g = 0;
+  while(sb.t === 0 && sb.acc >= Lp && g++ < 20){ if(nIce() === 0){ sb.t = sb.acc / (N * B.G * B.CW); sb.acc = 0; break; } melt(); sb.acc -= Lp; }
+  while(sb.t === 0 && sb.acc <= -Lp && g++ < 40){ if(nIce() === N){ sb.t = sb.acc / (N * B.G * B.CI); sb.acc = 0; break; } freeze(); sb.acc += Lp; }
+  if(sb.t === 0 && nIce() === 0 && sb.acc > 0){ sb.t = sb.acc / (N * B.G * B.CW); sb.acc = 0; }
+  if(sb.t === 0 && nIce() === N && sb.acc < 0){ sb.t = sb.acc / (N * B.G * B.CI); sb.acc = 0; }
+  if(sb.t > 30 && sb.mode > 0) setModeB(0); if(sb.t < -20 && sb.mode < 0) setModeB(0);
+  // 0 ℃ で氷と水が共存しているときは、融解と凝固が同じ割合で起こり続ける
+  const both = sb.t === 0 && nIce() > 0 && nIce() < N;
+  // 融解と凝固を交互に起こす（正味の変化は、出入りした熱だけで決まる）
+  sb.next1 -= dt;
+  while(sb.next1 <= 0){ if(both){ if(sb.flip ? freeze() : melt()) sb.flip = !sb.flip; } sb.next1 += expWait(2 * R0); }
+  // 水の粒子は、となりの水の粒子と位置を入れかえる（流れる）
+  sb.swapT += dt * 30 * (1 + Math.max(0, sb.t) / 40);
+  while(sb.swapT >= 1){ sb.swapT -= 1;
+    const i = Math.floor(Math.random() * N); if(sb.ice[i]) continue;
+    const ws = nb[i].filter(j => !sb.ice[j]); if(!ws.length) continue; const j = ws[Math.floor(Math.random() * ws.length)];
+    const a = sb.who[i]; sb.who[i] = sb.who[j]; sb.who[j] = a; }
+  // 表示位置をなめらかに
+  const k = Math.min(1, dt * 6);
+  sites.forEach((s, i) => { const d = sb.disp[sb.who[i]]; d.x += (s.x - d.x) * k; d.y += (s.y - d.y) * k; });
+  sb.fl.forEach(f => f.a -= dt * 1.4); sb.fl = sb.fl.filter(f => f.a > 0);
+  sb.m1 = sb.m1.filter(t => t > sb.time - 8); sb.m2 = sb.m2.filter(t => t > sb.time - 8);
+  sb.histT += dt; if(sb.histT > 0.2){ sb.histT = 0; sb.hist.push({ t: sb.time, T: sb.t, m: nIce() * B.G }); if(sb.hist.length > 600) sb.hist.shift(); }
+}
+const oB = mk($("cvB"));
+function drawB(){
+  const o = oB; if(!o.W) return; readColors(); o.ctx.clearRect(0, 0, o.W, o.H); o.layout(B.BW, B.BH);
+  const b = o.box, s = b.s, ctx = o.ctx, tt = sb.time;
+  ctx.save(); ctx.fillStyle = col.shade; ctx.globalAlpha = .35; ctx.fillRect(b.x, b.y, b.w, b.h); ctx.restore();
+  // 断熱容器（二重の壁）
+  o.L([[b.x, b.y], [b.x, b.y + b.h], [b.x + b.w, b.y + b.h], [b.x + b.w, b.y]], col.ink, 2.5);
+  o.L([[b.x - 5, b.y - 2], [b.x - 5, b.y + b.h + 5], [b.x + b.w + 5, b.y + b.h + 5], [b.x + b.w + 5, b.y - 2]], col.muted, 1.2);
+  o.L([[b.x - 5, b.y - 2], [b.x + b.w + 5, b.y - 2]], col.muted, 1.2);
+  o.T(`${sb.t === 0 ? "0" : (sb.t < 0 ? "−" : "") + Math.abs(sb.t).toFixed(1)} ℃`, b.x, 13, col.ink, 17, "left", true);
+  o.T("断熱容器", b.x + b.w, 13, col.muted, 11, "right");
+  if(sb.mode !== 0){ const c = sb.mode > 0 ? col.red : col.cold, yb = b.y + b.h + 5;
+    for(let k = 1; k <= 5; k++){ const x = b.x + b.w * k / 6; if(sb.mode > 0) o.arrow(x, yb + 20, x, yb + 4, c); else o.arrow(x, yb + 4, x, yb + 20, c); } }
+  // 氷の結びつき
+  ctx.save(); ctx.strokeStyle = col.muted; ctx.globalAlpha = .55; ctx.lineWidth = Math.max(1, s * .09); ctx.beginPath();
+  sites.forEach((p, i) => { if(!sb.ice[i]) return; nb[i].forEach(j => { if(j > i && sb.ice[j]){ ctx.moveTo(o.PX(p.x), o.PY(p.y)); ctx.lineTo(o.PX(sites[j].x), o.PY(sites[j].y)); } }); });
+  ctx.stroke(); ctx.restore();
+  const amp = 0.06 + Math.max(0, sb.t) * 0.002, rr = Math.max(2.2, s * .4);
+  sites.forEach((p, i) => {
+    const id = sb.who[i], d = sb.disp[id];
+    if(sb.ice[i]) o.dot(o.PX(p.x + 0.04 * Math.sin(tt * 23 + i)), o.PY(p.y + 0.04 * Math.cos(tt * 19 + i * 1.3)), rr, col.solid);
+    else o.dot(o.PX(d.x + amp * Math.sin(tt * 8 + id * 1.7)), o.PY(d.y + amp * Math.cos(tt * 10 + id * 2.1)), rr, col.liquid);
+  });
+  sb.fl.forEach(f => { const p = sites[f.i]; o.ring(o.PX(p.x), o.PY(p.y), s * (0.6 + (1 - f.a) * 1.1), col[f.c], f.a); });
+  o.chart(sb.hist, 60, [
+    { title: "温度〔℃〕", min: -10, max: 20, ticks: [-10, 0, 10, 20], fmt: v => fmtT(v), series: [{ key: "T", color: col.red }] },
+    { title: "氷の質量〔g〕", min: 0, max: 20, ticks: [0, 5, 10, 15, 20], series: [{ key: "m", color: col.solid }] }
+  ]);
+}
+function uiB(){
+  const N = sites.length, ni = nIce(), w = Math.min(5, Math.max(sb.time, .5));
+  const r1 = sb.m1.filter(t => t > sb.time - w).length / w, r2 = sb.m2.filter(t => t > sb.time - w).length / w;
+  $("bT").textContent = `${sb.t === 0 ? "0" : (sb.t < 0 ? "−" : "") + Math.abs(sb.t).toFixed(1)} ℃`;
+  $("bM").innerHTML = `${(ni * B.G).toFixed(1)} <small>g ／</small> ${((N - ni) * B.G).toFixed(1)} <small>g</small>`;
+  $("bR1").textContent = r1.toFixed(1); $("bR2").textContent = r2.toFixed(1);
+  let head, body;
+  const both = ni > 0 && ni < N;
+  if(sb.t === 0 && both && sb.mode === 0){ head = "固液平衡"; body = "0 ℃ で氷と水が共存しているとき、氷の表面では融解と凝固が同じ割合で起こっています。そのため、氷の量は変わらず、見かけ上は変化が止まっています。"; }
+  else if(sb.t === 0 && both && sb.mode > 0){ head = "融解 ＞ 凝固（氷が減っていく）"; body = "加えた熱は、氷の粒子の結びつきを断つ（融解）のに使われます。融解が凝固を上回って氷が減りますが、熱運動の激しさは変わらないので、温度は 0 ℃ のままです。"; }
+  else if(sb.t === 0 && both && sb.mode < 0){ head = "凝固 ＞ 融解（氷が増えていく）"; body = "水の粒子が氷に結びつくとき、凝固熱を放出します。奪われた熱はこの凝固熱でまかなわれるので、凝固が融解を上回って氷が増えますが、温度は 0 ℃ のままです。"; }
+  else if(sb.t > 0){ head = "水だけ（温度が変わる）"; body = sb.mode > 0 ? "氷がすべて融けたので、加えた熱は水の熱運動を激しくするのに使われ、温度が上がります。" : sb.mode < 0 ? "熱を奪うと水の温度が下がります。0 ℃ まで下がると、凝固が始まります。" : "氷がないので状態変化は起こらず、温度は一定です。"; }
+  else if(sb.t < 0){ head = "氷だけ（温度が変わる）"; body = sb.mode < 0 ? "水がすべて凍ったので、熱を奪うと氷の温度が下がります。" : sb.mode > 0 ? "熱を加えると氷の温度が上がります。0 ℃ に達すると、融解が始まります。" : "水がないので状態変化は起こらず、温度は一定です。"; }
+  else { head = ni === 0 ? "水だけ（0 ℃）" : "氷だけ（0 ℃）"; body = ni === 0 ? "氷がすべて融けました。熱を加えると、水の温度が上がり始めます。" : "水がすべて凍りました。熱を奪うと、氷の温度が下がり始めます。"; }
+  $("bNow").querySelector("b").textContent = `いま：${head}`; $("bNow").querySelector("p").textContent = body;
+  const net = (sb.cum1 - sb.cum2) * B.G;
+  const sign = v => (v < 0 ? "−" : "") + Math.abs(v).toFixed(1);
+  $("bNow").querySelector(".heat").innerHTML = `熱の出入り：加えた熱 <strong>${fmtT(sb.Q)} J</strong>、正味で融けた氷 ${sign(net)} g × 融解熱 334 J/g ＝ <strong>${fmtT(net * B.LF)} J</strong>${sb.t !== 0 ? `（残りは温度の変化に使われた）` : ""}`;
+}
+function setModeB(m){ sb.mode = m; if(m) sb.lastMode = m; [["bCool", -1], ["bStop", 0], ["bHeat", 1]].forEach(([id, v]) => $(id).setAttribute("aria-pressed", String(v === m))); }
+$("bCool").addEventListener("click", () => setModeB(-1));
+$("bStop").addEventListener("click", () => setModeB(0));
+$("bHeat").addEventListener("click", () => setModeB(1));
+$("bPlay").addEventListener("click", () => { sb.playing = !sb.playing; $("bPlay").textContent = sb.playing ? "一時停止" : "再生"; });
+$("bReset").addEventListener("click", () => { setModeB(0); resetB(); drawB(); uiB(); });
+$("bSp").addEventListener("input", e => { sb.pw = +e.target.value; $("bOp").textContent = `${sb.pw} J/s`; });
+
+/* ---------- 問い ---------- */
+const qs = list => list.map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
+$("qsA").innerHTML = qs([
+  ["「最初から」を押そう。ふたをした容器で、気体の粒子の数はどう変わっていくか。蒸発と凝縮の数（1秒あたり）はどうなるか。", "はじめは蒸発だけが起こり、気体の粒子が増えていきます。気体が増えると液面にぶつかって凝縮する粒子も増え、やがて蒸発の数と凝縮の数が等しくなって、気体の粒子の数が一定になります（気液平衡）。"],
+  ["気液平衡のとき、蒸発は止まっているか。", "止まっていません。蒸発も凝縮も起こり続けていて、その数が等しいので、見かけ上変化が止まっているだけです。"],
+  ["液体の温度を上げると、気液平衡のときの気体の粒子の数はどう変わるか。", "多くなります。温度が高いほど熱運動が激しく、液面から飛び出す粒子が増えるからです。このときの気体の圧力が飽和蒸気圧で、温度が高いほど大きくなります。"],
+  ["「ふたをする」を外すと、どうなるか。", "飛び出した粒子が外へ逃げて戻ってこないので、蒸発が凝縮を上回り続け、液体が減っていきます。洗濯物が乾いたり、コップの水が減ったりするのはこのためです。"],
+  ["「温度を一定に保つ」を外し、ふたも外そう。液体の温度はどうなるか。それはなぜか。", "下がっていきます。液体から飛び出せるのは、まわりの粒子との結びつき（引力）を振り切れるだけのエネルギーをもつ粒子です。粒子が蒸発するたびに液体は熱（蒸発熱）を奪われます。汗や打ち水で涼しくなるのはこのためです。"],
+  ["温度を一定に保つとき、外から補った熱（蒸発熱）の量は、何で決まっているか。", "蒸発した数から凝縮した数を引いた、正味で気体になった量で決まります。凝縮するときには、蒸発熱と同じ量の熱（凝縮熱）を放出するからです。気液平衡では正味の変化がないので、熱を補う必要もありません。"]
+]);
+$("qsB").innerHTML = qs([
+  ["熱の出入りがないとき、氷の表面では何が起きているか。氷の量はどうなるか。", "融解（氷から粒子が離れる）と凝固（水の粒子が氷にくっつく）が同じ割合で起こっています。そのため氷の量は変わりません（固液平衡）。"],
+  ["「熱を加える」を押そう。氷が残っている間、温度と氷の量はどうなるか。", "温度は 0 ℃ のままで、氷の量が一定の割合で減っていきます。加えた熱は融解（結びつきを断つこと）に使われ、熱運動を激しくすることには使われないからです。"],
+  [`氷が残っている間、「加えた熱」と「正味で融けた氷の質量 × 融解熱」を比べよう。`, `等しくなっています。融解熱は、氷 1 g を同じ温度の水にするのに必要な熱量だからです（${I("Q")} ＝ 融けた質量 × 融解熱）。`],
+  ["氷がすべて融けた後、熱を加え続けると、グラフはどう変わるか。", `温度が上がり始めます。加えた熱が、水の熱運動を激しくするのに使われるようになるからです（${I("Q")} ＝ ${I("m")}${I("c")}Δ${I("T")}）。`],
+  ["「熱を奪う」を押そう。熱を奪っているのに、温度が 0 ℃ から下がらないのはなぜか。", "水の粒子が氷に結びつく（凝固する）とき、融解熱と同じ量の熱（凝固熱）を放出するからです。奪われた熱をこの凝固熱がまかなうので、すべて凍るまで温度は 0 ℃ のままです。"]
+]);
+
+/* ---------- ループ ---------- */
+function resizeAll(){ oA.resize(); oB.resize(); drawA(); drawB(); }
+let last = null, uiT = 0;
+const vis = { A: true, B: true };
+if(window.IntersectionObserver){ const io = new IntersectionObserver(es => es.forEach(e => vis[e.target === $("cvA") ? "A" : "B"] = e.isIntersecting)); io.observe($("cvA")); io.observe($("cvB")); }
+function tick(ts){
+  if(last == null) last = ts; const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
+  if(sa.playing){ stepA(dt); if(vis.A) drawA(); }
+  if(sb.playing){ stepB(dt); if(vis.B) drawB(); }
+  uiT += dt; if(uiT > 0.2){ uiT = 0; uiA(); uiB(); }
+  requestAnimationFrame(tick);
+}
+const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+if(mq && mq.addEventListener) mq.addEventListener("change", () => { drawA(); drawB(); });
+new MutationObserver(() => { drawA(); drawB(); }).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+if(window.ResizeObserver){ const ro = new ResizeObserver(resizeAll); ro.observe($("cvA")); ro.observe($("cvB")); } else window.addEventListener("resize", resizeAll);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { drawA(); drawB(); });
+
+$("aOt").textContent = `${$("aSt").value} ℃`; $("bOp").textContent = `${sb.pw} J/s`;
+resetA(); resetB(); setModeB(0);
+if(!sa.playing){ $("aPlay").textContent = "再生"; $("bPlay").textContent = "再生"; }
+resizeAll(); uiA(); uiB(); requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
