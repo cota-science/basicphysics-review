@@ -33,19 +33,51 @@ const PARA = `<svg class="graph" viewBox="0 0 320 170" role="img" aria-label="�
 <text x="236" y="84" font-size="12" fill="currentColor">${SI("R")}₂</text><text x="232" y="100" font-size="11" fill="currentColor">15 Ω</text>
 </svg>`;
 
-const DEF_TABLE = `<div class="tbl"><table>
-<tr><th>用語</th><th>定義</th><th>式・単位</th></tr>
-<tr><td>電荷（電気量）</td><td>物体がもつ電気の量。正と負があり、全体の量は保存される</td><td>${q}〔C〕</td></tr>
-<tr><td>電気素量</td><td>電子1個がもつ電気量の大きさ。電子の電荷は −${e}</td><td>${e} ＝ 1.6 × 10⁻¹⁹ C</td></tr>
-<tr><td>電流</td><td>導線の断面を 1 s 間に通過する電気量。向きは正の電荷が移動する向き（電子の移動と逆）</td><td>${It} ＝ ${q}/${t}〔A〕、1 A ＝ 1 C/s</td></tr>
-<tr><td>電圧（電位差）</td><td>2点間の電気的な高さの差。電圧は2点の「間にかかる」</td><td>${V}〔V〕</td></tr>
-<tr><td>オームの法則</td><td>抵抗を流れる電流は、両端にかかる電圧に比例する</td><td>${V} ＝ ${R}${It}、${R}〔Ω〕</td></tr>
-<tr><td>抵抗率</td><td>導線の抵抗は長さに比例し、断面積に反比例する。比例定数 ${rho} は物質で決まる</td><td>${R} ＝ ${rho}${L}/${S}、${rho}〔Ω·m〕</td></tr>
-<tr><td>直列接続</td><td>各抵抗を流れる電流が等しい</td><td>${R} ＝ ${R1} ＋ ${R2}</td></tr>
-<tr><td>並列接続</td><td>各抵抗にかかる電圧が等しい</td><td>1/${R} ＝ 1/${R1} ＋ 1/${R2}</td></tr>
-<tr><td>電力</td><td>1 s 間に消費される電気エネルギー</td><td>${P} ＝ ${V}${It} ＝ ${R}${It}² ＝ ${V}²/${R}〔W〕</td></tr>
-<tr><td>電力量・ジュール熱</td><td>ある時間に消費された電気エネルギー。抵抗で発生する熱（ジュール熱）に等しい</td><td>${W} ＝ ${P}${t} ＝ ${V}${It}${t}〔J〕</td></tr>
-</table></div><p>1 kWh ＝ 1000 W × 3600 s ＝ 3.6 × 10⁶ J。</p>`;
+/* 用語集（定義カード）：小単元ごとに折りたたみ。同じ name の details は1つだけ開く */
+const GLOS = (id, groups) => groups.map((g, i) => `<details name='glos-${id}' ${i ? "" : "open"} style='margin:6px 0;border:1px solid var(--line);border-radius:6px;padding:2px 10px'>
+<summary style='cursor:pointer;font-weight:700;padding:6px 0'>${g.title}<span style='font-weight:400;color:var(--muted);font-size:13px'>（${g.rows.length}語）</span></summary>
+<div class="tbl"><table><colgroup><col style="width:7.2em"><col></colgroup>
+<tr><th>用語</th><th>定義（記号・式・単位）</th></tr>
+${g.rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}${r[2] ? `<br><span style='color:var(--blue);font-weight:700'>${r[2]}</span>` : ""}</td></tr>`).join("\n")}
+</table></div></details>`).join("\n");
+const DEF_TABLE = `<p style='margin:4px 0;font-size:14px;color:var(--muted)'>小単元をタップすると開きます。</p>` + GLOS("current", [
+{ title:"1 静電気と電荷", rows:[
+  ["帯電","物体が電気を帯びること。異なる物体どうしをこすり合わせると、一方から他方へ電子が移動して、両方の物体が帯電する"],
+  ["静電気","物体に帯電して、その場にたまったまま移動しない電気"],
+  ["静電気力","帯電した物体どうしの間にはたらく力。同種の電気（正と正、負と負）は退け合い、異種の電気（正と負）は引き合う"],
+  ["原子核","原子の中心にある、正の電気をもつ粒。陽子と中性子からできている"],
+  ["陽子","原子核をつくる粒子。正の電気をもつ",`電気量 ＋${e}`],
+  ["中性子","原子核をつくる粒子。電気をもたない",`電気量 0`],
+  ["電子","原子核のまわりにある粒子。負の電気をもつ。質量は陽子の約 1/1840",`電気量 −${e}`],
+  ["電荷","電気を帯びた粒子や物体。また、物体がもつ電気のこと。正の電荷と負の電荷がある"],
+  ["電気量","電荷がもつ電気の量。物体の間で電荷が移動しても、全体の電気量は変わらない（電気量保存の法則）",`${q}〔C〕（クーロン）`],
+  ["電気素量","電子1個がもつ電気量の大きさ。どんな電気量も電気素量の整数倍",`${e} ＝ 1.6 × 10⁻¹⁹&nbsp;C`]
+]},
+{ title:"2 電流と電圧", rows:[
+  ["自由電子","金属の中を自由に動き回ることができる電子。金属に電流が流れるのは、自由電子が移動するから"],
+  ["導体","電気を通しやすい物質（金属など）。自由電子を多くもつ"],
+  ["不導体（絶縁体）","電気をほとんど通さない物質（ガラス、ゴム、プラスチックなど）。自由電子がほとんどない"],
+  ["半導体","電気の通しやすさが導体と不導体の中間の物質（ケイ素、ゲルマニウムなど）。温度や混ぜる物質によって性質が大きく変わる"],
+  ["電流","電荷の流れ。導線の断面を 1&nbsp;s 間に通過する電気量で表す。向きは正の電荷が移動する向き（電子が移動する向きと逆）",`${It} ＝ ${q}/${t}〔A〕（アンペア）、1&nbsp;A ＝ 1&nbsp;C/s`],
+  ["回路（電気回路）","電池などと、導線・抵抗などをつないでできる、電流の通り道。ひとまわり閉じていないと電流は流れない"],
+  ["電圧（電位差）","2点間の電気的な高さ（電位）の差。電流を流そうとするはたらき。電圧は2点の「間にかかる」",`${V}〔V〕（ボルト）`]
+]},
+{ title:"3 電気抵抗", rows:[
+  ["電気抵抗（抵抗）","電流の流れにくさ。導体の両端にかかる電圧と、流れる電流の比",`${R} ＝ ${V}/${It}〔Ω〕（オーム）、1&nbsp;Ω ＝ 1&nbsp;V/A`],
+  ["オームの法則","抵抗を流れる電流は、両端にかかる電圧に比例する",`${V} ＝ ${R}${It}`],
+  ["電気抵抗率（抵抗率）","物質の種類と温度で決まる、電流の流れにくさを表す量。導体の抵抗は長さに比例し、断面積に反比例する",`${R} ＝ ${rho}${L}/${S}、${rho}〔Ω·m〕`],
+  ["合成抵抗","いくつかの抵抗をまとめて、同じはたらきをする1つの抵抗におきかえたもの"],
+  ["直列接続","各抵抗を流れる電流が等しい。合成抵抗は「流れにくさ（抵抗）の和」",`${R} ＝ ${R1} ＋ ${R2}`],
+  ["並列接続","各抵抗にかかる電圧が等しい。合成抵抗は「流れやすさ（抵抗の逆数）の和」から求める",`1/${R} ＝ 1/${R1} ＋ 1/${R2}`]
+]},
+{ title:"4 電気エネルギーと電力", rows:[
+  ["電気エネルギー",`電流がもつ、仕事をする能力。電流が流れると、熱・光・運動などのエネルギーに変わる。電荷 ${q} が電圧 ${V} の区間を通ると、電気エネルギーが ${q}${V} だけ変わる`,`〔J〕`],
+  ["消費電力（電力）","1&nbsp;s 間に消費される電気エネルギー",`${P} ＝ ${V}${It} ＝ ${R}${It}² ＝ ${V}²/${R}〔W〕（ワット）、1&nbsp;W ＝ 1&nbsp;J/s`],
+  ["電力量","ある時間に消費された電気エネルギー",`${W} ＝ ${P}${t} ＝ ${V}${It}${t}〔J〕、1&nbsp;Wh ＝ 3600&nbsp;J、1&nbsp;kWh ＝ 3.6 × 10⁶&nbsp;J`],
+  ["ジュール熱","抵抗に電流が流れたときに発生する熱"],
+  ["ジュールの法則",`抵抗で発生するジュール熱 ${Q} は、電流の2乗、抵抗、時間に比例する（消費された電力量に等しい）`,`${Q} ＝ ${R}${It}²${t} ＝ ${V}${It}${t}〔J〕`]
+]}
+]);
 const DIM_TABLE = `<div class="tbl"><table>
 <tr><th>量</th><th>単位</th></tr>
 <tr><td>電気量 ${q}</td><td>C ＝ A·s</td></tr>
@@ -55,12 +87,13 @@ const DIM_TABLE = `<div class="tbl"><table>
 <tr><td>抵抗率 ${rho}</td><td>Ω·m</td></tr>
 <tr><td>電力 ${P}</td><td>W ＝ V·A ＝ J/s</td></tr></table></div>`;
 const STEPS = `<p>1 回路図を見て、直列か並列かを見分ける → 2 共通な量（直列は電流、並列は電圧）を確かめる → 3 合成抵抗を求める → 4 オームの法則で回路全体の電流を求める → 5 各抵抗の電流・電圧を求める → 6 単位をそろえて代入 → 7 妥当性（電圧の和・電流の和が合うか）</p>`;
+const ANIM = (href, label) => `<a href='${href}' style='display:inline-block;margin:8px 6px 0 0;padding:6px 12px;border:1.5px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:700;text-decoration:none;line-height:1.5'>▶ ${label}</a>`;
 const TF = ["正しい","誤り"];
 const UNITQ = ["A（電流）","Ω（抵抗）","W（電力）","J（電力量・熱量）"];
 
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:"電流は「流れる」もの、電圧は2点の間に「かかる」もの。言い方まで含めて正確に覚えます。",
+  intro:`電流は「流れる」もの、電圧は2点の間に「かかる」もの。言い方まで含めて正確に覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/ohm.html#idef","電流の定義")}${ANIM("anim/ohm.html#one","オームの法則と電力")}${ANIM("anim/ohm.html#series","直列")}${ANIM("anim/ohm.html#parallel","並列")}${ANIM("anim/ohm.html#rho","抵抗と抵抗率")}${ANIM("anim/circuit.html","回路シミュレーター")}`,
   advice:"電流の向きの定義、オームの法則、直列と並列で共通な量を覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
@@ -98,7 +131,7 @@ const SECTIONS = [
      options:[["直列","並列"],["直列","並列"]],answer:[0,1],
      explain:"電流計には同じ電流を通し（直列）、電圧計は2点間の差を測る（並列）からです。"}
   ]},
-  { title:"B. 回路図を読む", lead:"電池（6.0 V）に、抵抗 <i class='qv'>R</i>₁（10 Ω）と <i class='qv'>R</i>₂（15 Ω）を並列につないだ回路。", figure:PARA, qs:[
+  { title:"B. 回路図を読む", lead:`電池（6.0 V）に、抵抗 <i class='qv'>R</i>₁（10 Ω）と <i class='qv'>R</i>₂（15 Ω）を並列につないだ回路。${ANIM("anim/ohm.html#parallel","並列回路のアニメーション（R₂ を 15 Ω にして確かめる）")}`, figure:PARA, qs:[
     {id:"rb1",type:"choice",prompt:`${R1} と ${R2} で等しい量はどれか。`,options:["かかる電圧","流れる電流","消費電力"],answer:0,
      explain:"並列では、どちらの抵抗の両端も電池の両端とつながっているので、電圧が等しくなります。"},
     {id:"rb2",type:"choice",prompt:"大きい電流が流れるのはどちらの抵抗か。",options:[R1,R2,"同じ"],answer:0,
@@ -138,7 +171,7 @@ const SECTIONS = [
     {id:"dc1",type:"choice",prompt:"消費電力 1.0 kW の電気器具を 2.0 時間使ったときの電力量はどれか。",
      options:["2.0 kWh ＝ 7.2 × 10⁶ J","2.0 kWh ＝ 7.2 × 10³ J","2.0 kW ＝ 2.0 × 10³ J"],answer:0,explain:"1.0 kW × 2.0 h ＝ 2.0 kWh ＝ 2.0 × 3.6 × 10⁶ J。"}
   ]},
-  { title:"D. 答案の誤りを見つける", lead:"問「抵抗率 1.7 × 10⁻⁸ Ω·m の銅線（長さ 2.0 m、断面積 1.0 mm²）の抵抗を求めよ。」",
+  { title:"D. 答案の誤りを見つける", lead:`問「抵抗率 1.7 × 10⁻⁸ Ω·m の銅線（長さ 2.0 m、断面積 1.0 mm²）の抵抗を求めよ。」${ANIM("anim/ohm.html#rho","抵抗と抵抗率のアニメーション（銅・2 m・1 mm² で確かめる）")}`,
     quote:`答案：${R} ＝ ${rho}${L}/${S} ＝ 1.7 × 10⁻⁸ × 2.0 ÷ 1.0 ＝ 3.4 × 10⁻⁸ Ω`, qs:[
     {id:"dd1",type:"choice",prompt:"この答案の誤りはどれか。",options:["断面積を mm² のまま代入している","式は <i class='qv'>R</i> ＝ <i class='qv'>ρS</i>/<i class='qv'>L</i> であるべき","長さを cm に直していない"],answer:0,
      explain:"抵抗率が Ω·m なので、断面積は m² にそろえます。1.0 mm² ＝ 1.0 × 10⁻⁶ m²。"},
@@ -147,11 +180,11 @@ const SECTIONS = [
   ]}]
 },
 { id:"step", tab:"④手順", title:"④ 手順固定の演習",
-  intro:"回路の問題は「直列か並列か → 共通な量 → 合成抵抗 → 全体の電流 → 各部分」の順に解きます。",
+  intro:`回路の問題は「直列か並列か → 共通な量 → 合成抵抗 → 全体の電流 → 各部分」の順に解きます。<br>${ANIM("anim/circuit.html","回路シミュレーター（答えを確かめる）")}`,
   advice:"共通な量を確かめてから、合成抵抗と全体の電流を求めよう。",
   ref:{label:"7ステップを見る", html:STEPS},
   groups:[
-  { title:"問題1（直列・すべてのステップ）", quote:"10 Ω の抵抗 <i class='qv'>R</i>₁ と 20 Ω の抵抗 <i class='qv'>R</i>₂ を直列につなぎ、6.0 V の電池につないだ。", qs:[
+  { title:"問題1（直列・すべてのステップ）", lead:ANIM("anim/ohm.html#series","直列回路のアニメーション"), quote:"10 Ω の抵抗 <i class='qv'>R</i>₁ と 20 Ω の抵抗 <i class='qv'>R</i>₂ を直列につなぎ、6.0 V の電池につないだ。", qs:[
     {id:"s11",type:"choice",prompt:"ステップ2　共通な量は？",options:["電流","電圧"],answer:0,explain:"直列では、どの抵抗にも同じ電流が流れます。"},
     {id:"s12",type:"num",prompt:"ステップ3　合成抵抗",answer:30,tol:0.1,unit:"Ω",traps:{"6.7":"直列は和です。並列の式を使っていませんか。"},explain:`${R} ＝ 10 ＋ 20 ＝ 30 Ω。`},
     {id:"s13",type:"num",prompt:"ステップ4　回路を流れる電流",answer:0.20,tol:0.002,unit:"A",traps:{"180":"<i class='qv'>I</i> ＝ <i class='qv'>V</i>/<i class='qv'>R</i> です。","5":"<i class='qv'>I</i> ＝ <i class='qv'>V</i>/<i class='qv'>R</i>（6.0 ÷ 30）です。"},explain:`${It} ＝ 6.0 ÷ 30 ＝ 0.20 A。`},
@@ -161,7 +194,7 @@ const SECTIONS = [
      options:["2つの電圧の和 2.0 V ＋ 4.0 V が電池の 6.0 V に等しい","2つの電圧が等しい","2つの電流の和が 0.20 A になる"],answer:0,
      explain:"直列では、各抵抗の電圧の和が全体の電圧になります。"}
   ]},
-  { title:"問題2（並列）", lead:"②読解ドリル B の並列回路（6.0 V、<i class='qv'>R</i>₁ ＝ 10 Ω、<i class='qv'>R</i>₂ ＝ 15 Ω）。", figure:PARA, qs:[
+  { title:"問題2（並列）", lead:`②読解ドリル B の並列回路（6.0 V、<i class='qv'>R</i>₁ ＝ 10 Ω、<i class='qv'>R</i>₂ ＝ 15 Ω）。${ANIM("anim/ohm.html#parallel","並列回路のアニメーション")}`, figure:PARA, qs:[
     {id:"s21",type:"num",prompt:"合成抵抗",answer:6.0,tol:0.05,unit:"Ω",traps:{"25":"並列の合成抵抗は 1/R ＝ 1/R₁ ＋ 1/R₂ です。","0.17":"1/R を求めた後、逆数をとります。"},
      explain:`1/${R} ＝ 1/10 ＋ 1/15 ＝ 1/6、${R} ＝ 6.0 Ω。`},
     {id:"s22",type:"num",prompt:"電池から流れ出る電流",answer:1.0,tol:0.01,unit:"A",explain:`${It} ＝ 6.0 ÷ 6.0 ＝ 1.0 A。`},
