@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>オームの法則と電力のアニメーション</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: mode tabs (1つの抵抗 / 直列 / 並列) → wide stage: circuit with moving charges | potential ("electric height") graph with the same charges (phone: stacked). Sliders under it, then a step card (4 steps) with Back/Next. Second sheet: I-V graph | value table + power bar. Last: questions. */
+:root{
+  --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
+  --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
+  --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3; --shade:#EEF2F6;
+  --r1:#2A62C9; --r2:#C2780F; --bat:#CF2A2A; --hi:#D2452F; --lo:#2A7BC9; --tot:#1C2430; --net:#1E8A4C;
+  --body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --math:"Times New Roman",Times,"Noto Serif",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+    --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+    --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+    --r1:#7FA8FF; --r2:#F0A84A; --bat:#FF7A70; --hi:#FF8068; --lo:#7DBBF5; --tot:#E4E9F0; --net:#5FD08F; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+  --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+  --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+  --r1:#7FA8FF; --r2:#F0A84A; --bat:#FF7A70; --hi:#FF8068; --lo:#7DBBF5; --tot:#E4E9F0; --net:#5FD08F; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qv{font-family:var(--math);font-style:italic;font-size:1.08em}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.top-inner{max-width:1080px;margin:0 auto;padding:10px 16px 10px}
+.back{font-size:14px;color:var(--blue);text-decoration:none}
+h1{font-size:19px;margin:2px 0 0;line-height:1.4;text-wrap:balance}
+.nav{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin-top:2px}
+.nav a{color:var(--blue);text-decoration:none}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:700}
+
+main{max-width:1080px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px;min-width:0}
+h2{font-size:20px;margin:0 0 4px;line-height:1.4;text-wrap:balance}
+h3{font-size:17px;margin:0 0 8px}
+.lead{margin:0 0 12px;color:var(--muted);font-size:15px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.tabs button{border:1.5px solid var(--blue);background:none;color:var(--blue);border-radius:8px;padding:6px 16px;min-height:44px;font-weight:700;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--btn);border-color:var(--btn);color:#fff}
+.stage{position:relative;width:100%;aspect-ratio:2.25/1;background:var(--sheet);border:1px solid var(--line);border-radius:4px}
+@media (max-width:760px){.stage{aspect-ratio:10/15}}
+canvas{display:block;width:100%;height:100%}
+.sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:6px 18px;margin-top:12px}
+.sl{display:grid;grid-template-columns:auto 1fr;gap:0 10px;align-items:center;font-size:14px}
+.sl .nm{white-space:nowrap}
+.sl output{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+.sl input[type=range]{grid-column:1/-1;width:100%;min-height:32px;accent-color:var(--blue)}
+.sl[hidden]{display:none}
+.opts{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;margin-top:6px;font-size:14px;color:var(--muted)}
+.opts label{display:flex;align-items:center;gap:6px;min-height:40px}
+.opts input[type=checkbox]{width:20px;height:20px;accent-color:var(--blue)}
+.opts select{min-height:38px;border:1.5px solid var(--line);border-radius:8px;background:var(--sheet);padding:2px 8px;color:var(--ink)}
+.note{font-size:13px;color:var(--muted);margin:6px 0 0}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 0;padding:0;list-style:none}
+.chips li{border:1.5px solid var(--line);border-radius:999px;padding:3px 10px;font-size:13px;color:var(--muted);line-height:1.6;cursor:pointer}
+.chips li.done{border-color:var(--blue);color:var(--blue)}
+.chips li.cur{background:var(--btn);border-color:var(--btn);color:#fff;font-weight:700}
+.step{margin-top:10px;padding:12px 14px;border-left:5px solid var(--blue);background:var(--shade);border-radius:0 8px 8px 0}
+.step .no{font-size:13px;color:var(--muted)}
+.step h3{margin:0 0 4px;font-size:18px}
+.step p{margin:4px 0 0;font-size:15px}
+.step .eq{margin-top:8px;padding:6px 10px;background:var(--sheet);border-radius:6px;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.9}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.btn{border:0;border-radius:8px;padding:9px 18px;min-height:46px;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.btn.ghost{background:none;color:var(--blue);border:1.5px solid var(--blue)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.next{margin-left:auto}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+.two>div{min-width:0}
+.ivbox{position:relative;width:100%;aspect-ratio:5/4;border:1px solid var(--line);border-radius:4px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px;font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:center}
+th{background:var(--shade);font-size:13px;line-height:1.45}
+td:first-child,th:first-child{text-align:left;white-space:nowrap}
+tr.sum td{font-weight:700;border-top:2px solid var(--ink)}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.pw{margin-top:14px}
+.pw .lab{display:flex;justify-content:space-between;gap:8px;font-size:14px}
+.pw .bar{display:flex;height:30px;border-radius:5px;overflow:hidden;margin-top:3px;background:var(--shade)}
+.pw .bar div{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;min-width:0}
+.forms{margin-top:10px;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px;line-height:1.9}
+.qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
+.qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
+.ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <a class="back" id="backLink" href="../index.html#/u/current/0" hidden>‹ 電流と電気抵抗（Webテスト）へ</a>
+    <h1>オームの法則と電力</h1>
+    <nav class="nav" id="nav" hidden aria-label="アニメーション">
+      <a href="index.html#elec">≡ アニメーション集</a>
+      <a href="ohm.html" aria-current="page">オームの法則と電力</a>
+      <a href="circuit.html">回路シミュレーター</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="sheet" aria-labelledby="t1">
+    <h2 id="t1">電流・電圧・抵抗・電力の関係を見る</h2>
+    <p class="lead">左は回路、右は回路をひとまわりしたときの「電気的な高さ（電位）」です。粒は電荷を表し、粒の速さが電流の大きさを表します。段階ごとに説明を読み、スライダーで電圧や抵抗を変えて確かめよう。</p>
+    <div class="tabs" role="group" aria-label="回路の種類">
+      <button type="button" data-mode="one" aria-pressed="true">1つの抵抗</button>
+      <button type="button" data-mode="series" aria-pressed="false">2つの抵抗の直列</button>
+      <button type="button" data-mode="parallel" aria-pressed="false">2つの抵抗の並列</button>
+    </div>
+    <div class="stage"><canvas id="cv" role="img" aria-label="左に電池と抵抗の回路図。導線と抵抗の中を電荷を表す粒が動く。右に、回路をひとまわりしたときの電位のグラフ。電池で上がり、抵抗で下がる。"></canvas></div>
+    <div class="sliders">
+      <label class="sl" for="sV"><span class="nm">電池の電圧 <i class="qv">V</i></span><output id="oV"></output><input type="range" id="sV" min="0" max="12" step="0.5" value="6"></label>
+      <label class="sl" for="sR1"><span class="nm">抵抗 <i class="qv">R</i>₁</span><output id="oR1"></output><input type="range" id="sR1" min="1" max="50" step="1" value="10"></label>
+      <label class="sl" id="slR2" for="sR2"><span class="nm">抵抗 <i class="qv">R</i>₂</span><output id="oR2"></output><input type="range" id="sR2" min="1" max="50" step="1" value="20"></label>
+    </div>
+    <div class="opts">
+      <label for="cbE"><input type="checkbox" id="cbE">電子の動きで表示する</label>
+      <label for="selSp">粒の速さ（見やすさ）
+        <select id="selSp"><option value="0.5">ゆっくり</option><option value="1" selected>ふつう</option><option value="2">はやい</option></select></label>
+    </div>
+    <p class="note" id="spNote">粒の速さは電流の大きさを表すための表示で、実際の電子の速さ（とても遅い）とは違います。粒の間隔はどこでも同じなので、速く動く所ほど 1 s 間に多くの電荷が通過します。<span id="cap" hidden>いまは電流が大きいので、比を保ったまま粒を遅くして表示しています。</span></p>
+
+    <ol class="chips" id="chips"></ol>
+    <div class="step" id="step"><div class="no"></div><h3></h3><p class="txt"></p><div class="eq"></div></div>
+    <div class="controls">
+      <button type="button" class="btn ghost" id="prevBtn">◀ 前へ</button>
+      <button type="button" class="btn next" id="nextBtn">次へ ▶</button>
+    </div>
+  </section>
+
+  <section class="sheet" aria-labelledby="t2">
+    <h2 id="t2">グラフと数値で確かめる</h2>
+    <p class="lead" id="t2lead"></p>
+    <div class="two">
+      <div>
+        <h3><i class="qv">I</i>-<i class="qv">V</i> グラフ（オームの法則）</h3>
+        <div class="ivbox"><canvas id="iv" role="img" aria-label="横軸が電圧、縦軸が電流のグラフ。抵抗ごとに原点を通る直線と、いまの電圧と電流を表す点。"></canvas></div>
+        <p class="note">直線の傾き ＝ 1/<i class="qv">R</i>。抵抗が小さいほど傾きが大きい（電流が流れやすい）。</p>
+      </div>
+      <div>
+        <h3>各抵抗の電圧・電流・電力</h3>
+        <div class="tbl"><table>
+          <thead><tr><th></th><th>抵抗 <i class="qv">R</i>〔Ω〕</th><th>電圧 <i class="qv">V</i>〔V〕</th><th>電流 <i class="qv">I</i>〔A〕</th><th>電力 <i class="qv">P</i>〔W〕</th></tr></thead>
+          <tbody id="tb"></tbody>
+        </table></div>
+        <div class="pw">
+          <div class="lab"><span>1 s 間に抵抗で熱になる電気エネルギー（電力）</span><span id="pTot"></span></div>
+          <div class="bar" id="pBar"></div>
+        </div>
+        <div class="forms" id="forms"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet" aria-labelledby="qsTitle">
+    <h3 id="qsTitle">見てみよう</h3>
+    <ol class="qs" id="qs"></ol>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const I_ = s => `<i class="qv">${s}</i>`;
+const sb = (s, b) => `${I_(s)}<sub>${b}</sub>`;
+if(/\/anim\//.test(location.pathname)){ $("backLink").hidden = false; $("nav").hidden = false; }
+const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- 状態 ---------- */
+const S = { mode: "one", V: 6, R1: 10, R2: 20, step: 0, elec: false, speed: 1 };
+const Q = { I: 0, I1: 0, I2: 0 };          // 表示用に積算した電荷（粒の位置の位相）
+const VMAX = 12;
+
+// 3桁表示：6 → 6.00、0.6 → 0.600
+function f3(x){ if(!isFinite(x)) return "—"; const a = Math.abs(x); if(a < 1e-9) return "0"; if(a >= 100) return x.toFixed(0); return x.toPrecision(3); }
+const fV = v => v.toFixed(1);
+
+function calc(){
+  const V = S.V, R1 = S.R1, R2 = S.R2, m = S.mode;
+  if(m === "one"){ const I = V / R1; return { R: R1, I, I1: I, I2: 0, V1: V, V2: 0, P1: V * I, P2: 0, P: V * I }; }
+  if(m === "series"){ const R = R1 + R2, I = V / R; return { R, I, I1: I, I2: I, V1: R1 * I, V2: R2 * I, P1: R1 * I * I, P2: R2 * I * I, P: V * I }; }
+  const R = R1 * R2 / (R1 + R2), I1 = V / R1, I2 = V / R2, I = I1 + I2;
+  return { R, I, I1, I2, V1: V, V2: V, P1: V * I1, P2: V * I2, P: V * I };
+}
+
+/* ---------- 回路の形（論理座標：横 124 × 縦 76） ---------- */
+// 各区間：pts（電流の向きに並べる）、key（流れる電流）、kind（w 導線／R1／R2／bat）、ph（電位 [始, 終]）、gx（右のグラフでの横位置 [始, 終]）、off（グラフでのずらし px）、from（前につながる区間）
+function build(st){
+  const V = S.V;
+  if(S.mode === "one") return [
+    { kind: "w",   key: "I", pts: [[18,30],[18,12],[48,12]], ph: [V, V], gx: [1, 2.5] },
+    { kind: "R1",  key: "I", pts: [[48,12],[74,12]], ph: [V, 0], gx: [2.5, 6] },
+    { kind: "w",   key: "I", pts: [[74,12],[92,12],[92,64],[18,64],[18,46]], ph: [0, 0], gx: [6, 9] },
+    { kind: "bat", key: "I", pts: [[18,46],[18,30]], ph: [0, V], gx: [0, 1] }
+  ];
+  if(S.mode === "series") return [
+    { kind: "w",   key: "I", pts: [[18,30],[18,12],[42,12]], ph: [V, V], gx: [1, 2] },
+    { kind: "R1",  key: "I", pts: [[42,12],[66,12]], ph: [V, V - st.V1], gx: [2, 4] },
+    { kind: "w",   key: "I", pts: [[66,12],[92,12],[92,28]], ph: [st.V2, st.V2], gx: [4, 5.5] },
+    { kind: "R2",  key: "I", pts: [[92,28],[92,52]], ph: [st.V2, 0], gx: [5.5, 7.5] },
+    { kind: "w",   key: "I", pts: [[92,52],[92,64],[18,64],[18,46]], ph: [0, 0], gx: [7.5, 9] },
+    { kind: "bat", key: "I", pts: [[18,46],[18,30]], ph: [0, V], gx: [0, 1] }
+  ];
+  return [
+    { kind: "w",   key: "I",  pts: [[18,30],[18,12],[55,12]], ph: [V, V], gx: [1, 2.5] },
+    { kind: "w",   key: "I1", pts: [[55,12],[55,28]], ph: [V, V], gx: [2.5, 3.5], off: -3, from: 0 },
+    { kind: "R1",  key: "I1", pts: [[55,28],[55,48]], ph: [V, 0], gx: [3.5, 6], off: -3 },
+    { kind: "w",   key: "I1", pts: [[55,48],[55,64]], ph: [0, 0], gx: [6, 7], off: -3 },
+    { kind: "w",   key: "I2", pts: [[55,12],[92,12],[92,28]], ph: [V, V], gx: [2.5, 3.5], off: 3, from: 0 },
+    { kind: "R2",  key: "I2", pts: [[92,28],[92,48]], ph: [V, 0], gx: [3.5, 6], off: 3 },
+    { kind: "w",   key: "I2", pts: [[92,48],[92,64],[55,64]], ph: [0, 0], gx: [6, 7], off: 3 },
+    { kind: "w",   key: "I",  pts: [[55,64],[18,64],[18,46]], ph: [0, 0], gx: [7, 9], from: 3 },
+    { kind: "bat", key: "I",  pts: [[18,46],[18,30]], ph: [0, V], gx: [0, 1] }
+  ];
+}
+function prep(segs){
+  let acc = 0;
+  segs.forEach((s, i) => {
+    const cum = [0]; for(let k = 1; k < s.pts.length; k++){ const a = s.pts[k-1], b = s.pts[k]; cum.push(cum[k-1] + Math.hypot(b[0]-a[0], b[1]-a[1])); }
+    s.cum = cum; s.len = cum[cum.length-1];
+    if(s.so == null){ s.so = (s.from != null ? segs[s.from].so + segs[s.from].len : acc); }
+    acc = s.so + s.len;
+  });
+  const loop = segs[segs.length - 1].so + segs[segs.length - 1].len; SP = loop / Math.round(loop / 5);
+  // 電池は最後の導線の終わりから続く
+  return segs;
+}
+function posOn(s, u){
+  const c = s.cum; let k = 1; while(k < c.length - 1 && c[k] < u) k++;
+  const a = s.pts[k-1], b = s.pts[k], t = (u - c[k-1]) / Math.max(1e-9, c[k] - c[k-1]);
+  return [a[0] + (b[0]-a[0]) * t, a[1] + (b[1]-a[1]) * t];
+}
+
+/* ---------- 段階の説明 ---------- */
+const NM = { one: ["電流は回路をひとまわりする", "電圧 ＝ 電気的な高さの差", "オームの法則", "電力 ＝ 1 s 間に使われる電気エネルギー"],
+  series: ["共通な量は電流", "電圧は分かれる", "合成抵抗", "電力"],
+  parallel: ["共通な量は電圧", "電流は分かれる", "合成抵抗", "電力"] };
+function stepInfo(st){
+  const V = fV(S.V), R1 = S.R1, R2 = S.R2, m = S.mode, k = S.step;
+  const I = I_("I"), Vv = I_("V"), R = I_("R"), P = I_("P"), V1 = sb("V","1"), V2 = sb("V","2"), I1 = sb("I","1"), I2 = sb("I","2"), Rr1 = sb("R","1"), Rr2 = sb("R","2"), P1 = sb("P","1"), P2 = sb("P","2");
+  if(m === "one") return [
+    { ov: { amm: 1 }, txt: `電池の正極（＋）から出た電流は、抵抗を通って負極（−）に戻ります。枝分かれがないので、回路のどこでも電流の大きさは同じです。図の電流計（Ⓐ）の値を比べよう。抵抗を通っても電流は減りません。`,
+      eq: `${I} ＝ ${f3(st.I)} A（どこでも同じ）` },
+    { ov: { volt: 1 }, txt: `電池は電荷を電気的に高い所へ持ち上げ（右のグラフで上がる部分）、電荷は抵抗を通るときに高い所から低い所へ下ります。抵抗の両端にかかる電圧は、この高さの差です。導線の中では高さは変わりません（導線の抵抗は 0 とみなす）。`,
+      eq: `電池の電圧 ${Vv} ＝ ${V} V ＝ 抵抗の両端にかかる電圧` },
+    { ov: { amm: 1, volt: 1 }, txt: `電圧 ${Vv} を大きくすると、電流 ${I} も同じ割合で大きくなります（比例）。この比例定数の逆数が抵抗 ${R} です。下の ${I}-${Vv} グラフで、直線の傾きが 1/${R}。電圧のスライダーを動かして、点が直線の上を動くことを確かめよう。`,
+      eq: `${Vv} ＝ ${R}${I}　→　${I} ＝ ${Vv}/${R} ＝ ${V} V ÷ ${R1} Ω ＝ ${f3(st.I)} A` },
+    { ov: { pow: 1 }, txt: `電荷は抵抗を通って電圧 ${Vv} だけ下るとき、1 C あたり ${Vv}〔J〕の電気エネルギーを失い、それが熱（ジュール熱）になります。1 s 間に ${I}〔C〕の電荷が通過するので、1 s 間に熱になるエネルギーは ${Vv}${I}。これが電力 ${P} です。`,
+      eq: `${P} ＝ ${Vv}${I} ＝ ${V} V × ${f3(st.I)} A ＝ ${f3(st.P)} W　（＝ ${R}${I}² ＝ ${Vv}²/${R}）` }
+  ][k];
+  if(m === "series") return [
+    { ov: { amm: 1 }, txt: `枝分かれがないので、${Rr1} と ${Rr2} には同じ電流 ${I} が流れます。電流計の値はどこでも同じです。電流は抵抗を通っても減りません（電荷は消えない）。減るのは電気的な高さ、つまり電荷のもつ電気エネルギーです。`,
+      eq: `${I} ＝ ${f3(st.I)} A（${Rr1} にも ${Rr2} にも同じ電流）` },
+    { ov: { volt: 1 }, txt: `電荷は ${Rr1} と ${Rr2} で2段に分けて下ります。右のグラフの段差が各抵抗にかかる電圧で、${V1} ＝ ${Rr1}${I}、${V2} ＝ ${Rr2}${I}。段差を合わせると電池で上がった高さに等しく、${V1} ＋ ${V2} ＝ ${Vv}。電流が同じなので、抵抗が大きいほうに大きい電圧がかかります（${V1}：${V2} ＝ ${Rr1}：${Rr2}）。`,
+      eq: `${V1} ＝ ${R1} × ${f3(st.I)} ＝ ${f3(st.V1)} V、${V2} ＝ ${R2} × ${f3(st.I)} ＝ ${f3(st.V2)} V<br>${V1} ＋ ${V2} ＝ ${f3(st.V1 + st.V2)} V ＝ ${Vv}` },
+    { ov: { comb: 1, amm: 1 }, txt: `2つの抵抗を、全体の電流が同じになる1つの抵抗におきかえたものが合成抵抗 ${R} です。${Vv} ＝ ${V1} ＋ ${V2} ＝ ${Rr1}${I} ＋ ${Rr2}${I} ＝ (${Rr1} ＋ ${Rr2})${I} だから、${R} ＝ ${Rr1} ＋ ${Rr2}。電流の通り道が長くなるので、抵抗は大きくなります。`,
+      eq: `${R} ＝ ${R1} ＋ ${R2} ＝ ${R1 + R2} Ω、${I} ＝ ${Vv}/${R} ＝ ${V} ÷ ${R1 + R2} ＝ ${f3(st.I)} A` },
+    { ov: { pow: 1 }, txt: `各抵抗の電力は ${P1} ＝ ${V1}${I} ＝ ${Rr1}${I}²。電流が同じなので、抵抗が大きいほうが電力が大きく、よく熱くなります（${P1}：${P2} ＝ ${Rr1}：${Rr2}）。全体の電力は ${P} ＝ ${P1} ＋ ${P2} ＝ ${Vv}${I}（電池が 1 s 間に供給するエネルギー）。`,
+      eq: `${P1} ＝ ${f3(st.P1)} W、${P2} ＝ ${f3(st.P2)} W、${P1} ＋ ${P2} ＝ ${f3(st.P1 + st.P2)} W ＝ ${Vv}${I}` }
+  ][k];
+  return [
+    { ov: { volt: 1 }, txt: `${Rr1} の両端も ${Rr2} の両端も、導線で電池の両端とつながっています（導線の中では高さは変わらない）。右のグラフで、どちらの道を通っても同じ高さだけ下ります。各抵抗にかかる電圧はどちらも電池の電圧 ${Vv} に等しくなります。`,
+      eq: `${V1} ＝ ${V2} ＝ ${Vv} ＝ ${V} V` },
+    { ov: { amm: 1 }, txt: `分かれ道で電流は ${I1} と ${I2} に分かれ、合流してもとに戻ります（電荷は消えも増えもしない）。${I} ＝ ${I1} ＋ ${I2}。電圧が同じなので、抵抗が小さいほうに大きい電流が流れます（${I1}：${I2} ＝ ${Rr2}：${Rr1}）。粒の速さを比べよう。`,
+      eq: `${I1} ＝ ${V} ÷ ${R1} ＝ ${f3(st.I1)} A、${I2} ＝ ${V} ÷ ${R2} ＝ ${f3(st.I2)} A<br>${I} ＝ ${I1} ＋ ${I2} ＝ ${f3(st.I)} A` },
+    { ov: { comb: 1, amm: 1 }, txt: `${I} ＝ ${I1} ＋ ${I2} ＝ ${Vv}/${Rr1} ＋ ${Vv}/${Rr2} ＝ ${Vv}(1/${Rr1} ＋ 1/${Rr2}) だから、合成抵抗は 1/${R} ＝ 1/${Rr1} ＋ 1/${Rr2}。電流の通り道が増える（導線が太くなったのと同じ）ので、全体の抵抗はどちらの抵抗よりも小さくなります。`,
+      eq: `1/${R} ＝ 1/${R1} ＋ 1/${R2}　→　${R} ＝ ${f3(st.R)} Ω（${Math.min(R1, R2)} Ω より小さい）、${I} ＝ ${Vv}/${R} ＝ ${f3(st.I)} A` },
+    { ov: { pow: 1 }, txt: `電圧が同じなので、${P1} ＝ ${Vv}${I1} ＝ ${Vv}²/${Rr1}。抵抗が小さいほうが電力が大きく、よく熱くなります（${P1}：${P2} ＝ ${Rr2}：${Rr1}。直列と逆）。全体の電力は ${P} ＝ ${P1} ＋ ${P2} ＝ ${Vv}${I}。家庭のコンセントにつなぐ電気器具は並列なので、どれにも 100 V がかかります。`,
+      eq: `${P1} ＝ ${f3(st.P1)} W、${P2} ＝ ${f3(st.P2)} W、${P1} ＋ ${P2} ＝ ${f3(st.P1 + st.P2)} W ＝ ${Vv}${I}` }
+  ][k];
+}
+
+/* ---------- 描画の道具 ---------- */
+const cv = $("cv"), ctx = cv.getContext("2d"), ivc = $("iv"), ictx = ivc.getContext("2d");
+let W = 0, H = 0, IW = 0, IH = 0, col = {}, LY = null, segs = [], st = calc(), spFactor = 1;
+const FONT = `"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`, MF = `"Times New Roman",Times,serif`;
+function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","shade","sheet","r1","r2","bat","hi","lo","tot","net","paper","blue-soft"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
+// {R}₁ のように { } の中を斜体で書く
+function mt(c, str, x, y, color, size, align, bold, bg){
+  size = size || 13;
+  const parts = str.split(/(\{[^}]*\})/).filter(Boolean).map(p => p[0] === "{" ? { s: p.slice(1, -1), it: 1 } : { s: p, it: 0 });
+  const fontOf = p => p.it ? `italic ${Math.round(size * 1.12)}px ${MF}` : `${bold ? "700 " : ""}${size}px ${FONT}`;
+  c.save(); c.textBaseline = "middle";
+  let w = 0; parts.forEach(p => { c.font = fontOf(p); p.w = c.measureText(p.s).width; w += p.w; });
+  let x0 = align === "right" ? x - w : align === "center" ? x - w / 2 : x;
+  if(bg){ c.fillStyle = col.sheet; c.globalAlpha = .88; c.fillRect(x0 - 3, y - size * .75, w + 6, size * 1.5); c.globalAlpha = 1; }
+  c.fillStyle = color;
+  parts.forEach(p => { c.font = fontOf(p); c.textAlign = "left"; c.fillText(p.s, x0, y); x0 += p.w; });
+  c.restore(); return w;
+}
+function line(c, pts, color, w, dash){ c.save(); c.strokeStyle = color; c.lineWidth = w; c.setLineDash(dash || []); c.lineJoin = "round"; c.lineCap = "round"; c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke(); c.restore(); }
+function hex2rgb(h){ h = h.replace("#", ""); if(h.length === 3) h = h.split("").map(x => x + x).join(""); const n = parseInt(h, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function mix(a, b, t){ const A = hex2rgb(a), B = hex2rgb(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(",")})`; }
+function rgba(h, a){ const A = hex2rgb(h); return `rgba(${A[0]},${A[1]},${A[2]},${a})`; }
+
+function layout(){
+  const wide = W >= 700;
+  const cA = wide ? { x: 0, y: 0, w: W * 0.53, h: H } : { x: 0, y: 0, w: W, h: H * 0.54 };
+  const gA = wide ? { x: W * 0.53, y: 0, w: W * 0.47, h: H } : { x: 0, y: H * 0.54, w: W, h: H * 0.46 };
+  const sc = Math.min((cA.w - 12) / 124, (cA.h - 12) / 76);
+  const ox = cA.x + (cA.w - 124 * sc) / 2, oy = cA.y + (cA.h - 76 * sc) / 2;
+  return { wide, cA, gA, sc, ox, oy, fs: sc < 3.6 ? 11 : 13 };
+}
+const P = p => [LY.ox + p[0] * LY.sc, LY.oy + p[1] * LY.sc];
+
+function resize(){
+  const d = Math.min(window.devicePixelRatio || 1, 2.5);
+  let r = cv.getBoundingClientRect(); W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0);
+  r = ivc.getBoundingClientRect(); IW = Math.max(1, Math.round(r.width)); IH = Math.max(1, Math.round(r.height)); ivc.width = Math.round(IW * d); ivc.height = Math.round(IH * d); ictx.setTransform(d, 0, 0, d, 0, 0);
+  LY = layout(); draw(); drawIV();
+}
+
+const curOf = key => key === "I" ? st.I : key === "I1" ? st.I1 : st.I2;
+let SP = 5;                           // 粒の間隔（論理単位）。ひとまわりの長さで割り切れるように調整
+function phiAt(s, u){ const t = u / s.len; return s.ph[0] + (s.ph[1] - s.ph[0]) * t; }
+function dotColor(phi){ const t = S.V > 0 ? Math.max(0, Math.min(1, phi / S.V)) : 0; return mix(col.lo, col.hi, t); }
+function eachDot(s, fn, sign){
+  const ph = (sign || 1) * Q[s.key], first = (((ph - s.so) % SP) + SP) % SP;
+  for(let u = first; u < s.len - 0.01; u += SP) fn(u);
+}
+
+/* ---------- 回路 ---------- */
+function drawCircuit(ov){
+  const sc = LY.sc, rw = 3.4 * sc;
+  // 導線
+  segs.forEach(s => { if(s.kind === "w") line(ctx, s.pts.map(P), col.ink, 2.2); });
+  // 抵抗の発熱（電力が大きいほど赤く）
+  const glow = p => Math.min(1, Math.sqrt(Math.max(0, p) / 30));
+  // 電池
+  segs.filter(s => s.kind === "bat").forEach(s => {
+    const a = P(s.pts[0]), b = P(s.pts[1]), mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, g = 2.2 * sc;
+    line(ctx, [a, [mx, my + g]], col.ink, 2.2); line(ctx, [[mx, my - g], b], col.ink, 2.2);
+    line(ctx, [[mx - 7 * sc, my - g], [mx + 7 * sc, my - g]], col.ink, 2.2);            // 正極（長い線）
+    line(ctx, [[mx - 3.6 * sc, my + g], [mx + 3.6 * sc, my + g]], col.ink, 5.5);        // 負極（短く太い線）
+    mt(ctx, "＋", mx + 8.5 * sc, my - g - 2.5 * sc, col.bat, LY.fs, "left", true);
+    mt(ctx, "−", mx + 5 * sc, my + g + 2.5 * sc, col.ink, LY.fs, "left", true);
+    mt(ctx, `{V} = ${fV(S.V)} V`, mx + 12 * sc, my - 1.5 * sc, ov.volt ? col.bat : col.ink, LY.fs, "left", !!ov.volt, true);
+    mt(ctx, "電池", mx + 12 * sc, my + 4.5 * sc, col.muted, LY.fs - 1, "left");
+  });
+  // 合成抵抗の囲み（下に描く）
+  if(ov.comb){
+    const box = S.mode === "series" ? [[36,5],[112,5],[112,58],[36,58]] : [[44,20],[112,20],[112,56],[44,56]];
+    const pts = box.map(P); ctx.save(); ctx.fillStyle = rgba(col.net, .07); ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.fill(); ctx.restore();
+    line(ctx, pts.concat([pts[0]]), col.net, 1.8, [6, 4]);
+  }
+  // 抵抗
+  segs.filter(s => s.kind === "R1" || s.kind === "R2").forEach(s => {
+    const a = P(s.pts[0]), b = P(s.pts[1]), dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, nx = -uy, ny = ux;
+    const c = s.kind === "R1" ? col.r1 : col.r2, p = s.kind === "R1" ? st.P1 : st.P2, gl = glow(p);
+    const q = [[a[0] + nx * rw, a[1] + ny * rw], [b[0] + nx * rw, b[1] + ny * rw], [b[0] - nx * rw, b[1] - ny * rw], [a[0] - nx * rw, a[1] - ny * rw]];
+    ctx.save(); ctx.beginPath(); q.forEach((pt, i) => i ? ctx.lineTo(pt[0], pt[1]) : ctx.moveTo(pt[0], pt[1])); ctx.closePath();
+    ctx.fillStyle = col.sheet; ctx.fill(); ctx.fillStyle = rgba(col.hi, 0.08 + 0.55 * gl); ctx.fill();
+    ctx.strokeStyle = c; ctx.lineWidth = 2.4; ctx.stroke(); ctx.restore();
+    s._geo = { a, b, ux, uy, nx, ny, gl, c };
+  });
+}
+function drawDots(){
+  const r = Math.max(3, LY.sc * 1.25);
+  segs.forEach(s => {
+    eachDot(s, u => {
+      const p = P(posOn(s, u));
+      ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, Math.PI * 2);
+      if(S.elec){ ctx.fillStyle = col.lo; ctx.fill(); line(ctx, [[p[0] - r * .55, p[1]], [p[0] + r * .55, p[1]]], "#fff", 1.4); }
+      else { ctx.fillStyle = dotColor(phiAt(s, u)); ctx.fill(); line(ctx, [[p[0] - r * .55, p[1]], [p[0] + r * .55, p[1]]], "#fff", 1.4); line(ctx, [[p[0], p[1] - r * .55], [p[0], p[1] + r * .55]], "#fff", 1.4); }
+    }, S.elec ? -1 : 1);                                   // 電子は電流と逆向きに動く
+  });
+}
+function drawArrows(){
+  // 電流の向き（導線の区間の途中に矢印）
+  segs.forEach(s => {
+    if(s.kind !== "w" || s.len < 14 || curOf(s.key) <= 1e-9) return;
+    const u = s.len * (s.pts.length > 2 ? 0.25 : 0.5), a = P(posOn(s, u)), b = P(posOn(s, u + 0.5)), dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L, k = 6;
+    ctx.save(); ctx.fillStyle = col.bat; ctx.beginPath(); ctx.moveTo(a[0] + ux * k, a[1] + uy * k); ctx.lineTo(a[0] - ux * k - uy * k * .8, a[1] - uy * k + ux * k * .8); ctx.lineTo(a[0] - ux * k + uy * k * .8, a[1] - uy * k - ux * k * .8); ctx.closePath(); ctx.fill(); ctx.restore();
+  });
+}
+function drawLabels(ov){
+  const sc = LY.sc;
+  segs.filter(s => s._geo).forEach(s => {
+    const g = s._geo, one = s.kind === "R1", horiz = Math.abs(g.ux) > .5, c = g.c;
+    const nm = one ? "₁" : "₂", Rv = one ? S.R1 : S.R2, Vv = one ? st.V1 : st.V2, Pv = one ? st.P1 : st.P2;
+    const lines = [[`{R}${nm} = ${Rv} Ω`, c, false]];
+    if(ov.volt) lines.push([`{V}${nm} = ${f3(Vv)} V`, c, true]);
+    if(ov.pow) lines.push([`{P}${nm} = ${f3(Pv)} W`, col.hi, true]);
+    const mx = (g.a[0] + g.b[0]) / 2, my = (g.a[1] + g.b[1]) / 2;
+    if(horiz){ lines.forEach((l, i) => mt(ctx, l[0], mx, my + (6.5 + i * 5.2) * sc, l[1], LY.fs, "center", l[2], true)); }
+    else { const y0 = my - (lines.length - 1) * 2.6 * sc; lines.forEach((l, i) => mt(ctx, l[0], mx + 5 * sc, y0 + i * 5.2 * sc, l[1], LY.fs, "left", l[2], true)); }
+    // 電圧：両端をはさむ括弧
+    if(ov.volt){
+      const off = horiz ? -5.5 * sc : -5.5 * sc, nx = horiz ? 0 : 1, ny = horiz ? 1 : 0;
+      const a = [g.a[0] + nx * off, g.a[1] + ny * off], b = [g.b[0] + nx * off, g.b[1] + ny * off];
+      line(ctx, [[a[0] - nx * 2 * sc * -1, a[1] - ny * 2 * sc * -1], a, b, [b[0] - nx * 2 * sc * -1, b[1] - ny * 2 * sc * -1]], c, 1.6);
+    }
+    // 発熱の波
+    if(ov.pow && g.gl > 0.02){
+      const nx = horiz ? 0 : -1, ny = horiz ? -1 : 0, t = performance.now() / 1000;
+      for(let k = -1; k <= 1; k++){
+        const bx = (g.a[0] + g.b[0]) / 2 + (horiz ? k * 6 * sc : 0) + nx * 4.5 * sc, by = (g.a[1] + g.b[1]) / 2 + (horiz ? 0 : k * 5 * sc) + ny * 4.5 * sc, pts = [];
+        for(let j = 0; j <= 10; j++){ const d = j / 10 * 6.5 * sc, w = Math.sin(j * 1.2 - t * 6) * 1.1 * sc; pts.push([bx + nx * d + (horiz ? w : 0), by + ny * d + (horiz ? 0 : w)]); }
+        line(ctx, pts, rgba(col.hi, 0.25 + 0.75 * g.gl), 2);
+      }
+    }
+  });
+  // 電流計
+  if(ov.amm){
+    const M = { one: [[30,12,"I","above"],[55,64,"I","below"]],
+      series: [[28,12,"I","above"],[79,12,"I","above"],[55,64,"I","below"]],
+      parallel: [[34,12,"I","above"],[55,20,"I1","right"],[92,20,"I2","right"],[34,64,"I","below"]] }[S.mode];
+    M.forEach(([x, y, key, pos]) => {
+      const p = P([x, y]), r = 3.6 * sc;
+      ctx.save(); ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, Math.PI * 2); ctx.fillStyle = col.sheet; ctx.fill(); ctx.lineWidth = 1.8; ctx.strokeStyle = col.ink; ctx.stroke(); ctx.restore();
+      mt(ctx, "A", p[0], p[1] + .5, col.ink, LY.fs - 1, "center", true);
+      const nm = key === "I" ? "{I}" : key === "I1" ? "{I}₁" : "{I}₂", s = `${nm} = ${f3(curOf(key))} A`;
+      if(pos === "above") mt(ctx, s, p[0], p[1] - r - 3.2 * sc, col.bat, LY.fs, "center", true, true);
+      else if(pos === "below") mt(ctx, s, p[0], p[1] + r + 3.2 * sc, col.bat, LY.fs, "center", true, true);
+      else mt(ctx, s, p[0] + r + 1.5 * sc, p[1], col.bat, LY.fs, "left", true, true);
+    });
+  }
+  if(ov.comb){
+    const s = S.mode === "series" ? `合成抵抗 {R} = ${S.R1 + S.R2} Ω` : `合成抵抗 {R} = ${f3(st.R)} Ω`;
+    const p = S.mode === "series" ? P([60, 40]) : P([78, 60]);
+    mt(ctx, s, p[0], p[1] + (S.mode === "parallel" ? 0 : 0), col.net, LY.fs, "center", true, true);
+  }
+}
+
+/* ---------- 電位のグラフ ---------- */
+function drawGraph(ov){
+  const A = LY.gA, ml = 50, mr = 14, mtp = S.mode === "parallel" ? 46 : 34, mb = 40;
+  const x0 = A.x + ml, x1 = A.x + A.w - mr, y0 = A.y + A.h - mb, y1 = A.y + mtp, GX = 9;
+  const X = gx => x0 + (x1 - x0) * gx / GX, Y = v => y0 - (y0 - y1) * v / VMAX;
+  // 枠と目盛り
+  if(!LY.wide) line(ctx, [[A.x + 8, A.y + 1], [A.x + A.w - 8, A.y + 1]], col.line, 1);
+  else line(ctx, [[A.x + 1, A.y + 10], [A.x + 1, A.y + A.h - 10]], col.line, 1);
+  for(let v = 0; v <= VMAX; v += 2){ line(ctx, [[x0, Y(v)], [x1, Y(v)]], col.line, v === 0 ? 1.4 : .8); mt(ctx, String(v), x0 - 6, Y(v), col.muted, 12, "right"); }
+  mt(ctx, "電位（電気的な高さ）〔V〕", A.x + 10, A.y + 14, col.ink, 13, "left", true);
+  mt(ctx, "（電池の負極を 0 V とする）", A.x + A.w - mr, A.y + 14, col.muted, 11, "right");
+  // 区間の名前
+  const lab = { bat: ["電池", col.bat] , R1: ["{R}₁", col.r1], R2: ["{R}₂", col.r2] };
+  const done = {};
+  segs.forEach(s => { if(lab[s.kind] && !done[s.kind]){ done[s.kind] = 1; mt(ctx, lab[s.kind][0], X((s.gx[0] + s.gx[1]) / 2), y0 + 14, lab[s.kind][1], 13, "center", true); } });
+  mt(ctx, "回路をひとまわりする道すじ →", (x0 + x1) / 2, y0 + 31, col.muted, 11, "center");
+  // 線
+  segs.forEach(s => {
+    const o = s.off || 0, c = s.kind === "R1" ? col.r1 : s.kind === "R2" ? col.r2 : s.kind === "bat" ? col.bat : col.ink, w = s.kind === "w" ? 2.2 : 4;
+    line(ctx, [[X(s.gx[0]), Y(s.ph[0]) + o], [X(s.gx[1]), Y(s.ph[1]) + o]], c, w);
+  });
+  if(S.mode === "parallel"){
+    mt(ctx, "上の線：{R}₁ を通る道　下の線：{R}₂ を通る道", A.x + 10, A.y + 31, col.muted, 11, "left");
+  }
+  // 電圧の段差
+  if(ov.volt){
+    const arrow = (gx, va, vb, c, txt, side) => {
+      const x = X(gx), ya = Y(va), yb = Y(vb);
+      line(ctx, [[x, ya], [x, yb]], c, 1.6, [4, 3]);
+      const head = (y, dir) => { ctx.save(); ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 4, y - dir * 7); ctx.lineTo(x + 4, y - dir * 7); ctx.closePath(); ctx.fill(); ctx.restore(); };
+      head(ya, -1); head(yb, 1);
+      if(side > 0 && x + 92 > x1) side = -1;
+      mt(ctx, txt, x + (side < 0 ? -6 : 6), (ya + yb) / 2, c, 13, side < 0 ? "right" : "left", true, true);
+    };
+    const bat = segs.find(s => s.kind === "bat");
+    arrow(bat.gx[1] + 0.05, 0, S.V, col.bat, `{V} = ${fV(S.V)} V`, 1);
+    segs.filter(s => s.kind === "R1" || s.kind === "R2").forEach(s => {
+      const one = s.kind === "R1", c = one ? col.r1 : col.r2;
+      if(S.mode === "parallel"){ arrow(one ? 4.6 : 5.6, s.ph[0], s.ph[1], c, one ? `{V}₁ = ${f3(st.V1)} V` : `{V}₂ = ${f3(st.V2)} V`, one ? -1 : 1); }
+      else arrow(s.gx[1] + 0.08, s.ph[0], s.ph[1], c, one ? `{V}₁ = ${f3(st.V1)} V` : `{V}₂ = ${f3(st.V2)} V`, 1);
+    });
+  }
+  // 粒（正の電荷として描く）
+  const r = 3.4;
+  segs.forEach(s => {
+    const o = s.off || 0;
+    eachDot(s, u => {
+      const t = u / s.len, gx = s.gx[0] + (s.gx[1] - s.gx[0]) * t, v = phiAt(s, u), x = X(gx), y = Y(v) + o - 5;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = dotColor(v); ctx.fill();
+    });
+  });
+  if(S.elec) mt(ctx, "グラフの粒は正の電荷として描いています", (x0 + x1) / 2, y1 + 10, col.muted, 11, "center", false, true);
+}
+
+function draw(){
+  if(!LY) return; readColors();
+  ctx.clearRect(0, 0, W, H);
+  const ov = stepInfo(st).ov;
+  drawCircuit(ov); drawArrows(); drawDots(); drawLabels(ov); drawGraph(ov);
+}
+
+/* ---------- I-V グラフ ---------- */
+function niceMax(x){ const c = [0.25, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30]; for(const v of c) if(v >= x * 1.05) return v; return Math.ceil(x); }
+function drawIV(){
+  if(!IW) return; readColors();
+  const c = ictx; c.clearRect(0, 0, IW, IH);
+  const ml = 52, mr = 16, mtp = 18, mb = 42, x0 = ml, x1 = IW - mr, y0 = IH - mb, y1 = mtp;
+  const lines = S.mode === "one" ? [{ R: S.R1, c: col.r1, nm: "{R}₁" }]
+    : S.mode === "series" ? [{ R: S.R1, c: col.r1, nm: "{R}₁" }, { R: S.R2, c: col.r2, nm: "{R}₂" }, { R: S.R1 + S.R2, c: col.tot, nm: "全体 {R}" }]
+    : [{ R: S.R1, c: col.r1, nm: "{R}₁" }, { R: S.R2, c: col.r2, nm: "{R}₂" }, { R: S.R1 * S.R2 / (S.R1 + S.R2), c: col.tot, nm: "全体 {R}" }];
+  const Imax = niceMax(Math.max(st.I, ...lines.map(l => VMAX / l.R)) * (S.mode === "one" ? 1 : 0.6) || 1);
+  const X = v => x0 + (x1 - x0) * v / VMAX, Y = i => y0 - (y0 - y1) * i / Imax;
+  const step = Imax / 5;
+  for(let v = 0; v <= VMAX; v += 2){ line(c, [[X(v), y0], [X(v), y1]], col.line, .8); mt(c, String(v), X(v), y0 + 12, col.muted, 12, "center"); }
+  for(let k = 0; k <= 5; k++){ const i = step * k; line(c, [[x0, Y(i)], [x1, Y(i)]], col.line, .8); mt(c, String(Number(i.toPrecision(3))), x0 - 6, Y(i), col.muted, 12, "right"); }
+  line(c, [[x0, y0], [x1, y0]], col.ink, 1.4); line(c, [[x0, y0], [x0, y1]], col.ink, 1.4);
+  mt(c, "電圧 {V}〔V〕", (x0 + x1) / 2, y0 + 30, col.ink, 13, "center");
+  c.save(); c.translate(14, (y0 + y1) / 2); c.rotate(-Math.PI / 2); mt(c, "電流 {I}〔A〕", 0, 0, col.ink, 13, "center"); c.restore();
+  c.save(); c.beginPath(); c.rect(x0, y1, x1 - x0, y0 - y1); c.clip();
+  lines.forEach(l => {
+    const vEnd = Math.min(VMAX, Imax * l.R);
+    line(c, [[X(0), Y(0)], [X(vEnd), Y(vEnd / l.R)]], l.c, l.nm.startsWith("全体") ? 2.6 : 2, l.nm.startsWith("全体") ? [7, 4] : []);
+  });
+  c.restore();
+  lines.forEach(l => { const vEnd = Math.min(VMAX, Imax * l.R), lx = X(vEnd), ly = Y(vEnd / l.R);
+    if(vEnd < VMAX) mt(c, l.nm, lx - 8, y1 + 10, l.c, 13, "right", true, true); else mt(c, l.nm, x1 - 4, ly - 12, l.c, 13, "right", true, true); });
+  // いまの点
+  const pts = S.mode === "one" ? [[S.V, st.I, col.r1]]
+    : S.mode === "series" ? [[st.V1, st.I, col.r1], [st.V2, st.I, col.r2], [S.V, st.I, col.tot]]
+    : [[S.V, st.I1, col.r1], [S.V, st.I2, col.r2], [S.V, st.I, col.tot]];
+  if(S.mode === "series") line(c, [[x0, Y(st.I)], [X(Math.max(st.V1, st.V2, S.V)), Y(st.I)]], col.muted, 1.2, [3, 3]);
+  if(S.mode === "parallel") line(c, [[X(S.V), y0], [X(S.V), Y(st.I)]], col.muted, 1.2, [3, 3]);
+  pts.forEach(([v, i, cc]) => { if(i > Imax) return; c.beginPath(); c.arc(X(v), Y(i), 5.5, 0, Math.PI * 2); c.fillStyle = cc; c.fill(); c.lineWidth = 2; c.strokeStyle = col.sheet; c.stroke(); });
+  if(S.mode === "series") mt(c, "どの点も同じ高さ（電流が共通）", x1 - 4, y0 - 12, col.muted, 12, "right", false, true);
+  if(S.mode === "parallel") mt(c, "どの点も同じ横位置（電圧が共通）", x1 - 4, y0 - 12, col.muted, 12, "right", false, true);
+}
+
+/* ---------- 表・電力の帯 ---------- */
+function table(){
+  const sw = c => `<span class="sw" style="background:var(--${c})"></span>`;
+  const row = (nm, c, R, V, I, P, cls) => `<tr${cls ? ` class="${cls}"` : ""}><td>${c ? sw(c) : ""}${nm}</td><td>${R}</td><td>${V}</td><td>${I}</td><td>${P}</td></tr>`;
+  let h = row(`抵抗 ${sb("R","1")}`, "r1", S.R1, f3(st.V1), f3(st.I1), f3(st.P1));
+  if(S.mode !== "one") h += row(`抵抗 ${sb("R","2")}`, "r2", S.R2, f3(st.V2), f3(st.I2), f3(st.P2));
+  if(S.mode !== "one") h += row("回路全体（合成抵抗）", "", f3(st.R), fV(S.V), f3(st.I), f3(st.P), "sum");
+  $("tb").innerHTML = h;
+  $("pTot").innerHTML = `${I_("P")} ＝ ${f3(st.P)} W`;
+  const tot = st.P || 1;
+  $("pBar").innerHTML = st.P <= 0 ? "" : (S.mode === "one" ? `<div style="width:100%;background:var(--r1)"><span>${sb("P","1")}&nbsp;${f3(st.P1)}&nbsp;W</span></div>`
+    : `<div style="width:${st.P1 / tot * 100}%;background:var(--r1)"><span>${sb("P","1")}&nbsp;${f3(st.P1)}&nbsp;W</span></div><div style="width:${st.P2 / tot * 100}%;background:var(--r2)"><span>${sb("P","2")}&nbsp;${f3(st.P2)}&nbsp;W</span></div>`);
+  const V = I_("V"), I = I_("I"), R = I_("R"), P = I_("P");
+  $("forms").innerHTML = `電力の3つの式：${P} ＝ ${V}${I} ＝ ${R}${I}² ＝ ${V}²/${R}<br>` +
+    (S.mode === "one" ? `${f3(st.P)} W ＝ ${fV(S.V)} × ${f3(st.I)} ＝ ${S.R1} × ${f3(st.I)}² ＝ ${fV(S.V)}² ÷ ${S.R1}`
+      : S.mode === "series" ? `直列では電流が共通なので ${R}${I}² で比べる：${sb("P","1")}：${sb("P","2")} ＝ ${sb("R","1")}：${sb("R","2")} ＝ ${S.R1}：${S.R2}`
+      : `並列では電圧が共通なので ${V}²/${R} で比べる：${sb("P","1")}：${sb("P","2")} ＝ 1/${sb("R","1")}：1/${sb("R","2")} ＝ ${S.R2}：${S.R1}`);
+  $("t2lead").innerHTML = S.mode === "one" ? "電圧を変えると、点は直線の上を動きます（電流は電圧に比例）。"
+    : S.mode === "series" ? "直列では、3つの点がすべて同じ高さ（同じ電流）に並びます。横の位置（電圧）の和は電池の電圧です。"
+    : "並列では、3つの点がすべて同じ横位置（同じ電圧）に並びます。高さ（電流）の和が全体の電流です。";
+}
+
+/* ---------- UI ---------- */
+function ui(){
+  const nm = NM[S.mode];
+  $("chips").innerHTML = nm.map((n, i) => `<li class="${i === S.step ? "cur" : i < S.step ? "done" : ""}" data-i="${i}">${i + 1} ${n}</li>`).join("");
+  const info = stepInfo(st), el = $("step");
+  el.querySelector(".no").textContent = `段階 ${S.step + 1} / ${nm.length}`;
+  el.querySelector("h3").textContent = nm[S.step];
+  el.querySelector(".txt").innerHTML = info.txt;
+  el.querySelector(".eq").innerHTML = info.eq;
+  $("prevBtn").disabled = S.step === 0; $("nextBtn").disabled = S.step === nm.length - 1;
+  document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === S.mode ? "true" : "false"));
+  $("slR2").hidden = S.mode === "one";
+  $("oV").textContent = `${fV(S.V)} V`; $("oR1").textContent = `${S.R1} Ω`; $("oR2").textContent = `${S.R2} Ω`;
+  table();
+}
+function update(){ st = calc(); segs = prep(build(st)); ui(); draw(); drawIV(); }
+function setMode(m, keepHash){
+  if(!["one", "series", "parallel"].includes(m)) m = "one";
+  S.mode = m; S.step = 0; Q.I = Q.I1 = Q.I2 = 0;
+  if(!keepHash){ try{ history.replaceState(null, "", "#" + m); }catch(e){ location.hash = m; } }
+  update();
+}
+document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => setMode(b.dataset.mode)));
+$("chips").addEventListener("click", e => { const li = e.target.closest("li"); if(li){ S.step = +li.dataset.i; ui(); draw(); } });
+$("prevBtn").addEventListener("click", () => { if(S.step > 0){ S.step--; ui(); draw(); } });
+$("nextBtn").addEventListener("click", () => { if(S.step < 3){ S.step++; ui(); draw(); } });
+$("sV").addEventListener("input", e => { S.V = +e.target.value; update(); });
+$("sR1").addEventListener("input", e => { S.R1 = +e.target.value; update(); });
+$("sR2").addEventListener("input", e => { S.R2 = +e.target.value; update(); });
+$("cbE").addEventListener("change", e => { S.elec = e.target.checked; draw(); });
+$("selSp").addEventListener("change", e => { S.speed = +e.target.value; });
+window.addEventListener("hashchange", () => setMode(location.hash.slice(1), true));
+
+/* ---------- アニメーション ---------- */
+const BASE = 22;   // 1 A あたりの粒の速さ（論理単位/s）
+let last = null;
+function tick(ts){
+  if(last == null) last = ts; const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
+  if(!reduce){
+    const imax = Math.max(st.I, st.I1, st.I2), vmax = 120;   // 速すぎると粒が止まって見えるので上限を設ける（比はそのまま）
+    const k = BASE * S.speed, f = imax * k > vmax ? vmax / (imax * k) : 1;
+    if((f < 1) !== (spFactor < 1)) $("cap").hidden = !(f < 1);
+    spFactor = f;
+    Q.I += st.I * k * f * dt; Q.I1 += st.I1 * k * f * dt; Q.I2 += st.I2 * k * f * dt;
+  }
+  draw();
+  requestAnimationFrame(tick);
+}
+const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+if(mq && mq.addEventListener) mq.addEventListener("change", () => { draw(); drawIV(); });
+new MutationObserver(() => { draw(); drawIV(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+if(window.ResizeObserver){ const ro = new ResizeObserver(resize); ro.observe(cv); ro.observe(ivc); } else window.addEventListener("resize", resize);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { draw(); drawIV(); });
+
+$("qs").innerHTML = [
+  ["1つの抵抗で、電圧を 2 倍にすると電流と電力はそれぞれ何倍になるか。", "電流は 2 倍（オームの法則、電流は電圧に比例）、電力は 4 倍です。<i class='qv'>P</i> ＝ <i class='qv'>VI</i> で、<i class='qv'>V</i> も <i class='qv'>I</i> も 2 倍になるからです（<i class='qv'>P</i> ＝ <i class='qv'>V</i>²/<i class='qv'>R</i>）。"],
+  ["電流は抵抗を通ると減るか。抵抗を通ると何が減るのか。", "電流は減りません。電荷は消えないので、枝分かれのない所ではどこでも電流は同じです。減るのは電気的な高さ（電位）で、そのぶんの電気エネルギーが熱（ジュール熱）になります。"],
+  ["直列で <i class='qv'>R</i>₂ を大きくすると、<i class='qv'>R</i>₁ にかかる電圧はどうなるか。", "小さくなります。合成抵抗が大きくなって回路全体の電流 <i class='qv'>I</i> が減るので、<i class='qv'>V</i>₁ ＝ <i class='qv'>R</i>₁<i class='qv'>I</i> も減ります。そのぶん <i class='qv'>V</i>₂ が大きくなり、<i class='qv'>V</i>₁ ＋ <i class='qv'>V</i>₂ ＝ <i class='qv'>V</i> は変わりません。"],
+  ["並列で <i class='qv'>R</i>₂ を大きくすると、<i class='qv'>R</i>₁ を流れる電流はどうなるか。", "変わりません。<i class='qv'>R</i>₁ にかかる電圧は電池の電圧 <i class='qv'>V</i> のままだからです。<i class='qv'>I</i>₂ が減るので、全体の電流 <i class='qv'>I</i> ＝ <i class='qv'>I</i>₁ ＋ <i class='qv'>I</i>₂ は減ります。"],
+  ["直列では大きい抵抗のほうが電力が大きいのに、並列では小さい抵抗のほうが電力が大きい。なぜか。", "直列では電流が共通なので <i class='qv'>P</i> ＝ <i class='qv'>RI</i>² で比べると <i class='qv'>R</i> が大きいほど大きい。並列では電圧が共通なので <i class='qv'>P</i> ＝ <i class='qv'>V</i>²/<i class='qv'>R</i> で比べると <i class='qv'>R</i> が小さいほど大きい。共通な量に注目して式を選ぶのがポイントです。"],
+  ["同じ 10 Ω の抵抗 2 つを 6.0 V の電池につなぐ。直列と並列で、回路全体の電力はそれぞれいくらか。", "直列：合成抵抗 20 Ω、<i class='qv'>P</i> ＝ 6.0² ÷ 20 ＝ 1.8 W。並列：合成抵抗 5.0 Ω、<i class='qv'>P</i> ＝ 6.0² ÷ 5.0 ＝ 7.2 W。並列のほうが 4 倍大きくなります。スライダーで確かめよう。"]
+].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
+
+S.mode = ["one", "series", "parallel"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "one";
+st = calc(); segs = prep(build(st)); ui(); resize(); requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

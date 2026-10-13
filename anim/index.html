@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
 <style>
-/* Layout: one-column list on graph paper — three groups (波の性質, 音, 熱) of tappable cards, each card = title + one-line purpose + related Web-test section. */
+/* Layout: one-column list on graph paper — four groups (波の性質, 音, 熱, 電気) of tappable cards, each card = title + one-line purpose + related Web-test section. */
 :root{
   --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
   --blue:#2447B3; --blue-soft:#E7EDFB; --line:#CBD5DF; --sheet:#FFFFFF;
@@ -47,13 +47,13 @@ html{scroll-padding-top:90px}
 <header class="top">
   <div class="top-inner">
     <a class="back" id="backLink" href="../index.html" hidden>‹ 単元一覧（Webテスト）へ</a>
-    <h1>アニメーション集（熱・波・音）</h1>
+    <h1>アニメーション集（熱・波・音・電気）</h1>
   </div>
 </header>
 
 <main>
   <section class="sheet">
-    <p class="intro">Webテストに取り組む前に、目に見えない粒子や波の動きを見て確かめよう。波は上から順に見ると、「波の速さ」→「波を3次元で見る」→「重ね合わせ・反射・定在波（定常波）」→「音」の順に理解が積み上がります。熱のアニメーションは<a href="#heat">下の「熱」</a>にあります。各ページの「見てみよう」の問いにも答えてみよう。</p>
+    <p class="intro">Webテストに取り組む前に、目に見えない粒子や波の動きを見て確かめよう。波は上から順に見ると、「波の速さ」→「波を3次元で見る」→「重ね合わせ・反射・定在波（定常波）」→「音」の順に理解が積み上がります。熱のアニメーションは<a href="#heat">下の「熱」</a>、電気は<a href="#elec">「電気」</a>にあります。各ページの「見てみよう」の問いにも答えてみよう。</p>
   </section>
 
   <section class="sheet" aria-labelledby="g1">
@@ -85,6 +85,13 @@ html{scroll-padding-top:90px}
       <li><a class="card" href="phase-equilibrium.html#sl"><span class="t"><span class="num">13</span>融解と凝固（固液平衡）</span><span class="d">0 ℃ の氷と水。熱を加えた分だけ氷が融け、その間は温度が変わらないことを確かめる</span><span class="r">関連：熱とエネルギー ①定義・②読解 D</span></a></li>
       <li><a class="card" href="first-law.html"><span class="t"><span class="num">14</span>熱力学第一法則 Δ<i class="qv">U</i> ＝ <i class="qv">Q</i> ＋ <i class="qv">W</i></span><span class="d">熱を出し入れし、ピストンを押し引きして、粒子の速さと内部エネルギーの変化を帯グラフで確かめる</span><span class="r">関連：熱とエネルギー ①定義・②読解 A・④手順 問題2</span></a></li>
       <li><a class="card" href="heat-engine.html"><span class="t"><span class="num">15</span>熱機関のサイクルと熱効率</span><span class="d">加熱・膨張・冷却・圧縮を1段階ずつ進め、p-V・T-V グラフ、正味の仕事 ＝ 囲まれた面積、熱効率の分母が吸収した熱量であることを確かめる</span><span class="r">関連：熱とエネルギー ①定義・④手順 問題3</span></a></li>
+    </ol>
+  </section>
+  <section class="sheet" id="elec" aria-labelledby="g4">
+    <h2 id="g4">電気</h2>
+    <ol class="cards" start="16">
+      <li><a class="card" href="ohm.html"><span class="t"><span class="num">16</span>オームの法則と電力</span><span class="d">1つの抵抗・直列・並列で、電荷の流れと電気的な高さ（電位）を見ながら、共通な量・合成抵抗・電力 <i class="qv">P</i> ＝ <i class="qv">VI</i> を段階ごとに確かめる</span><span class="r">関連：電流と電気抵抗 ①定義・②読解 B・④手順</span></a></li>
+      <li><a class="card" href="circuit.html"><span class="t"><span class="num">17</span>回路シミュレーター</span><span class="d">導線・抵抗・電球・電池・スイッチを方眼に置いて回路を組み、各部分の電圧・電流・電力と合成抵抗を調べる（電圧計つき）</span><span class="r">関連：電流と電気抵抗 ④手順</span></a></li>
     </ol>
   </section>
 </main>

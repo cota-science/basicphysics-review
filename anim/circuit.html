@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>回路シミュレーター</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: workbench. Wide: grid canvas (left, the circuit board) | side panel (tools, selected part editor, presets/options). Phone: tool strip, canvas, panel stacked. Below: table of every part (R, V, I, P) with power totals, then usage notes and questions. */
+:root{
+  --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
+  --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
+  --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3; --shade:#EEF2F6;
+  --res:#2A62C9; --bulb:#C98A00; --bat:#CF2A2A; --hi:#D2452F; --lo:#2A7BC9; --net:#1E8A4C; --sel:#7A4FC4; --dot:#9AA6B5;
+  --body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --math:"Times New Roman",Times,"Noto Serif",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+    --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+    --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+    --res:#7FA8FF; --bulb:#F2C14E; --bat:#FF7A70; --hi:#FF8068; --lo:#7DBBF5; --net:#5FD08F; --sel:#B79BFF; --dot:#4A5768; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+  --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+  --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+  --res:#7FA8FF; --bulb:#F2C14E; --bat:#FF7A70; --hi:#FF8068; --lo:#7DBBF5; --net:#5FD08F; --sel:#B79BFF; --dot:#4A5768; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qv{font-family:var(--math);font-style:italic;font-size:1.08em}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.top-inner{max-width:1180px;margin:0 auto;padding:10px 16px 10px}
+.back{font-size:14px;color:var(--blue);text-decoration:none}
+h1{font-size:19px;margin:2px 0 0;line-height:1.4}
+.nav{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin-top:2px}
+.nav a{color:var(--blue);text-decoration:none}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:700}
+
+main{max-width:1180px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px;min-width:0}
+h2{font-size:20px;margin:0 0 4px;line-height:1.4}
+h3{font-size:16px;margin:0 0 6px}
+.lead{margin:0 0 12px;color:var(--muted);font-size:15px}
+
+.bench{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;align-items:start}
+@media (max-width:900px){.bench{grid-template-columns:1fr}}
+.tools{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 0 10px}
+.tool{display:flex;flex-direction:column;align-items:center;gap:0;padding:4px 2px;min-height:58px;border:1.5px solid var(--line);border-radius:8px;background:var(--sheet);cursor:pointer;font-size:12px;line-height:1.3;color:var(--ink)}
+.tool svg{width:34px;height:22px}
+.tool[aria-pressed="true"]{border-color:var(--btn);background:var(--blue-soft);color:var(--blue);font-weight:700}
+.hint{font-size:13px;color:var(--muted);margin:0 0 10px;min-height:2.6em}
+.board{position:relative;width:100%;aspect-ratio:9/7;background:var(--sheet);border:1px solid var(--line);border-radius:4px;touch-action:none;user-select:none;-webkit-user-select:none}
+.board canvas{display:block;width:100%;height:100%;cursor:crosshair}
+.warn{margin:8px 0 0;padding:8px 12px;border-radius:6px;background:var(--red-soft);color:var(--red);font-size:14px;font-weight:700}
+.warn[hidden]{display:none}
+.info{margin:8px 0 0;font-size:14px;color:var(--muted)}
+
+.panel{display:grid;gap:12px}
+.box{border:1.5px solid var(--line);border-radius:8px;padding:10px 12px}
+.box h3{font-size:15px}
+.ed[hidden]{display:none}
+.ed .nm{font-weight:700;font-size:17px}
+.ed .row{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap}
+.ed input[type=range]{flex:1 1 140px;min-height:32px;accent-color:var(--blue)}
+.ed input[type=number]{width:86px;min-height:38px;border:1.5px solid var(--line);border-radius:6px;background:var(--sheet);padding:2px 6px;font-variant-numeric:tabular-nums}
+.ed .vals{margin-top:8px;padding:6px 10px;background:var(--shade);border-radius:6px;font-size:15px;line-height:1.8;font-variant-numeric:tabular-nums}
+.ed .vals b{font-weight:700}
+.ed .sub{font-size:13px;color:var(--muted);margin-top:4px}
+.btn{border:0;border-radius:8px;padding:6px 14px;min-height:42px;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.btn.ghost{background:none;color:var(--blue);border:1.5px solid var(--blue)}
+.btn.danger{background:none;color:var(--red);border:1.5px solid var(--red)}
+.btn:disabled{opacity:.4;cursor:default}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+select.pre{width:100%;min-height:42px;border:1.5px solid var(--line);border-radius:8px;background:var(--sheet);padding:2px 8px;color:var(--ink)}
+.opts{display:grid;gap:2px;font-size:14px}
+.opts label{display:flex;align-items:center;gap:8px;min-height:36px}
+.opts input[type=checkbox]{width:20px;height:20px;accent-color:var(--blue)}
+.opts select{min-height:36px;border:1.5px solid var(--line);border-radius:8px;background:var(--sheet);padding:2px 6px;color:var(--ink)}
+
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:15px;font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:center}
+th{background:var(--shade);font-size:13px;line-height:1.45}
+td:first-child,th:first-child{text-align:left;white-space:nowrap}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:var(--blue-soft)}
+tr.on td{background:var(--blue-soft);font-weight:700}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.totals{margin-top:10px;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px;line-height:1.9;font-variant-numeric:tabular-nums}
+.how{margin:0;padding-left:1.3em;font-size:15px;display:grid;gap:4px}
+.qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
+.qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
+.ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+.note{font-size:13px;color:var(--muted);margin:8px 0 0}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <a class="back" id="backLink" href="../index.html#/u/current/0" hidden>‹ 電流と電気抵抗（Webテスト）へ</a>
+    <h1>回路シミュレーター</h1>
+    <nav class="nav" id="nav" hidden aria-label="アニメーション">
+      <a href="index.html#elec">≡ アニメーション集</a>
+      <a href="ohm.html">オームの法則と電力</a>
+      <a href="circuit.html" aria-current="page">回路シミュレーター</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="sheet" aria-labelledby="t1">
+    <h2 id="t1">抵抗をつないで回路をつくり、電流・電圧・電力を調べる</h2>
+    <p class="lead">方眼の点と点の間に、導線・抵抗・電球・電池・スイッチを置いて回路をつくります。電流・電圧・電力はオームの法則にしたがってすぐに計算されます（導線の抵抗は 0、電池の内部抵抗は 0 とします）。まずは「回路の例」から選んでみよう。</p>
+    <div class="bench">
+      <div>
+        <div class="tools" id="tools" role="group" aria-label="道具"></div>
+        <p class="hint" id="hint"></p>
+        <div class="board"><canvas id="cv" role="img" aria-label="回路を組み立てる方眼。点と点の間に部品を置くと、電流を表す粒が動く。"></canvas></div>
+        <p class="warn" id="warn" hidden></p>
+        <p class="info" id="probeInfo"></p>
+      </div>
+      <div class="panel">
+        <div class="box">
+          <h3>選んだ部品</h3>
+          <p class="note" id="edNone" style="margin:0">「選ぶ」で部品をタップすると、抵抗の値や電池の電圧を変えられます。置いたばかりの部品も選ばれます。</p>
+          <div class="ed" id="ed" hidden>
+            <div class="nm" id="edName"></div>
+            <div class="row" id="edValRow">
+              <input type="range" id="edRange" aria-label="値">
+              <input type="number" id="edNum" aria-label="値（数値で入力）"><span id="edUnit"></span>
+            </div>
+            <div class="row btns" id="edBtns"></div>
+            <div class="vals" id="edVals"></div>
+            <div class="sub" id="edSub"></div>
+          </div>
+        </div>
+        <div class="box">
+          <h3>回路の例</h3>
+          <select class="pre" id="preset" aria-label="回路の例">
+            <option value="">― 選ぶ ―</option>
+            <option value="one">1つの抵抗</option>
+            <option value="series">直列（抵抗2つ）</option>
+            <option value="parallel">並列（抵抗2つ）</option>
+            <option value="combo">直列と並列の組み合わせ</option>
+            <option value="para3">並列（抵抗3つ）</option>
+            <option value="bulbs">電球の明るさ比べ（直列と並列）</option>
+            <option value="bypass">一部を導線でつなぐ（短絡）</option>
+            <option value="switch">スイッチで切りかえる</option>
+            <option value="bridge">ブリッジ回路</option>
+            <option value="two">電池2つ</option>
+          </select>
+          <div class="btns" style="margin-top:8px">
+            <button type="button" class="btn ghost" id="undoBtn">↶ 元に戻す</button>
+            <button type="button" class="btn danger" id="clearBtn">全部消す</button>
+          </div>
+        </div>
+        <div class="box opts">
+          <label for="cbVal"><input type="checkbox" id="cbVal" checked>電圧・電流の値を図に表示</label>
+          <label for="cbPot"><input type="checkbox" id="cbPot">電位（電気的な高さ）を色で表示</label>
+          <label for="cbE"><input type="checkbox" id="cbE">電子の動きで表示する</label>
+          <label for="selSp">粒の速さ
+            <select id="selSp"><option value="0.5">ゆっくり</option><option value="1" selected>ふつう</option><option value="2">はやい</option></select></label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet" aria-labelledby="t2">
+    <h2 id="t2">部品ごとの電圧・電流・電力</h2>
+    <p class="lead">行をタップすると、その部品が選ばれます。電圧は部品の両端にかかる電圧、電流はその部品を流れる電流です。</p>
+    <div class="tbl"><table>
+      <thead><tr><th>部品</th><th>抵抗 <i class="qv">R</i>〔Ω〕／電池の電圧</th><th>電圧 <i class="qv">V</i>〔V〕</th><th>電流 <i class="qv">I</i>〔A〕</th><th>電力 <i class="qv">P</i>〔W〕</th></tr></thead>
+      <tbody id="tb"></tbody>
+    </table></div>
+    <div class="totals" id="totals"></div>
+  </section>
+
+  <section class="sheet" aria-labelledby="t3">
+    <h3 id="t3">使い方</h3>
+    <ol class="how">
+      <li>道具を選び、方眼の<b>点から隣の点へドラッグ</b>するか、<b>点と点の間をタップ</b>すると部品が置けます。導線はドラッグで続けて引けます。</li>
+      <li>電池はドラッグした向きの先が正極（＋）になります。「選ぶ」でタップして「向きを反対に」でも変えられます。</li>
+      <li>「選ぶ」で部品をタップすると、抵抗の値（1〜100 Ω、数値入力なら 0.1〜1000 Ω）や電池の電圧を変えられます。</li>
+      <li>「電圧計」で2つの点を順にタップすると、その2点間の電圧（1点目の電位 − 2点目の電位）がわかります。</li>
+      <li>同じ場所に別の部品を置くと置きかわります。「消す」でタップまたはドラッグすると消えます。</li>
+    </ol>
+    <p class="note">電球も、ここでは抵抗の値が一定の抵抗として扱います（実際の電球は、熱くなると抵抗が大きくなります）。明るさは消費電力で表しています。組んだ回路は、このブラウザに保存されます。</p>
+  </section>
+
+  <section class="sheet" aria-labelledby="qsTitle">
+    <h3 id="qsTitle">やってみよう</h3>
+    <ol class="qs" id="qs"></ol>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const Iq = s => `<i class="qv">${s}</i>`;
+if(/\/anim\//.test(location.pathname)){ $("backLink").hidden = false; $("nav").hidden = false; }
+const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- 方眼と部品 ---------- */
+const COLS = 9, ROWS = 7;
+// 辺のキー：横 "c,r,h"（(c,r)-(c+1,r)）、縦 "c,r,v"（(c,r)-(c,r+1)）
+const ek = (c, r, d) => `${c},${r},${d}`;
+function edgeOf(c1, r1, c2, r2){
+  if(r1 === r2 && Math.abs(c1 - c2) === 1) return { key: ek(Math.min(c1, c2), r1, "h"), rev: c2 < c1 };
+  if(c1 === c2 && Math.abs(r1 - r2) === 1) return { key: ek(c1, Math.min(r1, r2), "v"), rev: r2 < r1 };
+  return null;
+}
+function ends(key){ const [c, r, d] = key.split(","); const C = +c, R = +r; return d === "h" ? [[C, R], [C + 1, R]] : [[C, R], [C, R + 1]]; }
+const pid = (c, r) => r * COLS + c;
+// 部品：{ type: wire|res|bulb|bat|sw, val, plus（電池：1 なら b 側が＋）, on（スイッチ）, n（番号） }
+let parts = {};
+const TYPES = {
+  wire: { nm: "導線" }, res: { nm: "抵抗", sym: "R", def: 10 }, bulb: { nm: "電球", sym: "L", def: 10 },
+  bat: { nm: "電池", sym: "E", def: 6 }, sw: { nm: "スイッチ", sym: "S" }
+};
+function nextN(type){ const used = new Set(Object.values(parts).filter(p => p.type === type).map(p => p.n)); let n = 1; while(used.has(n)) n++; return n; }
+const SUBD = "₀₁₂₃₄₅₆₇₈₉";
+const subN = n => String(n).split("").map(d => SUBD[+d]).join("");
+const nameOf = p => p.type === "wire" ? "導線" : `${TYPES[p.type].nm} {${TYPES[p.type].sym}}${subN(p.n)}`;
+const nameHTML = p => p.type === "wire" ? "導線" : `${TYPES[p.type].nm} ${Iq(TYPES[p.type].sym)}<sub>${p.n}</sub>`;
+
+/* ---------- 回路の例 ---------- */
+function P_(spec){
+  // spec: [["w", [c,r],[c,r],...], ["res", [c,r],[c,r], val], ["bat", [−側],[＋側], V], ["sw", a, b, on]]
+  const out = {}, cnt = {};
+  spec.forEach(s => {
+    const t = s[0];
+    if(t === "w"){ for(let i = 2; i < s.length; i++){ let [c, r] = s[i-1]; const [c2, r2] = s[i], dc = Math.sign(c2 - c), dr = Math.sign(r2 - r);
+      while(c !== c2 || r !== r2){ const e = edgeOf(c, r, c + dc, r + dr); out[e.key] = { type: "wire" }; c += dc; r += dr; } } return; }
+    const e = edgeOf(s[1][0], s[1][1], s[2][0], s[2][1]); cnt[t] = (cnt[t] || 0) + 1;
+    const p = { type: t, n: cnt[t] };
+    if(t === "res" || t === "bulb") p.val = s[3];
+    if(t === "bat"){ p.val = s[3]; p.plus = e.rev ? 0 : 1; }
+    if(t === "sw") p.on = !!s[3];
+    out[e.key] = p;
+  });
+  return out;
+}
+const PRESETS = {
+  one: [["w",[1,3],[1,1],[3,1]],["res",[3,1],[4,1],10],["w",[4,1],[7,1],[7,5],[1,5],[1,4]],["bat",[1,4],[1,3],6]],
+  series: [["w",[1,3],[1,1],[2,1]],["res",[2,1],[3,1],10],["w",[3,1],[5,1]],["res",[5,1],[6,1],20],["w",[6,1],[7,1],[7,5],[1,5],[1,4]],["bat",[1,4],[1,3],6]],
+  parallel: [["w",[1,3],[1,1],[7,1],[7,2]],["w",[4,1],[4,2]],["res",[4,2],[4,3],10],["w",[4,3],[4,5]],["res",[7,2],[7,3],20],["w",[7,3],[7,5],[1,5],[1,4]],["bat",[1,4],[1,3],6]],
+  combo: [["w",[1,3],[1,1],[2,1]],["res",[2,1],[3,1],10],["w",[3,1],[7,1],[7,2]],["w",[5,1],[5,2]],["res",[5,2],[5,3],20],["w",[5,3],[5,5]],["res",[7,2],[7,3],30],["w",[7,3],[7,5],[1,5],[1,4]],["bat",[1,4],[1,3],6]],
+  para3: [["w",[1,3],[1,1],[7,1],[7,2]],["w",[3,1],[3,2]],["res",[3,2],[3,3],10],["w",[3,3],[3,5]],["w",[5,1],[5,2]],["res",[5,2],[5,3],20],["w",[5,3],[5,5]],["res",[7,2],[7,3],30],["w",[7,3],[7,5],[1,5],[1,4]],["bat",[1,4],[1,3],6]],
+  bulbs: [["w",[0,3],[0,1],[1,1]],["bulb",[1,1],[2,1],10],["w",[2,1],[3,1],[3,5],[2,5]],["bulb",[2,5],[1,5],10],["w",[1,5],[0,5],[0,4]],["bat",[0,4],[0,3],6],
+          ["w",[4,5],[4,1],[8,1],[8,3]],["w",[6,1],[6,2]],["bulb",[6,2],[6,3],10],["w",[6,3],[6,5]],["bulb",[8,3],[8,4],10],["w",[8,4],[8,5],[5,5]],["bat",[5,5],[4,5],6]],
+  bypass: [["w",[1,3],[1,1],[2,1]],["res",[2,1],[3,1],10],["w",[3,1],[4,1]],["res",[4,1],[5,1],20],["w",[5,1],[7,1],[7,5],[1,5],[1,4]],["w",[4,1],[4,0],[5,0],[5,1]],["bat",[1,4],[1,3],6]],
+  switch: [["w",[1,3],[1,1],[2,1]],["res",[2,1],[3,1],10],["w",[3,1],[7,1],[7,2]],["w",[5,1],[5,2]],["res",[5,2],[5,3],20],["w",[5,3],[5,5]],["res",[7,2],[7,3],20],["sw",[7,3],[7,4],0],["w",[7,4],[7,5],[1,5],[1,4]],["bat",[1,4],[1,3],6]],
+  bridge: [["w",[1,4],[1,3],[2,3]],["w",[2,3],[2,2]],["res",[2,2],[2,1],10],["w",[2,1],[4,1],[6,1]],["res",[6,1],[6,2],20],["w",[6,2],[6,3]],
+           ["w",[2,3],[2,4]],["res",[2,4],[2,5],20],["w",[2,5],[4,5],[6,5]],["res",[6,5],[6,4],40],["w",[6,4],[6,3]],
+           ["w",[4,1],[4,2],[4,3]],["res",[4,3],[4,4],15],["w",[4,4],[4,5]],
+           ["w",[6,3],[7,3],[7,6],[1,6],[1,5]],["bat",[1,5],[1,4],12]],
+  two: [["w",[1,3],[1,1],[3,1]],["res",[3,1],[4,1],10],["w",[4,1],[7,1],[7,2]],["bat",[7,2],[7,3],3],["w",[7,3],[7,5],[5,5]],["res",[5,5],[4,5],20],["w",[4,5],[1,5],[1,4]],["bat",[1,4],[1,3],6]]
+};
+const PRESET_NOTE = {
+  one: "電池の電圧や抵抗の値を変えて、電流 I ＝ V/R を確かめよう。",
+  series: "直列：どちらの抵抗にも同じ電流。電圧は抵抗の比に分かれる。",
+  parallel: "並列：どちらの抵抗にも同じ電圧。電流は抵抗の逆比に分かれる。",
+  combo: "R₂ と R₃ の並列部分を1つの抵抗におきかえてから、R₁ との直列として考えよう。",
+  para3: "並列につなぐ抵抗を増やすと、全体の電流はどうなるか。",
+  bulbs: "左は直列、右は並列。同じ電球（10 Ω）なのに明るさ（電力）が違う。",
+  bypass: "R₂ の両端が導線でつながると、R₂ には電流が流れない。",
+  switch: "スイッチ S₁ を閉じると、R₁ の電流・電圧はどう変わるか。",
+  bridge: "R₁：R₂ ＝ R₃：R₄ のとき、真ん中の抵抗 R₅ に電流が流れない（電位が等しい）。値を変えてみよう。",
+  two: "電池が2つあるとき：向きをそろえると電流が大きくなり、逆向きにすると小さくなる。"
+};
+
+/* ---------- 計算（節点の電位を求める） ---------- */
+let SOL = null;
+function gauss(A, b){
+  const n = b.length;
+  for(let i = 0; i < n; i++){
+    let mx = i; for(let k = i + 1; k < n; k++) if(Math.abs(A[k][i]) > Math.abs(A[mx][i])) mx = k;
+    if(Math.abs(A[mx][i]) < 1e-14) return null;
+    [A[i], A[mx]] = [A[mx], A[i]]; [b[i], b[mx]] = [b[mx], b[i]];
+    for(let k = i + 1; k < n; k++){ const f = A[k][i] / A[i][i]; if(!f) continue; for(let j = i; j < n; j++) A[k][j] -= f * A[i][j]; b[k] -= f * b[i]; }
+  }
+  const x = new Array(n).fill(0);
+  for(let i = n - 1; i >= 0; i--){ let s = b[i]; for(let j = i + 1; j < n; j++) s -= A[i][j] * x[j]; x[i] = s / A[i][i]; }
+  return x;
+}
+function solve(){
+  const keys = Object.keys(parts), N = COLS * ROWS;
+  const par = Array.from({ length: N }, (_, i) => i), find = i => { while(par[i] !== i){ par[i] = par[par[i]]; i = par[i]; } return i; }, uni = (a, b) => { a = find(a); b = find(b); if(a !== b) par[a] = b; };
+  const used = new Set(), E = {};
+  keys.forEach(k => { const [a, b] = ends(k), pa = pid(a[0], a[1]), pb = pid(b[0], b[1]); E[k] = { pa, pb }; used.add(pa); used.add(pb);
+    const p = parts[k]; if(p.type === "wire" || (p.type === "sw" && p.on)) uni(pa, pb); });
+  // 超節点（導線でつながった点のまとまり）
+  const sn = {}, roots = []; used.forEach(p => { const r = find(p); if(sn[r] == null){ sn[r] = roots.length; roots.push(r); } });
+  const n = roots.length, S = p => sn[find(p)];
+  const bats = keys.filter(k => parts[k].type === "bat");
+  const res = {}; keys.forEach(k => res[k] = { I: 0, V: 0, P: 0, short: false });
+  const out = { res, phi: new Array(N).fill(0), used, err: null, shortKeys: [], bats };
+  // 短絡：電池の両極が導線だけでつながっている
+  bats.forEach(k => { const e = E[k]; if(S(e.pa) === S(e.pb)) out.shortKeys.push(k); });
+  if(out.shortKeys.length){ out.err = "short"; return out; }
+  const m = bats.length, M = n + m;
+  const A = Array.from({ length: M }, () => new Array(M).fill(0)), b = new Array(M).fill(0);
+  for(let i = 0; i < n; i++) A[i][i] += 1e-12;
+  keys.forEach(k => { const p = parts[k]; if(p.type !== "res" && p.type !== "bulb") return; const a = S(E[k].pa), c = S(E[k].pb); if(a === c) return; const g = 1 / p.val; A[a][a] += g; A[c][c] += g; A[a][c] -= g; A[c][a] -= g; });
+  bats.forEach((k, j) => { const p = parts[k], pl = S(p.plus ? E[k].pb : E[k].pa), mi = S(p.plus ? E[k].pa : E[k].pb), r = n + j;
+    A[pl][r] -= 1; A[mi][r] += 1; A[r][pl] += 1; A[r][mi] -= 1; b[r] = p.val; });
+  const x = gauss(A, b);
+  if(!x){ out.err = "loop"; return out; }
+  // 電位の基準：つながりごとに、最初の電池の負極を 0 V にする
+  const par2 = roots.map((_, i) => i), f2 = i => { while(par2[i] !== i) i = par2[i] = par2[par2[i]]; return i; };
+  keys.forEach(k => { const p = parts[k]; if(p.type === "sw" && !p.on) return; const a = f2(S(E[k].pa)), c = f2(S(E[k].pb)); if(a !== c) par2[a] = c; });
+  const ref = {}; bats.forEach(k => { const p = parts[k], g = f2(S(E[k].pa)); if(ref[g] == null) ref[g] = x[S(p.plus ? E[k].pa : E[k].pb)]; });
+  const phiS = roots.map((_, i) => { const g = f2(i); return ref[g] == null ? 0 : x[i] - ref[g]; });
+  used.forEach(p => out.phi[p] = phiS[S(p)]);
+  // 部品の電流（a→b を正）
+  const inj = new Array(N).fill(0);
+  keys.forEach(k => { const p = parts[k], e = E[k], Vab = out.phi[e.pa] - out.phi[e.pb], r = res[k]; r.V = Vab;
+    if(p.type === "res" || p.type === "bulb"){ r.short = S(e.pa) === S(e.pb); r.I = Vab / p.val; r.P = Vab * r.I; }
+    if(p.type === "bat"){ const j = x[n + bats.indexOf(k)]; r.I = p.plus ? j : -j; r.P = p.val * j; r.j = j; }
+    if(p.type === "res" || p.type === "bulb" || p.type === "bat" ){ inj[e.pa] -= r.I; inj[e.pb] += r.I; }
+  });
+  // 導線（と閉じたスイッチ）の電流：超節点の中で、導線を同じ小さな抵抗とみなして分ける
+  const groups = {}; used.forEach(p => { (groups[S(p)] = groups[S(p)] || []).push(p); });
+  Object.values(groups).forEach(pts => {
+    if(pts.length < 2) return;
+    const idx = {}; pts.forEach((p, i) => idx[p] = i); const k2 = pts.length;
+    const L = Array.from({ length: k2 }, () => new Array(k2).fill(0)), rhs = pts.map(p => inj[p]);
+    const wk = keys.filter(k => { const p = parts[k]; return (p.type === "wire" || (p.type === "sw" && p.on)) && idx[E[k].pa] != null; });
+    wk.forEach(k => { const a = idx[E[k].pa], c = idx[E[k].pb]; L[a][a]++; L[c][c]++; L[a][c]--; L[c][a]--; });
+    L[0] = new Array(k2).fill(0); L[0][0] = 1; rhs[0] = 0;
+    const y = gauss(L, rhs); if(!y) return;
+    wk.forEach(k => { res[k].I = y[idx[E[k].pa]] - y[idx[E[k].pb]]; });
+  });
+  return out;
+}
+
+/* ---------- 表示用の数値 ---------- */
+function f3(x){ if(!isFinite(x)) return "—"; const a = Math.abs(x); if(a < 5e-7) return "0"; if(a >= 1000) return x.toFixed(0); if(a >= 100) return x.toFixed(1); return x.toPrecision(3); }
+const fR = v => v >= 100 ? String(Math.round(v)) : String(Number(v.toPrecision(3)));
+const fVb = v => v.toFixed(1);
+
+/* ---------- 状態 ---------- */
+const ST = { tool: "select", sel: null, showVal: true, pot: false, elec: false, speed: 1, probe: [], hover: null };
+const Qd = {};           // 辺ごとの粒の位相
+let hist = [];
+function snapshot(){ hist.push(JSON.stringify(parts)); if(hist.length > 60) hist.shift(); }
+function save(){ try{ localStorage.setItem("circuit-sim-v1", JSON.stringify(parts)); }catch(e){} }
+function changed(){ SOL = solve(); save(); panel(); table(); draw(); }
+
+/* ---------- 道具 ---------- */
+const ICON = {
+  select: '<svg viewBox="0 0 34 22"><path d="M12 3 L12 18 L16 14 L19 20 L21.5 19 L18.5 13 L24 13 Z" fill="currentColor"/></svg>',
+  wire: '<svg viewBox="0 0 34 22"><circle cx="5" cy="11" r="2.4" fill="currentColor"/><circle cx="29" cy="11" r="2.4" fill="currentColor"/><line x1="5" y1="11" x2="29" y2="11" stroke="currentColor" stroke-width="2.2"/></svg>',
+  res: '<svg viewBox="0 0 34 22"><line x1="1" y1="11" x2="9" y2="11" stroke="currentColor" stroke-width="2"/><rect x="9" y="6.5" width="16" height="9" fill="none" stroke="currentColor" stroke-width="2"/><line x1="25" y1="11" x2="33" y2="11" stroke="currentColor" stroke-width="2"/></svg>',
+  bulb: '<svg viewBox="0 0 34 22"><line x1="1" y1="11" x2="9" y2="11" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M11.3 5.3 L22.7 16.7 M22.7 5.3 L11.3 16.7" stroke="currentColor" stroke-width="1.6"/><line x1="25" y1="11" x2="33" y2="11" stroke="currentColor" stroke-width="2"/></svg>',
+  bat: '<svg viewBox="0 0 34 22"><line x1="1" y1="11" x2="14" y2="11" stroke="currentColor" stroke-width="2"/><line x1="14" y1="7" x2="14" y2="15" stroke="currentColor" stroke-width="4"/><line x1="19" y1="2" x2="19" y2="20" stroke="currentColor" stroke-width="2"/><line x1="19" y1="11" x2="33" y2="11" stroke="currentColor" stroke-width="2"/></svg>',
+  sw: '<svg viewBox="0 0 34 22"><line x1="1" y1="15" x2="10" y2="15" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="15" r="2" fill="currentColor"/><line x1="10" y1="15" x2="24" y2="5" stroke="currentColor" stroke-width="2"/><circle cx="24" cy="15" r="2" fill="currentColor"/><line x1="24" y1="15" x2="33" y2="15" stroke="currentColor" stroke-width="2"/></svg>',
+  probe: '<svg viewBox="0 0 34 22"><circle cx="17" cy="11" r="9" fill="none" stroke="currentColor" stroke-width="2"/><text x="17" y="15.5" font-size="12" text-anchor="middle" fill="currentColor" font-weight="700">V</text></svg>',
+  erase: '<svg viewBox="0 0 34 22"><path d="M11 4 L23 18 M23 4 L11 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>'
+};
+const TOOLS = [["select","選ぶ"],["wire","導線"],["res","抵抗"],["bulb","電球"],["bat","電池"],["sw","スイッチ"],["probe","電圧計"],["erase","消す"]];
+const HINT = {
+  select: "部品をタップすると選ばれ、右（下）で値を変えられます。",
+  wire: "点から隣の点へドラッグすると導線が引けます（続けて引けます）。点と点の間のタップでも置けます。",
+  res: "点と点の間をタップするか、点から隣の点へドラッグして抵抗を置きます。",
+  bulb: "点と点の間をタップするか、ドラッグして電球を置きます。明るさは消費電力で表します。",
+  bat: "点から隣の点へドラッグすると、ドラッグした先が正極（＋）の電池を置きます。",
+  sw: "スイッチを置きます。「選ぶ」でタップすると、開く／閉じるを切りかえられます。",
+  probe: "2つの点を順にタップすると、2点間の電圧（1点目の電位 − 2点目の電位）を表示します。",
+  erase: "部品をタップ、またはなぞると消えます。"
+};
+$("tools").innerHTML = TOOLS.map(([t, nm]) => `<button type="button" class="tool" data-t="${t}" aria-pressed="${t === ST.tool}">${ICON[t]}<span>${nm}</span></button>`).join("");
+function setTool(t){ ST.tool = t; ST.probe = []; ST.hover = null; document.querySelectorAll(".tool").forEach(b => b.setAttribute("aria-pressed", b.dataset.t === t ? "true" : "false")); $("hint").textContent = HINT[t]; probeInfo(); draw(); }
+$("tools").addEventListener("click", e => { const b = e.target.closest(".tool"); if(b) setTool(b.dataset.t); });
+
+/* ---------- 描画 ---------- */
+const cv = $("cv"), ctx = cv.getContext("2d");
+let W = 0, H = 0, g = 60, ox = 0, oy = 0, col = {};
+const FONT = `"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`, MF = `"Times New Roman",Times,serif`;
+function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","shade","sheet","res","bulb","bat","hi","lo","net","sel","dot","paper","blue-soft"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
+function resize(){ const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0);
+  g = Math.min(W / COLS, H / ROWS); ox = (W - g * COLS) / 2 + g / 2; oy = (H - g * ROWS) / 2 + g / 2; draw(); }
+const XY = (c, r) => [ox + c * g, oy + r * g];
+function hex2rgb(h){ h = h.replace("#", ""); if(h.length === 3) h = h.split("").map(x => x + x).join(""); const n = parseInt(h, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function mix(a, b, t){ const A = hex2rgb(a), B = hex2rgb(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(",")})`; }
+function rgba(h, a){ const A = hex2rgb(h); return `rgba(${A[0]},${A[1]},${A[2]},${a})`; }
+function line(pts, color, w, dash){ ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore(); }
+function mt(str, x, y, color, size, align, bold, bg){
+  const parts_ = str.split(/(\{[^}]*\})/).filter(Boolean).map(p => p[0] === "{" ? { s: p.slice(1, -1), it: 1 } : { s: p, it: 0 });
+  const fo = p => p.it ? `italic ${Math.round(size * 1.12)}px ${MF}` : `${bold ? "700 " : ""}${size}px ${FONT}`;
+  ctx.save(); ctx.textBaseline = "middle"; let w = 0; parts_.forEach(p => { ctx.font = fo(p); p.w = ctx.measureText(p.s).width; w += p.w; });
+  let x0 = align === "right" ? x - w : align === "center" ? x - w / 2 : x;
+  if(bg){ ctx.fillStyle = col.sheet; ctx.globalAlpha = .85; ctx.fillRect(x0 - 2, y - size * .72, w + 4, size * 1.44); ctx.globalAlpha = 1; }
+  ctx.fillStyle = color; parts_.forEach(p => { ctx.font = fo(p); ctx.textAlign = "left"; ctx.fillText(p.s, x0, y); x0 += p.w; }); ctx.restore(); return w;
+}
+let potMin = 0, potMax = 1;
+function potCol(v){ const t = potMax - potMin > 1e-9 ? (v - potMin) / (potMax - potMin) : 0; return mix(col.lo, col.hi, Math.max(0, Math.min(1, t))); }
+function draw(){
+  if(!W) return; readColors();
+  ctx.clearRect(0, 0, W, H);
+  const fs = Math.max(10, Math.min(13, Math.round(g / 4.6)));
+  // 方眼の点
+  for(let r = 0; r < ROWS; r++) for(let c = 0; c < COLS; c++){ const p = XY(c, r); ctx.beginPath(); ctx.arc(p[0], p[1], Math.max(2, g * .045), 0, Math.PI * 2); ctx.fillStyle = col.dot; ctx.fill(); }
+  const sol = SOL, ok = sol && !sol.err;
+  if(ok){ const ph = [...sol.used].map(p => sol.phi[p]); potMin = Math.min(0, ...ph); potMax = Math.max(...ph); }
+  // ホバー（置く場所の予告）
+  if(ST.hover && ["wire","res","bulb","bat","sw","erase","select"].includes(ST.tool)){
+    const [a, b] = ends(ST.hover).map(q => XY(q[0], q[1]));
+    line([a, b], rgba(ST.tool === "erase" ? col.red : col.blue, .25), g * .22);
+  }
+  const keys = Object.keys(parts);
+  // 導線・スイッチ
+  keys.forEach(k => {
+    const p = parts[k], [A, B] = ends(k), a = XY(A[0], A[1]), b = XY(B[0], B[1]);
+    const ca = ok && ST.pot ? potCol(sol.phi[pid(A[0], A[1])]) : col.ink, cb = ok && ST.pot ? potCol(sol.phi[pid(B[0], B[1])]) : col.ink;
+    const grad = (c1, c2) => { if(c1 === c2) return c1; const gr = ctx.createLinearGradient(a[0], a[1], b[0], b[1]); gr.addColorStop(0.3, c1); gr.addColorStop(0.7, c2); return gr; };
+    const dx = (b[0] - a[0]) / g, dy = (b[1] - a[1]) / g, nx = -dy, ny = dx, m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], mid = m;
+    const at = t => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+    if(ST.sel === k){ line([a, b], rgba(col.sel, .28), g * .34); }
+    if(sol && sol.shortKeys.includes(k)){ line([a, b], rgba(col.red, .3), g * .4); }
+    if(p.type === "wire"){ line([a, b], grad(ca, cb), 2.6); }
+    else if(p.type === "sw"){
+      line([a, at(0.3)], ca, 2.6); line([at(0.7), b], cb, 2.6);
+      const p1 = at(0.3), p2 = at(0.7);
+      if(p.on) line([p1, p2], col.ink, 2.6);
+      else { const ang = -0.55, ux = dx, uy = dy, L = g * .42; line([p1, [p1[0] + (ux * Math.cos(ang) - uy * Math.sin(ang)) * L, p1[1] + (ux * Math.sin(ang) + uy * Math.cos(ang)) * L]], col.ink, 2.6); }
+      [p1, p2].forEach(q => { ctx.beginPath(); ctx.arc(q[0], q[1], 3.2, 0, Math.PI * 2); ctx.fillStyle = col.ink; ctx.fill(); });
+      mt(`{S}${subN(p.n)} ${p.on ? "閉" : "開"}`, m[0] + (nx ? nx * g * .3 : 0) + (dy ? g * .14 : 0), m[1] + (dx ? -g * .3 : 0), col.muted, fs, dy ? "left" : "center", false, true);
+    }
+    else if(p.type === "bat"){
+      const plusAtB = !!p.plus, tp = plusAtB ? 0.56 : 0.44, tm = plusAtB ? 0.44 : 0.56;
+      const cp = at(tp), cm = at(tm);
+      line([a, at(Math.min(tp, tm))], ca, 2.6); line([at(Math.max(tp, tm)), b], cb, 2.6);
+      const lp = g * .3, lm = g * .14;
+      line([[cp[0] + nx * lp, cp[1] + ny * lp], [cp[0] - nx * lp, cp[1] - ny * lp]], col.ink, 2.4);
+      line([[cm[0] + nx * lm, cm[1] + ny * lm], [cm[0] - nx * lm, cm[1] - ny * lm]], col.ink, 6);
+      const pl = at(plusAtB ? 0.72 : 0.28);
+      mt("＋", pl[0] + nx * g * .22 + (dy ? g * .02 : 0), pl[1] + ny * g * .22 - (dx ? g * .02 : 0), col.bat, fs, "center", true);
+      const rs = A[0] === 0 ? 1 : -1, lx = dy ? mid[0] + rs * g * .36 : mid[0], ly = dx ? mid[1] - g * .36 : mid[1];
+      mt(`{E}${subN(p.n)} ${fVb(p.val)} V`, lx, ly, col.bat, fs, dy ? (rs > 0 ? "left" : "right") : "center", true, true);
+    }
+    else {
+      const c = p.type === "res" ? col.res : col.bulb, r0 = sol && !sol.err ? sol.res[k] : null, P = r0 ? Math.max(0, r0.P) : 0;
+      if(p.type === "res"){
+        const hw = g * .12, t0 = 0.22, t1 = 0.78, a2 = at(t0), b2 = at(t1);
+        line([a, a2], ca, 2.6); line([b2, b], cb, 2.6);
+        const q = [[a2[0] + nx * hw, a2[1] + ny * hw], [b2[0] + nx * hw, b2[1] + ny * hw], [b2[0] - nx * hw, b2[1] - ny * hw], [a2[0] - nx * hw, a2[1] - ny * hw]];
+        ctx.save(); ctx.beginPath(); q.forEach((pt, i) => i ? ctx.lineTo(pt[0], pt[1]) : ctx.moveTo(pt[0], pt[1])); ctx.closePath();
+        ctx.fillStyle = col.sheet; ctx.fill(); if(ok && ST.pot){ const gr = ctx.createLinearGradient(a2[0], a2[1], b2[0], b2[1]); gr.addColorStop(0, rgba("#000000", 0)); ctx.fillStyle = grad(ca, cb); ctx.globalAlpha = .25; ctx.fill(); ctx.globalAlpha = 1; }
+        ctx.fillStyle = rgba(col.hi, Math.min(.75, Math.sqrt(P / 20) * .75)); ctx.fill();
+        ctx.strokeStyle = c; ctx.lineWidth = 2.4; ctx.stroke(); ctx.restore();
+      } else {
+        const R = g * .2, ce = mid;
+        line([a, at(0.5 - R / g)], ca, 2.6); line([at(0.5 + R / g), b], cb, 2.6);
+        const br = Math.min(1, Math.sqrt(P / 6));
+        if(br > 0.01){ const gr = ctx.createRadialGradient(ce[0], ce[1], R * .3, ce[0], ce[1], R * (1.4 + 1.6 * br)); gr.addColorStop(0, rgba(col.bulb, .85 * br)); gr.addColorStop(1, rgba(col.bulb, 0)); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(ce[0], ce[1], R * (1.4 + 1.6 * br), 0, Math.PI * 2); ctx.fill(); }
+        ctx.save(); ctx.beginPath(); ctx.arc(ce[0], ce[1], R, 0, Math.PI * 2); ctx.fillStyle = col.sheet; ctx.fill(); ctx.fillStyle = rgba(col.bulb, .15 + .8 * br); ctx.fill(); ctx.lineWidth = 2.2; ctx.strokeStyle = c; ctx.stroke();
+        const s = R * .7; ctx.beginPath(); ctx.moveTo(ce[0] - s, ce[1] - s); ctx.lineTo(ce[0] + s, ce[1] + s); ctx.moveTo(ce[0] + s, ce[1] - s); ctx.lineTo(ce[0] - s, ce[1] + s); ctx.lineWidth = 1.6; ctx.stroke(); ctx.restore();
+      }
+      // 名前と値
+      const nm = `{${TYPES[p.type].sym}}${subN(p.n)} ${fR(p.val)} Ω`;
+      if(dx){ mt(nm, mid[0], mid[1] - g * .3, c, fs, "center", true, true); }
+      else { const rs = A[0] === COLS - 1 ? -1 : 1; mt(nm, mid[0] + rs * g * .2, mid[1] - (ST.showVal && ok ? fs * .7 : 0), c, fs, rs > 0 ? "left" : "right", true, true); }
+      if(ST.showVal && ok && r0){
+        const s = r0.short ? "電流 0（両端が導線でつながっている）" : `${f3(Math.abs(r0.V))} V・${f3(Math.abs(r0.I))} A`;
+        if(dx) mt(s, mid[0], mid[1] + g * .3, col.ink, fs - 1, "center", false, true);
+        else { const rs = A[0] === COLS - 1 ? -1 : 1; mt(s, mid[0] + rs * g * .2, mid[1] + fs * .7, col.ink, fs - 1, rs > 0 ? "left" : "right", false, true); }
+      }
+    }
+  });
+  // 電流の粒
+  if(ok){
+    const sp = g / 3, rr = Math.max(2.4, g * .048);
+    keys.forEach(k => {
+      const p = parts[k], I = sol.res[k].I; if(p.type === "sw" && !p.on) return;
+      const [A, B] = ends(k), a = XY(A[0], A[1]), b = XY(B[0], B[1]);
+      const ph = (ST.elec ? -1 : 1) * (Qd[k] || 0) * g, first = ((ph % sp) + sp) % sp;
+      for(let u = first; u < g - 0.5; u += sp){
+        const t = u / g, x = a[0] + (b[0] - a[0]) * t, y = a[1] + (b[1] - a[1]) * t;
+        if(p.type === "bulb" && Math.abs(t - .5) < .2) continue;
+        ctx.beginPath(); ctx.arc(x, y, rr, 0, Math.PI * 2);
+        if(ST.elec){ ctx.fillStyle = col.lo; ctx.fill(); line([[x - rr * .55, y], [x + rr * .55, y]], "#fff", 1.2); }
+        else { const v = sol.phi[pid(A[0], A[1])] + (sol.phi[pid(B[0], B[1])] - sol.phi[pid(A[0], A[1])]) * (p.type === "res" ? Math.max(0, Math.min(1, (t - .22) / .56)) : p.type === "bat" ? (t < .5 ? 0 : 1) : (t < .5 ? 0 : 1)); ctx.fillStyle = ST.pot ? potCol(v) : col.hi; ctx.fill(); line([[x - rr * .55, y], [x + rr * .55, y]], "#fff", 1.2); line([[x, y - rr * .55], [x, y + rr * .55]], "#fff", 1.2); }
+      }
+    });
+  }
+  // 電流の値（導線は表示しない。電池の電流）
+  if(ST.showVal && ok){
+    keys.forEach(k => { const p = parts[k]; if(p.type !== "bat") return; const r0 = sol.res[k], [A, B] = ends(k), a = XY(A[0], A[1]), b = XY(B[0], B[1]), dx = (b[0] - a[0]) / g, mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+      const rs = A[0] === 0 ? 1 : -1;
+      mt(`${f3(Math.abs(r0.j))} A`, dx ? mid[0] : mid[0] + rs * g * .36, dx ? mid[1] + g * .36 : mid[1] + fs * 1.3, col.bat, fs - 1, dx ? "center" : (rs > 0 ? "left" : "right"), false, true); });
+  }
+  // 電圧計
+  ST.probe.forEach((q, i) => { const p = XY(q[0], q[1]); ctx.beginPath(); ctx.arc(p[0], p[1], g * .14, 0, Math.PI * 2); ctx.fillStyle = col.net; ctx.fill(); mt(i ? "B" : "A", p[0], p[1] + 1, "#fff", fs, "center", true); });
+  if(ST.probe.length === 2){ const a = XY(...ST.probe[0]), b = XY(...ST.probe[1]); line([a, b], col.net, 1.8, [6, 4]); }
+  // 電位の凡例
+  if(ok && ST.pot && potMax - potMin > 1e-9){
+    const x0 = W - 16 - 110, y0 = 22; const gr = ctx.createLinearGradient(x0, 0, x0 + 110, 0); gr.addColorStop(0, col.lo); gr.addColorStop(1, col.hi);
+    ctx.fillStyle = gr; ctx.fillRect(x0, y0, 110, 8);
+    mt("電位", x0 - 6, y0 + 4, col.muted, 11, "right");
+    mt(`${f3(potMin)} V`, x0, y0 + 18, col.muted, 11, "left"); mt(`${f3(potMax)} V`, x0 + 110, y0 + 18, col.muted, 11, "right");
+  }
+}
+
+/* ---------- 操作 ---------- */
+function hit(ev){ const r = cv.getBoundingClientRect(); const x = ev.clientX - r.left, y = ev.clientY - r.top; return { fx: (x - ox) / g, fy: (y - oy) / g }; }
+function nearPoint(h){ const c = Math.round(h.fx), r = Math.round(h.fy); if(c < 0 || r < 0 || c >= COLS || r >= ROWS) return null; const d = Math.hypot(h.fx - c, h.fy - r); return { c, r, d }; }
+function nearEdge(h){
+  let best = null;
+  const tryE = (c, r, d) => { if(c < 0 || r < 0) return; if(d === "h" && (c >= COLS - 1 || r >= ROWS)) return; if(d === "v" && (r >= ROWS - 1 || c >= COLS)) return;
+    const dist = d === "h" ? (h.fx < c ? Math.hypot(h.fx - c, h.fy - r) : h.fx > c + 1 ? Math.hypot(h.fx - c - 1, h.fy - r) : Math.abs(h.fy - r))
+                          : (h.fy < r ? Math.hypot(h.fx - c, h.fy - r) : h.fy > r + 1 ? Math.hypot(h.fx - c, h.fy - r - 1) : Math.abs(h.fx - c));
+    const along = d === "h" ? Math.abs(h.fx - c - .5) : Math.abs(h.fy - r - .5);
+    const score = dist + along * 0.15;
+    if(!best || score < best.score) best = { key: ek(c, r, d), dist, score }; };
+  const c = Math.floor(h.fx), r = Math.floor(h.fy), rc = Math.round(h.fx), rr = Math.round(h.fy);
+  tryE(c, rr, "h"); tryE(rc, r, "v");
+  return best && best.dist < 0.4 ? best : null;
+}
+function place(type, key, rev){
+  const old = parts[key];
+  if(type === "erase"){ if(old){ delete parts[key]; delete Qd[key]; if(ST.sel === key) ST.sel = null; return true; } return false; }
+  if(old && old.type === type){ if(type === "bat" && rev != null && (rev ? 0 : 1) !== old.plus){ old.plus = rev ? 0 : 1; return true; } return false; }
+  const p = { type };
+  if(type !== "wire") p.n = nextN(type);
+  if(type === "res" || type === "bulb") p.val = TYPES[type].def;
+  if(type === "bat"){ p.val = 6; p.plus = rev ? 0 : 1; }
+  if(type === "sw") p.on = false;
+  parts[key] = p; Qd[key] = 0;
+  return true;
+}
+let drag = null;
+cv.addEventListener("pointerdown", ev => {
+  const h = hit(ev), t = ST.tool;
+  cv.setPointerCapture && cv.setPointerCapture(ev.pointerId);
+  if(t === "probe"){ const q = nearPoint(h); if(q && q.d < .45){ if(ST.probe.length >= 2) ST.probe = []; ST.probe.push([q.c, q.r]); probeInfo(); draw(); } return; }
+  if(t === "select"){ const e = nearEdge(h); ST.sel = e && parts[e.key] ? e.key : null; panel(); table(); draw(); return; }
+  const q = nearPoint(h);
+  if(q && q.d < .3){ drag = { last: [q.c, q.r], done: false, snap: false }; return; }
+  const e = nearEdge(h);
+  if(e){
+    if(t !== "erase" && parts[e.key] && parts[e.key].type === t){ ST.sel = e.key; panel(); table(); draw(); return; }
+    snapshot(); if(place(t, e.key, null)){ if(t !== "wire" && t !== "erase") ST.sel = e.key; changed(); } else hist.pop();
+    if(t === "erase") drag = { last: null, done: false, erase: true };
+  }
+});
+cv.addEventListener("pointermove", ev => {
+  const h = hit(ev), t = ST.tool;
+  if(!drag){ const e = (t !== "probe") ? nearEdge(h) : null; const k = e ? e.key : null; if(k !== ST.hover){ ST.hover = ev.pointerType === "mouse" ? k : null; draw(); } return; }
+  if(drag.erase || (t === "erase")){ const e = nearEdge(h); if(e && parts[e.key]){ if(!drag.snap){ snapshot(); drag.snap = true; } place("erase", e.key); changed(); } return; }
+  const q = nearPoint(h); if(!q || q.d > .38) return;
+  const [lc, lr] = drag.last; if(q.c === lc && q.r === lr) return;
+  if(t !== "wire" && drag.done) return;
+  // 同じ行・列なら1マスずつ進める
+  const steps = [];
+  if(q.r === lr){ const s = Math.sign(q.c - lc); for(let c = lc; c !== q.c; c += s) steps.push([c, lr, c + s, lr]); }
+  else if(q.c === lc){ const s = Math.sign(q.r - lr); for(let r = lr; r !== q.r; r += s) steps.push([lc, r, lc, r + s]); }
+  else return;
+  if(t !== "wire") steps.length = 1;
+  if(!drag.snap){ snapshot(); drag.snap = true; }
+  steps.forEach(([c1, r1, c2, r2]) => { const e = edgeOf(c1, r1, c2, r2); if(place(t, e.key, e.rev) && t !== "wire") ST.sel = e.key; });
+  drag.last = t === "wire" ? [q.c, q.r] : drag.last; drag.done = true;
+  changed();
+});
+const endDrag = () => { drag = null; };
+cv.addEventListener("pointerup", endDrag); cv.addEventListener("pointercancel", endDrag);
+cv.addEventListener("pointerleave", () => { if(ST.hover){ ST.hover = null; draw(); } });
+
+/* ---------- 選んだ部品のパネル ---------- */
+function panel(){
+  const k = ST.sel, p = k && parts[k];
+  $("edNone").hidden = !!p; $("ed").hidden = !p;
+  if(!p) return;
+  $("edName").innerHTML = nameHTML(p);
+  const r0 = SOL && !SOL.err ? SOL.res[k] : null, Vv = Iq("V"), Ii = Iq("I"), Pp = Iq("P");
+  const rg = $("edRange"), nu = $("edNum");
+  const showVal = p.type === "res" || p.type === "bulb" || p.type === "bat";
+  $("edValRow").hidden = !showVal;
+  if(p.type === "res" || p.type === "bulb"){ rg.min = 1; rg.max = 100; rg.step = 1; rg.value = Math.min(100, Math.max(1, Math.round(p.val))); nu.min = 0.1; nu.max = 1000; nu.step = 0.1; nu.value = p.val; $("edUnit").textContent = "Ω"; }
+  if(p.type === "bat"){ rg.min = 0; rg.max = 24; rg.step = 0.5; rg.value = p.val; nu.min = 0; nu.max = 100; nu.step = 0.1; nu.value = p.val; $("edUnit").textContent = "V"; }
+  let btn = "";
+  if(p.type === "bat") btn += `<button type="button" class="btn ghost" data-a="flip">向きを反対に</button>`;
+  if(p.type === "sw") btn += `<button type="button" class="btn" data-a="toggle">${p.on ? "開く" : "閉じる"}</button>`;
+  btn += `<button type="button" class="btn danger" data-a="del">この部品を消す</button>`;
+  $("edBtns").innerHTML = btn;
+  let v = "", sub = "";
+  if(!r0){ v = SOL && SOL.err ? "回路に問題があるため計算できません。" : ""; }
+  else if(p.type === "res" || p.type === "bulb"){
+    v = `かかる電圧 ${Vv} ＝ <b>${f3(Math.abs(r0.V))} V</b><br>流れる電流 ${Ii} ＝ <b>${f3(Math.abs(r0.I))} A</b><br>消費電力 ${Pp} ＝ <b>${f3(r0.P)} W</b>`;
+    sub = r0.short ? "両端が導線だけでつながっている（短絡されている）ので、電流は流れません。" : Math.abs(r0.I) > 1e-6 ? `確かめ：${Ii} ＝ ${Vv}/${Iq("R")} ＝ ${f3(Math.abs(r0.V))} ÷ ${fR(p.val)} ＝ ${f3(Math.abs(r0.I))} A、${Pp} ＝ ${Vv}${Ii} ＝ ${f3(r0.P)} W` : "電流が流れていません（回路が閉じていない、またはスイッチが開いている）。";
+  }
+  else if(p.type === "bat"){
+    v = `電池の電圧 ${Vv} ＝ <b>${fVb(p.val)} V</b><br>電池を流れる電流 ${Ii} ＝ <b>${f3(Math.abs(r0.j))} A</b><br>電池が供給する電力 ${Pp} ＝ ${Vv}${Ii} ＝ <b>${f3(r0.P)} W</b>`;
+    sub = r0.j < -1e-6 ? "この電池には、電池の中を＋極から−極へ電流が流されています（ほかの電池に押し返されている）。供給する電力が負になっています。" : "";
+  }
+  else if(p.type === "sw"){ v = p.on ? `閉じている：流れる電流 ${Ii} ＝ <b>${f3(Math.abs(r0.I))} A</b>（両端の電圧は 0）` : `開いている：電流は流れない。両端の電圧 ＝ <b>${f3(Math.abs(r0.V))} V</b>`; }
+  else { v = `導線（抵抗 0）：流れる電流 ${Ii} ＝ <b>${f3(Math.abs(r0.I))} A</b>、両端の電圧 0 V`; }
+  $("edVals").innerHTML = v; $("edVals").hidden = !v; $("edSub").innerHTML = sub;
+}
+function setVal(v){ const p = parts[ST.sel]; if(!p || !isFinite(v)) return; if(p.type === "bat") v = Math.max(0, Math.min(100, v)); else v = Math.max(0.1, Math.min(1000, v)); p.val = Math.round(v * 10) / 10; SOL = solve(); save(); table(); draw();
+  const keep = document.activeElement; panel(); if(keep === $("edNum")) $("edNum").focus(); }
+let valSnap = false;
+$("edRange").addEventListener("pointerdown", () => { if(!valSnap){ snapshot(); valSnap = true; } });
+$("edRange").addEventListener("input", e => { setVal(+e.target.value); $("edNum").value = e.target.value; });
+$("edRange").addEventListener("change", () => { valSnap = false; });
+$("edNum").addEventListener("change", e => { snapshot(); setVal(+e.target.value); });
+$("edBtns").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return; const p = parts[ST.sel]; if(!p) return; snapshot();
+  if(b.dataset.a === "flip") p.plus = p.plus ? 0 : 1;
+  if(b.dataset.a === "toggle") p.on = !p.on;
+  if(b.dataset.a === "del"){ delete parts[ST.sel]; ST.sel = null; }
+  changed(); });
+
+/* ---------- 電圧計 ---------- */
+function probeInfo(){
+  const el = $("probeInfo");
+  if(ST.tool !== "probe"){ el.innerHTML = ""; return; }
+  if(ST.probe.length < 2){ el.innerHTML = ST.probe.length ? "2点目をタップしよう。" : "1点目をタップしよう。"; return; }
+  const [a, b] = ST.probe, ok = SOL && !SOL.err, pa = pid(a[0], a[1]), pb = pid(b[0], b[1]);
+  if(!ok){ el.innerHTML = "回路に問題があるため測れません。"; return; }
+  if(!SOL.used.has(pa) || !SOL.used.has(pb)){ el.innerHTML = "部品がつながっている点を選ぼう。"; return; }
+  const d = SOL.phi[pa] - SOL.phi[pb];
+  el.innerHTML = `<b style="color:var(--net)">点 A と点 B の間の電圧 ＝ ${f3(Math.abs(d))} V</b>（A の電位 ${f3(SOL.phi[pa])} V、B の電位 ${f3(SOL.phi[pb])} V。${Math.abs(d) < 1e-7 ? "同じ電位" : d > 0 ? "A のほうが高い" : "B のほうが高い"}）`;
+}
+
+/* ---------- 表 ---------- */
+const ORDER = { bat: 0, res: 1, bulb: 2, sw: 3 };
+function table(){
+  const ok = SOL && !SOL.err;
+  const ks = Object.keys(parts).filter(k => parts[k].type !== "wire").sort((a, b) => (ORDER[parts[a].type] - ORDER[parts[b].type]) || (parts[a].n - parts[b].n));
+  const sw = c => `<span class="sw" style="background:var(--${c})"></span>`;
+  $("tb").innerHTML = ks.length ? ks.map(k => {
+    const p = parts[k], r0 = ok ? SOL.res[k] : null, c = { bat: "bat", res: "res", bulb: "bulb", sw: "muted" }[p.type];
+    const val = p.type === "bat" ? `${fVb(p.val)} V` : p.type === "sw" ? (p.on ? "閉じている" : "開いている") : fR(p.val);
+    const V = r0 ? f3(Math.abs(r0.V)) : "—", I = r0 ? f3(Math.abs(p.type === "bat" ? r0.j : r0.I)) : "—";
+    const P = !r0 || p.type === "sw" ? "—" : p.type === "bat" ? `${f3(r0.P)}（供給）` : f3(r0.P);
+    return `<tr data-k="${k}" class="${ST.sel === k ? "on" : ""}"><td>${sw(c)}${nameHTML(p)}</td><td>${val}</td><td>${V}</td><td>${I}</td><td>${P}</td></tr>`;
+  }).join("") : `<tr><td colspan="5" style="text-align:center;color:var(--muted)">部品がありません。「回路の例」から選ぶか、部品を置こう。</td></tr>`;
+  // 合計と合成抵抗
+  let h = "";
+  const warn = $("warn");
+  warn.hidden = true;
+  if(SOL && SOL.err === "short"){ warn.hidden = false; warn.textContent = `ショート（短絡）：${SOL.shortKeys.map(k => nameOf(parts[k]).replace(/[{}]/g, "")).join("・")} の＋極と−極が、抵抗を通らずに導線だけでつながっています。実際の回路ではとても大きな電流が流れて危険です。導線を消すか、抵抗や電球をはさもう。`; }
+  else if(SOL && SOL.err === "loop"){ warn.hidden = false; warn.textContent = "電池どうしが抵抗をはさまずに導線だけでつながっていて、電流が決まりません。間に抵抗をはさもう。"; }
+  if(ok){
+    const bats = SOL.bats, sup = bats.reduce((s, k) => s + SOL.res[k].P, 0);
+    const cons = Object.keys(parts).filter(k => ["res", "bulb"].includes(parts[k].type)).reduce((s, k) => s + SOL.res[k].P, 0);
+    if(!bats.length) h = "電池を置くと電流が流れます。";
+    else {
+      h = `電池が供給する電力の合計 ＝ <b>${f3(sup)} W</b>、抵抗・電球で消費される電力の合計 ＝ <b>${f3(cons)} W</b>（エネルギーの保存：等しくなる）`;
+      if(bats.length === 1){ const k = bats[0], j = SOL.res[k].j, V = parts[k].val;
+        h += j > 1e-6 ? `<br>電池から見た回路全体の抵抗（合成抵抗）${Iq("R")} ＝ ${Iq("V")}/${Iq("I")} ＝ ${fVb(V)} V ÷ ${f3(j)} A ＝ <b>${f3(V / j)} Ω</b>` : "<br>電池から電流が流れ出ていません。回路が閉じているか（スイッチ・導線のつながり）を確かめよう。"; }
+    }
+  }
+  $("totals").innerHTML = h; $("totals").hidden = !h;
+}
+$("tb").addEventListener("click", e => { const tr = e.target.closest("tr[data-k]"); if(!tr) return; ST.sel = tr.dataset.k; if(ST.tool !== "select") setTool("select"); panel(); table(); draw(); });
+
+/* ---------- その他のボタン ---------- */
+function loadPreset(name, keepHash){
+  if(!PRESETS[name]) return;
+  snapshot(); parts = P_(PRESETS[name]); ST.sel = null; ST.probe = []; for(const k in Qd) delete Qd[k];
+  $("hint").textContent = PRESET_NOTE[name] || HINT[ST.tool];
+  if(!keepHash){ try{ history.replaceState(null, "", "#" + name); }catch(e){} }
+  changed(); probeInfo();
+}
+$("preset").addEventListener("change", e => { loadPreset(e.target.value); e.target.value = ""; });
+$("undoBtn").addEventListener("click", () => { if(!hist.length) return; parts = JSON.parse(hist.pop()); if(ST.sel && !parts[ST.sel]) ST.sel = null; changed(); });
+$("clearBtn").addEventListener("click", () => { if(!Object.keys(parts).length) return; snapshot(); parts = {}; ST.sel = null; ST.probe = []; changed(); probeInfo(); });
+$("cbVal").addEventListener("change", e => { ST.showVal = e.target.checked; draw(); });
+$("cbPot").addEventListener("change", e => { ST.pot = e.target.checked; draw(); });
+$("cbE").addEventListener("change", e => { ST.elec = e.target.checked; draw(); });
+$("selSp").addEventListener("change", e => { ST.speed = +e.target.value; });
+window.addEventListener("hashchange", () => loadPreset(location.hash.slice(1), true));
+
+/* ---------- アニメーション ---------- */
+let last = null;
+function tick(ts){
+  if(last == null) last = ts; const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
+  if(!reduce && SOL && !SOL.err){
+    let imax = 0; for(const k in SOL.res) imax = Math.max(imax, Math.abs(SOL.res[k].I));
+    const k0 = 0.9 * ST.speed, vmax = 3.2, f = imax * k0 > vmax ? vmax / (imax * k0) : 1;
+    for(const k in parts){ const I = SOL.res[k] ? SOL.res[k].I : 0; Qd[k] = ((Qd[k] || 0) + I * k0 * f * dt) % 1; }
+  }
+  draw();
+  requestAnimationFrame(tick);
+}
+const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+if(mq && mq.addEventListener) mq.addEventListener("change", draw);
+new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+if(window.ResizeObserver) new ResizeObserver(resize).observe(cv); else window.addEventListener("resize", resize);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+
+$("qs").innerHTML = [
+  ["「並列（抵抗2つ）」に、同じつなぎ方でもう1つ抵抗を並列に足すと、電池から流れ出る電流はどうなるか。", "大きくなります。並列につなぐ抵抗が増えると電流の通り道が増え、合成抵抗が小さくなるからです。もとからあった抵抗の電流は変わりません（電圧が電池の電圧のまま）。"],
+  ["「電球の明るさ比べ」で、いちばん明るい電球といちばん暗い電球の電力を比べよう。", "並列の電球はそれぞれ 6.0 V がかかり 3.6 W、直列の電球はそれぞれ 3.0 V で 0.90 W です。電力は 4 倍違います。直列では電圧が半分ずつに分かれ、P ＝ V²/R なので 1/4 になります。"],
+  ["「直列と並列の組み合わせ」で、R₁ にかかる電圧を手で計算し、シミュレーターで確かめよう。", "R₂ と R₃ の並列部分は 1/R ＝ 1/20 ＋ 1/30 より 12 Ω。全体は 10 ＋ 12 ＝ 22 Ω、電流は 6.0 ÷ 22 ≒ 0.273 A。R₁ の電圧は 10 × 0.273 ≒ 2.73 V、並列部分の電圧は 12 × 0.273 ≒ 3.27 V です。"],
+  ["「スイッチで切りかえる」で、スイッチを閉じると R₁ の電流・電圧・電力はどう変わるか。理由も説明しよう。", "大きくなります。スイッチを閉じると R₃ が R₂ と並列に加わり、並列部分の合成抵抗が 20 Ω から 10 Ω に小さくなります。全体の抵抗が小さくなって全体の電流が増えるので、R₁ の電流・電圧・電力が増えます（そのぶん R₂ の電圧は減ります）。"],
+  ["「一部を導線でつなぐ（短絡）」で R₂ に電流が流れないのはなぜか。電圧計で R₂ の両端を測ってみよう。", "R₂ の両端は導線でつながっていて、電位が等しい（電圧 0）からです。電圧がかからなければ、オームの法則 I ＝ V/R より電流は 0 です。電流はすべて抵抗 0 の導線のほうを流れます。"],
+  ["「ブリッジ回路」で R₅ に電流が流れない条件を、電圧計で点の電位を測って説明しよう。", "R₅ の両端の電位が等しいとき、R₅ には電流が流れません。そうなるのは、R₁ と R₃ で同じ割合だけ電位が下がるとき、つまり R₁：R₂ ＝ R₃：R₄ のときです（例：10：20 ＝ 20：40）。R₁ を変えると R₅ に電流が流れ始めます。"],
+  ["「電池2つ」で片方の電池の向きを反対にすると、電流はどうなるか。", "向きがそろっているときは電圧が足し合わされて 6.0 ＋ 3.0 ＝ 9.0 V、逆向きにすると 6.0 − 3.0 ＝ 3.0 V になり、電流が小さくなります。逆向きの電池は電気エネルギーを受け取る側になります（充電と同じ）。"]
+].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
+
+/* ---------- はじめ ---------- */
+const h0 = location.hash.slice(1);
+let loaded = false;
+if(PRESETS[h0]){ parts = P_(PRESETS[h0]); $("hint").textContent = PRESET_NOTE[h0]; loaded = true; }
+else { try{ const s = localStorage.getItem("circuit-sim-v1"); if(s){ const o = JSON.parse(s); if(o && typeof o === "object" && Object.keys(o).length){ parts = o; loaded = true; } } }catch(e){} }
+if(!loaded){ parts = P_(PRESETS.series); $("hint").textContent = PRESET_NOTE.series; }
+else if(!PRESETS[h0]) $("hint").textContent = HINT[ST.tool];
+SOL = solve(); panel(); table(); resize(); requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
