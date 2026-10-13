@@ -15,11 +15,12 @@ window.UNIT_LIST = [
     { id: "notation",   title: "表記ルールと測定値の扱い",   file: "units/notation.js" }
   ]},
   { group: "運動とエネルギー", units: [
-    { id: "anim-motion", title: "▶ 運動のシミュレーター",     href: "anim/index.html#motion", note: "平均と瞬間の速度・加速度、運動と x-t・v-t・a-t 図を連動させて、傾き・面積・式の意味を確かめよう。合成速度と相対速度・投射運動・モンキーハンティングも（月や惑星でも）" },
+    { id: "anim-motion", title: "▶ 運動のシミュレーター",     href: "anim/index.html#motion", note: "運動と x-t・v-t・a-t 図を連動させて、傾き・面積・式の意味を確かめよう。合成速度と相対速度・投射運動・モンキーハンティングも（月や惑星でも）" },
     { id: "kinematics", title: "速度・加速度（運動の表し方）", file: "units/kinematics.js" },
     { id: "free-fall",  title: "落体の運動",                 file: "units/free-fall.js" },
     { id: "force",      title: "力とつり合い",               file: "units/force.js" },
     { id: "newton",     title: "運動の法則",                 file: "units/newton.js" },
+    { id: "anim-energy", title: "▶ 仕事とエネルギーのシミュレーター", href: "anim/index.html#energy", note: "仕事と F-x グラフ・仕事率・仕事の原理、運動エネルギーの思考実験、位置エネルギー、力学的エネルギー保存を、エネルギー図と連動させて確かめよう" },
     { id: "energy",     title: "仕事と力学的エネルギー",     file: "units/energy.js" }
   ]},
   { group: "熱", units: [
@@ -37,6 +38,7 @@ window.UNIT_LIST = [
     { id: "ac",         title: "電流と磁場・交流",           file: "units/ac.js" }
   ]},
   { group: "エネルギーとその利用", units: [
+    { id: "anim-nuclear", title: "▶ 原子核と放射線のアニメーション", href: "anim/index.html#nuclear", note: "放射線の透過力と電離作用、崩壊と半減期（原子核を選べる）、核分裂の連鎖反応と制御棒、核融合" },
     { id: "energy-use", title: "エネルギーとその利用",       file: "units/energy-use.js" }
   ]}
 ];
