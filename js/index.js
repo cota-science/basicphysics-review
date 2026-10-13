@@ -15,7 +15,6 @@ window.UNIT_LIST = [
     { id: "notation",   title: "表記ルールと測定値の扱い",   file: "units/notation.js" }
   ]},
   { group: "運動とエネルギー", units: [
-    { id: "anim-motion", title: "▶ 運動のシミュレーター",     href: "anim/index.html#motion", note: "運動と x-t・v-t・a-t 図を連動させて、傾き・面積・式の意味を確かめよう（月や惑星でも）" },
     { id: "kinematics", title: "速度・加速度（運動の表し方）", file: "units/kinematics.js" },
     { id: "free-fall",  title: "落体の運動",                 file: "units/free-fall.js" },
     { id: "force",      title: "力とつり合い",               file: "units/force.js" },
@@ -32,7 +31,7 @@ window.UNIT_LIST = [
     { id: "sound",      title: "音",                         file: "units/sound.js" }
   ]},
   { group: "電気", units: [
-    { id: "anim-elec",  title: "▶ 電気のアニメーション",     href: "anim/index.html#elec", note: "オームの法則と電力、回路、ジュール熱、電流と磁場、モーター、電磁誘導と発電機" },
+    { id: "anim-elec",  title: "▶ 電気のアニメーション",     href: "anim/index.html#elec", note: "オームの法則と電力、回路、ジュール熱、電流と磁場、モーター、電磁誘導と発電機、変圧器と送電" },
     { id: "current",    title: "電流と電気抵抗",             file: "units/current.js" },
     { id: "ac",         title: "電流と磁場・交流",           file: "units/ac.js" }
   ]},
