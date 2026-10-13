@@ -135,15 +135,6 @@ const DEF_TABLE = `<div class="tbl"><table>
 <tr><td>自由端反射</td><td>自由端での反射。山は山のまま反射する（位相は変わらない）。自由端は合成波の腹になる</td></tr>
 <tr><td>固定端反射</td><td>固定端での反射。山は谷になって反射する（位相が逆になる）。固定端は合成波の節になる</td></tr>
 <tr><td>定在波（定常波）</td><td>逆向きに進む同じ波が重なってできる、どちらにも進まない波。振動しない点が節、最も大きく振動する点が腹<br><span style='color:var(--blue);font-weight:700'>節の間隔 ＝ ${L}/2</span></td></tr>
-<tr><th colspan='2' style='text-align:left;background:var(--blue-soft)'>音と固有振動</th></tr>
-<tr><td>音源</td><td>振動して音を出すもの（発音体）</td></tr>
-<tr><td>超音波</td><td>振動数がおよそ 20000 Hz より大きく、人の耳には聞こえない音</td></tr>
-<tr><td>固有振動</td><td>弦や気柱などが、長さや端の条件で決まる特定の振動数で振動すること。このとき定在波（定常波）ができる</td></tr>
-<tr><td>固有振動数</td><td>固有振動の振動数<br><span style='color:var(--blue);font-weight:700'>〔Hz〕</span></td></tr>
-<tr><td>基本振動</td><td>固有振動のうち、振動数が最も小さい（腹の数が最も少ない）振動。その振動数が基本振動数<br><span style='color:var(--blue);font-weight:700'>${Sb('f','1')}〔Hz〕</span></td></tr>
-<tr><td>倍振動</td><td>基本振動数の ${I('n')} 倍の振動数をもつ固有振動（${I('n')} 倍振動）。閉管では奇数倍だけが生じる<br><span style='color:var(--blue);font-weight:700'>${Sb('f',I('n'))} ＝ ${I('n')}${Sb('f','1')}</span></td></tr>
-<tr><td>気柱</td><td>管の中の空気の柱。閉じた端は変位の節、開いた端は変位の腹になる</td></tr>
-<tr><td>開口端補正</td><td>気柱の定在波（定常波）の腹が、管口より少し外側にできること。そのずれの長さ<br><span style='color:var(--blue);font-weight:700'>Δ${I('L')}〔m〕</span></td></tr>
 </table></div>
 <p>${y}-${x} グラフはある時刻の波形（山と山の間隔が波長）。${y}-${t} グラフは媒質の1点の振動（山と山の間隔が周期）。</p>
 <h3 style='font-size:15px;margin:14px 0 4px'>振動数と周期の関係</h3>

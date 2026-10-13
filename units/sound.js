@@ -39,17 +39,29 @@ ${env(60, 220, 138, 16, u => Math.cos(Math.PI * u))}
 })();
 
 const DEF_TABLE = `<div class="tbl"><table>
-<tr><th>用語</th><th>定義</th><th>式・単位</th></tr>
-<tr><td>音</td><td>空気などの媒質を伝わる縦波。真空中は伝わらない</td><td>―</td></tr>
-<tr><td>音速</td><td>空気中の音の速さ。気温 ${t}〔℃〕が高いほど大きい</td><td>${V} ＝ 331.5 ＋ 0.6${t}〔m/s〕</td></tr>
-<tr><td>音の3要素</td><td>高さ ← 振動数、大きさ ← 振幅、音色 ← 波形</td><td>―</td></tr>
-<tr><td>可聴音</td><td>人が聞くことのできる音。振動数はおよそ 20 Hz〜20000 Hz</td><td>―</td></tr>
-<tr><td>うなり</td><td>振動数がわずかに異なる2つの音が重なり、大きさが周期的に変わる現象</td><td>1 s 間の回数 ＝ |${f1} − ${f2}|</td></tr>
-<tr><td>弦の固有振動</td><td>両端が節の定在波（定常波）。長さ ${l} に半波長が ${n} 個入る</td><td>${L} ＝ 2${l}/${n}、${f} ＝ ${n}${v}/(2${l})</td></tr>
-<tr><td>閉管</td><td>閉じた端が節、開いた端が腹。基本振動数の奇数倍の音だけが生じる</td><td>基本振動：${l} ＝ ${L}/4</td></tr>
-<tr><td>開管</td><td>両端が腹。基本振動数の整数倍の音が生じる</td><td>基本振動：${l} ＝ ${L}/2</td></tr>
-<tr><td>共振（共鳴）</td><td>物体の固有振動数と同じ振動数で振動を与えると、大きく振動する現象</td><td>―</td></tr>
-</table></div><p>気柱の腹は管口より少し外側にできる（開口端補正）。この単元では開口端補正を無視する。</p>`;
+<colgroup><col style="width:6.6em"><col></colgroup>
+<tr><th>用語</th><th>定義（記号・式・単位）</th></tr>
+<tr><th colspan='2' style='text-align:left;background:var(--blue-soft)'>音の性質</th></tr>
+<tr><td>音源</td><td>振動して音を出すもの（発音体）</td></tr>
+<tr><td>音</td><td>空気などの媒質を伝わる縦波。真空中は伝わらない</td></tr>
+<tr><td>音速</td><td>空気中の音の速さ。気温 ${t}〔℃〕が高いほど大きい<br><span style='color:var(--blue);font-weight:700'>${V} ＝ 331.5 ＋ 0.6${t}〔m/s〕</span></td></tr>
+<tr><td>音の3要素</td><td>高さ ← 振動数、大きさ ← 振幅、音色 ← 波形</td></tr>
+<tr><td>可聴音</td><td>人が聞くことのできる音。振動数はおよそ 20&nbsp;Hz〜20000&nbsp;Hz</td></tr>
+<tr><td>超音波</td><td>振動数がおよそ 20000&nbsp;Hz より大きく、人の耳には聞こえない音</td></tr>
+<tr><td>うなり</td><td>振動数がわずかに異なる2つの音が重なり、大きさが周期的に変わる現象<br><span style='color:var(--blue);font-weight:700'>1 s 間の回数 ＝ |${f1} − ${f2}|</span></td></tr>
+<tr><th colspan='2' style='text-align:left;background:var(--blue-soft)'>固有振動</th></tr>
+<tr><td>固有振動</td><td>弦や気柱などが、長さや端の条件で決まる特定の振動数で振動すること。このとき定在波（定常波）ができる</td></tr>
+<tr><td>固有振動数</td><td>固有振動の振動数<br><span style='color:var(--blue);font-weight:700'>〔Hz〕</span></td></tr>
+<tr><td>基本振動</td><td>固有振動のうち、振動数が最も小さい（腹の数が最も少ない）振動。その振動数が基本振動数<br><span style='color:var(--blue);font-weight:700'>${f}<sub>1</sub>〔Hz〕</span></td></tr>
+<tr><td>倍振動</td><td>基本振動数の ${n} 倍の振動数をもつ固有振動（${n} 倍振動）。閉管では奇数倍だけが生じる<br><span style='color:var(--blue);font-weight:700'>${f}<sub>${n}</sub> ＝ ${n}${f}<sub>1</sub></span></td></tr>
+<tr><td>共振（共鳴）</td><td>物体の固有振動数と同じ振動数で振動を与えると、大きく振動する現象</td></tr>
+<tr><th colspan='2' style='text-align:left;background:var(--blue-soft)'>弦と気柱</th></tr>
+<tr><td>弦の固有振動</td><td>両端が節の定在波（定常波）。長さ ${l} に半波長が ${n} 個入る<br><span style='color:var(--blue);font-weight:700'>${L} ＝ 2${l}/${n}、${f} ＝ ${n}${v}/(2${l})</span></td></tr>
+<tr><td>気柱</td><td>管の中の空気の柱。閉じた端は変位の節、開いた端は変位の腹になる</td></tr>
+<tr><td>閉管</td><td>一方の端が閉じた管。閉じた端が節、開いた端が腹。基本振動数の奇数倍の音だけが生じる<br><span style='color:var(--blue);font-weight:700'>基本振動：${l} ＝ ${L}/4</span></td></tr>
+<tr><td>開管</td><td>両端が開いた管。両端が腹。基本振動数の整数倍の音が生じる<br><span style='color:var(--blue);font-weight:700'>基本振動：${l} ＝ ${L}/2</span></td></tr>
+<tr><td>開口端補正</td><td>気柱の定在波（定常波）の腹が、管口より少し外側にできること。そのずれの長さ<br><span style='color:var(--blue);font-weight:700'>Δ${l}〔m〕</span></td></tr>
+</table></div><p>この単元の問題では、とくに断りがなければ開口端補正を無視する。</p>`;
 const DIM_TABLE = `<div class="tbl"><table>
 <tr><th>量</th><th>単位</th></tr>
 <tr><td>音速 ${V}、弦を伝わる波の速さ ${v}</td><td>m/s</td></tr>
