@@ -15,7 +15,7 @@ window.UNIT_LIST = [
     { id: "notation",   title: "表記ルールと測定値の扱い",   file: "units/notation.js" }
   ]},
   { group: "運動とエネルギー", units: [
-    { id: "anim-motion", title: "▶ 運動のシミュレーター",     href: "anim/index.html#motion", note: "運動と x-t・v-t・a-t 図を連動させて、傾き・面積・式の意味を確かめよう。投射運動・モンキーハンティングも（月や惑星でも）" },
+    { id: "anim-motion", title: "▶ 運動のシミュレーター",     href: "anim/index.html#motion", note: "運動と x-t・v-t・a-t 図を連動させて、傾き・面積・式の意味を確かめよう。合成速度と相対速度・投射運動・モンキーハンティングも（月や惑星でも）" },
     { id: "kinematics", title: "速度・加速度（運動の表し方）", file: "units/kinematics.js" },
     { id: "free-fall",  title: "落体の運動",                 file: "units/free-fall.js" },
     { id: "force",      title: "力とつり合い",               file: "units/force.js" },
