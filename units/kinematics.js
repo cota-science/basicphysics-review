@@ -22,7 +22,10 @@ const DEF_TABLE = `<div class="tbl"><table>
 <tr><td>速さ</td><td>単位時間あたりに進む道のり</td><td>m/s</td><td>なし</td></tr>
 <tr><td>速度 <i class='qv'>v</i></td><td>単位時間あたりの変位。速さに向きを加えた量</td><td>m/s</td><td>あり</td></tr>
 <tr><td>平均の速度</td><td>変位 ÷ かかった時間</td><td>m/s</td><td>あり</td></tr>
+<tr><td>瞬間の速度</td><td>時間の幅 Δ<i class='qv'>t</i> を限りなく小さくしたときの平均の速度。<i class='qv'>x</i>-<i class='qv'>t</i> グラフの接線の傾き</td><td>m/s</td><td>あり</td></tr>
 <tr><td>加速度 <i class='qv'>a</i></td><td>単位時間あたりの<b>速度</b>の変化</td><td>m/s²</td><td>あり</td></tr>
+<tr><td>平均の加速度</td><td>速度の変化 ÷ かかった時間。<i class='qv'>v</i>-<i class='qv'>t</i> グラフの2点を結ぶ直線の傾き</td><td>m/s²</td><td>あり</td></tr>
+<tr><td>瞬間の加速度</td><td>Δ<i class='qv'>t</i> を限りなく小さくしたときの平均の加速度。<i class='qv'>v</i>-<i class='qv'>t</i> グラフの接線の傾き</td><td>m/s²</td><td>あり</td></tr>
 </table></div>
 <p class="formula">平均の速度 ＝ Δ<i class='qv'>x</i> ÷ Δ<i class='qv'>t</i>　　平均の加速度 <i class='qv'>a</i> ＝ Δ<i class='qv'>v</i> ÷ Δ<i class='qv'>t</i></p>${FORMULAS}`;
 const DIM_TABLE = `<div class="tbl"><table>
@@ -49,7 +52,7 @@ const UNITQ = ["m/s（速度）","m（変位）","s（時間）","m/s²（加速
 
 const SECTIONS = [
 { id:"def", advice:"変位・速度・加速度の定義を、定義カードで言葉と単位ごと覚え直そう。", tab:"①定義", title:"① 定義カード", back:"① 定義カード",
-  intro:`定義を正確に言えるかを確かめます。迷ったら定義カードを開いて確認してから答えましょう。<br>アニメーションで確かめよう：<br>${ANIM("anim/kinematics.html#uniform","等速直線運動")}${ANIM("anim/kinematics.html#slope","斜面を下る台車（等加速度直線運動）")}${ANIM("anim/kinematics.html#direct","加速度を自由に決める")}${ANIM("anim/relative.html#line-sum","合成速度と相対速度")}`,
+  intro:`定義を正確に言えるかを確かめます。迷ったら定義カードを開いて確認してから答えましょう。<br>アニメーションで確かめよう：<br>${ANIM("anim/average.html#v","平均の速度と瞬間の速度")}${ANIM("anim/average.html#a","平均の加速度と瞬間の加速度")}${ANIM("anim/kinematics.html#uniform","等速直線運動")}${ANIM("anim/kinematics.html#slope","斜面を下る台車（等加速度直線運動）")}${ANIM("anim/kinematics.html#direct","加速度を自由に決める")}${ANIM("anim/relative.html#line-sum","合成速度と相対速度")}`,
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
     {id:"d1",type:"blanks",text:"変位とは、{0}の変化であり、後の位置 − {1}で求める。単位は{2}。",
@@ -113,7 +116,7 @@ const SECTIONS = [
     {id:"rc4",type:"choice",prompt:"速度が大きい物体ほど、加速度も大きい。",options:TF,answer:1,
      explain:"誤り。高速でも等速なら <i class='qv'>a</i> ＝ 0 です。加速度は速度の「変化」の割合です。"},
     {id:"rc5",type:"choice",prompt:"平均の速度は、最初の速度と最後の速度を足して2で割れば必ず求まる。",options:TF,answer:1,
-     explain:"誤り。それが成り立つのは等加速度直線運動のときだけです。一般には「変位 ÷ 時間」で求めます。"}
+     explain:`誤り。それが成り立つのは等加速度直線運動のときだけです。一般には「変位 ÷ 時間」で求めます。${ANIM("anim/average.html#v","平均の速度と瞬間の速度")}`}
   ]},
   { title:"D. 問題文を表に置き換える", lead:"次の問題文を読み、表を完成させよ。解かなくてよい。",
     quote:"東向きに 15 m/s で走っていた自動車が、ブレーキをかけて一定の加速度で減速し、40 m 進んで停止した。このときの加速度を求めよ。", qs:[
