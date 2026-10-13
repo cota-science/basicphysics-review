@@ -46,13 +46,14 @@ const VT_GRAPH = `<svg class="graph" viewBox="0 0 320 180" role="img" aria-label
 <text x="138" y="108" font-size="12" fill="currentColor"><tspan font-style="italic" font-family="Times New Roman,Times,serif">t</tspan>₁</text>
 <text x="258" y="84" font-size="12" fill="currentColor">2<tspan font-style="italic" font-family="Times New Roman,Times,serif">t</tspan>₁</text>
 </svg>`;
+const ANIM = (href, label) => `<a href='${href}' style='display:inline-block;margin:8px 6px 0 0;padding:6px 12px;border:1.5px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:700;text-decoration:none;line-height:1.5'>▶ ${label}</a>`;
 const TF = ["正しい","誤り"];
 const UNITQ = ["m/s（速度・速さ）","m（高さ・変位）","s（時間）","m/s²（加速度）"];
 const SGN = ["正","負","0"];
 
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:"覚える量は重力加速度の大きさ <i class='qv'>g</i> ひとつだけ。あとは運動の名前と初速度の関係を覚えます。",
+  intro:`覚える量は重力加速度の大きさ <i class='qv'>g</i> ひとつだけ。あとは運動の名前と初速度の関係を覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/kinematics.html#ff-free","自由落下")}${ANIM("anim/kinematics.html#ff-down","鉛直投げ下ろし")}${ANIM("anim/kinematics.html#ff-up","鉛直投げ上げ")}${ANIM("anim/projectile.html#h","発展：水平投射・斜方投射")}`,
   advice:"<i class='qv'>g</i> の大きさと向き、そして「加速度はどこでも鉛直下向きに <i class='qv'>g</i>」を覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
@@ -92,7 +93,7 @@ const SECTIONS = [
     {id:"ra5",type:"choice",prompt:"「空気抵抗は無視できるものとする。」",options:["加速度が <i class='qv'>g</i> で一定","速度が一定","物体の質量が 0"],answer:0,
      explain:"重力だけを受けるので、加速度は <i class='qv'>g</i> で一定。等加速度直線運動の式が使えます。"}
   ]},
-  { title:"B. 正の向きと符号", qs:[
+  { title:"B. 正の向きと符号", lead:`同じ 20 m/s の投げ上げを、2通りの座標軸で比べよう：${ANIM("anim/kinematics.html#ff-rb-up","上向きを正")}${ANIM("anim/kinematics.html#ff-rb-down","下向きを正")}`, qs:[
     {id:"rb1",type:"blanks",prompt:"上向きを正として、20 m/s で真上に投げ上げた。",text:"<i class='qv'>v</i>₀ ＝ {0}　<i class='qv'>a</i> ＝ {1}",
      options:[["−20 m/s","＋20 m/s"],["＋9.8 m/s²","−9.8 m/s²"]],answer:[1,1],
      explain:"投げた向き（上）が正なので <i class='qv'>v</i>₀ は正。重力加速度は下向きなので <i class='qv'>a</i> は負です。"},
@@ -129,7 +130,7 @@ const SECTIONS = [
      options:["<i class='qv'>y</i> は出発点からの変位で、地面は屋上より下にあるので負になる","単位が違う","24.5 m ではなく 19.6 m を入れるべき"],answer:0,
      explain:"<i class='qv'>y</i> は「地面からの高さ」ではなく「原点からの変位」です。"}
   ]},
-  { title:"E. 投げ上げの <i class='qv'>v</i>-<i class='qv'>t</i> グラフを読む", lead:"上向き正で投げ上げたときの <i class='qv'>v</i>-<i class='qv'>t</i> グラフ。<i class='qv'>t</i>₁ でグラフが <i class='qv'>t</i> 軸と交わる。", figure:VT_GRAPH, qs:[
+  { title:"E. 投げ上げの <i class='qv'>v</i>-<i class='qv'>t</i> グラフを読む", lead:`上向き正で投げ上げたときの <i class='qv'>v</i>-<i class='qv'>t</i> グラフ。<i class='qv'>t</i>₁ でグラフが <i class='qv'>t</i> 軸と交わる。答えたら確かめよう：${ANIM("anim/kinematics.html#ff-graph","投げ上げの運動とグラフ")}`, figure:VT_GRAPH, qs:[
     {id:"re1",type:"blanks",text:"グラフの傾きは{0}を表し、その値は{1}である。",
      options:[["速度","加速度","高さ"],["＋9.8 m/s²","0","−9.8 m/s²"]],answer:[1,2],
      explain:"傾き ＝ 加速度 ＝ −<i class='qv'>g</i>。上昇中も下降中も同じ傾きの1本の直線です。"},
@@ -188,7 +189,7 @@ const SECTIONS = [
   advice:"正の向きを決めた時点で <i class='qv'>a</i> の符号を書き、2次方程式の解は必ず吟味しよう。",
   ref:{label:"符号と3式を見る", html:FORMULAS},
   groups:[
-  { title:"問題1（すべてのステップ）",
+  { title:"問題1（すべてのステップ）", lead:`解き終えたら確かめよう：${ANIM("anim/kinematics.html#ff-p1","問題1の運動とグラフ")}`,
     quote:"高さ 44.1 m のビルの屋上から、小球を静かにはなした。(1) 地面に達するまでの時間、(2) 地面に達する直前の速さを求めよ。", qs:[
     {id:"s11",type:"choice",prompt:"ステップ1　正の向きと <i class='qv'>a</i>（ここでは運動の向きを正にする）。",
      options:["上向き正、<i class='qv'>a</i> ＝ −<i class='qv'>g</i>","下向き正、<i class='qv'>a</i> ＝ ＋<i class='qv'>g</i>","下向き正、<i class='qv'>a</i> ＝ −<i class='qv'>g</i>"],answer:1,
@@ -213,7 +214,7 @@ const SECTIONS = [
      options:["約 106 km/h。空気抵抗を無視しているので大きめだが、あり得る値","速すぎるので計算が誤っている","速さは質量によるので判断できない"],answer:0,
      explain:"44 m（ビル約 14 階）からの落下。空気抵抗を無視した理想的な値として妥当です。"}
   ]},
-  { title:"問題2（ステップ1〜3だけ誘導）",
+  { title:"問題2（ステップ1〜3だけ誘導）", lead:`解き終えたら確かめよう：${ANIM("anim/kinematics.html#ff-p2","問題2の運動とグラフ")}`,
     quote:"小球を鉛直上向きに 19.6 m/s で投げ上げた。(1) 最高点に達するまでの時間、(2) 最高点の高さ、(3) 投げた点に戻るまでの時間を求めよ。", qs:[
     {id:"s21",type:"blanks",prompt:"ステップ1・2　上向き正、投げた点を原点として整理する（(1)(2) 用）。",text:"<i class='qv'>v</i>₀ ＝ {0}　<i class='qv'>a</i> ＝ {1}　最高点の <i class='qv'>v</i> ＝ {2}",
      options:[["＋19.6 m/s","−19.6 m/s","0"],["＋9.8 m/s²","0","−9.8 m/s²"],["−19.6 m/s","0","わからない"]],answer:[0,2,1],
@@ -229,7 +230,7 @@ const SECTIONS = [
      traps:{"0":"<i class='qv'>t</i> ＝ 0 は投げた瞬間です。もう1つの解を選びます。","2":"それは最高点までの時間です。"},
      explain:"0 ＝ 19.6<i class='qv'>t</i> − 4.9<i class='qv'>t</i>² より <i class='qv'>t</i> ＝ 0, 4.0。<i class='qv'>t</i> ＝ 0 は投げた瞬間なので 4.0 s。"}
   ]},
-  { title:"問題3（答えだけ入力・解の吟味）", lead:"紙に7ステップを書いて解き、答えを入力せよ。上向き正、屋上を原点とする。",
+  { title:"問題3（答えだけ入力・解の吟味）", lead:`紙に7ステップを書いて解き、答えを入力せよ。上向き正、屋上を原点とする。解き終えたら確かめよう：${ANIM("anim/kinematics.html#ff-p3","問題3の運動とグラフ")}`,
     quote:"高さ 24.5 m のビルの屋上から、小球を鉛直上向きに 19.6 m/s で投げ上げた。", qs:[
     {id:"s31",type:"num",prompt:"(1) 小球が地面に達するのは何秒後か。",answer:5.0,tol:0.05,unit:"s",
      traps:{"-1":"負の解は投げる前の時刻です。捨てましょう。"},

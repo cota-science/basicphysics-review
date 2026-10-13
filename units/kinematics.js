@@ -42,13 +42,14 @@ const VT_GRAPH = `<svg class="graph" viewBox="0 0 320 170" role="img" aria-label
 <text x="18" y="96" font-size="12" fill="currentColor">0</text>
 <text x="170" y="110" font-size="12" fill="currentColor">交点</text>
 </svg>`;
+const ANIM = (href, label) => `<a href='${href}' style='display:inline-block;margin:8px 6px 0 0;padding:6px 12px;border:1.5px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:700;text-decoration:none;line-height:1.5'>▶ ${label}</a>`;
 const DIR = ["大きくなる","小さくなる"];
 const TF = ["正しい","誤り"];
 const UNITQ = ["m/s（速度）","m（変位）","s（時間）","m/s²（加速度）"];
 
 const SECTIONS = [
 { id:"def", advice:"変位・速度・加速度の定義を、定義カードで言葉と単位ごと覚え直そう。", tab:"①定義", title:"① 定義カード", back:"① 定義カード",
-  intro:"定義を正確に言えるかを確かめます。迷ったら定義カードを開いて確認してから答えましょう。",
+  intro:`定義を正確に言えるかを確かめます。迷ったら定義カードを開いて確認してから答えましょう。<br>アニメーションで確かめよう：<br>${ANIM("anim/kinematics.html#uniform","等速直線運動")}${ANIM("anim/kinematics.html#slope","斜面を下る台車（等加速度直線運動）")}${ANIM("anim/kinematics.html#direct","加速度を自由に決める")}`,
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
     {id:"d1",type:"blanks",text:"変位とは、{0}の変化であり、後の位置 − {1}で求める。単位は{2}。",
@@ -123,7 +124,7 @@ const SECTIONS = [
      options:["<i class='qv'>t</i> がわからず求めもしないので、<i class='qv'>v</i>² − <i class='qv'>v</i>₀² ＝ 2<i class='qv'>ax</i>","<i class='qv'>x</i> がわからないので、<i class='qv'>v</i> ＝ <i class='qv'>v</i>₀ ＋ <i class='qv'>at</i>","<i class='qv'>a</i> を求めるので、<i class='qv'>x</i> ＝ <i class='qv'>v</i>₀<i class='qv'>t</i> ＋ ½<i class='qv'>at</i>²"],answer:0,
      explain:"わからず、求めもしない量は <i class='qv'>t</i>。<i class='qv'>t</i> を含まない <i class='qv'>v</i>² − <i class='qv'>v</i>₀² ＝ 2<i class='qv'>ax</i> を使います。"}
   ]},
-  { title:"E. グラフを言葉で読む", lead:"次の <i class='qv'>v</i>-<i class='qv'>t</i> グラフについて答えよ。", figure:VT_GRAPH, qs:[
+  { title:"E. グラフを言葉で読む", lead:`次の <i class='qv'>v</i>-<i class='qv'>t</i> グラフについて答えよ。答えたら確かめよう：${ANIM("anim/kinematics.html#k-graph","このグラフの運動を動かす")}`, figure:VT_GRAPH, qs:[
     {id:"re1",type:"blanks",text:"グラフの傾きは{0}を表し、単位は (m/s) ÷ (s) ＝ {1}である。",
      options:[["速度","変位","加速度"],["m","m/s²","m/s"]],answer:[2,1],
      explain:"傾き ＝ 速度の変化 ÷ 時間 ＝ 加速度。単位は m/s²。"},
@@ -179,7 +180,7 @@ const SECTIONS = [
   intro:"7つのステップで解きます。①正の向き → ②既知・未知 → ③式を選ぶ → ④文字式 → ⑤次元 → ⑥数値 → ⑦妥当性。問題1はすべてのステップ、問題2は一部、問題3は答えだけを入力します。",
   ref:{label:"3式を見る", html:FORMULAS},
   groups:[
-  { title:"問題1（すべてのステップ）",
+  { title:"問題1（すべてのステップ）", lead:`解き終えたら確かめよう：${ANIM("anim/kinematics.html#k-p1","問題1の運動とグラフ")}`,
     quote:"東向きに 15 m/s で走っていた自動車が、ブレーキをかけて一定の加速度で減速し、40 m 進んで停止した。このときの加速度を求めよ。", qs:[
     {id:"s11",type:"choice",prompt:"ステップ1　正の向きをどちらにとるか（ここでは進む向きにとる）。",options:["西向き","東向き"],answer:1,
      explain:"進む向き（東）を正にすると、<i class='qv'>v</i>₀ が正になり考えやすくなります。"},
@@ -212,7 +213,7 @@ const SECTIONS = [
     {id:"s24",type:"num",prompt:"(2) 進んだ距離",answer:12,tol:0.1,unit:"m",
      traps:{"24":"½ が抜けていませんか。","6":"<i class='qv'>t</i>² になっていますか。"},explain:"<i class='qv'>x</i> ＝ ½<i class='qv'>at</i>² ＝ ½ × 1.5 × 4.0² ＝ 12 m。（平均の速度 3.0 m/s × 4.0 s でも求まります）"}
   ]},
-  { title:"問題3（答えだけ入力・符号に注意）", lead:"紙に7ステップを書いて解き、答えを入力せよ。東向きを正とする。",
+  { title:"問題3（答えだけ入力・符号に注意）", lead:`紙に7ステップを書いて解き、答えを入力せよ。東向きを正とする。解き終えたら確かめよう：${ANIM("anim/kinematics.html#k-p3","問題3の運動（位置と道のり）")}`,
     quote:"東向きに 10 m/s で動いている物体に、西向きに 2.0 m/s² の一定の加速度が生じている。", qs:[
     {id:"s31",type:"num",prompt:"(1) 物体が一瞬止まるのは何秒後か。",answer:5,tol:0.05,unit:"s",explain:"0 ＝ 10 − 2.0<i class='qv'>t</i> より <i class='qv'>t</i> ＝ 5.0 s。"},
     {id:"s32",type:"num",prompt:"(2) それまでに進む距離（向きは東）",answer:25,tol:0.2,unit:"m",
