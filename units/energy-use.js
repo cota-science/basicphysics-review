@@ -62,10 +62,11 @@ const STEPS = `<p>1 エネルギーの流れ（投入 → 目的のエネルギ�
 const TF = ["正しい","誤り"];
 const UNITQ = ["W（電力）","J（エネルギー）","Gy（吸収線量）","Bq（放射能の強さ）"];
 const RAYS = ["α線","β線","γ線"];
+const ANIM = (href, label) => `<a href='${href}' style='display:inline-block;margin:8px 6px 0 0;padding:6px 12px;border:1.5px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:700;text-decoration:none;line-height:1.5'>▶ ${label}</a>`;
 
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:"エネルギーの変換と、原子核・放射線の用語を正確に覚えます。似た用語（放射線と放射能、Gy と Sv）の違いに注意します。",
+  intro:`エネルギーの変換と、原子核・放射線の用語を正確に覚えます。似た用語（放射線と放射能、Gy と Sv）の違いに注意します。<br>アニメーションで確かめよう：<br>${ANIM("anim/nuclear.html#rays","放射線の種類と性質")}${ANIM("anim/nuclear.html#rays-mag","磁場の中の放射線")}${ANIM("anim/nuclear.html#decay","崩壊と半減期")}${ANIM("anim/nuclear.html#fission","核分裂と連鎖反応")}${ANIM("anim/nuclear.html#fusion","核融合")}`,
   advice:"変換効率の定義、原子番号と質量数、放射線の種類と単位の違いを覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
@@ -105,14 +106,14 @@ const SECTIONS = [
     {id:"ra6",type:"choice",prompt:"同じ吸収線量（Gy）なら、放射線の種類によらず人体への影響（Sv）は同じである。",options:TF,answer:1,
      explain:"誤り。同じエネルギーを吸収しても、放射線の種類によって影響が異なるので、Sv で表します。"}
   ]},
-  { title:"B. 半減期のグラフを読む", lead:"ある放射性原子核の数 <i class='qv'>N</i> の、はじめの数 <i class='qv'>N</i>₀ に対する割合と経過日数の関係。", figure:DECAY, qs:[
+  { title:"B. 半減期のグラフを読む", lead:`ある放射性原子核の数 <i class='qv'>N</i> の、はじめの数 <i class='qv'>N</i>₀ に対する割合と経過日数の関係。${ANIM("anim/nuclear.html#decay-i131","半減期 8.0 日（ヨウ素 131）のシミュレーション")}`, figure:DECAY, qs:[
     {id:"rb1",type:"num",prompt:"この原子核の半減期を読め。",answer:8,tol:0.1,unit:"日",traps:{"16":"割合が 1/2 になるまでの時間を読みます。"},explain:"割合が 1/2 になるのは 8 日後です。"},
     {id:"rb2",type:"choice",prompt:"24 日後に残っている割合はどれか。",options:["1/8","1/3","1/6"],answer:0,
      explain:"24 ÷ 8 ＝ 3 回半分になるので、(1/2)³ ＝ 1/8。"},
     {id:"rb3",type:"choice",prompt:"0 日から 8 日の間と、8 日から 16 日の間で、減った原子核の数を比べるとどうか。",options:["0〜8 日のほうが多い","同じ","8〜16 日のほうが多い"],answer:0,
      explain:"減る割合はどちらも半分ですが、もとの数が違うので、減る数は前半のほうが多くなります。"}
   ]},
-  { title:"C. 崩壊を読む", qs:[
+  { title:"C. 崩壊を読む", lead:`${ANIM("anim/nuclear.html#decay-ra226","α崩壊（ラジウム 226）")}${ANIM("anim/nuclear.html#decay-c14","β崩壊（炭素 14）")}`, qs:[
     {id:"rc1",type:"blanks",prompt:"α崩壊（ヘリウム原子核を放出）",text:"質量数は{0}減り、原子番号は{1}減る。",options:[["4","2","1"],["4","2","1"]],answer:[0,1],
      explain:"ヘリウム原子核は陽子2個と中性子2個からできています。"},
     {id:"rc2",type:"choice",prompt:"β崩壊（原子核内の中性子が陽子に変わり、電子を放出）では、どうなるか。",options:["原子番号が 1 増え、質量数は変わらない","原子番号が 1 減り、質量数も 1 減る","原子番号も質量数も変わらない"],answer:0,
@@ -165,7 +166,7 @@ const SECTIONS = [
     {id:"s22",type:"num",prompt:"この電動機の変換効率は何 % か（有効数字2桁）。",answer:59,tol:0.6,unit:"%",traps:{"170":"目的 ÷ 投入です。","0.59":"% で答えます。"},
      explain:"117.6 ÷ 200 ＝ 0.588 ≒ 59%。残りは熱や音として周囲に散らばります。"}
   ]},
-  { title:"問題3（半減期）", quote:"半減期 8.0 日の放射性物質がある。はじめの放射能の強さは 1.6 × 10⁴ Bq であった。", qs:[
+  { title:"問題3（半減期）", lead:ANIM("anim/nuclear.html#decay-i131","半減期 8.0 日のシミュレーション（解き終えたら確かめよう）"), quote:"半減期 8.0 日の放射性物質がある。はじめの放射能の強さは 1.6 × 10⁴ Bq であった。", qs:[
     {id:"s31",type:"num",prompt:"32 日後までに、半分になる回数は何回か。",answer:4,tol:0.01,unit:"回",traps:{"256":"回数は 32 ÷ 8 です。"},explain:"32 ÷ 8.0 ＝ 4 回。"},
     {id:"s32",type:"choice",prompt:"32 日後に残っている放射性原子核の割合はどれか。",options:["1/16","1/4","1/8","1/32"],answer:0,explain:"(1/2)⁴ ＝ 1/16。"},
     {id:"s33",type:"num",prompt:"32 日後の放射能の強さは何 Bq か。",answer:1000,tol:5,unit:"Bq",traps:{"4000":"4 で割るのではなく、16 で割ります。"},
