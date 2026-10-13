@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>変圧器と送電</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: two sheets. (1) Transformer: canvas (AC source, iron core with two coils, lamp) + waveform canvas, sliders (N1, N2, V1, load R), AC/DC toggle, readout table. (2) Power transmission: canvas (plant → step-up → long line → step-down → town), sliders (transmission voltage, power, line resistance), bars, table for all voltages, log-log graph of loss vs voltage. Questions last. */
+@font-face{font-family:"OhmFix";font-weight:400;src:local("Segoe UI"),local("Meiryo"),local("Hiragino Sans W3"),local("Roboto"),local("Arial");unicode-range:U+03A9,U+2126}
+@font-face{font-family:"OhmFix";font-weight:700;src:local("Segoe UI Bold"),local("Meiryo Bold"),local("Hiragino Sans W6"),local("Roboto Bold"),local("Arial Bold");unicode-range:U+03A9,U+2126}
+:root{
+  --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
+  --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
+  --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3; --shade:#EEF2F6;
+  --c1:#2A62C9; --c2:#C2780F; --core:#7D8794; --flux:#1E8A4C; --cur:#D2452F; --hot:#D2452F; --ok:#1E8A4C; --lamp:#F2B705;
+  --body:"OhmFix","BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --math:"Times New Roman",Times,"Noto Serif",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+    --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+    --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+    --c1:#7FA8FF; --c2:#F0A84A; --core:#8E99A6; --flux:#5FD08F; --cur:#FF8068; --hot:#FF8068; --ok:#5FD08F; --lamp:#F2C14E; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+  --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+  --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+  --c1:#7FA8FF; --c2:#F0A84A; --core:#8E99A6; --flux:#5FD08F; --cur:#FF8068; --hot:#FF8068; --ok:#5FD08F; --lamp:#F2C14E; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qv{font-family:var(--math);font-style:italic;font-size:1.08em}
+html{scroll-padding-top:110px}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.top-inner{max-width:1080px;margin:0 auto;padding:10px 16px 10px}
+.back{font-size:14px;color:var(--blue);text-decoration:none}
+h1{font-size:19px;margin:2px 0 0;line-height:1.4}
+.nav{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin-top:2px}
+.nav a{color:var(--blue);text-decoration:none}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:700}
+main{max-width:1080px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px;min-width:0}
+h2{font-size:20px;margin:0 0 4px;line-height:1.4}
+h3{font-size:16px;margin:0 0 6px}
+.lead{margin:0 0 12px;color:var(--muted);font-size:15px}
+.toc{display:flex;flex-wrap:wrap;gap:4px 16px;margin:0;padding:0;list-style:none;font-size:15px}
+.toc a{color:var(--blue);text-decoration:none;font-weight:700}
+.stage{position:relative;width:100%;aspect-ratio:2/1;background:var(--sheet);border:1px solid var(--line);border-radius:4px}
+.stage.line{aspect-ratio:2.6/1}
+.wbox{position:relative;width:100%;aspect-ratio:5/1;background:var(--sheet);border:1px solid var(--line);border-radius:4px;margin-top:8px}
+.gbox{position:relative;width:100%;aspect-ratio:2.2/1;background:var(--sheet);border:1px solid var(--line);border-radius:4px}
+@media (max-width:760px){.stage{aspect-ratio:1.3/1}.stage.line{aspect-ratio:1.5/1}.wbox{aspect-ratio:2.6/1}.gbox{aspect-ratio:1.4/1}}
+canvas{display:block;width:100%;height:100%}
+.sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:6px 18px;margin-top:12px}
+.sl{display:grid;grid-template-columns:auto 1fr;gap:0 10px;align-items:center;font-size:14px}
+.sl output{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+.sl input[type=range]{grid-column:1/-1;width:100%;min-height:32px;accent-color:var(--blue)}
+.ctrl{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-top:10px;font-size:14px;color:var(--muted)}
+.btn{border:0;border-radius:8px;padding:6px 14px;min-height:42px;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.btn.ghost{background:none;color:var(--blue);border:1.5px solid var(--blue)}
+.seg{display:inline-flex;border:1.5px solid var(--blue);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:none;color:var(--blue);padding:6px 14px;min-height:40px;font-weight:700;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--btn);color:#fff}
+.tbl{overflow-x:auto;margin-top:12px}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:center}
+th{background:var(--shade);font-size:13px;line-height:1.45}
+td:first-child,th:first-child{text-align:left;white-space:nowrap}
+tr.on td{background:var(--blue-soft);font-weight:700}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;margin-top:12px}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+.two>div{min-width:0}
+.bars{display:grid;gap:8px}
+.bar .lab{display:flex;justify-content:space-between;font-size:14px;gap:8px}
+.bar .tr{display:flex;height:26px;background:var(--shade);border-radius:5px;overflow:hidden;margin-top:2px}
+.bar .tr div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden}
+.read{margin-top:10px;padding:8px 12px;background:var(--shade);border-radius:6px;font-size:15px;line-height:1.85;font-variant-numeric:tabular-nums}
+.read b{color:var(--blue)}
+.def{margin-top:12px;padding:12px 14px;border:1.5px solid var(--blue);border-radius:8px;background:var(--blue-soft);font-size:15px}
+.def h3{margin:0 0 4px;color:var(--blue)}
+.warn{color:var(--red);font-weight:700}
+.note{font-size:13px;color:var(--muted);margin:8px 0 0}
+.qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
+.qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
+.ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <a class="back" id="backLink" href="../index.html#/u/ac/0" hidden>‹ 電流と磁場・交流（Webテスト）へ</a>
+    <h1>変圧器と送電</h1>
+    <nav class="nav" id="nav" hidden aria-label="アニメーション">
+      <a href="index.html#elec">≡ アニメーション集</a>
+      <a href="ohm.html">電流の定義・オームの法則と電力</a>
+      <a href="circuit.html">回路シミュレーター</a>
+      <a href="joule.html">電熱線で水を温める</a>
+      <a href="magnetic.html">電流がつくる磁場</a>
+      <a href="motor.html">電流が磁場から受ける力とモーター</a>
+      <a href="induction.html">電磁誘導と発電機</a>
+      <a href="transformer.html" aria-current="page">変圧器と送電</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <nav class="sheet" aria-label="このページの内容" style="padding:12px 16px">
+    <ul class="toc">
+      <li><a href="#trans">1 変圧器（トランス）のしくみ</a></li>
+      <li><a href="#power">2 高い電圧で送電するわけ</a></li>
+    </ul>
+  </nav>
+
+  <section class="sheet" id="trans" aria-labelledby="t1">
+    <h2 id="t1">1 変圧器：電圧の比 ＝ 巻き数の比</h2>
+    <p class="lead">鉄心に2つのコイルを巻いたものが変圧器です。1次コイルに交流を流すと、鉄心の中の磁場（磁力線）が向きと強さを変え続け、それが2次コイルを貫くので、2次コイルに電磁誘導で交流電圧が生じます。巻き数と電圧を変えて確かめよう（動きはゆっくりにしてあります）。</p>
+    <div class="stage"><canvas id="cv1" role="img" aria-label="左に交流電源、中央に四角い鉄心と左右に巻いた1次コイルと2次コイル、右に電球。鉄心の中の磁力線の向きが周期的に入れかわり、2つの回路を電流が行ったり来たりする。"></canvas></div>
+    <div class="wbox"><canvas id="wv" role="img" aria-label="1次電圧と2次電圧の時間変化のグラフ。"></canvas></div>
+    <div class="ctrl">
+      <div class="seg" role="group" aria-label="電源の種類"><button type="button" data-s="ac" aria-pressed="true">交流</button><button type="button" data-s="dc" aria-pressed="false">直流</button></div>
+      <button type="button" class="btn ghost" id="pre1">④手順 問題1 の値にする</button>
+    </div>
+    <div class="sliders">
+      <label class="sl" for="sN1"><span>1次コイルの巻き数 <i class="qv">N</i>₁</span><output id="oN1"></output><input type="range" id="sN1" min="5" max="1000" step="5" value="500"></label>
+      <label class="sl" for="sN2"><span>2次コイルの巻き数 <i class="qv">N</i>₂</span><output id="oN2"></output><input type="range" id="sN2" min="5" max="1000" step="5" value="100"></label>
+      <label class="sl" for="sV1"><span>1次電圧 <i class="qv">V</i>₁（実効値）</span><output id="oV1"></output><input type="range" id="sV1" min="0" max="200" step="5" value="100"></label>
+      <label class="sl" for="sR"><span>2次側につなぐ抵抗（電球）<i class="qv">R</i></span><output id="oR"></output><input type="range" id="sR" min="0" max="10" step="1" value="4"></label>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th></th><th>巻き数 <i class="qv">N</i></th><th>電圧 <i class="qv">V</i>〔V〕</th><th>電流 <i class="qv">I</i>〔A〕</th><th>電力 <i class="qv">P</i> ＝ <i class="qv">VI</i>〔W〕</th></tr></thead>
+      <tbody id="tb1"></tbody>
+    </table></div>
+    <div class="read" id="read1"></div>
+    <div class="def"><h3>理想的な変圧器</h3>どちらのコイルも同じ鉄心の磁力線に貫かれているので、1巻きあたりに生じる電圧は等しく、<b>電圧の比は巻き数の比</b>になります：<i class="qv">V</i>₁ : <i class="qv">V</i>₂ ＝ <i class="qv">N</i>₁ : <i class="qv">N</i>₂。電力の損失がなければ <b>1次側と2次側の電力は等しく</b>（<i class="qv">V</i>₁<i class="qv">I</i>₁ ＝ <i class="qv">V</i>₂<i class="qv">I</i>₂）、電圧を上げると電流は小さくなります。直流では磁場が変化しないので、2次コイルに電圧は生じません。</div>
+  </section>
+
+  <section class="sheet" id="power" aria-labelledby="t2">
+    <h2 id="t2">2 高い電圧で送電すると、送電線で失われる電力が小さくなる</h2>
+    <p class="lead">発電所から遠くの町へ、同じ電力 <i class="qv">P</i> を送ります。送電線には抵抗 <i class="qv">r</i> があり、電流 <i class="qv">I</i> が流れるとジュール熱 <i class="qv">rI</i>² が発生して、その分の電力が失われます。<i class="qv">P</i> ＝ <i class="qv">VI</i> なので、送電電圧 <i class="qv">V</i> を高くすると電流 <i class="qv">I</i> が小さくなり、失われる電力は 1/<i class="qv">V</i>² に比例して小さくなります。</p>
+    <div class="stage line"><canvas id="cv2" role="img" aria-label="左に発電所と変圧器（電圧を上げる）、中央に長い送電線、右に変圧器（電圧を下げる）と町。送電線は失われる電力に応じて赤く光り、町の明かりは届いた電力に応じて明るくなる。"></canvas></div>
+    <div class="ctrl"><button type="button" class="btn ghost" id="pre2">④手順 問題2 の値にする</button></div>
+    <div class="sliders">
+      <label class="sl" for="sVt"><span>送電電圧 <i class="qv">V</i>（変圧器で上げる）</span><output id="oVt"></output><input type="range" id="sVt" min="0" max="8" step="1" value="2"></label>
+      <label class="sl" for="sP"><span>送る電力 <i class="qv">P</i></span><output id="oP"></output><input type="range" id="sP" min="10" max="200" step="10" value="100"></label>
+      <label class="sl" for="sr"><span>送電線の抵抗 <i class="qv">r</i>（往復）</span><output id="or"></output><input type="range" id="sr" min="1" max="50" step="1" value="10"></label>
+    </div>
+    <div class="two">
+      <div>
+        <div class="bars" id="bars2"></div>
+        <div class="read" id="read2"></div>
+      </div>
+      <div>
+        <h3>送電電圧と、失われる電力の割合</h3>
+        <div class="gbox"><canvas id="gr2" role="img" aria-label="横軸が送電電圧、縦軸が失われる電力の割合の、両対数グラフ。電圧を10倍にすると割合は100分の1になる。"></canvas></div>
+        <p class="note">横軸・縦軸とも目盛りが 10 倍ずつの対数グラフ。電圧を 10 倍にすると、失われる電力は 1/100 になります。</p>
+      </div>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th>送電電圧 <i class="qv">V</i></th><th>電流 <i class="qv">I</i> ＝ <i class="qv">P</i>/<i class="qv">V</i></th><th>送電線の電圧降下 <i class="qv">rI</i></th><th>失われる電力 <i class="qv">rI</i>²</th><th>町に届く電力</th><th>送電の効率</th></tr></thead>
+      <tbody id="tb2"></tbody>
+    </table></div>
+    <div class="def"><h3>なぜ高電圧で送るのか</h3>同じ電力を送るとき、電圧を <i class="qv">n</i> 倍にすると電流は 1/<i class="qv">n</i> 倍になり、送電線で失われる電力 <i class="qv">rI</i>² は 1/<i class="qv">n</i>² 倍になります。そこで発電所の近くの変電所で変圧器を使って数十万 V まで電圧を上げて送り、町の近くでいくつかの変電所を通して段階的に下げ、家庭には 100 V（200 V）で届けます。変圧器で電圧を簡単に変えられることが、送電に交流が使われる大きな理由です。</div>
+    <p class="note">変圧器での損失はないものとし、発電機の電圧を 1 kV（1000 V）としています。送電線の抵抗 <i class="qv">r</i> は行きと帰りの合計です。</p>
+  </section>
+
+  <section class="sheet" aria-labelledby="qsTitle">
+    <h3 id="qsTitle">見てみよう</h3>
+    <ol class="qs" id="qs"></ol>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const Iq = s => `<i class="qv">${s}</i>`, sb = (s, b) => `${Iq(s)}<sub>${b}</sub>`;
+if(/\/anim\//.test(location.pathname)){ $("backLink").hidden = false; $("nav").hidden = false; }
+const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+const TAU = Math.PI * 2;
+
+/* ---------- 描画の道具 ---------- */
+let col = {};
+const FONT = `"OhmFix","BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`, MF = `"Times New Roman",Times,serif`;
+function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","shade","sheet","c1","c2","core","flux","cur","hot","ok","lamp","paper"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
+function hex2rgb(h){ h = h.replace("#", ""); if(h.length === 3) h = h.split("").map(x => x + x).join(""); const n = parseInt(h, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function rgba(h, a){ const A = hex2rgb(h); return `rgba(${A[0]},${A[1]},${A[2]},${a})`; }
+function line(c, pts, color, w, dash){ c.save(); c.strokeStyle = color; c.lineWidth = w; c.setLineDash(dash || []); c.lineJoin = "round"; c.lineCap = "round"; c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke(); c.restore(); }
+function mt(c, str, x, y, color, size, align, bold, bg){
+  size = size || 13;
+  const parts = str.split(/(\{[^}]*\})/).filter(Boolean).map(p => p[0] === "{" ? { s: p.slice(1, -1), it: 1 } : { s: p, it: 0 });
+  const fo = p => p.it ? `italic ${Math.round(size * 1.12)}px ${MF}` : `${bold ? "700 " : ""}${size}px ${FONT}`;
+  c.save(); c.textBaseline = "middle"; let w = 0; parts.forEach(p => { c.font = fo(p); p.w = c.measureText(p.s).width; w += p.w; });
+  let x0 = align === "right" ? x - w : align === "center" ? x - w / 2 : x;
+  if(bg){ c.fillStyle = col.sheet; c.globalAlpha = .88; c.fillRect(x0 - 3, y - size * .75, w + 6, size * 1.5); c.globalAlpha = 1; }
+  c.fillStyle = color; parts.forEach(p => { c.font = fo(p); c.textAlign = "left"; c.fillText(p.s, x0, y); x0 += p.w; }); c.restore(); return w;
+}
+function arrowHead(c, x, y, dx, dy, color, s){
+  const L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L; s = s || 7;
+  c.save(); c.fillStyle = color; c.beginPath(); c.moveTo(x + ux * s, y + uy * s); c.lineTo(x - ux * s * .7 - uy * s * .65, y - uy * s * .7 + ux * s * .65); c.lineTo(x - ux * s * .7 + uy * s * .65, y - uy * s * .7 - ux * s * .65); c.closePath(); c.fill(); c.restore();
+}
+function setupCanvas(cv, c){ const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); const W = Math.max(1, Math.round(r.width)), H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); c.setTransform(d, 0, 0, d, 0, 0); return [W, H]; }
+function f3(x){ if(!isFinite(x)) return "—"; const a = Math.abs(x); if(a < 5e-7) return "0"; if(a >= 1000) return Math.round(x).toLocaleString("en-US"); if(a >= 100) return x.toFixed(0); return x.toPrecision(3); }
+// 電力の表示（W・kW）
+const fW = x => x >= 1000 ? `${f3(x / 1000)} kW` : `${f3(x)} W`;
+function effStr(x){ if(x.over) return "0 %"; const lp = 100 * x.loss / D.P; if(lp < 1e-4) return "≒ 100 %"; const d = Math.max(1, Math.ceil(-Math.log10(lp)) + 1); return `${(100 - lp).toFixed(d)} %`; }
+const fV = x => x >= 1000 ? `${f3(x / 1000)} kV` : `${f3(x)} V`;
+
+/* ======================================================================
+   1 変圧器
+   ====================================================================== */
+const RLIST = [1, 2, 2.5, 5, 10, 20, 50, 100, 200, 500, 1000];
+const T = { N1: 500, N2: 100, V1: 100, Ri: 4, dc: false, ph: 0, q1: 0, q2: 0, t: 0 };
+const OMEGA = TAU * 0.4;     // 表示用の角振動数（実際は 50 Hz・60 Hz）
+function tr(){ const R = RLIST[T.Ri], V2 = T.dc ? 0 : T.V1 * T.N2 / T.N1, I2 = V2 / R, P = V2 * I2, I1 = T.V1 > 0 ? P / T.V1 : 0; return { R, V2, I2, P, I1 }; }
+const cv1 = $("cv1"), c1 = cv1.getContext("2d"), wv = $("wv"), cw = wv.getContext("2d");
+let W1 = 0, H1 = 0, WW = 0, WH = 0;
+function draw1(){
+  const c = c1; if(W1 < 80) return; c.clearRect(0, 0, W1, H1);
+  const e = tr(), narrow = W1 < 600, BW = narrow ? 112 : 124, BH = 64, sc = Math.min(W1 / BW, H1 / BH), ox = (W1 - BW * sc) / 2, oy = (H1 - BH * sc) / 2;
+  const P = (x, y) => [ox + x * sc, oy + y * sc], fs = sc < 3.6 ? 11 : 13;
+  const s = T.dc ? (T.V1 > 0 ? 1 : 0) : Math.sin(T.ph);                // 電源の電圧の符号と大きさ（−1〜1）
+  const flux = T.dc ? (T.V1 > 0 ? 1 : 0) : -Math.cos(T.ph);            // 磁束（電圧より 1/4 周期遅れる）
+  const k = narrow ? -6 : 0;   // 横方向のつめ
+  // 鉄心
+  const cx0 = 36 + k, cx1 = 88 + k, cy0 = 8, cy1 = 52, th = 7;
+  c.save(); c.fillStyle = rgba(col.core, .35); c.strokeStyle = col.core; c.lineWidth = 1.5;
+  const o0 = P(cx0, cy0), o1 = P(cx1, cy1), i0 = P(cx0 + th, cy0 + th), i1 = P(cx1 - th, cy1 - th);
+  c.beginPath(); c.rect(o0[0], o0[1], o1[0] - o0[0], o1[1] - o0[1]); c.rect(i1[0], i0[1], i0[0] - i1[0], i1[1] - i0[1]); c.fill("evenodd"); c.stroke(); c.strokeRect(i0[0], i0[1], i1[0] - i0[0], i1[1] - i0[1]); c.restore();
+  mt(c, "鉄心", P((cx0 + cx1) / 2, cy0 + th / 2)[0], P(0, cy0 + th / 2)[1], col.muted, fs - 1, "center", false, true);
+  // 鉄心の中の磁力線（中心線を一周する。向き：1次コイル側で上向き＝時計回りを正）
+  const mx0 = cx0 + th / 2, mx1 = cx1 - th / 2, my0 = cy0 + th / 2, my1 = cy1 - th / 2, per = 2 * (mx1 - mx0) + 2 * (my1 - my0);
+  const along = u => { u = ((u % per) + per) % per; const a = mx1 - mx0, b = my1 - my0;
+    if(u < b) return [[mx0, my1 - u], [0, -1]]; u -= b; if(u < a) return [[mx0 + u, my0], [1, 0]]; u -= a; if(u < b) return [[mx1, my0 + u], [0, 1]]; u -= b; return [[mx1 - u, my1], [-1, 0]]; };
+  if(Math.abs(flux) > 0.04 && T.V1 > 0){ const n = 14, al = Math.abs(flux), dir = Math.sign(flux);
+    for(let j = 0; j < n; j++){ const [p, d] = along(j * per / n + 3); if((p[0] < cx0 + th + 0.5 && p[1] > 16 && p[1] < 44) || (p[0] > cx1 - th - 0.5 && p[1] > 16 && p[1] < 44)) continue; const q = P(p[0], p[1]); arrowHead(c, q[0], q[1], d[0] * dir, d[1] * dir, rgba(col.flux, 0.35 + 0.65 * al), 6 + 6 * al); } }
+  // コイル（巻き数に比例した本数で描く）
+  const coil = (xc, N, cc) => { const n = Math.max(2, Math.round(2 + 20 * N / 1000)), y0 = 16, y1 = 44, rx = th / 2 + 2.6;
+    for(let j = 0; j < n; j++){ const y = y0 + (j + 0.5) * (y1 - y0) / n, a = P(xc - rx, y + 0.8), b = P(xc + rx, y - 0.8); line(c, [a, b], cc, 2.2); }
+    return n; };
+  const n1 = coil(cx0 + th / 2, T.N1, col.c1), n2 = coil(cx1 - th / 2, T.N2, col.c2);
+  // 1次回路：電源（左）
+  const sx = 12, sy = 30, sr = 6.5, sp = P(sx, sy);
+  const L1 = [[sx, sy - sr], [sx, 12], [cx0 - 1, 12], [cx0 - 1, 16]], L1b = [[cx0 - 1, 44], [cx0 - 1, 48], [sx, 48], [sx, sy + sr]];
+  line(c, L1.map(p => P(p[0], p[1])), col.ink, 2); line(c, L1b.map(p => P(p[0], p[1])), col.ink, 2);
+  c.save(); c.beginPath(); c.arc(sp[0], sp[1], sr * sc, 0, TAU); c.fillStyle = col.sheet; c.fill(); c.strokeStyle = col.ink; c.lineWidth = 2; c.stroke(); c.restore();
+  if(T.dc){ mt(c, "直流", sp[0], sp[1], col.ink, fs, "center", true); }
+  else { const pts = []; for(let j = 0; j <= 30; j++){ const t = j / 30; pts.push([sp[0] - sr * sc * 0.6 + t * sr * sc * 1.2, sp[1] - Math.sin(t * TAU) * sr * sc * 0.35]); } line(c, pts, col.ink, 2); }
+  mt(c, `${sb2("V", "1")} ＝ ${f3(T.V1)} V`, sp[0], P(0, sy + sr + 5)[1], col.c1, fs, "center", true, true);
+  // 2次回路：電球（右）
+  const lx = 112 + k, ly = 30, lr = 5, lp = P(lx, ly);
+  const L2 = [[cx1 + 1, 16], [cx1 + 1, 12], [lx, 12], [lx, ly - lr]], L2b = [[lx, ly + lr], [lx, 48], [cx1 + 1, 48], [cx1 + 1, 44]];
+  line(c, L2.map(p => P(p[0], p[1])), col.ink, 2); line(c, L2b.map(p => P(p[0], p[1])), col.ink, 2);
+  const br = Math.min(1, Math.sqrt(e.P / 40)) * (T.dc ? 0 : 0.35 + 0.65 * Math.abs(Math.sin(T.ph)));
+  if(br > 0.02){ const g = c.createRadialGradient(lp[0], lp[1], 2, lp[0], lp[1], lr * sc * 3); g.addColorStop(0, rgba(col.lamp, 0.85 * br)); g.addColorStop(1, rgba(col.lamp, 0)); c.fillStyle = g; c.beginPath(); c.arc(lp[0], lp[1], lr * sc * 3, 0, TAU); c.fill(); }
+  c.save(); c.beginPath(); c.arc(lp[0], lp[1], lr * sc, 0, TAU); c.fillStyle = col.sheet; c.fill(); c.fillStyle = rgba(col.lamp, 0.1 + 0.85 * br); c.fill(); c.strokeStyle = col.ink; c.lineWidth = 1.8; c.stroke();
+  const kk = lr * sc * 0.65; c.beginPath(); c.moveTo(lp[0] - kk, lp[1] - kk); c.lineTo(lp[0] + kk, lp[1] + kk); c.moveTo(lp[0] + kk, lp[1] - kk); c.lineTo(lp[0] - kk, lp[1] + kk); c.stroke(); c.restore();
+  if(narrow) mt(c, `${sb2("V", "2")} ＝ ${f3(e.V2)} V`, lp[0] - lr * sc - 3, P(0, ly + lr + 5)[1], col.c2, fs, "right", true, true);
+  else mt(c, `${sb2("V", "2")} ＝ ${f3(e.V2)} V`, lp[0], P(0, ly + lr + 5)[1], col.c2, fs, "center", true, true);
+  // 電流の粒（交流では行ったり来たり）
+  const dots = (pts, q) => { let L = 0; const segs = []; for(let i = 1; i < pts.length; i++){ const l = Math.hypot(pts[i][0] - pts[i-1][0], pts[i][1] - pts[i-1][1]); segs.push([pts[i-1], pts[i], L, l]); L += l; }
+    const spc = 4; for(let u = ((q % spc) + spc) % spc; u < L; u += spc){ const sg = segs.find(s2 => u >= s2[2] && u <= s2[2] + s2[3]); if(!sg) continue; const t = (u - sg[2]) / sg[3], p = P(sg[0][0] + (sg[1][0] - sg[0][0]) * t, sg[0][1] + (sg[1][1] - sg[0][1]) * t); c.beginPath(); c.arc(p[0], p[1], Math.max(1.8, sc * 0.55), 0, TAU); c.fillStyle = col.cur; c.fill(); } };
+  if(e.P > 0 && T.V1 > 0){ dots([[sx, sy - sr], [sx, 12], [cx0 - 1, 12], [cx0 - 1, 16]], T.q1); dots([[cx0 - 1, 44], [cx0 - 1, 48], [sx, 48], [sx, sy + sr]], T.q1); dots([[cx1 + 1, 16], [cx1 + 1, 12], [lx, 12], [lx, ly - lr]], T.q2); dots([[lx, ly + lr], [lx, 48], [cx1 + 1, 48], [cx1 + 1, 44]], T.q2); }
+  // コイルのラベル
+  mt(c, `1次コイル ${sb2("N", "1")} ＝ ${T.N1} 回`, P(cx0 + th / 2, 0)[0], P(0, 56)[1], col.c1, fs, "center", true, true);
+  mt(c, `2次コイル ${sb2("N", "2")} ＝ ${T.N2} 回`, P(cx1 - th / 2, 0)[0], P(0, 60)[1], col.c2, fs, "center", true, true);
+  mt(c, `{I}₁ ＝ ${f3(e.I1)} A`, P(sx + 10, 0)[0], P(0, 9)[1], col.cur, fs - 1, "left", false, true);
+  mt(c, `{I}₂ ＝ ${f3(e.I2)} A`, P(lx - 10, 0)[0], P(0, 9)[1], col.cur, fs - 1, "right", false, true);
+  mt(c, T.dc ? "直流：磁力線は一定 → 2次コイルに電圧は生じない" : (narrow ? "" : "鉄心の中の磁力線（向きと本数が変わり続ける）"), P((cx0 + cx1) / 2, 0)[0], P(0, 3)[1], T.dc ? col.red : col.flux, fs - 1, "center", true, true);
+}
+const sb2 = (s, b) => `{${s}}${b === "1" ? "₁" : "₂"}`;
+function drawWave(){
+  const c = cw; if(WW < 80) return; c.clearRect(0, 0, WW, WH);
+  const e = tr(), ml = 46, mr = 10, x0 = ml, x1 = WW - mr, ym = WH / 2, A = (WH / 2 - 12), Vm = Math.max(T.V1, e.V2, 1) * Math.SQRT2;
+  line(c, [[x0, ym], [x1, ym]], col.line, 1); line(c, [[x0, 8], [x0, WH - 8]], col.ink, 1.2);
+  mt(c, `${f3(Vm)} V`, x0 - 4, ym - A, col.muted, 10, "right"); mt(c, "0", x0 - 4, ym, col.muted, 10, "right"); mt(c, `−${f3(Vm)} V`, x0 - 4, ym + A, col.muted, 10, "right");
+  const curve = (amp, cc) => { const pts = []; for(let i = 0; i <= 200; i++){ const t = i / 200, ph = T.ph - (1 - t) * 2 * TAU; const v = T.dc ? amp / Math.SQRT2 : amp * Math.sin(ph); pts.push([x0 + t * (x1 - x0), ym - v / Vm * A]); } line(c, pts, cc, 2.2); };
+  curve(T.V1 * Math.SQRT2, col.c1); curve(e.V2 * Math.SQRT2, col.c2);
+  mt(c, "1次電圧", x0 + 8, 12, col.c1, 12, "left", true, true); mt(c, "2次電圧", x0 + 70, 12, col.c2, 12, "left", true, true);
+  mt(c, "時間 →", x1, WH - 8, col.muted, 11, "right");
+}
+function ui1(){
+  const e = tr();
+  $("oN1").textContent = `${T.N1} 回`; $("oN2").textContent = `${T.N2} 回`; $("oV1").textContent = `${T.V1} V`; $("oR").textContent = `${RLIST[T.Ri]} Ω`;
+  $("tb1").innerHTML = `<tr><td style="color:var(--c1);font-weight:700">1次側</td><td>${T.N1}</td><td>${f3(T.V1)}</td><td>${f3(e.I1)}</td><td>${f3(T.V1 * e.I1)}</td></tr>`
+    + `<tr><td style="color:var(--c2);font-weight:700">2次側</td><td>${T.N2}</td><td>${f3(e.V2)}</td><td>${f3(e.I2)}</td><td>${f3(e.P)}</td></tr>`;
+  const r = T.N2 / T.N1;
+  $("read1").innerHTML = T.dc
+    ? `<span class="warn">直流では、2次コイルに電圧が生じません。</span>1次コイルの電流がつくる磁場は一定で、2次コイルを貫く磁力線の本数が変化しないからです（電磁誘導は「変化」で起こる）。※ 実際の変圧器に直流をかけると、1次コイルに大きな電流が流れて危険です。`
+    : `${sb("V", "1")} : ${sb("V", "2")} ＝ ${sb("N", "1")} : ${sb("N", "2")} より、${sb("V", "2")} ＝ ${sb("V", "1")} × ${sb("N", "2")}/${sb("N", "1")} ＝ ${f3(T.V1)} × ${T.N2}/${T.N1} ＝ <b>${f3(e.V2)} V</b>（${r > 1.0001 ? `<b>電圧を上げる</b>：${f3(r)} 倍` : r < 0.9999 ? `<b>電圧を下げる</b>：${f3(r)} 倍` : "電圧は変わらない"}）<br>`
+      + `2次側の電流 ${sb("I", "2")} ＝ ${sb("V", "2")}/${Iq("R")} ＝ <b>${f3(e.I2)} A</b>、電力 ${sb("P", "2")} ＝ ${sb("V", "2")}${sb("I", "2")} ＝ <b>${f3(e.P)} W</b>。損失がなければ1次側の電力も同じなので、${sb("I", "1")} ＝ ${sb("P", "2")}/${sb("V", "1")} ＝ <b>${f3(e.I1)} A</b>。<br>電流の比は ${sb("I", "1")} : ${sb("I", "2")} ＝ ${sb("N", "2")} : ${sb("N", "1")}（電圧の比の逆）。電圧を上げる側では電流が小さくなります。`;
+}
+$("sN1").addEventListener("input", e => { T.N1 = +e.target.value; ui1(); });
+$("sN2").addEventListener("input", e => { T.N2 = +e.target.value; ui1(); });
+$("sV1").addEventListener("input", e => { T.V1 = +e.target.value; ui1(); });
+$("sR").addEventListener("input", e => { T.Ri = +e.target.value; ui1(); });
+document.querySelectorAll("#trans .seg button").forEach(b => b.addEventListener("click", () => { T.dc = b.dataset.s === "dc"; document.querySelectorAll("#trans .seg button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false")); ui1(); }));
+$("pre1").addEventListener("click", () => {   // 問題1：500 回・25 回、100 V、10 W の電球（2次側 5.0 V なので R ＝ 2.5 Ω）
+  T.N1 = 500; T.N2 = 25; T.V1 = 100; T.Ri = 2; T.dc = false; $("sN1").value = 500; $("sN2").value = 25; $("sV1").value = 100; $("sR").value = 2;
+  document.querySelectorAll("#trans .seg button").forEach(x => x.setAttribute("aria-pressed", x.dataset.s === "ac" ? "true" : "false")); ui1(); });
+
+/* ======================================================================
+   2 送電
+   ====================================================================== */
+const VLIST = [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5, 2e5, 5e5];
+const D = { Vi: 2, P: 100e3, r: 10, q: 0, t: 0 };
+const V0 = 1e3;    // 発電機の電圧
+function pw(Vt){ const V = Vt || VLIST[D.Vi], I = D.P / V, loss = D.r * I * I, deliv = Math.max(0, D.P - loss); return { V, I, drop: D.r * I, loss: Math.min(loss, D.P), deliv, eff: deliv / D.P, over: loss >= D.P }; }
+const cv2 = $("cv2"), c2 = cv2.getContext("2d"), gr2 = $("gr2"), g2 = gr2.getContext("2d");
+let W2 = 0, H2 = 0, GW = 0, GH = 0;
+function draw2(){
+  const c = c2; if(W2 < 80) return; c.clearRect(0, 0, W2, H2);
+  const e = pw(), narrow = W2 < 600, BW = narrow ? 120 : 140, BH = 58, sc = Math.min(W2 / BW, H2 / BH), ox = (W2 - BW * sc) / 2, oy = (H2 - BH * sc) / 2;
+  const MX = x => narrow && x > 60 ? x - 20 : x;   // スマートフォンでは送電線を短くする
+  const P = (x, y) => [ox + MX(x) * sc, oy + y * sc], fs = sc < 3.4 ? 10.5 : 13;
+  // 発電所
+  const pl = P(2, 18), pr = P(18, 40);
+  c.save(); c.fillStyle = col.shade; c.strokeStyle = col.ink; c.lineWidth = 1.5; c.fillRect(pl[0], pl[1], pr[0] - pl[0], pr[1] - pl[1]); c.strokeRect(pl[0], pl[1], pr[0] - pl[0], pr[1] - pl[1]);
+  const ch = P(12, 10), ch2 = P(15, 18); c.fillRect(ch[0], ch[1], ch2[0] - ch[0], ch2[1] - ch[1]); c.strokeRect(ch[0], ch[1], ch2[0] - ch[0], ch2[1] - ch[1]); c.restore();
+  mt(c, "発電所", P(10, 0)[0], P(0, 25)[1], col.ink, fs, "center", true);
+  mt(c, fV(V0), P(10, 0)[0], P(0, 33)[1], col.muted, fs - 1, "center");
+  // 変圧器のシンボル
+  const tsym = (x, lab, sub) => { const a = P(x - 3, 20), b = P(x + 3, 38); for(const xx of [x - 2, x + 2]){ const pts = []; for(let j = 0; j <= 40; j++){ const t = j / 40; pts.push(P(xx + Math.sin(t * TAU * 4) * 1.2 * (xx < x ? -1 : 1), 21 + 16 * t)); } line(c, pts, col.ink, 1.8); }
+    line(c, [P(x - 0.3, 20), P(x - 0.3, 38)], col.core, 1.5); line(c, [P(x + 0.3, 20), P(x + 0.3, 38)], col.core, 1.5);
+    mt(c, lab, P(x, 0)[0], P(0, 15)[1], col.blue, fs - 1, "center", true, true); if(!narrow) mt(c, sub, P(x, 0)[0], P(0, 44)[1], col.muted, fs - 1.5, "center", false, true); };
+  line(c, [P(18, 24), P(23, 24)], col.ink, 2); line(c, [P(18, 34), P(23, 34)], col.ink, 2);
+  const ratio = e.V / V0;
+  tsym(26, "変圧器", ratio >= 1 ? `${f3(ratio)} 倍に上げる` : `${f3(ratio)} 倍`);
+  tsym(114, "変圧器", "100 V に下げる");
+  // 送電線（上と下の2本）
+  const lx0 = 29, lx1 = 111, glow = Math.min(1, Math.sqrt(e.loss / D.P));
+  [24, 34].forEach(y => { if(glow > 0.02) line(c, [P(lx0, y), P(lx1, y)], rgba(col.hot, 0.22 * glow + 0.05), 8 * glow + 2); line(c, [P(lx0, y), P(lx1, y)], glow > 0.05 ? col.hot : col.ink, 2.2); });
+  // 鉄塔（飾り）
+  (narrow ? [42, 81, 100] : [45, 70, 95]).forEach(x => { line(c, [P(x - 2, 46), P(x, 20), P(x + 2, 46)], rgba(col.muted, .6), 1.4); line(c, [P(x - 3, 24), P(x + 3, 24)], rgba(col.muted, .6), 1.2); line(c, [P(x - 3, 34), P(x + 3, 34)], rgba(col.muted, .6), 1.2); });
+  // 熱（失われる電力）
+  if(glow > 0.03){ const t = D.t; for(let j = 0; j < 9; j++){ const x = lx0 + 6 + j * 9, pts = []; for(let s = 0; s <= 10; s++){ const yy = 22 - s * 0.8; pts.push(P(x + Math.sin(s * 1.3 - t * 5 + j) * 0.8, yy)); } line(c, pts, rgba(col.hot, 0.25 + 0.6 * glow), 1.6); } }
+  // 電流の粒
+  const spc = 4, q = D.q;
+  [[24, 1], [34, -1]].forEach(([y, d]) => { for(let u = ((q % spc) + spc) % spc; u < lx1 - lx0; u += spc){ const x = d > 0 ? lx0 + u : lx1 - u, p = P(x, y); c.beginPath(); c.arc(p[0], p[1], Math.max(1.8, sc * 0.5), 0, TAU); c.fillStyle = col.cur; c.fill(); } });
+  // 町（家の窓の明るさ ＝ 届いた電力の割合）
+  line(c, [P(117, 24), P(121, 24)], col.ink, 2); line(c, [P(117, 34), P(121, 34)], col.ink, 2);
+  for(let j = 0; j < 3; j++){ const x = 122 + j * 6, y = 30 - (j % 2) * 4, a = P(x, y), b = P(x + 5, 42);
+    c.save(); c.fillStyle = col.shade; c.strokeStyle = col.ink; c.lineWidth = 1.2; c.fillRect(a[0], a[1], b[0] - a[0], b[1] - a[1]); c.strokeRect(a[0], a[1], b[0] - a[0], b[1] - a[1]);
+    c.beginPath(); c.moveTo(a[0] - 2, a[1]); c.lineTo((a[0] + b[0]) / 2, a[1] - 3 * sc); c.lineTo(b[0] + 2, a[1]); c.closePath(); c.fill(); c.stroke();
+    const w0 = P(x + 1.5, y + 3), w1 = P(x + 3.5, y + 6); c.fillStyle = rgba(col.lamp, 0.1 + 0.9 * e.eff); c.fillRect(w0[0], w0[1], w1[0] - w0[0], w1[1] - w0[1]); c.restore(); }
+  mt(c, "町", P(131, 0)[0], P(0, 47)[1], col.ink, fs, "center", true);
+  // ラベル
+  const mid = narrow ? 80 : (lx0 + lx1) / 2;
+  mt(c, `送電電圧 {V} ＝ ${fV(e.V)}　電流 {I} ＝ {P}/{V} ＝ ${f3(e.I)} A`, P(mid, 0)[0], P(0, 7)[1], col.ink, fs, "center", true, true);
+  const lc = e.loss / D.P > 0.1 ? col.red : col.ink;
+  if(narrow){ mt(c, `送電線の抵抗 {r} ＝ ${D.r} Ω`, P(mid, 0)[0], P(0, 48)[1], col.ink, fs, "center", true, true); mt(c, `失われる電力 {r}{I}² ＝ ${fW(e.loss)}${e.over ? "（すべて）" : ""}`, P(mid, 0)[0], P(0, 54)[1], lc, fs, "center", true, true); }
+  else mt(c, `送電線の抵抗 {r} ＝ ${D.r} Ω　失われる電力 {r}{I}² ＝ ${fW(e.loss)}${e.over ? "（すべて失われる）" : ""}`, P(mid, 0)[0], P(0, 52)[1], lc, fs, "center", true, true);
+  mt(c, `送る ${fW(D.P)}`, narrow ? P(1, 0)[0] : P(10, 0)[0], P(0, 46)[1], col.blue, fs - 1, narrow ? "left" : "center", true, true);
+  mt(c, `届く ${fW(e.deliv)}`, narrow ? P(139, 0)[0] : P(131, 0)[0], P(0, narrow ? 47 : 53)[1], col.ok, fs - 1, narrow ? "right" : "center", true, true);
+}
+function drawG2(){
+  const c = g2; if(GW < 80) return; c.clearRect(0, 0, GW, GH);
+  const ml = 54, mr = 12, mt_ = 14, mb = 36, x0 = ml, x1 = GW - mr, y0 = GH - mb, y1 = mt_;
+  const lx0 = 3, lx1 = 6, ly0 = -6, ly1 = 0;    // 横：10³〜10⁶ V、縦：10⁻⁶〜1（割合）
+  const X = v => x0 + (x1 - x0) * (Math.log10(v) - lx0) / (lx1 - lx0), Y = f => y0 - (y0 - y1) * (Math.log10(Math.max(f, 1e-9)) - ly0) / (ly1 - ly0);
+  for(let k = lx0; k <= lx1; k++){ line(c, [[X(10 ** k), y0], [X(10 ** k), y1]], col.line, .8); mt(c, ["1 kV", "10 kV", "100 kV", "1000 kV"][k - 3], X(10 ** k), y0 + 12, col.muted, 11, "center"); }
+  for(let k = ly0; k <= ly1; k++){ line(c, [[x0, Y(10 ** k)], [x1, Y(10 ** k)]], col.line, .8); mt(c, k === 0 ? "100%" : k === -1 ? "10%" : k === -2 ? "1%" : k === -3 ? "0.1%" : `10${["⁻⁴", "⁻⁵", "⁻⁶"][-k - 4]}`, x0 - 5, Y(10 ** k), col.muted, 11, "right"); }
+  line(c, [[x0, y0], [x1, y0]], col.ink, 1.3); line(c, [[x0, y0], [x0, y1]], col.ink, 1.3);
+  mt(c, "送電電圧 V", (x0 + x1) / 2, y0 + 26, col.ink, 12, "center");
+  c.save(); c.translate(13, (y0 + y1) / 2); c.rotate(-Math.PI / 2); mt(c, "失われる割合", 0, 0, col.ink, 12, "center"); c.restore();
+  const pts = []; for(let i = 0; i <= 120; i++){ const v = 10 ** (lx0 + (lx1 - lx0) * i / 120), f = Math.min(1, D.r * D.P / (v * v)); pts.push([X(v), Y(f)]); }
+  c.save(); c.beginPath(); c.rect(x0, y1, x1 - x0, y0 - y1); c.clip(); line(c, pts, col.hot, 2.4);
+  VLIST.forEach((v, i) => { const f = Math.min(1, D.r * D.P / (v * v)), p = [X(v), Y(f)]; c.beginPath(); c.arc(p[0], p[1], i === D.Vi ? 6.5 : 3.5, 0, TAU); c.fillStyle = i === D.Vi ? col.blue : col.hot; c.fill(); });
+  c.restore();
+}
+function ui2(){
+  const e = pw();
+  $("oVt").textContent = fV(e.V); $("oP").textContent = fW(D.P); $("or").textContent = `${D.r} Ω`;
+  $("bars2").innerHTML = `<div class="bar"><div class="lab"><span>送る電力 ${Iq("P")} ＝ ${fW(D.P)}</span><span>効率 ${effStr(e)}</span></div>
+    <div class="tr"><div style="width:${e.eff * 100}%;background:var(--ok)">${e.eff > 0.25 ? `届く ${fW(e.deliv)}` : ""}</div><div style="width:${(1 - e.eff) * 100}%;background:var(--hot)">${1 - e.eff > 0.25 ? `失われる ${fW(e.loss)}` : ""}</div></div></div>`;
+  $("read2").innerHTML = e.over
+    ? `電流 ${Iq("I")} ＝ ${Iq("P")}/${Iq("V")} ＝ ${f3(e.I)} A。${Iq("rI")}² ＝ ${fW(D.r * e.I * e.I)} が送る電力をこえてしまい、<span class="warn">町に電力をほとんど届けられません</span>（実際には送電線の電圧降下 ${Iq("rI")} ＝ ${fV(e.drop)} が送電電圧より大きく、成り立ちません）。電圧を上げよう。`
+    : `電流 ${Iq("I")} ＝ ${Iq("P")}/${Iq("V")} ＝ ${fW(D.P)} ÷ ${fV(e.V)} ＝ <b>${f3(e.I)} A</b><br>失われる電力 ${Iq("rI")}² ＝ ${D.r} × ${f3(e.I)}² ＝ <b>${fW(e.loss)}</b>（送る電力の ${(100 * e.loss / D.P).toPrecision(2)} %）<br>送電電圧を 10 倍にすると、電流は 1/10、失われる電力は <b>1/100</b> になります。`;
+  $("tb2").innerHTML = VLIST.map((v, i) => { const x = pw(v); return `<tr class="${i === D.Vi ? "on" : ""}"><td>${fV(v)}</td><td>${f3(x.I)} A</td><td>${fV(x.drop)}</td><td>${x.over ? "すべて" : fW(x.loss)}</td><td>${fW(x.deliv)}</td><td>${effStr(x)}</td></tr>`; }).join("");
+  drawG2();
+}
+$("sVt").addEventListener("input", e => { D.Vi = +e.target.value; ui2(); });
+$("sP").addEventListener("input", e => { D.P = +e.target.value * 1e3; ui2(); });
+$("sr").addEventListener("input", e => { D.r = +e.target.value; ui2(); });
+$("pre2").addEventListener("click", () => { D.P = 10e3; D.r = 2; D.Vi = 0; $("sP").value = 10; $("sr").value = 2; $("sVt").value = 0; ui2(); });
+
+/* ---------- アニメーション ---------- */
+let last = null;
+function tick(ts){
+  if(last == null) last = ts; const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
+  readColors();
+  if(!reduce){
+    T.ph += OMEGA * dt;
+    const e = tr(), s = T.dc ? 1 : Math.sin(T.ph);
+    // 粒の速さ：電流の大きさ（対数で見やすく）× 向き
+    const vis = I => I > 0 ? 3 + 4 * Math.log10(1 + I * 10) : 0;
+    T.q1 += s * vis(e.I1) * dt * (T.dc ? 0 : 1); T.q2 += s * vis(e.I2) * dt;
+    const p = pw(); D.q += (p.over ? 1 : 1) * (2 + 6 * Math.log10(1 + p.I)) * dt; D.t += dt;
+  }
+  draw1(); drawWave(); draw2();
+  requestAnimationFrame(tick);
+}
+function layout(){ readColors(); [W1, H1] = setupCanvas(cv1, c1); [WW, WH] = setupCanvas(wv, cw); [W2, H2] = setupCanvas(cv2, c2); [GW, GH] = setupCanvas(gr2, g2); draw1(); drawWave(); draw2(); drawG2(); }
+if(window.ResizeObserver){ const ro = new ResizeObserver(layout); [cv1, wv, cv2, gr2].forEach(e => ro.observe(e)); } else window.addEventListener("resize", layout);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+
+$("qs").innerHTML = [
+  ["1次コイル 500 回、2次コイル 100 回の変圧器の1次側に 100 V をかけた。2次側の電圧はいくらか。", "100 × 100/500 ＝ 20 V。巻き数が 1/5 なので電圧も 1/5 になります。"],
+  ["2次コイルの巻き数を1次コイルより多くすると、どうなるか。電流はどうか。", "2次側の電圧は1次側より高くなります（昇圧）。損失がなければ電力は等しいので、2次側の電流は1次側より小さくなります。"],
+  ["変圧器を直流電源につなぐと、2次コイルに電圧が生じないのはなぜか。", "直流では1次コイルの電流がつくる磁場が一定で、2次コイルを貫く磁力線の本数が変化しないからです。電磁誘導は「変化」があるときだけ起こります。"],
+  ["④手順 問題2：10 kW の電力を抵抗 2.0 Ω の送電線で送る。1.0 kV と 10 kV で、失われる電力はそれぞれいくらか。", "1.0 kV：I ＝ 10 A、損失 2.0 × 10² ＝ 200 W。10 kV：I ＝ 1.0 A、損失 2.0 × 1.0² ＝ 2.0 W。電圧を 10 倍にすると、損失は 1/100 になります。「④手順 問題2 の値にする」で確かめよう。"],
+  ["送電電圧を 2 倍にすると、失われる電力は何倍になるか。", "1/4 倍になります。電流が 1/2 倍になり、損失は電流の 2 乗に比例するからです。"],
+  ["高い電圧で送ると損失が小さいのに、家庭では 100 V で使うのはなぜか。", "高い電圧は感電や絶縁の点で危険だからです。町の近くの変電所や電柱の上の変圧器（柱上変圧器）で、使いやすく安全な 100 V（200 V）に下げてから家庭に届けています。"]
+].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
+
+ui1(); ui2(); layout(); requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
