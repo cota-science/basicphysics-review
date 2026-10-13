@@ -22,7 +22,7 @@ window.UNIT_LIST = [
     { id: "energy",     title: "仕事と力学的エネルギー",     file: "units/energy.js" }
   ]},
   { group: "熱", units: [
-    { id: "anim-heat",  title: "▶ 熱のアニメーション",       href: "anim/index.html#heat", note: "熱運動・状態変化・相平衡を粒子の動きで見よう" },
+    { id: "anim-heat",  title: "▶ 熱のアニメーション",       href: "anim/index.html#heat", note: "熱平衡・状態変化・相平衡を、粒子や水槽のモデルで見よう" },
     { id: "heat",       title: "熱とエネルギー",             file: "units/heat.js" }
   ]},
   { group: "波", units: [
