@@ -1,8 +1,11 @@
+/* Ω（オーム）だけは端末のフォントで表示する（Web フォントでは Ω が別の字に化けることがあるため） */
+@font-face{font-family:"OhmFix";font-weight:400;src:local("Segoe UI"),local("SegoeUI"),local("Meiryo"),local("Yu Gothic UI"),local("Hiragino Sans W3"),local("HiraginoSans-W3"),local("Helvetica Neue"),local("Roboto"),local("Arial"),local("ArialMT");unicode-range:U+03A9,U+2126}
+@font-face{font-family:"OhmFix";font-weight:700;src:local("Segoe UI Bold"),local("SegoeUI-Bold"),local("Meiryo Bold"),local("Meiryo-Bold"),local("Yu Gothic UI Bold"),local("Hiragino Sans W6"),local("HiraginoSans-W6"),local("Helvetica Neue Bold"),local("Roboto Bold"),local("Roboto-Bold"),local("Arial Bold"),local("Arial-BoldMT");unicode-range:U+03A9,U+2126}
 :root{
   --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
   --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
   --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3;
-  --body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --body:"OhmFix","BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
   --pen:"Klee One","Hiragino Maru Gothic ProN","Yu Gothic",cursive;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
