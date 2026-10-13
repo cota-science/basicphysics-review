@@ -182,7 +182,7 @@ sub .s, sub i{font-family:var(--f-sym)}
     <div class="hd">
       <a class="back" id="backLink" href="../index.html#/u/free-fall/0" hidden>‹ 落体の運動（Webテスト）へ</a>
       <h1>投射運動ラボ<small>物理基礎・落体の運動（水平投射・斜方投射）</small></h1>
-      <nav class="nav" aria-label="アニメーション"><a href="index.html#motion">≡ アニメーション集</a><a href="kinematics.html">直線運動ラボ</a><a href="projectile.html" aria-current="page">投射運動ラボ</a></nav>
+      <nav class="nav" aria-label="アニメーション"><a href="index.html#motion">≡ アニメーション集</a><a href="kinematics.html">直線運動ラボ</a><a href="projectile.html" aria-current="page">投射運動ラボ</a><a href="monkey.html">モンキーハンティング</a></nav>
     </div>
     <div class="tabs" aria-label="よくある形">
       <button class="tab" type="button" data-pre="h">水平投射</button>
@@ -418,7 +418,7 @@ sub .s, sub i{font-family:var(--f-sym)}
     constructor(cv, o) {
       this.cv = cv; this.o = o;
       this.fn = () => 0; this.dfn = null; this.tEnd = 1; this.tAxis = 1;
-      this.ghosts = []; this.hl = []; this.marks = [];
+      this.ghosts = []; this.hl = []; this.marks = []; this.extras = [];
       this.slope = false; this.area = false; this.full = false;
       this.onScrub = null;
       const scrub = (e) => {
@@ -439,6 +439,7 @@ sub .s, sub i{font-family:var(--f-sym)}
       };
       take(this.fn, this.tEnd);
       this.ghosts.forEach((g) => take(g.fn, g.tEnd));
+      this.extras.forEach((g) => take(g.fn, g.tEnd != null ? g.tEnd : this.tEnd));
       if (hi - lo < 1e-9) { hi = 1; lo = Math.min(lo, -0) ; if (lo === 0) lo = -1; }
       const span = hi - lo;
       const st = K.niceStep(span, 4);
@@ -519,6 +520,18 @@ sub .s, sub i{font-family:var(--f-sym)}
         ctx.beginPath();
         for (let i = 0; i <= 120; i++) { const tt = (g.tEnd * i) / 120; i ? ctx.lineTo(X(tt), Y(g.fn(tt))) : ctx.moveTo(X(tt), Y(g.fn(tt))); }
         ctx.stroke(); ctx.setLineDash([]);
+      });
+      // 追加の系列（2つの物体を同じ図に描くとき）
+      this.extras.forEach((g) => {
+        const T = Math.min(tc, g.tEnd != null ? g.tEnd : this.tEnd), c = C(g.color);
+        ctx.strokeStyle = c; ctx.lineWidth = g.width || 2.4; ctx.setLineDash(g.dash || []);
+        if (g.whole) { ctx.globalAlpha = g.alpha || 0.6; ctx.beginPath(); const TE = g.tEnd != null ? g.tEnd : this.tEnd; for (let i = 0; i <= 120; i++) { const tt = (TE * i) / 120; i ? ctx.lineTo(X(tt), Y(g.fn(tt))) : ctx.moveTo(X(tt), Y(g.fn(tt))); } ctx.stroke(); ctx.globalAlpha = 1; }
+        else {
+          ctx.beginPath(); for (let i = 0; i <= 120; i++) { const tt = (T * i) / 120; i ? ctx.lineTo(X(tt), Y(g.fn(tt))) : ctx.moveTo(X(tt), Y(g.fn(tt))); } ctx.stroke();
+          ctx.setLineDash([]); ctx.fillStyle = c; ctx.beginPath(); ctx.arc(X(T), Y(g.fn(T)), 4.5, 0, 7); ctx.fill();
+        }
+        ctx.setLineDash([]);
+        if (g.label) K.tag(ctx, g.label, X(g.labelAt != null ? g.labelAt : Math.min(T, this.tEnd) * 0.5), Y(g.fn(g.labelAt != null ? g.labelAt : Math.min(T, this.tEnd) * 0.5)) - 11, c, 11.5, 'center');
       });
       // 予測（全体）
       if (this.full) {
