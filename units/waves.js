@@ -103,17 +103,47 @@ const FT_NOTE = `<p>1 s 間に ${f} 回振動し、1回に ${T}〔s〕かかる�
 <p>単位で確かめる：${f}〔Hz ＝ 1/s〕×${T}〔s〕→ 1/s × s ＝ 1（単位なし）。</p>`;
 
 const DEF_TABLE = `<div class="tbl"><table>
-<tr><th>用語</th><th>定義</th><th>記号・単位</th></tr>
-<tr><td>波（波動）</td><td>ある点の振動が、次々と周りに伝わっていく現象。媒質そのものは移動しない</td><td>―</td></tr>
-<tr><td>横波・縦波</td><td>媒質の振動方向が、波の進む向きに垂直なのが横波、平行なのが縦波（疎密波）</td><td>―</td></tr>
-<tr><td>振幅</td><td>媒質の振動の中心からの最大の変位</td><td>${A}〔m〕</td></tr>
-<tr><td>波長</td><td>隣り合う山と山（谷と谷）の間隔。1回の振動の間に波が進む距離</td><td>${L}〔m〕</td></tr>
-<tr><td>周期</td><td>媒質の1点が1回振動するのにかかる時間</td><td>${T}〔s〕</td></tr>
-<tr><td>振動数</td><td>媒質の1点が1 s 間に振動する回数</td><td>${f} ＝ 1/${T}〔Hz〕</td></tr>
-<tr><td>波の速さ</td><td>波形が1 s 間に進む距離。媒質によって決まる</td><td>${v} ＝ ${f}${L} ＝ ${L}/${T}〔m/s〕</td></tr>
-<tr><td>重ね合わせの原理</td><td>2つの波が重なった点の変位は、それぞれの変位の和</td><td>${y} ＝ ${Sb("y","1")} ＋ ${Sb("y","2")}</td></tr>
-<tr><td>反射</td><td>自由端では山は山として、固定端では山は谷として（位相が逆になって）反射する</td><td>―</td></tr>
-<tr><td>定在波（定常波）</td><td>逆向きに進む同じ波が重なってできる、どちらにも進まない波。振動しない点が節、最も大きく振動する点が腹</td><td>節の間隔 ＝ ${L}/2</td></tr>
+<colgroup><col style="width:6.6em"><col></colgroup>
+<tr><th>用語</th><th>定義（記号・式・単位）</th></tr>
+<tr><th colspan='2' style='text-align:left;background:var(--blue-soft)'>波の基本</th></tr>
+<tr><td>波源</td><td>振動を始めて、波をつくり出すもの</td></tr>
+<tr><td>波（波動）</td><td>ある点の振動が、次々と周りに伝わっていく現象。媒質そのものは移動しない</td></tr>
+<tr><td>媒質</td><td>波を伝える物質（ひも・ばね・水・空気など）。媒質の各点はその場で振動するだけで、波と一緒には移動しない</td></tr>
+<tr><td>進行波</td><td>波形が一定の速さで進んでいく波</td></tr>
+<tr><td>パルス波</td><td>波源が1回だけ振動してできる、孤立した短い波</td></tr>
+<tr><td>連続波</td><td>波源が続けて振動してできる、途切れずに続く波</td></tr>
+<tr><td>波形</td><td>ある時刻の媒質全体の形。${y}-${x} グラフで表す</td></tr>
+<tr><td>変位</td><td>媒質の各点の、振動の中心（もとの位置）からのずれ。向きをもつ量<br><span style='color:var(--blue);font-weight:700'>${y}〔m〕</span></td></tr>
+<tr><td>山・谷</td><td>波形で、変位が正の向きに最大の所が山、負の向きに最大の所が谷</td></tr>
+<tr><td>横波・縦波</td><td>媒質の振動方向が、波の進む向きに垂直なのが横波、平行なのが縦波（疎密波）</td></tr>
+<tr><td>密・疎</td><td>縦波で、媒質の点が集まって密度が大きくなった所が密、まばらになって密度が小さくなった所が疎</td></tr>
+<tr><th colspan='2' style='text-align:left;background:var(--blue-soft)'>波を表す量</th></tr>
+<tr><td>振幅</td><td>媒質の振動の中心からの最大の変位<br><span style='color:var(--blue);font-weight:700'>${A}〔m〕</span></td></tr>
+<tr><td>波長</td><td>隣り合う山と山（谷と谷）の間隔。1回の振動の間に波が進む距離<br><span style='color:var(--blue);font-weight:700'>${L}〔m〕</span></td></tr>
+<tr><td>周期</td><td>媒質の1点が1回振動するのにかかる時間<br><span style='color:var(--blue);font-weight:700'>${T}〔s〕</span></td></tr>
+<tr><td>振動数</td><td>媒質の1点が1 s 間に振動する回数<br><span style='color:var(--blue);font-weight:700'>${f} ＝ 1/${T}〔Hz〕</span></td></tr>
+<tr><td>波の速さ</td><td>波形が1 s 間に進む距離。媒質によって決まる（媒質の点が振動する速さとは別のもの）<br><span style='color:var(--blue);font-weight:700'>${v} ＝ ${f}${L} ＝ ${L}/${T}〔m/s〕</span></td></tr>
+<tr><th colspan='2' style='text-align:left;background:var(--blue-soft)'>波の重ね合わせ</th></tr>
+<tr><td>合成波</td><td>2つ以上の波が重なってできる波<br><span style='color:var(--blue);font-weight:700'>${y} ＝ ${Sb('y','1')} ＋ ${Sb('y','2')}</span></td></tr>
+<tr><td>重ね合わせの原理</td><td>2つの波が重なった点の変位は、それぞれの波の変位の和になる<br><span style='color:var(--blue);font-weight:700'>${y} ＝ ${Sb('y','1')} ＋ ${Sb('y','2')}</span></td></tr>
+<tr><td>波の独立性</td><td>重なり合った波は、すれ違った後、互いに影響を受けずにもとの形のまま進む</td></tr>
+<tr><th colspan='2' style='text-align:left;background:var(--blue-soft)'>波の反射と定在波（定常波）</th></tr>
+<tr><td>入射波</td><td>境界（端）に向かって進んでくる波</td></tr>
+<tr><td>反射波</td><td>境界（端）ではね返って戻っていく波</td></tr>
+<tr><td>自由端</td><td>媒質が自由に動ける端</td></tr>
+<tr><td>固定端</td><td>媒質が固定されていて動けない端（変位はいつも 0）</td></tr>
+<tr><td>自由端反射</td><td>自由端での反射。山は山のまま反射する（位相は変わらない）。自由端は合成波の腹になる</td></tr>
+<tr><td>固定端反射</td><td>固定端での反射。山は谷になって反射する（位相が逆になる）。固定端は合成波の節になる</td></tr>
+<tr><td>定在波（定常波）</td><td>逆向きに進む同じ波が重なってできる、どちらにも進まない波。振動しない点が節、最も大きく振動する点が腹<br><span style='color:var(--blue);font-weight:700'>節の間隔 ＝ ${L}/2</span></td></tr>
+<tr><th colspan='2' style='text-align:left;background:var(--blue-soft)'>音と固有振動</th></tr>
+<tr><td>音源</td><td>振動して音を出すもの（発音体）</td></tr>
+<tr><td>超音波</td><td>振動数がおよそ 20000 Hz より大きく、人の耳には聞こえない音</td></tr>
+<tr><td>固有振動</td><td>弦や気柱などが、長さや端の条件で決まる特定の振動数で振動すること。このとき定在波（定常波）ができる</td></tr>
+<tr><td>固有振動数</td><td>固有振動の振動数<br><span style='color:var(--blue);font-weight:700'>〔Hz〕</span></td></tr>
+<tr><td>基本振動</td><td>固有振動のうち、振動数が最も小さい（腹の数が最も少ない）振動。その振動数が基本振動数<br><span style='color:var(--blue);font-weight:700'>${Sb('f','1')}〔Hz〕</span></td></tr>
+<tr><td>倍振動</td><td>基本振動数の ${I('n')} 倍の振動数をもつ固有振動（${I('n')} 倍振動）。閉管では奇数倍だけが生じる<br><span style='color:var(--blue);font-weight:700'>${Sb('f',I('n'))} ＝ ${I('n')}${Sb('f','1')}</span></td></tr>
+<tr><td>気柱</td><td>管の中の空気の柱。閉じた端は変位の節、開いた端は変位の腹になる</td></tr>
+<tr><td>開口端補正</td><td>気柱の定在波（定常波）の腹が、管口より少し外側にできること。そのずれの長さ<br><span style='color:var(--blue);font-weight:700'>Δ${I('L')}〔m〕</span></td></tr>
 </table></div>
 <p>${y}-${x} グラフはある時刻の波形（山と山の間隔が波長）。${y}-${t} グラフは媒質の1点の振動（山と山の間隔が周期）。</p>
 <h3 style='font-size:15px;margin:14px 0 4px'>振動数と周期の関係</h3>
@@ -180,7 +210,7 @@ const SECTIONS = [
      explain:"波形を進む向きに少しずらして描くと、P の位置には左側の山が近づいてきます。だから P は上に動きます。"},
     {id:"ra4",type:"choice",prompt:"この瞬間、山の位置にある点 Q の速さはどうなっているか。",
      options:["0（振動の端で、向きが変わる瞬間）","最大","波の速さと同じ"],answer:0,
-     explain:"山や谷の位置は振動の端なので、媒質の速さは 0 です。振動の中心を通るとき、速さは最大になります。"}
+     explain:"山や谷の位置は振動の端なので、媒質の振動の速さは 0 です。振動の中心を通るとき、速さは最大になります。"}
   ]},
   { title:"B. <i class='qv'>y</i>-<i class='qv'>t</i> グラフ（1点の振動）を読む", lead:"同じ波が伝わる媒質の、ある1点の変位と時間の関係。", figure:OSC, qs:[
     {id:"rb1",type:"num",prompt:`周期 ${T} を読め。`,answer:0.50,tol:0.005,unit:"s",
