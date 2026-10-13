@@ -75,7 +75,7 @@ const UNITQ = ["J（熱量）","J/K（熱容量）","J/(g·K)（比熱）","K（
 
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:`「熱」は物体がもっているものではなく、移動するエネルギーです。言葉と式を正確に覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/heat-equilibrium.html","熱の移動と熱平衡")}${ANIM("anim/heat-motion.html","熱運動と状態変化")}${ANIM("anim/phase-equilibrium.html#lv","蒸発と凝縮（気液平衡）")}${ANIM("anim/phase-equilibrium.html#sl","融解と凝固（固液平衡）")}${ANIM("anim/first-law.html","熱力学第一法則")}`,
+  intro:`「熱」は物体がもっているものではなく、移動するエネルギーです。言葉と式を正確に覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/heat-equilibrium.html","熱の移動と熱平衡")}${ANIM("anim/heat-motion.html","熱運動と状態変化")}${ANIM("anim/phase-equilibrium.html#lv","蒸発と凝縮（気液平衡）")}${ANIM("anim/phase-equilibrium.html#sl","融解と凝固（固液平衡）")}${ANIM("anim/first-law.html","熱力学第一法則")}${ANIM("anim/heat-engine.html","熱機関のサイクルと熱効率")}`,
   advice:`熱量・熱容量・比熱の違いと、熱力学第一法則の ${W} が「された仕事」であることを覚え直そう。`,
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
@@ -215,7 +215,7 @@ const SECTIONS = [
      traps:{"420":`外部に仕事をしたので ${W} は負です。`,"-180":`${Q} は正（吸収）、${W} は負（外部にした）です。`},
      explain:`Δ${U} ＝ 300 ＋ (−120) ＝ 180 J ＝ 1.8 × 10² J。`}
   ]},
-  { title:"問題3（熱効率）", quote:"ある熱機関は、1 回の動作で高温の熱源から 2.0 × 10³ J の熱を吸収し、外部に 5.0 × 10² J の仕事をした。", qs:[
+  { title:"問題3（熱効率）", lead:ANIM("anim/heat-engine.html","熱機関のサイクルと熱効率のアニメーション"), quote:"ある熱機関は、1 回の動作で高温の熱源から 2.0 × 10³ J の熱を吸収し、外部に 5.0 × 10² J の仕事をした。", qs:[
     {id:"s31",type:"num",prompt:"熱効率は何 % か。",answer:25,tol:0.1,unit:"%",
      traps:{"0.25":"% で答えます（100 を掛ける）。","400":"仕事 ÷ 吸収した熱量です。"},explain:`${e} ＝ 500 ÷ 2000 ＝ 0.25 ＝ 25%。`},
     {id:"s32",type:"num",prompt:"低温の熱源に捨てた熱量は何 J か。",answer:1500,tol:5,unit:"J",
