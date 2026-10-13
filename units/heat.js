@@ -69,12 +69,13 @@ const CURVE = `<svg class="graph" viewBox="0 0 320 175" role="img" aria-label="�
 <text x="54" y="152" font-size="13" fill="var(--red)">A</text><text x="82" y="124" font-size="13" fill="var(--red)">B</text>
 <text x="170" y="92" font-size="13" fill="var(--red)">C</text><text x="252" y="24" font-size="13" fill="var(--red)">D</text>
 </svg>`;
+const ANIM = (href, label) => `<a href='${href}' style='display:inline-block;margin:8px 6px 0 0;padding:6px 12px;border:1.5px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:700;text-decoration:none;line-height:1.5'>▶ ${label}</a>`;
 const TF = ["正しい","誤り"];
 const UNITQ = ["J（熱量）","J/K（熱容量）","J/(g·K)（比熱）","K（温度差）"];
 
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:"「熱」は物体がもっているものではなく、移動するエネルギーです。言葉と式を正確に覚えます。",
+  intro:`「熱」は物体がもっているものではなく、移動するエネルギーです。言葉と式を正確に覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/heat-motion.html","熱運動と状態変化")}${ANIM("anim/phase-equilibrium.html#lv","蒸発と凝縮（気液平衡）")}${ANIM("anim/phase-equilibrium.html#sl","融解と凝固（固液平衡）")}`,
   advice:`熱量・熱容量・比熱の違いと、熱力学第一法則の ${W} が「された仕事」であることを覚え直そう。`,
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
@@ -144,7 +145,7 @@ const SECTIONS = [
      traps:{"50":"単純な平均ではありません。質量の大きい水の温度に近くなります。"},
      explain:`100(80 − ${t}) ＝ 200(${t} − 20) より ${t} ＝ 40 ℃。`}
   ]},
-  { title:"D. 加熱のグラフを読む", lead:"−20 ℃ の氷を一定の割合で加熱したときの、温度と時間の関係（模式図）。", figure:CURVE, qs:[
+  { title:"D. 加熱のグラフを読む", lead:`−20 ℃ の氷を一定の割合で加熱したときの、温度と時間の関係（模式図）。${ANIM("anim/heat-motion.html","熱運動と状態変化のアニメーション")}`, figure:CURVE, qs:[
     {id:"rd1",type:"choice",prompt:"区間 B（0 ℃ で水平）で起きていることはどれか。",
      options:["氷が融けている（加えた熱は融解に使われる）","熱が加わっていない","水が沸騰している"],answer:0,
      explain:"状態変化の間は温度が一定です。D では沸騰（蒸発）が起きています。"},
