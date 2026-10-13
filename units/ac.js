@@ -90,7 +90,7 @@ const UNITQ = ["m（波長）","W（電力）","s（周期）","V（電圧）"];
 
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:`電流と磁場は互いに関係し合います。法則の「向き」を言葉で正確に言えるようにします。<br>アニメーションで確かめよう：<br>${ANIM("anim/magnetic.html#field","磁場と磁力線")}${ANIM("anim/magnetic.html#line","直線電流")}${ANIM("anim/magnetic.html#loop","円形電流")}${ANIM("anim/magnetic.html#sol","ソレノイド")}${ANIM("anim/motor.html#force","フレミングの左手の法則")}${ANIM("anim/motor.html#motor","直流モーター")}${ANIM("anim/induction.html#def","電磁誘導")}${ANIM("anim/induction.html#lenz","レンツの法則")}${ANIM("anim/induction.html#gen","交流発電機")}`,
+  intro:`電流と磁場は互いに関係し合います。法則の「向き」を言葉で正確に言えるようにします。<br>アニメーションで確かめよう：<br>${ANIM("anim/magnetic.html#field","磁場と磁力線")}${ANIM("anim/magnetic.html#line","直線電流")}${ANIM("anim/magnetic.html#loop","円形電流")}${ANIM("anim/magnetic.html#sol","ソレノイド")}${ANIM("anim/motor.html#force","フレミングの左手の法則")}${ANIM("anim/motor.html#motor","直流モーター")}${ANIM("anim/induction.html#def","電磁誘導")}${ANIM("anim/induction.html#lenz","レンツの法則")}${ANIM("anim/induction.html#gen","交流発電機")}${ANIM("anim/transformer.html","変圧器と送電")}`,
   advice:"右ねじの法則、レンツの法則、変圧器の関係、実効値の意味を覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
@@ -181,7 +181,7 @@ const SECTIONS = [
   advice:"電圧の比と巻数の比を対応させ、電流は電力 ÷ 電圧で求めよう。",
   ref:{label:"7ステップを見る", html:STEPS},
   groups:[
-  { title:"問題1（変圧器・すべてのステップ）", quote:"1次コイルの巻数 500 回、2次コイルの巻数 25 回の理想的な変圧器の1次側に、100 V の交流電圧をかけた。2次側には消費電力 10 W の電球をつないだ。", qs:[
+  { title:"問題1（変圧器・すべてのステップ）", lead:ANIM("anim/transformer.html#trans","変圧器のシミュレーター（「④手順 問題1 の値にする」で確かめる）"), quote:"1次コイルの巻数 500 回、2次コイルの巻数 25 回の理想的な変圧器の1次側に、100 V の交流電圧をかけた。2次側には消費電力 10 W の電球をつないだ。", qs:[
     {id:"s11",type:"choice",prompt:"ステップ2　2次側の電圧を求める式はどれか。",options:[`${V2} ＝ ${V1} × ${N2}/${N1}`,`${V2} ＝ ${V1} × ${N1}/${N2}`,`${V2} ＝ ${V1}`],answer:0,
      explain:`${V1} : ${V2} ＝ ${N1} : ${N2} を ${V2} について解きます。`},
     {id:"s12",type:"num",prompt:"2次側の電圧",answer:5.0,tol:0.05,unit:"V",traps:{"2000":"巻数の比が逆になっています。巻数の少ない側は電圧が低くなります。"},
@@ -192,7 +192,7 @@ const SECTIONS = [
     {id:"s15",type:"choice",prompt:"ステップ7　妥当性の確認として正しいものはどれか。",options:["電圧が 1/20 になり、電流は 20 倍になっている","電圧も電流も 1/20 になっている","電圧と電流は変わっていない"],answer:0,
      explain:`${V1}${I1} ＝ ${V2}${I2}（100 × 0.10 ＝ 5.0 × 2.0）で、電力が等しくなっています。`}
   ]},
-  { title:"問題2（送電）", quote:"発電所から 1.0 × 10⁴ W の電力を、抵抗 2.0 Ω の送電線で送る。", qs:[
+  { title:"問題2（送電）", lead:ANIM("anim/transformer.html#power","送電のシミュレーター（「④手順 問題2 の値にする」で確かめる）"), quote:"発電所から 1.0 × 10⁴ W の電力を、抵抗 2.0 Ω の送電線で送る。", qs:[
     {id:"s21",type:"num",prompt:"1.0 × 10³ V で送るとき、送電線を流れる電流",answer:10,tol:0.05,unit:"A",explain:`${It} ＝ ${P}/${V} ＝ 10000 ÷ 1000 ＝ 10 A。`},
     {id:"s22",type:"num",prompt:"そのとき送電線で失われる電力",answer:200,tol:1,unit:"W",traps:{"20":"損失は <i class='qv'>RI</i>²（2.0 × 10²）です。","2000":"<i class='qv'>RI</i>² ＝ 2.0 × 10² です。"},explain:`${R}${It}² ＝ 2.0 × 10² ＝ 200 W。`},
     {id:"s23",type:"num",prompt:"1.0 × 10⁴ V で送るとき、送電線で失われる電力",answer:2.0,tol:0.02,unit:"W",traps:{"20":"電流が 1/10 なら、損失は 1/100 になります。"},
