@@ -49,7 +49,7 @@ const UNITQ = ["m/s（速度）","m（変位）","s（時間）","m/s²（加速
 
 const SECTIONS = [
 { id:"def", advice:"変位・速度・加速度の定義を、定義カードで言葉と単位ごと覚え直そう。", tab:"①定義", title:"① 定義カード", back:"① 定義カード",
-  intro:`定義を正確に言えるかを確かめます。迷ったら定義カードを開いて確認してから答えましょう。<br>アニメーションで確かめよう：<br>${ANIM("anim/kinematics.html#uniform","等速直線運動")}${ANIM("anim/kinematics.html#slope","斜面を下る台車（等加速度直線運動）")}${ANIM("anim/kinematics.html#direct","加速度を自由に決める")}`,
+  intro:`定義を正確に言えるかを確かめます。迷ったら定義カードを開いて確認してから答えましょう。<br>アニメーションで確かめよう：<br>${ANIM("anim/kinematics.html#uniform","等速直線運動")}${ANIM("anim/kinematics.html#slope","斜面を下る台車（等加速度直線運動）")}${ANIM("anim/kinematics.html#direct","加速度を自由に決める")}${ANIM("anim/relative.html#line-sum","合成速度と相対速度")}`,
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
     {id:"d1",type:"blanks",text:"変位とは、{0}の変化であり、後の位置 − {1}で求める。単位は{2}。",
