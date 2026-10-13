@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>熱の移動と熱平衡のアニメーション</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: one wide stage — two touching objects on top, a water-tank model (width = heat capacity, level = temperature) on the left and the temperature–time graph on the right, sharing one temperature axis; two input cards (A, B), result row, questions. Stacked on phones. */
+:root{
+  --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
+  --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
+  --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3; --shade:#EEF2F6;
+  --ca:#B8640A; --cb:#0F7C79; --heat:#CF2A2A;
+  --body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --math:"Times New Roman",Times,"Noto Serif",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+    --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+    --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+    --ca:#F0A84A; --cb:#4FC7C1; --heat:#FF7A70; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+  --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+  --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+  --ca:#F0A84A; --cb:#4FC7C1; --heat:#FF7A70; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qv{font-family:var(--math);font-style:italic;font-size:1.08em}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.top-inner{max-width:1000px;margin:0 auto;padding:10px 16px 10px}
+.back{font-size:14px;color:var(--blue);text-decoration:none}
+h1{font-size:19px;margin:2px 0 0;line-height:1.4;text-wrap:balance}
+.nav{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin-top:2px}
+.nav a{color:var(--blue);text-decoration:none}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:700}
+
+main{max-width:1000px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px;min-width:0}
+h2{font-size:20px;margin:0 0 4px;line-height:1.4;text-wrap:balance}
+.lead{margin:0 0 12px;color:var(--muted);font-size:15px}
+.stage{position:relative;width:100%;aspect-ratio:2/1.05;background:var(--sheet);border:1px solid var(--line);border-radius:4px}
+@media (max-width:640px){.stage{aspect-ratio:10/19}}
+canvas{display:block;width:100%;height:100%}
+
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.btn{border:0;border-radius:8px;padding:9px 16px;min-height:44px;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.btn.ghost{background:none;color:var(--blue);border:1.5px solid var(--blue)}
+.btn:disabled{opacity:.45;cursor:default}
+.speed{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted);margin-left:auto}
+.speed select{min-height:40px;border:1.5px solid var(--line);border-radius:8px;background:var(--sheet);padding:4px 8px}
+.checks{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:10px}
+.checks label{display:flex;align-items:center;gap:8px;min-height:40px;cursor:pointer;font-size:15px}
+.checks input{width:20px;height:20px;accent-color:var(--blue)}
+
+.objs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+@media (max-width:640px){.objs{grid-template-columns:minmax(0,1fr)}}
+.obj{border:1.5px solid var(--line);border-top:5px solid var(--c);border-radius:8px;padding:10px 12px;min-width:0}
+.obj h3{margin:0 0 6px;font-size:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.obj h3 span{color:var(--c)}
+.obj select{min-height:38px;border:1.5px solid var(--line);border-radius:8px;background:var(--sheet);padding:2px 8px;font-size:15px;font-weight:400}
+.slider{display:grid;grid-template-columns:6.4em minmax(0,1fr) 6.4em;align-items:center;gap:8px}
+.slider label{font-size:14px;line-height:1.35}
+.slider input{width:100%;accent-color:var(--c);min-height:32px}
+.slider output{font-variant-numeric:tabular-nums;text-align:right;font-weight:700;font-size:15px;white-space:nowrap}
+.cap{margin:6px 0 0;padding:6px 10px;background:var(--shade);border-radius:6px;font-size:15px;line-height:1.6}
+.cap b{font-variant-numeric:tabular-nums}
+
+.res{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+@media (max-width:640px){.res{grid-template-columns:minmax(0,1fr)}}
+.res div{border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;min-width:0}
+.res .k{display:block;font-size:12px;color:var(--muted);line-height:1.4}
+.res .v{display:block;font-weight:700;font-size:17px;font-variant-numeric:tabular-nums;line-height:1.55}
+.res .v small{font-size:13px;font-weight:400;color:var(--muted)}
+.now{margin-top:14px;padding:10px 14px;border-left:4px solid var(--blue);background:var(--blue-soft);border-radius:0 6px 6px 0}
+.now > b{display:block;font-size:15px}
+.now p{margin:2px 0 0;font-size:15px}
+.hint{font-size:13px;color:var(--muted);margin:10px 0 0}
+h3.qh{font-size:17px;margin:0 0 8px}
+.qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
+.qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
+.ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <a class="back" id="backLink" href="../index.html#/u/heat/0" hidden>‹ 熱とエネルギー（Webテスト）へ</a>
+    <h1>熱の移動と熱平衡</h1>
+    <nav class="nav" id="nav" hidden aria-label="アニメーション">
+      <a href="index.html#heat">≡ アニメーション集</a>
+      <a href="heat-equilibrium.html" aria-current="page">熱の移動と熱平衡</a>
+      <a href="heat-motion.html">熱運動と状態変化</a>
+      <a href="phase-equilibrium.html#lv">蒸発と凝縮（気液平衡）</a>
+      <a href="phase-equilibrium.html#sl">融解と凝固（固液平衡）</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="sheet" aria-labelledby="t1">
+    <h2 id="t1">温度の異なる2つの物体を接触させると</h2>
+    <p class="lead">物体 A と B の初めの温度・質量・比熱を決めて「接触させる」を押そう。熱は高温の物体から低温の物体へ移り、やがて2つの温度が等しくなります（熱平衡）。下の水槽は、<b>幅＝熱容量 <i class="qv">C</i></b>、<b>水位＝温度 <i class="qv">t</i></b> として、熱の移動を水の移動にたとえたモデルです。</p>
+    <div class="stage"><canvas id="cv" role="img" aria-label="上に接触した物体AとB。左に、幅が熱容量、水位が温度を表す2つの水槽が底の管でつながっている。右に、AとBの温度の時間変化のグラフ。水位とグラフの高さはそろえてある。"></canvas></div>
+    <div class="controls">
+      <button type="button" class="btn" id="goBtn">接触させる</button>
+      <button type="button" class="btn ghost" id="playBtn" disabled>一時停止</button>
+      <button type="button" class="btn ghost" id="resetBtn">最初から</button>
+      <label class="speed" for="speedSel">速さ
+        <select id="speedSel"><option value="0.5">ゆっくり</option><option value="1" selected>ふつう</option><option value="2.5">はやい</option></select>
+      </label>
+    </div>
+    <div class="checks">
+      <label for="ckCube"><input type="checkbox" id="ckCube">水槽を直方体で表す（横＝質量、奥行＝比熱）</label>
+      <label for="ckArea"><input type="checkbox" id="ckArea" checked>移動した熱を色で示す</label>
+      <label for="ckPred"><input type="checkbox" id="ckPred">熱平衡の温度（計算値）を先に表示</label>
+    </div>
+
+    <div class="objs">
+      <div class="obj" id="objA" style="--c:var(--ca)">
+        <h3><span>物体 A</span><select id="mA" aria-label="物体Aの物質"></select></h3>
+        <div class="slider"><label for="tA">初めの温度</label><input type="range" id="tA" min="0" max="100" step="1"><output id="otA"></output></div>
+        <div class="slider"><label for="gA">質量 <i class="qv">m</i></label><input type="range" id="gA" min="10" max="500" step="10"><output id="ogA"></output></div>
+        <div class="slider"><label for="cA">比熱 <i class="qv">c</i></label><input type="range" id="cA" min="0.10" max="4.20" step="0.01"><output id="ocA"></output></div>
+        <p class="cap" id="capA"></p>
+      </div>
+      <div class="obj" id="objB" style="--c:var(--cb)">
+        <h3><span>物体 B</span><select id="mB" aria-label="物体Bの物質"></select></h3>
+        <div class="slider"><label for="tB">初めの温度</label><input type="range" id="tB" min="0" max="100" step="1"><output id="otB"></output></div>
+        <div class="slider"><label for="gB">質量 <i class="qv">m</i></label><input type="range" id="gB" min="10" max="500" step="10"><output id="ogB"></output></div>
+        <div class="slider"><label for="cB">比熱 <i class="qv">c</i></label><input type="range" id="cB" min="0.10" max="4.20" step="0.01"><output id="ocB"></output></div>
+        <p class="cap" id="capB"></p>
+      </div>
+    </div>
+
+    <div class="res" aria-live="polite">
+      <div><span class="k">いまの温度（A ／ B）</span><span class="v" id="rNow"></span></div>
+      <div><span class="k">A が失った熱量 ／ B が得た熱量</span><span class="v" id="rQ"></span></div>
+      <div><span class="k">熱平衡の温度</span><span class="v" id="rF"></span></div>
+    </div>
+    <div class="now" id="now"><b></b><p></p></div>
+    <p class="hint">水槽の水全体は、物体がもっている「熱」ではありません（熱は移動するエネルギーの名前です）。水全体は 0&nbsp;℃ を基準にした内部エネルギーの増え分の目安で、管を通って<b>移動した水だけ</b>が「熱」にあたります。熱は2物体の間だけで移動し、外へは逃げないものとします。状態変化は起こらない温度の範囲で考えます。時間の目盛りは、見やすいように調整したモデルの時間です。</p>
+  </section>
+
+  <section class="sheet" aria-labelledby="qsTitle">
+    <h3 class="qh" id="qsTitle">見てみよう</h3>
+    <ol class="qs" id="qs"></ol>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id), TAU = 2 * Math.PI;
+const I = s => `<i class="qv">${s}</i>`;
+if(/\/anim\//.test(location.pathname)){ $("backLink").hidden = false; $("nav").hidden = false; }
+const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- 物質と比熱〔J/(g·K)〕 ---------- */
+const MATS = [["水", 4.2], ["エタノール", 2.4], ["アルミニウム", 0.90], ["ガラス", 0.67], ["鉄", 0.45], ["銅", 0.38], ["鉛", 0.13]];
+const FREE = "自由に設定";
+const st = {
+  A: { name: "アルミニウム", t0: 90, m: 200, c: 0.90 },
+  B: { name: "水", t0: 20, m: 100, c: 4.2 },
+  time: 0, contact: false, playing: true, speed: 1, cube: false, area: true, pred: false
+};
+const TAUM = 4;                 // 温度差が 1/e になるまでのモデルの時間〔s〕
+const TMAX = 30;                // グラフの時間軸
+const CA = () => st.A.m * st.A.c, CB = () => st.B.m * st.B.c;
+const tf = () => (CA() * st.A.t0 + CB() * st.B.t0) / (CA() + CB());
+const temps = () => { const f = tf(), e = Math.exp(-st.time / TAUM); return [f + (st.A.t0 - f) * e, f + (st.B.t0 - f) * e]; };
+const tempsAt = s => { const f = tf(), e = Math.exp(-s / TAUM); return [f + (st.A.t0 - f) * e, f + (st.B.t0 - f) * e]; };
+const qMoved = () => CA() * (st.A.t0 - temps()[0]);       // A から B へ移った熱（負なら B → A）
+
+/* ---------- 表示用の数値 ---------- */
+const nf = (v, d) => { const s = Math.abs(v).toFixed(d); return (v < -1e-9 && +s !== 0 ? "−" : "") + s; };
+const sci = v => { const a = Math.abs(v); if(a < 1000) return `${Math.round(a)}`; const e = Math.floor(Math.log10(a)), m = a / Math.pow(10, e); return `${m.toFixed(1)}×10${["⁰","¹","²","³","⁴","⁵","⁶"][e]}`; };
+const fmtC = v => v >= 100 ? `${Math.round(v)}` : v >= 10 ? v.toFixed(1).replace(/\.0$/, "") : v.toFixed(2);
+
+/* ---------- 描画 ---------- */
+const cv = $("cv"), ctx = cv.getContext("2d"); let W = 0, H = 0, col = {}, LY = null;
+function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","shade","sheet","ca","cb","heat","paper"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
+function resize(){ const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0); LY = layout(); draw(); }
+function L(pts, color, w, dash){ ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore(); }
+function F(pts, color, a){ ctx.save(); ctx.fillStyle = color; ctx.globalAlpha = a == null ? 1 : a; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.fill(); ctx.restore(); }
+function T(s, x, y, color, size, align, bold){ ctx.save(); ctx.fillStyle = color; ctx.font = `${bold ? "700 " : ""}${size || 12}px "BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`; ctx.textAlign = align || "left"; ctx.textBaseline = "middle"; ctx.fillText(s, x, y); ctx.restore(); }
+function TB(s, x, y, color, size, align){ // 背景つきの文字（線と重なっても読める）
+  ctx.save(); ctx.font = `700 ${size || 12}px "BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`; const w = ctx.measureText(s).width, h = (size || 12) + 4;
+  const x0 = align === "right" ? x - w : align === "center" ? x - w / 2 : x; ctx.fillStyle = col.sheet; ctx.globalAlpha = .88; ctx.fillRect(x0 - 3, y - h / 2, w + 6, h); ctx.restore();
+  T(s, x, y, color, size, align, true); }
+function hatch(x0, y0, x1, y1, color){ // 斜線（移動した熱の部分）
+  if(Math.abs(y1 - y0) < 1 || Math.abs(x1 - x0) < 1) return;
+  ctx.save(); ctx.beginPath(); ctx.rect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.abs(y1 - y0)); ctx.clip();
+  ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.globalAlpha = .9; ctx.beginPath();
+  const lo = Math.min(x0, x1) - Math.abs(y1 - y0) - 10, hi = Math.max(x0, x1) + 10;
+  for(let x = lo; x < hi; x += 7){ ctx.moveTo(x, Math.max(y0, y1)); ctx.lineTo(x + Math.abs(y1 - y0), Math.min(y0, y1)); }
+  ctx.stroke(); ctx.restore(); }
+function arrow(x0, y0, x1, y1, color, w){ const a = Math.atan2(y1 - y0, x1 - x0), h = 6 + w * 1.2;
+  L([[x0, y0], [x1 - h * .7 * Math.cos(a), y1 - h * .7 * Math.sin(a)]], color, w);
+  F([[x1, y1], [x1 - h * Math.cos(a - .45), y1 - h * Math.sin(a - .45)], [x1 - h * Math.cos(a + .45), y1 - h * Math.sin(a + .45)]], color); }
+// 温度の色（0 ℃：青 → 100 ℃：赤）
+function tcol(t){ const k = Math.max(0, Math.min(1, t / 100)), a = [56, 116, 204], m = [150, 120, 170], b = [214, 58, 46];
+  const c = k < .5 ? a.map((v, i) => v + (m[i] - v) * k * 2) : m.map((v, i) => v + (b[i] - v) * (k - .5) * 2); return `rgb(${c.map(Math.round).join(",")})`; }
+
+function layout(){
+  const wide = W / H > 1.3;
+  if(wide){
+    const blk = { y: 12, h: Math.min(84, H * .18) };
+    const top = blk.y + blk.h + 40, bot = H - 40;
+    const tank = { x: 48, w: W * .52 - 48, top, bot };
+    const gr = { x: W * .52 + 46, w: W - (W * .52 + 46) - 14, top, bot };
+    return { wide, blk, tank, gr };
+  } else {
+    const blk = { y: 12, h: Math.min(80, W * .2) };
+    const top = blk.y + blk.h + 40, th = (H - top - 40 - 50) * .54, bot = top + th;
+    const tank = { x: 44, w: W - 44 - 14, top, bot };
+    const gtop = bot + 54;
+    const gr = { x: 44, w: W - 44 - 14, top: gtop, bot: H - 36 };
+    return { wide, blk, tank, gr };
+  }
+}
+function draw(){
+  if(!W || !LY) return; readColors(); ctx.clearRect(0, 0, W, H);
+  const [ta, tb] = temps(), cA = CA(), cB = CB();
+  drawBlocks(ta, tb);
+  drawTanks(ta, tb, cA, cB);
+  drawGraph(ta, tb);
+}
+function drawBlocks(ta, tb){
+  const { blk, tank } = LY, cx = LY.wide ? tank.x + tank.w / 2 : W / 2, gap = st.contact ? 0 : 26;
+  const bw = Math.min(150, (LY.wide ? tank.w : W - 40) * .36), bh = blk.h;
+  const xa = cx - gap / 2 - bw, xb = cx + gap / 2, y = blk.y;
+  [[xa, ta, "A", col.ca, st.A], [xb, tb, "B", col.cb, st.B]].forEach(([x, t, nm, c, o], k) => {
+    ctx.save(); ctx.fillStyle = tcol(t); ctx.globalAlpha = .9; ctx.fillRect(x, y, bw, bh); ctx.restore();
+    ctx.save(); ctx.strokeStyle = c; ctx.lineWidth = 3; ctx.strokeRect(x + 1.5, y + 1.5, bw - 3, bh - 3); ctx.restore();
+    // 粒子の熱運動（温度が高いほど大きく振動。見やすく誇張）
+    const amp = 1 + 4.5 * (t + 10) / 110, tt = performance.now() / 1000;
+    for(let i = 0; i < 4; i++) for(let j = 0; j < 3; j++){
+      const px = x + bw * (i + .5) / 4 + amp * Math.sin(tt * 17 + i * 3.1 + j * 1.7 + k * 5), py = y + bh * (j + .5) / 3 + amp * Math.cos(tt * 19 + i * 1.3 + j * 2.9 + k * 7);
+      ctx.save(); ctx.fillStyle = "#fff"; ctx.globalAlpha = .85; ctx.beginPath(); ctx.arc(px, py, 3.2, 0, TAU); ctx.fill(); ctx.restore(); }
+    TB(`${nm}：${o.name}`, x + (k ? bw - 4 : 4), y + 12, col.ink, 12, k ? "right" : "left");
+    TB(`${nf(t, 1)} ℃`, x + bw / 2, y + bh - 13, col.ink, 14, "center");
+  });
+  // 熱の移動の矢印
+  if(st.contact){
+    const d = ta - tb, mag = Math.abs(d) / Math.max(1, Math.abs(st.A.t0 - st.B.t0));
+    if(Math.abs(d) > 0.05){
+      const w = 2 + 8 * mag, dir = d > 0 ? 1 : -1, yA = y + bh + 18;
+      arrow(cx - dir * 40, yA, cx + dir * 40, yA, col.heat, w);
+      T("熱", cx, yA - 1, "#fff", 11, "center", true);
+    } else T("熱平衡（熱の移動なし）", cx, y + bh + 18, col.muted, 12, "center", true);
+  } else T("離れている（接触させる前）", cx, y + bh + 18, col.muted, 12, "center", true);
+}
+function drawTanks(ta, tb, cA, cB){
+  const g = LY.tank, Y = t => g.bot - t / 100 * (g.bot - g.top);
+  // 温度の目盛り
+  [0, 20, 40, 60, 80, 100].forEach(t => { L([[g.x, Y(t)], [g.x + g.w, Y(t)]], col.line, 1, t ? [3, 4] : []); T(`${t}`, g.x - 6, Y(t), col.muted, 11, "right"); });
+  T("水位＝温度〔℃〕", g.x - 34, g.top - 16, col.muted, 11, "left");
+  const pipeH = 10, gapX = 30;
+  if(!st.cube){
+    const half = (g.w - gapX - 16) / 2, sc = half / Math.max(cA, cB);
+    const wa = Math.max(3, cA * sc), wb = Math.max(3, cB * sc);
+    const xa = g.x + 8 + (half - wa), xb = g.x + 8 + half + gapX;
+    tank2(xa, wa, ta, st.A.t0, col.ca, "A", cA, Y, -1);
+    tank2(xb, wb, tb, st.B.t0, col.cb, "B", cB, Y, 1);
+    // 底の管とコック
+    const py = g.bot - pipeH / 2 - 2;
+    ctx.save(); ctx.fillStyle = st.contact ? col.blue : col.shade; ctx.globalAlpha = st.contact ? .35 : 1; ctx.fillRect(xa + wa, py - pipeH / 2, xb - xa - wa, pipeH); ctx.restore();
+    L([[xa + wa, py - pipeH / 2], [xb, py - pipeH / 2]], col.ink, 1.5); L([[xa + wa, py + pipeH / 2], [xb, py + pipeH / 2]], col.ink, 1.5);
+    const vx = (xa + wa + xb) / 2;
+    ctx.save(); ctx.fillStyle = col.sheet; ctx.strokeStyle = col.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(vx, py, 7, 0, TAU); ctx.fill(); ctx.stroke(); ctx.restore();
+    L(st.contact ? [[vx - 5, py], [vx + 5, py]] : [[vx, py - 5], [vx, py + 5]], col.ink, 2);
+    if(st.contact && Math.abs(ta - tb) > 0.05){ const dir = ta > tb ? 1 : -1; T(dir > 0 ? "→" : "←", vx, py - 15, col.heat, 14, "center", true); }
+  } else {
+    // 直方体：横＝質量、奥行＝比熱（同じ縮尺）、高さ＝温度
+    const half = (g.w - gapX - 16) / 2, dmax = Math.min(44, half * .4);
+    const sm = (half - dmax * .72) / Math.max(st.A.m, st.B.m), sd = dmax / Math.max(st.A.c, st.B.c);
+    const wa = Math.max(3, st.A.m * sm), wb = Math.max(3, st.B.m * sm), da = st.A.c * sd, db = st.B.c * sd;
+    const xa = g.x + 8 + (half - wa - da * .72), xb = g.x + 8 + half + gapX;
+    cube(xa, wa, da, ta, st.A.t0, col.ca, "A", Y);
+    cube(xb, wb, db, tb, st.B.t0, col.cb, "B", Y);
+    const py = g.bot - pipeH / 2 - 2;
+    L([[xa + wa, py - pipeH / 2], [xb, py - pipeH / 2]], col.ink, 1.5); L([[xa + wa, py + pipeH / 2], [xb, py + pipeH / 2]], col.ink, 1.5);
+  }
+}
+function tank2(x, w, t, t0, c, nm, C, Y, side){
+  const g = LY.tank;
+  // 水
+  ctx.save(); ctx.fillStyle = c; ctx.globalAlpha = .28; ctx.fillRect(x, Y(t), w, g.bot - Y(t)); ctx.restore();
+  L([[x, Y(t)], [x + w, Y(t)]], c, 2.5);
+  // 移動した熱（初めの水位との差）
+  if(st.area && st.contact && Math.abs(t - t0) > 0.05){
+    const y0 = Y(t0), y1 = Y(t);
+    hatch(x, y0, x + w, y1, col.heat);
+    L([[x, y0], [x + w, y0]], c, 1.2, [4, 3]);
+    const dq = C * Math.abs(t - t0), lost = t < t0;
+    const lab = `${lost ? "失った熱" : "得た熱"} ${sci(dq)} J`;
+    const ly = (y0 + y1) / 2, lx = side < 0 ? x - 6 : x + w + 6;
+    TB(lab, side < 0 ? Math.max(LY.tank.x + 4, x + w / 2) : Math.min(LY.tank.x + LY.tank.w - 4, x + w / 2), Math.min(y0, y1) - 11, col.heat, 11, side < 0 ? (x + w / 2 < LY.tank.x + 60 ? "left" : "center") : (x + w / 2 > LY.tank.x + LY.tank.w - 60 ? "right" : "center"));
+  }
+  // 水槽の壁
+  L([[x, Y(100) - 4], [x, g.bot], [x + w, g.bot], [x + w, Y(100) - 4]], col.ink, 2);
+  // 幅＝熱容量
+  const by = g.bot + 14;
+  L([[x, by - 4], [x, by + 4]], c, 1.4); L([[x + w, by - 4], [x + w, by + 4]], c, 1.4); L([[x, by], [x + w, by]], c, 1.4);
+  const lab = `${nm}：幅 C ＝ ${fmtC(C)} J/K`;
+  if(LY.wide) TB(lab, side < 0 ? Math.max(g.x + 2, x + w / 2) : Math.min(g.x + g.w, x + w / 2), by + 13, c, 11, side < 0 ? (x + w / 2 - 70 < g.x ? "left" : "center") : (x + w / 2 + 70 > g.x + g.w ? "right" : "center"));
+  else TB(lab, side < 0 ? g.x : g.x + g.w, by + (side < 0 ? 13 : 28), c, 11, side < 0 ? "left" : "right");
+}
+function cube(x, w, d, t, t0, c, nm, Y){
+  const g = LY.tank, dx = d * .72, dy = -d * .32, yb = g.bot, yt = Y(100) - 4, yw = Y(t);
+  // 奥の線
+  L([[x + dx, yb + dy], [x + dx, yt + dy], [x + w + dx, yt + dy]], col.line, 1.2);
+  L([[x + dx, yb + dy], [x + w + dx, yb + dy]], col.line, 1.2);
+  // 水（前面・側面・上面）
+  F([[x, yb], [x + w, yb], [x + w, yw], [x, yw]], c, .3);
+  F([[x + w, yb], [x + w + dx, yb + dy], [x + w + dx, yw + dy], [x + w, yw]], c, .45);
+  F([[x, yw], [x + w, yw], [x + w + dx, yw + dy], [x + dx, yw + dy]], c, .55);
+  if(st.area && st.contact && Math.abs(t - t0) > 0.05){ hatch(x, Y(t0), x + w, yw, col.heat); L([[x, Y(t0)], [x + w, Y(t0)], [x + w + dx, Y(t0) + dy]], c, 1.2, [4, 3]); }
+  // 枠
+  L([[x, yt], [x, yb], [x + w, yb], [x + w, yt]], col.ink, 2);
+  L([[x + w, yb], [x + w + dx, yb + dy], [x + w + dx, yt + dy]], col.ink, 1.6);
+  L([[x, yt], [x + dx, yt + dy], [x + w + dx, yt + dy], [x + w, yt]], col.ink, 1.2);
+  const o = nm === "A" ? st.A : st.B;
+  TB(`${nm}：横 ${o.m} g × 奥行 ${o.c.toFixed(2)} J/(g·K)`, nm === "A" ? g.x : g.x + g.w, yb + (nm === "A" ? 14 : 29), c, 11, nm === "A" ? "left" : "right");
+  if(st.area && st.contact && Math.abs(t - t0) > 0.05){ const dq = o.m * o.c * Math.abs(t - t0); TB(`${t < t0 ? "失った熱" : "得た熱"} ${sci(dq)} J`, x + w / 2, Math.min(Y(t0), yw) - 11 + dy, col.heat, 11, "center"); }
+}
+function drawGraph(ta, tb){
+  const g = LY.gr, Y = t => g.bot - t / 100 * (g.bot - g.top), X = s => g.x + s / TMAX * g.w;
+  [0, 20, 40, 60, 80, 100].forEach(t => { L([[g.x, Y(t)], [g.x + g.w, Y(t)]], col.line, 1, t ? [3, 4] : []); if(!LY.wide) T(`${t}`, g.x - 6, Y(t), col.muted, 11, "right"); });
+  for(let s = 5; s <= TMAX; s += 5){ L([[X(s), g.top], [X(s), g.bot]], col.line, 1, [3, 4]); T(`${s}`, X(s), g.bot + 11, col.muted, 11, "center"); }
+  T("0", X(0), g.bot + 11, col.muted, 11, "center");
+  L([[g.x, g.top], [g.x, g.bot], [g.x + g.w, g.bot]], col.ink, 1.4);
+  T("温度 t〔℃〕", g.x, g.top - 16, col.muted, 11, "left");
+  T("時間〔s〕", g.x + g.w, g.bot + 26, col.muted, 11, "right");
+  // 熱平衡の温度
+  const f = tf(), show = st.pred || (st.contact && Math.abs(ta - tb) < 0.5);
+  if(show){ L([[g.x, Y(f)], [g.x + g.w, Y(f)]], col.muted, 1.5, [6, 4]); TB(`熱平衡の温度 ${nf(f, 1)} ℃`, g.x + g.w - 2, Y(f) + (st.A.t0 > st.B.t0 === (f > 50) ? 14 : -14), col.muted, 11, "right"); }
+  // 曲線
+  const tEnd = Math.min(st.time, TMAX), pa = [], pb = [];
+  const n = Math.max(2, Math.ceil(tEnd / TMAX * 200));
+  for(let i = 0; i <= n; i++){ const s = tEnd * i / n, [a, b] = tempsAt(s); pa.push([X(s), Y(a)]); pb.push([X(s), Y(b)]); }
+  L(pa, col.ca, 3); L(pb, col.cb, 3);
+  const xa = X(tEnd);
+  [[ta, col.ca, "A"], [tb, col.cb, "B"]].forEach(([t, c, nm]) => { ctx.save(); ctx.fillStyle = c; ctx.beginPath(); ctx.arc(xa, Y(t), 5, 0, TAU); ctx.fill(); ctx.restore(); });
+  const off = Math.abs(Y(ta) - Y(tb)) < 16 ? (ta >= tb ? [-9, 9] : [9, -9]) : [0, 0];
+  T("A", xa + 9, Y(ta) + off[0], col.ca, 12, "left", true); T("B", xa + 9, Y(tb) + off[1], col.cb, 12, "left", true);
+  // 水位とグラフを結ぶ線（PC のとき）
+  if(LY.wide){ [[ta, col.ca], [tb, col.cb]].forEach(([t, c]) => L([[LY.tank.x + LY.tank.w, Y(t)], [g.x, Y(t)]], c, 1, [2, 4])); }
+}
+
+/* ---------- 入力 ---------- */
+function fillSel(id){ $(id).innerHTML = MATS.map(([n, c]) => `<option value="${n}">${n}（${c.toFixed(2)}）</option>`).join("") + `<option value="${FREE}">${FREE}</option>`; }
+fillSel("mA"); fillSel("mB");
+function sync(){
+  ["A", "B"].forEach(k => { const o = st[k];
+    $("m" + k).value = MATS.some(m => m[0] === o.name) ? o.name : FREE;
+    $("t" + k).value = o.t0; $("g" + k).value = o.m; $("c" + k).value = o.c;
+    $("ot" + k).textContent = `${o.t0} ℃`; $("og" + k).textContent = `${o.m} g`; $("oc" + k).textContent = `${o.c.toFixed(2)} J/(g·K)`;
+    $("cap" + k).innerHTML = `熱容量 ${I("C")} ＝ ${I("m")}${I("c")} ＝ ${o.m} g × ${o.c.toFixed(2)} J/(g·K) ＝ <b>${fmtC(o.m * o.c)} J/K</b>`;
+  });
+}
+function toStart(){ st.time = 0; st.contact = false; setPlaying(true); $("goBtn").disabled = false; $("playBtn").disabled = true; ui(); draw(); }
+["A", "B"].forEach(k => {
+  $("m" + k).addEventListener("change", e => { const v = e.target.value, m = MATS.find(x => x[0] === v); if(m){ st[k].name = m[0]; st[k].c = m[1]; } else st[k].name = "物質"; sync(); toStart(); });
+  $("t" + k).addEventListener("input", e => { st[k].t0 = +e.target.value; sync(); toStart(); });
+  $("g" + k).addEventListener("input", e => { st[k].m = +e.target.value; sync(); toStart(); });
+  $("c" + k).addEventListener("input", e => { st[k].c = +e.target.value; const m = MATS.find(x => Math.abs(x[1] - st[k].c) < 1e-6); st[k].name = m ? m[0] : "物質"; sync(); toStart(); });
+});
+function setPlaying(p){ st.playing = p; $("playBtn").textContent = p ? "一時停止" : "再生"; }
+$("goBtn").addEventListener("click", () => { st.contact = true; st.time = 0; setPlaying(true); $("goBtn").disabled = true; $("playBtn").disabled = false; });
+$("playBtn").addEventListener("click", () => setPlaying(!st.playing));
+$("resetBtn").addEventListener("click", toStart);
+$("speedSel").addEventListener("change", e => st.speed = +e.target.value);
+$("ckCube").addEventListener("change", e => { st.cube = e.target.checked; draw(); });
+$("ckArea").addEventListener("change", e => { st.area = e.target.checked; draw(); });
+$("ckPred").addEventListener("change", e => { st.pred = e.target.checked; ui(); draw(); });
+
+function ui(){
+  const [ta, tb] = temps(), q = qMoved(), f = tf(), cA = CA(), cB = CB();
+  $("rNow").innerHTML = `<span style="color:var(--ca)">${nf(ta, 1)}</span> <small>℃ ／</small> <span style="color:var(--cb)">${nf(tb, 1)}</span> <small>℃</small>`;
+  const qb = cB * (tb - st.B.t0);
+  $("rQ").innerHTML = `${sci(Math.abs(q))} <small>J ／</small> ${sci(Math.abs(qb))} <small>J</small>${q < -0.5 ? " <small>（B → A）</small>" : ""}`;
+  const reached = st.contact && Math.abs(ta - tb) < 0.5;
+  $("rF").innerHTML = (st.pred || reached) ? `${nf(f, 1)} <small>℃</small>` : `<small>予想してから「接触させる」</small>`;
+  let h, p;
+  const hot = st.A.t0 >= st.B.t0 ? "A" : "B", cold = hot === "A" ? "B" : "A";
+  if(st.A.t0 === st.B.t0){ h = "はじめから同じ温度"; p = "温度が等しいので、接触させても熱は移動しません。これも熱平衡の状態です。"; }
+  else if(!st.contact){ h = "接触させる前"; p = `熱平衡の温度は、A の ${st.A.t0} ℃ と B の ${st.B.t0} ℃ の間のどこになるか予想しよう。熱容量は A が ${fmtC(cA)} J/K、B が ${fmtC(cB)} J/K です。`; }
+  else if(!reached){ h = "熱が移動している"; p = `熱は高温の ${hot} から低温の ${cold} へ移動しています。${hot} が失った熱量と ${cold} が得た熱量は、いつも等しくなっています（水槽で、斜線の長方形の面積が等しい）。温度の差が小さくなるほど、熱の移動はゆっくりになります。`; }
+  else { h = "熱平衡"; p = `2つの温度が等しくなり、熱の移動が止まりました。熱平衡の温度は ${nf(f, 1)} ℃ で、熱容量の大きい ${cA >= cB ? "A" : "B"} の初めの温度に近くなっています。（${fmtC(cA)} × ${nf(st.A.t0, 0)} ＋ ${fmtC(cB)} × ${nf(st.B.t0, 0)}）÷（${fmtC(cA)} ＋ ${fmtC(cB)}）＝ ${nf(f, 1)} ℃`; }
+  $("now").querySelector("b").textContent = `いま：${h}`; $("now").querySelector("p").textContent = p;
+}
+
+let last = null, uiT = 0;
+function tick(ts){
+  if(last == null) last = ts; const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
+  if(st.contact && st.playing){ st.time = Math.min(TMAX, st.time + dt * st.speed); if(st.time >= TMAX) setPlaying(false); }
+  draw();
+  uiT += dt; if(uiT > 0.1){ uiT = 0; ui(); }
+  requestAnimationFrame(tick);
+}
+const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+if(mq && mq.addEventListener) mq.addEventListener("change", draw);
+new MutationObserver(draw).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+if(window.ResizeObserver) new ResizeObserver(resize).observe(cv); else window.addEventListener("resize", resize);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+
+$("qs").innerHTML = [
+  ["はじめの設定（アルミニウム 200 g・90 ℃ と 水 100 g・20 ℃）で、熱平衡の温度を予想してから接触させよう。熱平衡の温度は、どちらの初めの温度に近いか。それはなぜか。", "水の初めの温度（20 ℃）に近くなります（約 41 ℃）。質量は水のほうが小さいですが、比熱が大きいので、熱容量は水（420 J/K）のほうがアルミニウム（180 J/K）より大きいからです。水槽では、幅の広い水槽の水位はあまり変わりません。"],
+  ["水槽の斜線の長方形（A が失った熱と B が得た熱）の面積を比べよう。", `いつでも等しくなっています。長方形の面積は 幅 × 高さ ＝ ${I("C")}Δ${I("t")} で熱量を表すので、「高温の物体が失った熱量 ＝ 低温の物体が得た熱量」（熱量の保存）を表しています。`],
+  ["A と B の温度の変化の大きさ（Δt）を比べよう。どちらが大きく変化するか。", `熱容量の小さいほうが大きく変化します。移動する熱量 ${I("Q")} は同じなので、Δ${I("t")} ＝ ${I("Q")} ÷ ${I("C")} より、${I("C")} が小さいほど Δ${I("t")} が大きくなります。`],
+  ["B を「水 100 g」のまま、A を同じ質量・同じ初めの温度の「鉄」に変えると、熱平衡の温度はどう変わるか。", "水の温度にさらに近くなります。鉄の比熱（0.45 J/(g·K)）はアルミニウムより小さく、熱容量が小さいからです。「直方体で表す」にすると、奥行（比熱）が小さくなるのが分かります。"],
+  ["グラフで、温度の変化が速いのはいつか。熱平衡に近づくとどうなるか。", "接触させた直後がいちばん速く、温度の差が小さくなるほどゆっくりになります。水槽でも、水位の差が小さくなるほど流れが弱くなります。"],
+  ["熱平衡になった後、熱の移動はどうなっているか。", "温度が等しいので、熱は移動しません（水位がそろうと水が流れないのと同じ）。2つの物体の温度はそのまま変わりません。"],
+  ["水槽のたとえで、水槽に入っている水全体は「物体がもっている熱」といってよいか。", "いえません。熱は、温度の差によって移動するエネルギーの名前です。物体がもっているのは内部エネルギーで、水全体はその目安（0 ℃ を基準にした増え分）にすぎません。「熱」にあたるのは、管を通って移動した水だけです。"]
+].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
+
+sync(); ui(); resize(); requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
