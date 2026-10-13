@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>オームの法則と電力のアニメーション</title>
+<title>電流・オームの法則・電力のアニメーション</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
@@ -104,6 +104,24 @@ tr.sum td{font-weight:700;border-top:2px solid var(--ink)}
 .pw .bar{display:flex;height:30px;border-radius:5px;overflow:hidden;margin-top:3px;background:var(--shade)}
 .pw .bar div{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;min-width:0}
 .forms{margin-top:10px;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px;line-height:1.9}
+.stage0{position:relative;width:100%;aspect-ratio:3.2/1;background:var(--sheet);border:1px solid var(--line);border-radius:4px}
+@media (max-width:760px){.stage0{aspect-ratio:1.7/1}}
+.stage2{position:relative;width:100%;aspect-ratio:2.1/1;background:var(--sheet);border:1px solid var(--line);border-radius:4px}
+@media (max-width:760px){.stage2{aspect-ratio:1.05/1}}
+.ro{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:12px}
+.ro div{padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:15px;font-variant-numeric:tabular-nums;line-height:1.7}
+.ro b{display:block;font-size:13px;color:var(--muted);font-weight:400}
+.ro .big{font-size:18px;font-weight:700}
+.ro div.hl{border-color:var(--blue);background:var(--blue-soft)}
+.opts .btn{min-height:42px;padding:6px 16px}
+.toc{display:flex;flex-wrap:wrap;gap:4px 16px;margin:0;padding:0;list-style:none;font-size:15px}
+.toc a{color:var(--blue);text-decoration:none;font-weight:700}
+.rule{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+@media (max-width:760px){.rule{grid-template-columns:1fr}}
+.rule div{padding:12px 14px;border-radius:0 8px 8px 0;background:var(--shade);font-size:15px}
+.rule h3{margin:0 0 4px;font-size:17px}
+.rule .f{margin:6px 0;padding:6px 10px;background:var(--sheet);border-radius:6px;font-weight:700;font-variant-numeric:tabular-nums}
+html{scroll-padding-top:110px}
 .qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
 .qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
 .ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
@@ -113,7 +131,7 @@ tr.sum td{font-weight:700;border-top:2px solid var(--ink)}
 <header class="top">
   <div class="top-inner">
     <a class="back" id="backLink" href="../index.html#/u/current/0" hidden>‹ 電流と電気抵抗（Webテスト）へ</a>
-    <h1>オームの法則と電力</h1>
+    <h1>電流の定義・オームの法則と電力</h1>
     <nav class="nav" id="nav" hidden aria-label="アニメーション">
       <a href="index.html#elec">≡ アニメーション集</a>
       <a href="ohm.html" aria-current="page">オームの法則と電力</a>
@@ -123,6 +141,31 @@ tr.sum td{font-weight:700;border-top:2px solid var(--ink)}
 </header>
 
 <main>
+  <nav class="sheet" aria-label="このページの内容" style="padding:12px 16px">
+    <ul class="toc">
+      <li><a href="#idef">1 電流の定義</a></li>
+      <li><a href="#t1">2 オームの法則と電力（1つ・直列・並列）</a></li>
+      <li><a href="#t2">3 グラフと数値</a></li>
+      <li><a href="#rho">4 抵抗と抵抗率・直列と並列</a></li>
+    </ul>
+  </nav>
+
+  <section class="sheet" id="idef" aria-labelledby="t0">
+    <h2 id="t0">電流とは：導線の断面を 1 s 間に通過する電気量</h2>
+    <p class="lead">導線の中を電荷が移動すると、電流が流れます。電流の大きさ <i class="qv">I</i> は、導線のある断面（点線）を 1 s 間に通過する電気量で表します。時間 <i class="qv">t</i> の間に電気量 <i class="qv">q</i> が通過したとき、<b><i class="qv">I</i> ＝ <i class="qv">q</i>/<i class="qv">t</i></b>。単位はアンペア（A）で、1 A ＝ 1 C/s です。「はかり始める」を押して、通過した電気量を数えてみよう。</p>
+    <div class="stage0"><canvas id="cv0" role="img" aria-label="横に長い導線の中を、電荷を表す粒が右向きに移動している。導線の中央に点線の断面があり、通過した粒の数を数える。"></canvas></div>
+    <div class="sliders">
+      <label class="sl" for="sI0"><span class="nm">電流 <i class="qv">I</i>（1 s 間に通過する電気量）</span><output id="oI0"></output><input type="range" id="sI0" min="0.2" max="2" step="0.1" value="1"></label>
+    </div>
+    <div class="opts">
+      <label for="cbE0"><input type="checkbox" id="cbE0">電子の動きで表示する</label>
+      <button type="button" class="btn" id="m0Btn">はかり始める</button>
+      <button type="button" class="btn ghost" id="r0Btn">リセット</button>
+    </div>
+    <div class="ro" id="ro0"></div>
+    <p class="note">1粒は 0.1 C の電気量を表します。電子1個の電気量は −1.6 × 10⁻¹⁹ C なので、1粒は電子 約 6.3 × 10¹⁷ 個分、1 A の電流では 1 s 間に約 6.3 × 10¹⁸ 個の電子が断面を通過しています。電流の向きは正の電荷が移動する向きで、実際に導線の中を移動している電子（負の電荷）の向きとは逆です。</p>
+  </section>
+
   <section class="sheet" aria-labelledby="t1">
     <h2 id="t1">電流・電圧・抵抗・電力の関係を見る</h2>
     <p class="lead">左は回路、右は回路をひとまわりしたときの「電気的な高さ（電位）」です。粒は電荷を表し、粒の速さが電流の大きさを表します。段階ごとに説明を読み、スライダーで電圧や抵抗を変えて確かめよう。</p>
@@ -172,6 +215,36 @@ tr.sum td{font-weight:700;border-top:2px solid var(--ink)}
           <div class="bar" id="pBar"></div>
         </div>
         <div class="forms" id="forms"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet" id="rho" aria-labelledby="t4">
+    <h2 id="t4">抵抗の大きさを決めるもの：<i class="qv">R</i> ＝ <i class="qv">ρ</i><i class="qv">L</i>/<i class="qv">S</i></h2>
+    <p class="lead">導線を「長さ 1 m、断面積 1 mm² の小さなかたまり」に分けて考えます。かたまり1個の抵抗は物質で決まります。長くするとかたまりが<b>直列</b>に増え、太くすると電流の通り道が<b>並列</b>に増えます。粒の流れ方を見ながら、長さ・断面積・物質を変えてみよう（どれも同じ電圧をかけています）。</p>
+    <div class="stage2"><canvas id="cv2" role="img" aria-label="導線を小さなかたまりに分けた図。横に並んだかたまりの数が長さ、縦に並んだ段の数が断面積を表す。左の電極から右の電極へ、各段を粒が流れる。"></canvas></div>
+    <div class="sliders">
+      <label class="sl" for="sL2"><span class="nm">長さ <i class="qv">L</i></span><output id="oL2"></output><input type="range" id="sL2" min="1" max="6" step="1" value="2"></label>
+      <label class="sl" for="sS2"><span class="nm">断面積 <i class="qv">S</i></span><output id="oS2"></output><input type="range" id="sS2" min="1" max="5" step="1" value="1"></label>
+      <label class="sl" for="selM2"><span class="nm">物質（抵抗率 <i class="qv">ρ</i>、20 ℃）</span><span></span>
+        <select id="selM2" style="grid-column:1/-1;min-height:40px;border:1.5px solid var(--line);border-radius:8px;background:var(--sheet);padding:2px 8px;color:var(--ink)">
+          <option value="0">銅（1.7 × 10⁻⁸ Ω·m）</option><option value="1">アルミニウム（2.7 × 10⁻⁸ Ω·m）</option>
+          <option value="2">鉄（1.0 × 10⁻⁷ Ω·m）</option><option value="3" selected>ニクロム（1.1 × 10⁻⁶ Ω·m）</option>
+        </select></label>
+    </div>
+    <div class="ro" id="ro2"></div>
+    <div class="rule">
+      <div style="border-left:5px solid var(--r1)">
+        <h3>直列 ＝ 電流の「流れにくさ」の和</h3>
+        抵抗 <i class="qv">R</i> は電流の流れにくさです。直列につなぐと、電流は両方の抵抗を順に通らなければならないので、流れにくさがそのまま足し合わされます。
+        <div class="f"><i class="qv">R</i> ＝ <i class="qv">R</i>₁ ＋ <i class="qv">R</i>₂</div>
+        導線を長くする（かたまりを直列に増やす）と、抵抗が長さに比例して大きくなるのはこのためです。例：10 Ω と 20 Ω の直列 → 30 Ω。
+      </div>
+      <div style="border-left:5px solid var(--r2)">
+        <h3>並列 ＝ 電流の「流れやすさ」の和</h3>
+        抵抗の逆数 1/<i class="qv">R</i> は電流の流れやすさです。並列につなぐと、電流の通り道が増えるので、流れやすさが足し合わされます。
+        <div class="f">1/<i class="qv">R</i> ＝ 1/<i class="qv">R</i>₁ ＋ 1/<i class="qv">R</i>₂</div>
+        導線を太くする（通り道を並列に増やす）と、抵抗が断面積に反比例して小さくなるのはこのためです。例：10 Ω と 20 Ω の並列 → 流れやすさ 1/10 ＋ 1/20 ＝ 3/20、<i class="qv">R</i> ＝ 20/3 ≒ 6.7 Ω。
       </div>
     </div>
   </section>
@@ -278,8 +351,8 @@ function stepInfo(st){
       eq: `${I} ＝ ${f3(st.I)} A（${Rr1} にも ${Rr2} にも同じ電流）` },
     { ov: { volt: 1 }, txt: `電荷は ${Rr1} と ${Rr2} で2段に分けて下ります。右のグラフの段差が各抵抗にかかる電圧で、${V1} ＝ ${Rr1}${I}、${V2} ＝ ${Rr2}${I}。段差を合わせると電池で上がった高さに等しく、${V1} ＋ ${V2} ＝ ${Vv}。電流が同じなので、抵抗が大きいほうに大きい電圧がかかります（${V1}：${V2} ＝ ${Rr1}：${Rr2}）。`,
       eq: `${V1} ＝ ${R1} × ${f3(st.I)} ＝ ${f3(st.V1)} V、${V2} ＝ ${R2} × ${f3(st.I)} ＝ ${f3(st.V2)} V<br>${V1} ＋ ${V2} ＝ ${f3(st.V1 + st.V2)} V ＝ ${Vv}` },
-    { ov: { comb: 1, amm: 1 }, txt: `2つの抵抗を、全体の電流が同じになる1つの抵抗におきかえたものが合成抵抗 ${R} です。${Vv} ＝ ${V1} ＋ ${V2} ＝ ${Rr1}${I} ＋ ${Rr2}${I} ＝ (${Rr1} ＋ ${Rr2})${I} だから、${R} ＝ ${Rr1} ＋ ${Rr2}。電流の通り道が長くなるので、抵抗は大きくなります。`,
-      eq: `${R} ＝ ${R1} ＋ ${R2} ＝ ${R1 + R2} Ω、${I} ＝ ${Vv}/${R} ＝ ${V} ÷ ${R1 + R2} ＝ ${f3(st.I)} A` },
+    { ov: { comb: 1, amm: 1 }, txt: `2つの抵抗を、全体の電流が同じになる1つの抵抗におきかえたものが合成抵抗 ${R} です。${Vv} ＝ ${V1} ＋ ${V2} ＝ ${Rr1}${I} ＋ ${Rr2}${I} ＝ (${Rr1} ＋ ${Rr2})${I} だから、${R} ＝ ${Rr1} ＋ ${Rr2}。<b>直列の合成抵抗は、電流の「流れにくさ」（抵抗）の和</b>です。電流は両方の抵抗を順に通らなければならないので、流れにくさが足し合わされ、抵抗は大きくなります（導線を長くしたのと同じ）。`,
+      eq: `流れにくさの和：${R} ＝ ${R1} ＋ ${R2} ＝ ${R1 + R2} Ω<br>${I} ＝ ${Vv}/${R} ＝ ${V} ÷ ${R1 + R2} ＝ ${f3(st.I)} A` },
     { ov: { pow: 1 }, txt: `各抵抗の電力は ${P1} ＝ ${V1}${I} ＝ ${Rr1}${I}²。電流が同じなので、抵抗が大きいほうが電力が大きく、よく熱くなります（${P1}：${P2} ＝ ${Rr1}：${Rr2}）。全体の電力は ${P} ＝ ${P1} ＋ ${P2} ＝ ${Vv}${I}（電池が 1 s 間に供給するエネルギー）。`,
       eq: `${P1} ＝ ${f3(st.P1)} W、${P2} ＝ ${f3(st.P2)} W、${P1} ＋ ${P2} ＝ ${f3(st.P1 + st.P2)} W ＝ ${Vv}${I}` }
   ][k];
@@ -288,8 +361,8 @@ function stepInfo(st){
       eq: `${V1} ＝ ${V2} ＝ ${Vv} ＝ ${V} V` },
     { ov: { amm: 1 }, txt: `分かれ道で電流は ${I1} と ${I2} に分かれ、合流してもとに戻ります（電荷は消えも増えもしない）。${I} ＝ ${I1} ＋ ${I2}。電圧が同じなので、抵抗が小さいほうに大きい電流が流れます（${I1}：${I2} ＝ ${Rr2}：${Rr1}）。粒の速さを比べよう。`,
       eq: `${I1} ＝ ${V} ÷ ${R1} ＝ ${f3(st.I1)} A、${I2} ＝ ${V} ÷ ${R2} ＝ ${f3(st.I2)} A<br>${I} ＝ ${I1} ＋ ${I2} ＝ ${f3(st.I)} A` },
-    { ov: { comb: 1, amm: 1 }, txt: `${I} ＝ ${I1} ＋ ${I2} ＝ ${Vv}/${Rr1} ＋ ${Vv}/${Rr2} ＝ ${Vv}(1/${Rr1} ＋ 1/${Rr2}) だから、合成抵抗は 1/${R} ＝ 1/${Rr1} ＋ 1/${Rr2}。電流の通り道が増える（導線が太くなったのと同じ）ので、全体の抵抗はどちらの抵抗よりも小さくなります。`,
-      eq: `1/${R} ＝ 1/${R1} ＋ 1/${R2}　→　${R} ＝ ${f3(st.R)} Ω（${Math.min(R1, R2)} Ω より小さい）、${I} ＝ ${Vv}/${R} ＝ ${f3(st.I)} A` },
+    { ov: { comb: 1, amm: 1 }, txt: `${I} ＝ ${I1} ＋ ${I2} ＝ ${Vv}/${Rr1} ＋ ${Vv}/${Rr2} ＝ ${Vv}(1/${Rr1} ＋ 1/${Rr2}) だから、合成抵抗は 1/${R} ＝ 1/${Rr1} ＋ 1/${Rr2}。抵抗の逆数 1/${R} は電流の「流れやすさ」を表すので、<b>並列の合成抵抗は、電流の「流れやすさ」の和</b>から求めます。通り道が増える（導線が太くなったのと同じ）ので流れやすくなり、全体の抵抗はどちらの抵抗よりも小さくなります。`,
+      eq: `流れやすさの和：1/${R} ＝ 1/${R1} ＋ 1/${R2} ＝ ${f3(1 / R1 + 1 / R2)} /Ω<br>${R} ＝ ${f3(st.R)} Ω（${Math.min(R1, R2)} Ω より小さい）、${I} ＝ ${Vv}/${R} ＝ ${f3(st.I)} A` },
     { ov: { pow: 1 }, txt: `電圧が同じなので、${P1} ＝ ${Vv}${I1} ＝ ${Vv}²/${Rr1}。抵抗が小さいほうが電力が大きく、よく熱くなります（${P1}：${P2} ＝ ${Rr2}：${Rr1}。直列と逆）。全体の電力は ${P} ＝ ${P1} ＋ ${P2} ＝ ${Vv}${I}。家庭のコンセントにつなぐ電気器具は並列なので、どれにも 100 V がかかります。`,
       eq: `${P1} ＝ ${f3(st.P1)} W、${P2} ＝ ${f3(st.P2)} W、${P1} ＋ ${P2} ＝ ${f3(st.P1 + st.P2)} W ＝ ${Vv}${I}` }
   ][k];
@@ -322,7 +395,7 @@ function layout(){
   const wide = W >= 700;
   const cA = wide ? { x: 0, y: 0, w: W * 0.53, h: H } : { x: 0, y: 0, w: W, h: H * 0.54 };
   const gA = wide ? { x: W * 0.53, y: 0, w: W * 0.47, h: H } : { x: 0, y: H * 0.54, w: W, h: H * 0.46 };
-  const sc = Math.min((cA.w - 12) / 124, (cA.h - 12) / 76);
+  const sc = Math.max(0.5, Math.min((cA.w - 12) / 124, (cA.h - 12) / 76));
   const ox = cA.x + (cA.w - 124 * sc) / 2, oy = cA.y + (cA.h - 76 * sc) / 2;
   return { wide, cA, gA, sc, ox, oy, fs: sc < 3.6 ? 11 : 13 };
 }
@@ -597,7 +670,126 @@ $("sR1").addEventListener("input", e => { S.R1 = +e.target.value; update(); });
 $("sR2").addEventListener("input", e => { S.R2 = +e.target.value; update(); });
 $("cbE").addEventListener("change", e => { S.elec = e.target.checked; draw(); });
 $("selSp").addEventListener("change", e => { S.speed = +e.target.value; });
-window.addEventListener("hashchange", () => setMode(location.hash.slice(1), true));
+window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if(["one", "series", "parallel"].includes(h)) setMode(h, true); });
+
+/* ---------- 1 電流の定義（断面を通過する電気量を数える） ---------- */
+const cv0 = $("cv0"), c0 = cv0.getContext("2d"), cv2 = $("cv2"), c2 = cv2.getContext("2d");
+let W0 = 0, H0 = 0, W2 = 0, H2 = 0;
+const D0 = { I: 1, elec: false, run: false, t: 0, n: 0, lanes: 3, x: [] };   // x：各粒の位置（導線の長さに対する割合 0〜1）
+const DQ = 0.1, NPL = 16;                                                       // 1粒の電気量〔C〕、1列あたりの粒の数
+for(let l = 0; l < D0.lanes; l++) for(let k = 0; k < NPL; k++) D0.x.push({ l, u: (k + l / D0.lanes) / NPL });
+function ro0(){
+  const t = D0.t, q = D0.n * DQ;
+  $("oI0").textContent = `${D0.I.toFixed(1)} A`;
+  $("m0Btn").textContent = D0.run ? "一時停止" : (D0.t > 0 ? "続ける" : "はかり始める");
+  $("ro0").innerHTML = `<div><b>はかった時間</b><span class="big">${I_("t")} ＝ ${t.toFixed(1)} s</span></div>`
+    + `<div><b>断面を通過した電気量${D0.elec ? "（電子の電気量の大きさ）" : ""}</b><span class="big">${I_("q")} ＝ ${D0.n} 粒 × 0.1 C ＝ ${q.toFixed(1)} C</span></div>`
+    + `<div class="hl"><b>電流 ＝ 1 s 間あたりの電気量</b><span class="big">${I_("I")} ＝ ${I_("q")}/${I_("t")} ＝ ${t > 0.05 ? (q / t).toFixed(2) : "—"} A</span></div>`;
+}
+function draw0(){
+  if(!W0) return; const c = c0; c.clearRect(0, 0, W0, H0);
+  const x0 = 26, x1 = W0 - 26, yc = H0 * (W0 < 600 ? 0.46 : 0.5), h = Math.min(H0 * 0.5, 150), xs = (x0 + x1) / 2, rx = h * 0.18;
+  // 導線
+  c.save(); c.fillStyle = col.shade; c.fillRect(x0, yc - h / 2, x1 - x0, h); c.restore();
+  line(c, [[x0, yc - h / 2], [x1, yc - h / 2]], col.ink, 2); line(c, [[x0, yc + h / 2], [x1, yc + h / 2]], col.ink, 2);
+  // 断面（点線のだ円）
+  c.save(); c.setLineDash([5, 4]); c.strokeStyle = col.net; c.lineWidth = 2; c.beginPath(); c.ellipse(xs, yc, rx, h / 2, 0, 0, Math.PI * 2); c.stroke(); c.restore();
+  mt(c, "断面", xs, yc + h / 2 + 16, col.net, 13, "center", true);
+  // 粒
+  const r = Math.max(4, Math.min(7, h / 12));
+  D0.x.forEach(d => {
+    const x = x0 + (x1 - x0) * d.u, y = yc + (d.l - (D0.lanes - 1) / 2) * h / (D0.lanes + 0.6);
+    c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fillStyle = D0.elec ? col.lo : col.hi; c.fill();
+    line(c, [[x - r * .55, y], [x + r * .55, y]], "#fff", 1.6); if(!D0.elec) line(c, [[x, y - r * .55], [x, y + r * .55]], "#fff", 1.6);
+  });
+  // 向き
+  const ay = yc - h / 2 - 16;
+  const narrow = W0 < 600, al = narrow ? 36 : 90;
+  line(c, [[x0 + 4, ay], [x0 + al, ay]], col.bat, 2.4);
+  c.save(); c.fillStyle = col.bat; c.beginPath(); c.moveTo(x0 + al + 12, ay); c.lineTo(x0 + al, ay - 6); c.lineTo(x0 + al, ay + 6); c.closePath(); c.fill(); c.restore();
+  mt(c, narrow ? "電流の向き" : "電流 {I} の向き", x0 + al + 18, ay, col.bat, narrow ? 12 : 13, "left", true);
+  if(D0.elec) mt(c, "← 電子が移動する向き（電流と逆）", x0 + 4, yc + h / 2 + (narrow ? 34 : 16), col.lo, 13, "left", true);
+  // カウンター
+  if(narrow) mt(c, `通過：${D0.n} 粒（${(D0.n * DQ).toFixed(1)} C）`, x1, ay, col.net, 12, "right", true, true);
+  else mt(c, `断面を通過：${D0.n} 粒（${(D0.n * DQ).toFixed(1)} C）`, xs + rx + 8, ay, col.net, 14, "left", true, true);
+}
+function step0(dt){
+  if(reduce) return;
+  const dir = D0.elec ? -1 : 1, sp = D0.I / DQ / D0.lanes / NPL;   // 1 s 間に 1 列あたり I/(0.1×列数) 粒が通過する
+  D0.x.forEach(d => {
+    const before = d.u; let u = d.u + dir * sp * dt;
+    if(D0.run && ((dir > 0 && before < 0.5 && u >= 0.5) || (dir < 0 && before > 0.5 && u <= 0.5))) D0.n++;
+    d.u = (u % 1 + 1) % 1;
+  });
+  if(D0.run) D0.t += dt;
+}
+$("sI0").addEventListener("input", e => { D0.I = +e.target.value; D0.t = 0; D0.n = 0; ro0(); });
+$("cbE0").addEventListener("change", e => { D0.elec = e.target.checked; D0.t = 0; D0.n = 0; ro0(); });
+$("m0Btn").addEventListener("click", () => { D0.run = !D0.run; ro0(); });
+$("r0Btn").addEventListener("click", () => { D0.run = false; D0.t = 0; D0.n = 0; ro0(); });
+
+/* ---------- 4 抵抗と抵抗率（かたまりの直列・並列） ---------- */
+const MAT = [{ nm: "銅", rho: 1.7e-8, c: "#C8743A" }, { nm: "アルミニウム", rho: 2.7e-8, c: "#9AA7B4" }, { nm: "鉄", rho: 1.0e-7, c: "#6E7781" }, { nm: "ニクロム", rho: 1.1e-6, c: "#8C6BB1" }];
+const D2 = { L: 2, S: 1, m: 3, ph: 0 };
+const SUP = { "-": "⁻", "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" };
+function sci(x, d){ if(x === 0) return "0"; const e = Math.floor(Math.log10(Math.abs(x)) + 1e-9), m = x / Math.pow(10, e);
+  if(e >= -2 && e <= 3) return Number(x.toPrecision(d || 2)).toString(); return `${m.toFixed((d || 2) - 1)} × 10${String(e).split("").map(ch => SUP[ch]).join("")}`; }
+function ro2(){
+  const M = MAT[D2.m], r0 = M.rho * 1 / 1e-6, row = r0 * D2.L, R = M.rho * D2.L / (D2.S * 1e-6);
+  $("oL2").textContent = `${D2.L} m`; $("oS2").textContent = `${D2.S} mm²`;
+  const R_ = I_("R"), rho = I_("ρ"), L = I_("L"), S = I_("S");
+  $("ro2").innerHTML = `<div><b>かたまり1個（1 m・1 mm²）の抵抗 ${I_("r")}</b>${I_("r")} ＝ ${rho} × 1 m ÷ (1 × 10⁻⁶ m²)<br><span class="big">＝ ${sci(r0)} Ω</span></div>`
+    + `<div><b>通り道1本 ＝ かたまり ${D2.L} 個の直列（流れにくさの和）</b>${I_("r")} × ${D2.L}<br><span class="big">＝ ${sci(row)} Ω</span></div>`
+    + `<div><b>全体 ＝ 通り道 ${D2.S} 本の並列（流れやすさの和）</b>1/${R_} ＝ ${D2.S} × 1/(${sci(row)} Ω)<br><span class="big">${R_} ＝ ${sci(R)} Ω</span></div>`
+    + `<div class="hl"><b>まとめると ${R_} ＝ ${rho}${L}/${S}</b>${R_} ＝ ${sci(M.rho)} × ${D2.L} ÷ (${D2.S} × 10⁻⁶)<br><span class="big">＝ ${sci(R)} Ω</span>（${S} は m² に直す）</div>`
+    + `<div><b>同じ電圧をかけたときの電流（${L} ＝ 1 m、${S} ＝ 1 mm²、同じ物質のときを 1 とする）</b><span class="big">${sci(D2.S / D2.L, 3)} 倍</span>（${S}/${L} に比例）</div>`;
+}
+function draw2(){
+  if(!W2) return; const c = c2; c.clearRect(0, 0, W2, H2);
+  const narrow = W2 < 600, ml = 46, mr = narrow ? 30 : 190, mtp = 34, mb = narrow ? 92 : 56;
+  const bw = Math.min((W2 - ml - mr) / 6, 140), bh = Math.min(bw * 0.6, (H2 - mtp - mb) / 5), M = MAT[D2.m];
+  const gx0 = ml, gy0 = mtp + (H2 - mtp - mb - bh * D2.S) / 2, gx1 = gx0 + bw * D2.L, gy1 = gy0 + bh * D2.S;
+  // 電極
+  c.save(); c.fillStyle = col.bat; c.fillRect(gx0 - 12, gy0 - 6, 8, gy1 - gy0 + 12); c.fillStyle = col.lo; c.fillRect(gx1 + 4, gy0 - 6, 8, gy1 - gy0 + 12); c.restore();
+  mt(c, "＋", gx0 - 26, (gy0 + gy1) / 2, col.bat, 15, "center", true); mt(c, "−", gx1 + 8, gy0 - 14, col.lo, 15, "center", true);
+  // かたまり
+  for(let j = 0; j < D2.S; j++) for(let i = 0; i < D2.L; i++){
+    const x = gx0 + i * bw, y = gy0 + j * bh;
+    c.save(); c.fillStyle = rgba(M.c, 0.32); c.strokeStyle = M.c; c.lineWidth = 1.6; c.fillRect(x + 2, y + 2, bw - 4, bh - 4); c.strokeRect(x + 2, y + 2, bw - 4, bh - 4); c.restore();
+  }
+  mt(c, `1個 ＝ 1 m・1 mm²（{r} ＝ ${sci(M.rho * 1e6)} Ω）`, gx0, gy0 - 16 - (narrow ? 0 : 0), col.muted, 12, "left", false, true);
+  // 粒（各段を流れる。1段の電流は 1/L に比例）
+  const sp = bw / 3, r = Math.max(3.2, Math.min(6, bh / 9));
+  for(let j = 0; j < D2.S; j++){
+    const y = gy0 + (j + .5) * bh, len = gx1 - gx0, first = ((D2.ph / D2.L) % sp + sp) % sp;
+    for(let u = first; u < len; u += sp){ const x = gx0 + u; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fillStyle = col.hi; c.fill(); }
+  }
+  // 長さの説明（下）
+  const by = gy1 + 14;
+  line(c, [[gx0, by - 5], [gx0, by], [gx1, by], [gx1, by - 5]], col.r1, 1.8);
+  mt(c, `長さ {L} ＝ ${D2.L} m：かたまり ${D2.L} 個の直列`, gx0, by + 14, col.r1, 13, "left", true);
+  mt(c, "→ 流れにくさの和（{R} は {L} に比例）", gx0, by + 32, col.r1, 13, "left", false);
+  // 断面積の説明（右、または下）
+  if(narrow){
+    mt(c, `断面積 {S} ＝ ${D2.S} mm²：通り道 ${D2.S} 本の並列`, gx0, by + 54, col.r2, 13, "left", true);
+    mt(c, "→ 流れやすさの和（{R} は {S} に反比例）", gx0, by + 72, col.r2, 13, "left", false);
+  } else {
+    const bx = gx1 + 22;
+    line(c, [[bx - 5, gy0], [bx, gy0], [bx, gy1], [bx - 5, gy1]], col.r2, 1.8);
+    mt(c, `断面積 {S} ＝ ${D2.S} mm²`, bx + 8, (gy0 + gy1) / 2 - 18, col.r2, 13, "left", true);
+    mt(c, `通り道 ${D2.S} 本の並列`, bx + 8, (gy0 + gy1) / 2, col.r2, 13, "left", true);
+    mt(c, "→ 流れやすさの和", bx + 8, (gy0 + gy1) / 2 + 18, col.r2, 13, "left", false);
+  }
+}
+$("sL2").addEventListener("input", e => { D2.L = +e.target.value; ro2(); draw2(); });
+$("sS2").addEventListener("input", e => { D2.S = +e.target.value; ro2(); draw2(); });
+$("selM2").addEventListener("change", e => { D2.m = +e.target.value; ro2(); draw2(); });
+function resize2(){
+  const d = Math.min(window.devicePixelRatio || 1, 2.5);
+  let r = cv0.getBoundingClientRect(); W0 = Math.max(1, Math.round(r.width)); H0 = Math.max(1, Math.round(r.height)); cv0.width = Math.round(W0 * d); cv0.height = Math.round(H0 * d); c0.setTransform(d, 0, 0, d, 0, 0);
+  r = cv2.getBoundingClientRect(); W2 = Math.max(1, Math.round(r.width)); H2 = Math.max(1, Math.round(r.height)); cv2.width = Math.round(W2 * d); cv2.height = Math.round(H2 * d); c2.setTransform(d, 0, 0, d, 0, 0);
+  readColors(); draw0(); draw2();
+}
 
 /* ---------- アニメーション ---------- */
 const BASE = 22;   // 1 A あたりの粒の速さ（論理単位/s）
@@ -612,12 +804,15 @@ function tick(ts){
     Q.I += st.I * k * f * dt; Q.I1 += st.I1 * k * f * dt; Q.I2 += st.I2 * k * f * dt;
   }
   draw();
+  step0(dt); draw0();
+  if(D0.run){ D0.ui = (D0.ui || 0) + dt; if(D0.ui > 0.1){ D0.ui = 0; ro0(); } }
+  if(!reduce) D2.ph += dt * 60; draw2();
   requestAnimationFrame(tick);
 }
 const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
 if(mq && mq.addEventListener) mq.addEventListener("change", () => { draw(); drawIV(); });
 new MutationObserver(() => { draw(); drawIV(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-if(window.ResizeObserver){ const ro = new ResizeObserver(resize); ro.observe(cv); ro.observe(ivc); } else window.addEventListener("resize", resize);
+if(window.ResizeObserver){ const ro = new ResizeObserver(resize); ro.observe(cv); ro.observe(ivc); const ro2_ = new ResizeObserver(resize2); ro2_.observe(cv0); ro2_.observe(cv2); } else { window.addEventListener("resize", resize); window.addEventListener("resize", resize2); }
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { draw(); drawIV(); });
 if(document.fonts && document.fonts.load) Promise.all([document.fonts.load('13px "OhmFix"', "Ω"), document.fonts.load('700 13px "OhmFix"', "Ω")]).then(() => { draw(); drawIV(); }, () => {});
 
@@ -627,11 +822,13 @@ $("qs").innerHTML = [
   ["直列で <i class='qv'>R</i>₂ を大きくすると、<i class='qv'>R</i>₁ にかかる電圧はどうなるか。", "小さくなります。合成抵抗が大きくなって回路全体の電流 <i class='qv'>I</i> が減るので、<i class='qv'>V</i>₁ ＝ <i class='qv'>R</i>₁<i class='qv'>I</i> も減ります。そのぶん <i class='qv'>V</i>₂ が大きくなり、<i class='qv'>V</i>₁ ＋ <i class='qv'>V</i>₂ ＝ <i class='qv'>V</i> は変わりません。"],
   ["並列で <i class='qv'>R</i>₂ を大きくすると、<i class='qv'>R</i>₁ を流れる電流はどうなるか。", "変わりません。<i class='qv'>R</i>₁ にかかる電圧は電池の電圧 <i class='qv'>V</i> のままだからです。<i class='qv'>I</i>₂ が減るので、全体の電流 <i class='qv'>I</i> ＝ <i class='qv'>I</i>₁ ＋ <i class='qv'>I</i>₂ は減ります。"],
   ["直列では大きい抵抗のほうが電力が大きいのに、並列では小さい抵抗のほうが電力が大きい。なぜか。", "直列では電流が共通なので <i class='qv'>P</i> ＝ <i class='qv'>RI</i>² で比べると <i class='qv'>R</i> が大きいほど大きい。並列では電圧が共通なので <i class='qv'>P</i> ＝ <i class='qv'>V</i>²/<i class='qv'>R</i> で比べると <i class='qv'>R</i> が小さいほど大きい。共通な量に注目して式を選ぶのがポイントです。"],
-  ["同じ 10 Ω の抵抗 2 つを 6.0 V の電池につなぐ。直列と並列で、回路全体の電力はそれぞれいくらか。", "直列：合成抵抗 20 Ω、<i class='qv'>P</i> ＝ 6.0² ÷ 20 ＝ 1.8 W。並列：合成抵抗 5.0 Ω、<i class='qv'>P</i> ＝ 6.0² ÷ 5.0 ＝ 7.2 W。並列のほうが 4 倍大きくなります。スライダーで確かめよう。"]
+  ["同じ 10 Ω の抵抗 2 つを 6.0 V の電池につなぐ。直列と並列で、回路全体の電力はそれぞれいくらか。", "直列：合成抵抗 20 Ω、<i class='qv'>P</i> ＝ 6.0² ÷ 20 ＝ 1.8 W。並列：合成抵抗 5.0 Ω、<i class='qv'>P</i> ＝ 6.0² ÷ 5.0 ＝ 7.2 W。並列のほうが 4 倍大きくなります。スライダーで確かめよう。"],
+  ["「1 電流の定義」で、電流を 2 倍にすると、同じ時間に断面を通過する電気量はどうなるか。", "2 倍になります。電流は 1 s 間に断面を通過する電気量なので、<i class='qv'>q</i> ＝ <i class='qv'>It</i> です。たとえば 0.5 A の電流が 4.0 s 流れると、通過する電気量は 2.0 C です。"],
+  ["「4 抵抗と抵抗率」で、長さを 2 倍、断面積を 2 倍にすると、抵抗はどうなるか。", "変わりません。長さ 2 倍で直列のかたまりが 2 倍（流れにくさ 2 倍）、断面積 2 倍で通り道が 2 本（流れやすさ 2 倍）になり、打ち消し合います。<i class='qv'>R</i> ＝ <i class='qv'>ρL</i>/<i class='qv'>S</i> で、<i class='qv'>L</i>/<i class='qv'>S</i> が同じだからです。"]
 ].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
 
 S.mode = ["one", "series", "parallel"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "one";
-st = calc(); segs = prep(build(st)); ui(); resize(); requestAnimationFrame(tick);
+st = calc(); segs = prep(build(st)); ui(); resize(); ro0(); ro2(); resize2(); requestAnimationFrame(tick);
 })();
 </script>
 </body>
