@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>電磁誘導と交流発電機</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: three sheets. (1) Magnet + coil + galvanometer canvas, a scrolling graph of "lines through the coil" and EMF, controls. (2) Lenz: 4 pattern buttons, same scene with step chips that add overlays (magnet field → increase/decrease → induced field → induced current), summary table. (3) AC generator: 3D sketch | end view, graph of flux and voltage. Questions last. */
+@font-face{font-family:"OhmFix";font-weight:400;src:local("Segoe UI"),local("Meiryo"),local("Hiragino Sans W3"),local("Roboto"),local("Arial");unicode-range:U+03A9,U+2126}
+:root{
+  --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
+  --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
+  --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3; --shade:#EEF2F6;
+  --nP:#D23A33; --sP:#2F6FD6; --fl:#1E8A4C; --ind:#E07B00; --cur:#C2780F; --wire:#7A4FC4;
+  --body:"OhmFix","BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --math:"Times New Roman",Times,"Noto Serif",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+    --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+    --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+    --nP:#FF6B60; --sP:#6FA2FF; --fl:#5FD08F; --ind:#FFA040; --cur:#F0A84A; --wire:#B79BFF; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+  --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+  --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+  --nP:#FF6B60; --sP:#6FA2FF; --fl:#5FD08F; --ind:#FFA040; --cur:#F0A84A; --wire:#B79BFF; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qv{font-family:var(--math);font-style:italic;font-size:1.08em}
+html{scroll-padding-top:110px}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.top-inner{max-width:1080px;margin:0 auto;padding:10px 16px 10px}
+.back{font-size:14px;color:var(--blue);text-decoration:none}
+h1{font-size:19px;margin:2px 0 0;line-height:1.4}
+.nav{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin-top:2px}
+.nav a{color:var(--blue);text-decoration:none}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:700}
+main{max-width:1080px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px;min-width:0}
+h2{font-size:20px;margin:0 0 4px;line-height:1.4}
+h3{font-size:17px;margin:0 0 6px}
+.lead{margin:0 0 12px;color:var(--muted);font-size:15px}
+.toc{display:flex;flex-wrap:wrap;gap:4px 16px;margin:0;padding:0;list-style:none;font-size:15px}
+.toc a{color:var(--blue);text-decoration:none;font-weight:700}
+.stage{position:relative;width:100%;aspect-ratio:2.2/1;background:var(--sheet);border:1px solid var(--line);border-radius:4px;touch-action:none}
+.stage.gen{aspect-ratio:2.25/1}
+.gbox{position:relative;width:100%;aspect-ratio:4.6/1;background:var(--sheet);border:1px solid var(--line);border-radius:4px;margin-top:8px}
+@media (max-width:760px){.stage{aspect-ratio:1.25/1}.stage.gen{aspect-ratio:10/15}.gbox{aspect-ratio:2.3/1}}
+canvas{display:block;width:100%;height:100%}
+.sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:6px 18px;margin-top:12px}
+.sl{display:grid;grid-template-columns:auto 1fr;gap:0 10px;align-items:center;font-size:14px}
+.sl output{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+.sl input[type=range]{grid-column:1/-1;width:100%;min-height:32px;accent-color:var(--blue)}
+.ctrl{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-top:10px;font-size:14px;color:var(--muted)}
+.ctrl label{display:flex;align-items:center;gap:6px;min-height:40px}
+.ctrl select{min-height:40px;border:1.5px solid var(--line);border-radius:8px;background:var(--sheet);padding:2px 8px;color:var(--ink)}
+.btn{border:0;border-radius:8px;padding:6px 16px;min-height:42px;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.btn.ghost{background:none;color:var(--blue);border:1.5px solid var(--blue)}
+.btn[aria-pressed="true"]{background:var(--btn);color:#fff;border-color:var(--btn)}
+.read{margin-top:10px;padding:8px 12px;background:var(--shade);border-radius:6px;font-size:15px;line-height:1.8;font-variant-numeric:tabular-nums}
+.read b{color:var(--blue)}
+.def{margin-top:12px;padding:12px 14px;border:1.5px solid var(--blue);border-radius:8px;background:var(--blue-soft);font-size:15px}
+.def h3{margin:0 0 4px;color:var(--blue);font-size:16px}
+.pat{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 0 10px}
+@media (max-width:640px){.pat{grid-template-columns:1fr 1fr}}
+.pat button{border:1.5px solid var(--blue);background:none;color:var(--blue);border-radius:8px;padding:6px 8px;min-height:46px;font-weight:700;cursor:pointer;line-height:1.35}
+.pat button[aria-pressed="true"]{background:var(--btn);border-color:var(--btn);color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0;padding:0;list-style:none}
+.chips li{border:1.5px solid var(--line);border-radius:999px;padding:3px 10px;font-size:13px;color:var(--muted);line-height:1.6;cursor:pointer}
+.chips li.done{border-color:var(--blue);color:var(--blue)}
+.chips li.cur{background:var(--btn);border-color:var(--btn);color:#fff;font-weight:700}
+.step{margin-top:10px;padding:12px 14px;border-left:5px solid var(--ind);background:var(--shade);border-radius:0 8px 8px 0;font-size:15px}
+.step h3{margin:0 0 4px}
+.controls{display:flex;gap:8px;margin-top:10px}
+.controls .next{margin-left:auto}
+.tbl{overflow-x:auto;margin-top:12px}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:center}
+th{background:var(--shade);font-size:13px}
+tr.on td{background:var(--blue-soft);font-weight:700}
+.note{font-size:13px;color:var(--muted);margin:8px 0 0}
+.qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
+.qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
+.ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <a class="back" id="backLink" href="../index.html#/u/ac/0" hidden>‹ 電流と磁場・交流（Webテスト）へ</a>
+    <h1>電磁誘導と交流発電機</h1>
+    <nav class="nav" id="nav" hidden aria-label="アニメーション">
+      <a href="index.html#elec">≡ アニメーション集</a>
+      <a href="ohm.html">電流の定義・オームの法則と電力</a>
+      <a href="circuit.html">回路シミュレーター</a>
+      <a href="magnetic.html">電流がつくる磁場</a>
+      <a href="motor.html">電流が磁場から受ける力とモーター</a>
+      <a href="induction.html" aria-current="page">電磁誘導と発電機</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <nav class="sheet" aria-label="このページの内容" style="padding:12px 16px">
+    <ul class="toc">
+      <li><a href="#def">1 電磁誘導：磁力線の本数の変化</a></li>
+      <li><a href="#lenz">2 レンツの法則（4つの場合）</a></li>
+      <li><a href="#gen">3 交流発電機のしくみ</a></li>
+    </ul>
+  </nav>
+
+  <section class="sheet" id="def" aria-labelledby="t1">
+    <h2 id="t1">1 電磁誘導：コイルを貫く磁力線の本数が変化すると電流が流れる</h2>
+    <p class="lead">磁石をコイルに近づけたり遠ざけたりすると、コイルを貫く磁力線の本数が変化し、コイルに電圧（誘導起電力）が生じて電流（誘導電流）が流れます。濃い緑の線が、いまコイルを貫いている磁力線です。磁石はドラッグしても動かせます。</p>
+    <div class="stage" id="st1"><canvas id="cv1" role="img" aria-label="左に棒磁石、右にコイル、下に検流計。磁石が動くとコイルを貫く磁力線の本数が変わり、検流計の針が振れる。"></canvas></div>
+    <div class="gbox"><canvas id="gr1" role="img" aria-label="コイルを貫く磁力線の本数と、誘導起電力の時間変化のグラフ。"></canvas></div>
+    <div class="ctrl">
+      <label for="selMode">磁石の動かし方
+        <select id="selMode"><option value="osc">近づける・遠ざけるをくり返す</option><option value="stop">止める（手で動かす）</option></select></label>
+      <label for="selFace">コイルに向ける極
+        <select id="selFace"><option value="N">N 極</option><option value="S">S 極</option></select></label>
+    </div>
+    <div class="sliders">
+      <label class="sl" for="sV"><span>磁石を動かす速さ</span><output id="oV"></output><input type="range" id="sV" min="1" max="5" step="1" value="2"></label>
+      <label class="sl" for="sT"><span>コイルの巻き数</span><output id="oT"></output><input type="range" id="sT" min="1" max="3" step="1" value="1"></label>
+    </div>
+    <div class="read" id="read1"></div>
+    <div class="def"><h3>電磁誘導</h3>コイルを貫く磁力線の本数（磁場）が<b>変化する</b>と、コイルに電圧が生じる現象。生じる電圧を<b>誘導起電力</b>、流れる電流を<b>誘導電流</b>という。誘導起電力は、<b>コイルを貫く磁力線の本数が変化する速さ（1 s あたりの増減）</b>が大きいほど、また<b>コイルの巻き数</b>が多いほど大きい。磁石を止めると、磁力線がいくら多く貫いていても電流は流れない。</div>
+  </section>
+
+  <section class="sheet" id="lenz" aria-labelledby="t2">
+    <h2 id="t2">2 レンツの法則：誘導電流は、磁力線の本数の変化を妨げる向きに流れる</h2>
+    <p class="lead">磁石の極（N・S）と動かし方（近づける・遠ざける）の組み合わせは4通り。段階ごとに「磁場の向き → 増えるか減るか → 妨げる向きの磁場 → 誘導電流の向き」を確かめよう。</p>
+    <div class="pat" role="group" aria-label="4つの場合">
+      <button type="button" data-p="0" aria-pressed="true">① N 極を<br>近づける</button>
+      <button type="button" data-p="1" aria-pressed="false">② N 極を<br>遠ざける</button>
+      <button type="button" data-p="2" aria-pressed="false">③ S 極を<br>近づける</button>
+      <button type="button" data-p="3" aria-pressed="false">④ S 極を<br>遠ざける</button>
+    </div>
+    <div class="stage" id="st2"><canvas id="cv2" role="img" aria-label="磁石とコイル。コイルの中の磁石の磁場（緑の矢印）、誘導電流がつくる磁場（橙の矢印）、コイルを流れる誘導電流の向き、コイルの両端の極を表示する。"></canvas></div>
+    <ol class="chips" id="chips2"></ol>
+    <div class="step" id="step2"><h3></h3><div class="txt"></div></div>
+    <div class="controls"><button type="button" class="btn ghost" id="prev2">◀ 前へ</button><button type="button" class="btn next" id="next2">次へ ▶</button></div>
+    <div class="tbl"><table>
+      <thead><tr><th>場合</th><th>コイルを貫く磁石の磁場</th><th>磁力線の本数</th><th>誘導電流がつくる磁場（コイルの中）</th><th>磁石に近い側のコイルの端</th><th>磁石が受ける力</th></tr></thead>
+      <tbody id="tb2"></tbody>
+    </table></div>
+  </section>
+
+  <section class="sheet" id="gen" aria-labelledby="t3">
+    <h2 id="t3">3 交流発電機のしくみ</h2>
+    <p class="lead">磁場の中でコイルを回転させると、コイルを貫く磁力線の本数が増えたり減ったりをくり返し、向きが周期的に変わる電圧（交流）が生じます。左は立体的に見た図、右はコイルの回転軸の方向から見た図です。</p>
+    <div class="stage gen" id="st3"><canvas id="cv3" role="img" aria-label="左に N 極と S 極の間で回転するコイル、スリップリングとブラシ、電球。右に回転軸の方向から見た図で、コイルを貫く磁力線が濃く表示される。"></canvas></div>
+    <div class="gbox"><canvas id="gr3" role="img" aria-label="コイルを貫く磁力線の本数と、発電機の電圧の時間変化のグラフ。"></canvas></div>
+    <div class="ctrl">
+      <button type="button" class="btn" id="play3">一時停止</button>
+      <button type="button" class="btn ghost" id="quarter3">1/4 回転進める</button>
+    </div>
+    <div class="sliders">
+      <label class="sl" for="sW"><span>回転の速さ（1 s あたりの回転数）</span><output id="oW"></output><input type="range" id="sW" min="1" max="6" step="1" value="2"></label>
+    </div>
+    <div class="read" id="read3"></div>
+    <div class="def"><h3>交流発電機</h3>コイルが半回転するごとに、コイルを貫く磁力線の本数の「増える・減る」と向きが入れかわるので、誘導起電力の向きも半回転ごとに入れかわる（<b>交流</b>）。コイルの両端は<b>スリップリング</b>につながり、回転しても<b>ブラシ</b>を通して外の回路に電流を取り出せる。1 s あたりの回転数が交流の<b>周波数</b>〔Hz〕で、速く回すほど周波数も電圧の最大値も大きくなる。発電所では、水や蒸気で<b>タービン</b>を回して発電機を回す。</div>
+  </section>
+
+  <section class="sheet" aria-labelledby="qsTitle">
+    <h3 id="qsTitle">見てみよう</h3>
+    <ol class="qs" id="qs"></ol>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const Iq = s => `<i class="qv">${s}</i>`;
+if(/\/anim\//.test(location.pathname)){ $("backLink").hidden = false; $("nav").hidden = false; }
+const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+const TAU = Math.PI * 2;
+
+/* ---------- 描画の道具 ---------- */
+let col = {};
+const FONT = `"OhmFix","BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`, MF = `"Times New Roman",Times,serif`;
+function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","shade","sheet","nP","sP","fl","ind","cur","wire","paper"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
+function hex2rgb(h){ h = h.replace("#", ""); if(h.length === 3) h = h.split("").map(x => x + x).join(""); const n = parseInt(h, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function rgba(h, a){ const A = hex2rgb(h); return `rgba(${A[0]},${A[1]},${A[2]},${a})`; }
+function line(c, pts, color, w, dash){ c.save(); c.strokeStyle = color; c.lineWidth = w; c.setLineDash(dash || []); c.lineJoin = "round"; c.lineCap = "round"; c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke(); c.restore(); }
+function mt(c, str, x, y, color, size, align, bold, bg){
+  size = size || 13;
+  const parts = str.split(/(\{[^}]*\})/).filter(Boolean).map(p => p[0] === "{" ? { s: p.slice(1, -1), it: 1 } : { s: p, it: 0 });
+  const fo = p => p.it ? `italic ${Math.round(size * 1.12)}px ${MF}` : `${bold ? "700 " : ""}${size}px ${FONT}`;
+  c.save(); c.textBaseline = "middle"; let w = 0; parts.forEach(p => { c.font = fo(p); p.w = c.measureText(p.s).width; w += p.w; });
+  let x0 = align === "right" ? x - w : align === "center" ? x - w / 2 : x;
+  if(bg){ c.fillStyle = col.sheet; c.globalAlpha = .88; c.fillRect(x0 - 3, y - size * .75, w + 6, size * 1.5); c.globalAlpha = 1; }
+  c.fillStyle = color; parts.forEach(p => { c.font = fo(p); c.textAlign = "left"; c.fillText(p.s, x0, y); x0 += p.w; }); c.restore(); return w;
+}
+function arrowHead(c, x, y, dx, dy, color, s){
+  const L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L; s = s || 7;
+  c.save(); c.fillStyle = color; c.beginPath(); c.moveTo(x + ux * s, y + uy * s); c.lineTo(x - ux * s * .7 - uy * s * .65, y - uy * s * .7 + ux * s * .65); c.lineTo(x - ux * s * .7 + uy * s * .65, y - uy * s * .7 - ux * s * .65); c.closePath(); c.fill(); c.restore();
+}
+function arrow(c, a, b, color, w, s){ line(c, [a, b], color, w); arrowHead(c, b[0], b[1], b[0] - a[0], b[1] - a[1], color, s || 8); }
+function dotSym(c, x, y, r, out, color, lw){
+  c.save(); c.strokeStyle = color; c.fillStyle = color; c.lineWidth = lw || Math.max(1.2, r * .18);
+  c.beginPath(); c.arc(x, y, r, 0, TAU); c.stroke();
+  if(out){ c.beginPath(); c.arc(x, y, Math.max(1.2, r * .28), 0, TAU); c.fill(); }
+  else { const k = r * .68; c.beginPath(); c.moveTo(x - k, y - k); c.lineTo(x + k, y + k); c.moveTo(x + k, y - k); c.lineTo(x - k, y + k); c.stroke(); }
+  c.restore();
+}
+function setupCanvas(cv, c){ const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); const W = Math.max(1, Math.round(r.width)), H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); c.setTransform(d, 0, 0, d, 0, 0); return [W, H]; }
+function magnetBlock(c, a, b, leftIsN){
+  const mx = (a[0] + b[0]) / 2;
+  c.save(); c.fillStyle = leftIsN ? col.nP : col.sP; c.fillRect(a[0], a[1], mx - a[0], b[1] - a[1]); c.fillStyle = leftIsN ? col.sP : col.nP; c.fillRect(mx, a[1], b[0] - mx, b[1] - a[1]);
+  c.strokeStyle = col.ink; c.lineWidth = 1.4; c.strokeRect(a[0], a[1], b[0] - a[0], b[1] - a[1]); c.restore();
+  const fs = Math.max(13, Math.min(20, (b[1] - a[1]) * .6));
+  mt(c, leftIsN ? "N" : "S", (a[0] + mx) / 2, (a[1] + b[1]) / 2, "#fff", fs, "center", true); mt(c, leftIsN ? "S" : "N", (mx + b[0]) / 2, (a[1] + b[1]) / 2, "#fff", fs, "center", true);
+}
+
+/* ======================================================================
+   磁石とコイルの場面（1 と 2 で共通）
+   2次元の磁極モデル：磁石の両端近くに点磁極。磁力線は N 極から等角度に 20 本。
+   コイルを貫く本数 ＝ コイルの断面（高さ 2a）を横切る磁力線の本数（連続量は磁束 Φ）。
+   ====================================================================== */
+const NL = 30, ML = 3.4, PE = 1.25, XC = 3.2, CA = 1.6;     // 磁力線の本数、磁石の長さ、極の位置、コイルの位置・半径
+const PATHS = {};
+function tracePaths(faceN){
+  const key = faceN ? "N" : "S"; if(PATHS[key]) return PATHS[key];
+  const P = [{ x: PE, q: faceN ? 1 : -1 }, { x: -PE, q: faceN ? -1 : 1 }];
+  const B = (x, y) => { let bx = 0, by = 0; P.forEach(p => { const dx = x - p.x, r2 = dx * dx + y * y + 1e-6; bx += p.q * dx / r2; by += p.q * y / r2; }); return [bx, by]; };
+  const out = [], np = P.find(p => p.q > 0), sp = P.find(p => p.q < 0);
+  for(let k = 0; k < NL; k++){
+    const a = (k + 0.5) / NL * TAU; let x = np.x + 0.1 * Math.cos(a), y = 0.1 * Math.sin(a); const pts = [[x, y]];
+    for(let s = 0; s < 4000; s++){
+      const f = (xx, yy) => { const b = B(xx, yy), m = Math.hypot(b[0], b[1]) || 1; return [b[0] / m, b[1] / m]; };
+      const h = 0.04, k1 = f(x, y), k2 = f(x + k1[0] * h / 2, y + k1[1] * h / 2), k3 = f(x + k2[0] * h / 2, y + k2[1] * h / 2), k4 = f(x + k3[0] * h, y + k3[1] * h);
+      x += h / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]); y += h / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]); pts.push([x, y]);
+      if(Math.hypot(x - sp.x, y) < 0.08 || Math.abs(x) > 22 || Math.abs(y) > 14) break;
+    }
+    out.push(pts);
+  }
+  PATHS[key] = out; return out;
+}
+// コイルを貫く磁束（右向きを正）：Σ q × 2 atan(a / (xc − 極の位置))
+function flux(xm, faceN){ const q = faceN ? 1 : -1; return q * 2 * Math.atan(CA / (XC - (xm + PE))) - q * 2 * Math.atan(CA / (XC - (xm - PE))); }
+const DPHI = TAU / NL;   // 磁力線1本あたりの磁束
+
+function makeScene(cv){
+  const S = { cv, c: cv.getContext("2d"), W: 0, H: 0, sc: 1, ox: 0, oy: 0, xm: -4.5, faceN: true, turns: 1, emf: 0, phi: 0, ph: 0, ov: { cur: true, meter: true }, drag: false };
+  S.P = p => [S.ox + p[0] * S.sc, S.oy - p[1] * S.sc];
+  S.layout = () => { [S.W, S.H] = setupCanvas(S.cv, S.c); const narrow = S.W < 600; S.sc = Math.min(S.W / (narrow ? 11.2 : 15), S.H / 7.6); S.ox = S.W / 2 - (narrow ? 1.6 : 0.4) * S.sc; S.oy = S.H * 0.43; S.draw(); };
+  S.draw = () => {
+    const c = S.c, W = S.W, H = S.H; if(W < 50) return;
+    c.clearRect(0, 0, W, H);
+    const paths = tracePaths(S.faceN), xm = S.xm;
+    // 磁力線（コイルを貫くものは濃く）
+    const xr = XC - xm;
+    paths.forEach(pts => {
+      let through = false;
+      for(let i = 1; i < pts.length; i++){ const a = pts[i-1], b = pts[i]; if((a[0] - xr) * (b[0] - xr) <= 0){ const t = (xr - a[0]) / ((b[0] - a[0]) || 1e-9), y = a[1] + (b[1] - a[1]) * t; if(Math.abs(y) < CA) through = true; } }
+      const px = pts.map(p => S.P([p[0] + xm, p[1]]));
+      line(c, px, through ? col.fl : rgba(col.fl, .35), through ? 2.4 : 1.4);
+      let acc = 0, next = 1.4;
+      for(let i = 1; i < pts.length; i++){ acc += Math.hypot(pts[i][0] - pts[i-1][0], pts[i][1] - pts[i-1][1]); if(acc > next){ next += 3.4; const a = px[i-1], b = px[i]; if(b[0] > 4 && b[0] < W - 4 && b[1] > 4 && b[1] < H - 4) arrowHead(c, b[0], b[1], b[0] - a[0], b[1] - a[1], through ? col.fl : rgba(col.fl, .5), 6); } }
+    });
+    // 磁石
+    const a = S.P([xm - ML / 2, 0.5]), b = S.P([xm + ML / 2, -0.5]);
+    magnetBlock(c, a, b, !S.faceN);
+    if(S.ov.hint) mt(c, "← ドラッグ →", (a[0] + b[0]) / 2, b[1] + 14, col.muted, 12, "center", false, true);
+    // コイル
+    const nT = 3 * S.turns, dx = 0.2, rx = 0.32, ry = CA, x0 = XC - (nT - 1) * dx / 2;
+    const indB = S.emf > 0.02 ? 1 : S.emf < -0.02 ? -1 : 0;   // 誘導電流がつくる磁場の向き（右向き = +1）
+    for(let k = 0; k < nT; k++){ const p = S.P([x0 + k * dx, 0]); c.save(); c.strokeStyle = rgba(col.wire, .5); c.lineWidth = 2; c.setLineDash([3, 3]); c.beginPath(); c.ellipse(p[0], p[1], rx * S.sc, ry * S.sc, 0, Math.PI / 2, Math.PI * 1.5); c.stroke(); c.restore(); }
+    if(S.ov.bm){ // 磁石の磁場（コイルの中）
+      const s = Math.sign(S.phi); if(s){ const y = 0.42; arrow(c, S.P([XC - 0.9 * s, y]), S.P([XC + 0.9 * s, y]), col.fl, 4, 11); mt(c, "磁石の磁場", S.P([XC + 1.05, y])[0], S.P([XC + 1.05, y])[1], col.fl, 12, "left", true, true); }
+    }
+    if(S.ov.bi && indB){ const y = -0.42; arrow(c, S.P([XC - 0.9 * indB, y]), S.P([XC + 0.9 * indB, y]), col.ind, 4, 11); mt(c, "誘導電流の磁場", S.P([XC + 1.05, y])[0], S.P([XC + 1.05, y])[1], col.ind, 12, "left", true, true); }
+    for(let k = 0; k < nT; k++){
+      const x = x0 + k * dx, p = S.P([x, 0]);
+      c.save(); c.strokeStyle = col.wire; c.lineWidth = 2.6; c.beginPath(); c.ellipse(p[0], p[1], rx * S.sc, ry * S.sc, 0, -Math.PI / 2, Math.PI / 2); c.stroke(); c.restore();
+      // 誘導電流の向き（手前の部分）：右向きの磁場をつくる電流は、手前で下向き
+      if(S.ov.cur && indB){ const ph = S.ph % 1; for(let j = 0; j < 3; j++){ const t = ((j / 3 + ph) % 1 + 1) % 1, th = -Math.PI / 2 + t * Math.PI, q = [p[0] + rx * S.sc * Math.cos(th), p[1] + ry * S.sc * Math.sin(th)]; c.beginPath(); c.arc(q[0], q[1], 3, 0, TAU); c.fillStyle = col.cur; c.fill(); }
+        arrowHead(c, p[0] + rx * S.sc, p[1], 0, indB, col.cur, 8); }
+    }
+    // コイルの両端の極
+    if(S.ov.pole && indB){ const l = S.P([x0 - 0.55, -CA - 0.35]), r = S.P([x0 + (nT - 1) * dx + 0.55, -CA - 0.35]);
+      mt(c, indB > 0 ? "S" : "N", l[0], l[1], indB > 0 ? col.sP : col.nP, 18, "center", true, true); mt(c, indB > 0 ? "N" : "S", r[0], r[1], indB > 0 ? col.nP : col.sP, 18, "center", true, true); }
+    // 検流計
+    if(S.ov.meter){
+      const g = S.P([XC, -CA - 1.35]), R = Math.max(18, 0.62 * S.sc), lb = S.P([x0, -CA * 0.98]), rb = S.P([x0 + (nT - 1) * dx, -CA * 0.98]);
+      line(c, [lb, [lb[0], g[1]], [g[0] - R, g[1]]], col.wire, 2); line(c, [rb, [rb[0] + 0.0, rb[1]], [rb[0], g[1]], [g[0] + R, g[1]]], col.wire, 2);
+      c.save(); c.beginPath(); c.arc(g[0], g[1], R, 0, TAU); c.fillStyle = col.sheet; c.fill(); c.strokeStyle = col.ink; c.lineWidth = 1.6; c.stroke(); c.restore();
+      for(let k = -2; k <= 2; k++){ const th = -Math.PI / 2 + k * 0.42; line(c, [[g[0] + Math.cos(th) * R * .72, g[1] + Math.sin(th) * R * .72], [g[0] + Math.cos(th) * R * .88, g[1] + Math.sin(th) * R * .88]], col.muted, 1.2); }
+      const ang = -Math.PI / 2 + Math.max(-1.1, Math.min(1.1, S.emf * 0.5));
+      line(c, [[g[0], g[1] + R * .3], [g[0] + Math.cos(ang) * R * .82, g[1] + Math.sin(ang) * R * .82]], col.red, 2.2);
+      mt(c, "検流計", g[0] + R + 8, g[1], col.muted, 12, "left");
+    }
+    mt(c, `コイルを貫く磁力線：${S.count} 本`, S.P([XC, CA + 0.6])[0], S.P([XC, CA + 0.6])[1], col.fl, 13, "center", true, true);
+  };
+  // コイルを貫く本数（図の線を数える）
+  S.countLines = () => { const paths = tracePaths(S.faceN), xr = XC - S.xm; let n = 0; paths.forEach(pts => { for(let i = 1; i < pts.length; i++){ const a = pts[i-1], b = pts[i]; if((a[0] - xr) * (b[0] - xr) <= 0){ const t = (xr - a[0]) / ((b[0] - a[0]) || 1e-9), y = a[1] + (b[1] - a[1]) * t; if(Math.abs(y) < CA){ n++; break; } } } }); return n; };
+  return S;
+}
+
+/* ---------- 1 定義 ---------- */
+const S1 = makeScene($("cv1"));
+S1.ov = { cur: true, meter: true, hint: true };
+const X_MIN = -7.0, X_MAX = XC + 0.15 - ML / 2;
+const A = { mode: "osc", v: 2, dirn: 1, hist: [], t: 0 };
+S1.xm = -5; S1.phi = flux(S1.xm, true); S1.count = S1.countLines();
+const gr1 = $("gr1"), g1 = gr1.getContext("2d"); let GW1 = 0, GH1 = 0;
+function drawGraph(c, W, H, hist, opt){
+  c.clearRect(0, 0, W, H); if(W < 50) return;
+  const ml = 46, mr = 10, x0 = ml, x1 = W - mr, mid = H / 2, T = opt.T, tNow = hist.length ? hist[hist.length - 1].t : 0;
+  const X = t => x1 - (tNow - t) / T * (x1 - x0);
+  // 上：本数（または磁束）、下：起電力
+  const yA0 = 10, yA1 = mid - 6, yB0 = mid + 6, yB1 = H - 8;
+  line(c, [[x0, yA1], [x1, yA1]], col.line, 1); line(c, [[x0, (yB0 + yB1) / 2], [x1, (yB0 + yB1) / 2]], col.line, 1);
+  mt(c, opt.labA, x0 + 4, yA0 + 6, col.fl, 12, "left", true, true); mt(c, opt.labB, x0 + 4, yB0 + 6, col.red, 12, "left", true, true);
+  const ya = v => opt.signedA ? (yA0 + yA1) / 2 - v / opt.maxA * (yA1 - yA0) / 2 : yA1 - v / opt.maxA * (yA1 - yA0);
+  const yb = v => (yB0 + yB1) / 2 - Math.max(-1, Math.min(1, v / opt.maxB)) * (yB1 - yB0) / 2;
+  if(opt.signedA) line(c, [[x0, (yA0 + yA1) / 2], [x1, (yA0 + yA1) / 2]], col.line, 1, [3, 3]);
+  const pa = [], pb = []; hist.forEach(h => { if(tNow - h.t <= T){ pa.push([X(h.t), ya(h.a)]); pb.push([X(h.t), yb(h.b)]); } });
+  if(pa.length > 1){ line(c, pa, col.fl, 2); line(c, pb, col.red, 2); }
+  mt(c, "0", x0 - 6, (yB0 + yB1) / 2, col.muted, 11, "right"); if(opt.signedA) mt(c, "0", x0 - 6, (yA0 + yA1) / 2, col.muted, 11, "right"); else mt(c, "0", x0 - 6, yA1, col.muted, 11, "right");
+  mt(c, "時間 →", x1, H - 6, col.muted, 11, "right");
+}
+function read1(){
+  const r = A.rate || 0;
+  $("oV").textContent = ["", "とても遅い", "遅い", "ふつう", "速い", "とても速い"][A.v]; $("oT").textContent = `${S1.turns * 3} 回（相対 ${S1.turns}）`;
+  $("read1").innerHTML = `コイルを貫く磁力線：<b>${S1.count} 本</b>（${S1.faceN ? "右向き" : "左向き"}）　1 s あたりの本数の変化：<b>${r >= 0 ? "＋" : "−"}${Math.abs(r).toFixed(1)} 本/s</b>（${Math.abs(r) < 0.05 ? "変化なし" : r > 0 ? "増えている" : "減っている"}）<br>誘導起電力の大きさ（相対）＝ 巻き数（相対 ${S1.turns}）× 変化の速さ ＝ <b>${(S1.turns * Math.abs(r)).toFixed(1)}</b>　${Math.abs(r) < 0.05 ? "→ 本数が変化しないので、電流は流れない" : ""}`;
+}
+$("selMode").addEventListener("change", e => { A.mode = e.target.value; });
+$("selFace").addEventListener("change", e => { S1.faceN = e.target.value === "N"; });
+$("sV").addEventListener("input", e => { A.v = +e.target.value; read1(); });
+$("sT").addEventListener("input", e => { S1.turns = +e.target.value; read1(); });
+function toW(S, ev){ const r = S.cv.getBoundingClientRect(); return [(ev.clientX - r.left - S.ox) / S.sc, -(ev.clientY - r.top - S.oy) / S.sc]; }
+S1.cv.addEventListener("pointerdown", ev => { const p = toW(S1, ev); if(Math.abs(p[0] - S1.xm) < ML / 2 + 0.4 && Math.abs(p[1]) < 1.2){ S1.drag = true; S1.dragOff = p[0] - S1.xm; A.mode = "stop"; $("selMode").value = "stop"; S1.cv.setPointerCapture && S1.cv.setPointerCapture(ev.pointerId); } });
+S1.cv.addEventListener("pointermove", ev => { if(!S1.drag) return; const p = toW(S1, ev); S1.target = Math.max(X_MIN, Math.min(X_MAX, p[0] - S1.dragOff)); });
+const endDrag = () => { S1.drag = false; S1.target = null; }; S1.cv.addEventListener("pointerup", endDrag); S1.cv.addEventListener("pointercancel", endDrag);
+
+/* ---------- 2 レンツの法則 ---------- */
+const S2 = makeScene($("cv2"));
+const PAT = [{ N: true, app: true }, { N: true, app: false }, { N: false, app: true }, { N: false, app: false }];
+const L2 = { p: 0, step: 0, t: 0 };
+const STEPS2 = ["コイルを貫く磁石の磁場の向き", "磁力線の本数は増える？減る？", "変化を妨げる向きの磁場", "誘導電流の向き（右ねじの法則）"];
+function lenzInfo(){
+  const pt = PAT[L2.p], dirB = pt.N ? "右向き（磁石から遠ざかる向き）" : "左向き（磁石に向かう向き）", inc = pt.app;
+  const ind = (pt.N === inc) ? "左向き" : "右向き";
+  const end = pt.app ? (pt.N ? "N 極" : "S 極") : (pt.N ? "S 極" : "N 極");
+  return [
+    `磁石の${pt.N ? "N" : "S"} 極がコイルに向いています。磁力線は N 極から出て S 極に入るので、コイルの中の磁石の磁場は<b>${dirB}</b>です（緑の矢印）。`,
+    `磁石を${inc ? "近づける" : "遠ざける"}と、コイルを貫く磁力線の本数が<b>${inc ? "増えます" : "減ります"}</b>。`,
+    `誘導電流は、この変化を<b>妨げる</b>（打ち消す）向きの磁場をつくります。本数が${inc ? "増える" : "減る"}ので、${inc ? "磁石の磁場と逆向き" : "磁石の磁場と同じ向き（減った分を補う向き）"}、つまり<b>${ind}</b>の磁場です（橙の矢印）。`,
+    `${ind}の磁場をつくる電流の向きは、右ねじの法則で決まります（右ねじを${ind === "右向き" ? "右" : "左"}へ進める回し方）。コイルの磁石側の端は<b>${end}</b>になり、磁石を${pt.app ? "押し返す（退け合う）" : "引き止める（引き合う）"}ので、磁石を動かすのに仕事が必要です。この仕事が電気エネルギーに変わります。`
+  ];
+}
+function ui2(){
+  document.querySelectorAll(".pat button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.p === L2.p ? "true" : "false"));
+  $("chips2").innerHTML = STEPS2.map((n, i) => `<li class="${i === L2.step ? "cur" : i < L2.step ? "done" : ""}" data-i="${i}">${i + 1} ${n}</li>`).join("");
+  $("step2").querySelector("h3").textContent = `段階 ${L2.step + 1}：${STEPS2[L2.step]}`;
+  $("step2").querySelector(".txt").innerHTML = lenzInfo()[L2.step];
+  $("prev2").disabled = L2.step === 0; $("next2").disabled = L2.step === 3;
+  S2.ov = { meter: L2.step >= 3, bm: true, bi: L2.step >= 2, cur: L2.step >= 3, pole: L2.step >= 3, inc: L2.step >= 1 };
+  const rows = PAT.map((pt, i) => { const ind = (pt.N === pt.app) ? "左向き" : "右向き", end = pt.app ? (pt.N ? "N" : "S") : (pt.N ? "S" : "N");
+    return `<tr class="${i === L2.p ? "on" : ""}"><td>${["①", "②", "③", "④"][i]} ${pt.N ? "N" : "S"} 極を${pt.app ? "近づける" : "遠ざける"}</td><td>${pt.N ? "右向き" : "左向き"}</td><td>${pt.app ? "増える" : "減る"}</td><td>${ind}（${pt.app ? "逆向き" : "同じ向き"}）</td><td>${end} 極</td><td>${pt.app ? "退ける力" : "引く力"}</td></tr>`; });
+  $("tb2").innerHTML = rows.join("");
+}
+document.querySelectorAll(".pat button").forEach(b => b.addEventListener("click", () => { L2.p = +b.dataset.p; L2.t = 0; ui2(); }));
+$("chips2").addEventListener("click", e => { const li = e.target.closest("li"); if(li){ L2.step = +li.dataset.i; ui2(); } });
+$("prev2").addEventListener("click", () => { if(L2.step > 0){ L2.step--; ui2(); } });
+$("next2").addEventListener("click", () => { if(L2.step < 3){ L2.step++; ui2(); } });
+// 2 の磁石の動き：近づける（または遠ざける）を 3 s かけて行い、1 s 止まってくり返す
+function pos2(t){ const T = 3, Hd = 1.2, u = t % (T + Hd), s = Math.min(1, u / T), e = s * s * (3 - 2 * s), xa = -6.2, xb = X_MAX - 0.4; const pt = PAT[L2.p]; return { x: pt.app ? xa + (xb - xa) * e : xb + (xa - xb) * e, moving: u < T }; }
+
+/* ---------- 3 交流発電機 ---------- */
+const cv3 = $("cv3"), c3 = cv3.getContext("2d"), gr3 = $("gr3"), g3 = gr3.getContext("2d");
+const G = { phi: 0.3, f: 2, play: true, W: 0, H: 0, hist: [], t: 0, target: null, GW: 0, GH: 0 };
+const GR = 1.5, GL = 2.0, NLG = 9;    // コイルの半径（回転の）・奥行きの半分、磁力線の段数（片側）
+function genLayout(){ [G.W, G.H] = setupCanvas(cv3, c3); [G.GW, G.GH] = setupCanvas(gr3, g3); genDraw(); }
+function genDraw(){
+  const c = c3, W = G.W, H = G.H; if(W < 100) return;
+  c.clearRect(0, 0, W, H);
+  const wide = W >= 700, Lp = wide ? { x: 0, y: 0, w: W * 0.56, h: H } : { x: 0, y: 0, w: W, h: H * 0.56 }, Rp = wide ? { x: W * 0.56, y: 0, w: W * 0.44, h: H } : { x: 0, y: H * 0.56, w: W, h: H * 0.44 };
+  const ph = G.phi, cs = Math.cos(ph), sn = Math.sin(ph), cur = cs, tv = -cs;   // 辺1（赤の辺）の電流：cur は奥向き、tv は手前向きを正
+  /* --- 立体図（斜投影：x 右、y 上、z 奥） --- */
+  const sc = Math.min(Lp.w / 12.6, Lp.h / 8.8), ox = Lp.x + Lp.w * 0.48, oy = Lp.y + Lp.h * 0.47;
+  const Q = (x, y, z) => [ox + (x + z * 0.42) * sc, oy - (y + z * 0.26) * sc];
+  mt(c, "立体的に見た図", Lp.x + 10, Lp.y + 14, col.ink, 13, "left", true);
+  // 磁石（左 N、右 S）
+  const poleFace = (x0, x1, isN) => { const zf = -GL - 0.2, zb = GL + 0.2, yt = 2.0, yb = -2.0;
+    const f = [Q(x0, yt, zf), Q(x1, yt, zf), Q(x1, yb, zf), Q(x0, yb, zf)], top = [Q(x0, yt, zf), Q(x1, yt, zf), Q(x1, yt, zb), Q(x0, yt, zb)], side = isN ? [Q(x1, yt, zf), Q(x1, yt, zb), Q(x1, yb, zb), Q(x1, yb, zf)] : [Q(x0, yt, zf), Q(x0, yt, zb), Q(x0, yb, zb), Q(x0, yb, zf)];
+    [[top, .7], [side, .55], [f, 1]].forEach(([pg, al]) => { c.save(); c.beginPath(); pg.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fillStyle = rgba(isN ? col.nP : col.sP, al); c.fill(); c.strokeStyle = col.ink; c.lineWidth = 1; c.stroke(); c.restore(); });
+    const m = Q((x0 + x1) / 2, 0, zf); mt(c, isN ? "N" : "S", m[0], m[1], "#fff", 20, "center", true); };
+  poleFace(-4.9, -3.9, true); poleFace(3.9, 4.9, false);
+  // 磁力線（N から S へ）
+  [-1.2, 0, 1.2].forEach(y => [-1.2, 1.2].forEach(z => { const a = Q(-3.9, y, z), b = Q(3.9, y, z); line(c, [a, b], rgba(col.fl, .55), 1.4, [6, 4]); arrowHead(c, (a[0] + b[0]) / 2 + 20, (a[1] + b[1]) / 2, 1, 0, rgba(col.fl, .8), 6); }));
+  // コイル
+  const P1 = z => Q(GR * cs, GR * sn, z), P2 = z => Q(-GR * cs, -GR * sn, z);
+  c.save(); c.beginPath(); [P1(-GL), P1(GL), P2(GL), P2(-GL)].forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fillStyle = rgba(col.wire, .13); c.fill(); c.restore();
+  line(c, [P1(GL), P2(GL)], col.wire, 3);                      // 奥の辺
+  line(c, [P1(-GL), P1(GL)], col.nP, 3.4); line(c, [P2(-GL), P2(GL)], col.sP, 3.4);   // 辺1（赤）・辺2（青）
+  // 手前：辺1 → リング1、辺2 → リング2
+  const zr1 = -GL - 0.9, zr2 = -GL - 1.6, rr = 0.42;
+  line(c, [P1(-GL), Q(0, 0, -GL - 0.3), Q(0, 0, zr1)], col.nP, 2.2); line(c, [P2(-GL), Q(0.08, 0.05, -GL - 0.25), Q(0.08, 0.05, zr2)], col.sP, 2.2);
+  line(c, [Q(0, 0, -GL), Q(0, 0, zr2 - 0.3)], col.muted, 3);      // 回転軸
+  [[zr1, col.nP], [zr2, col.sP]].forEach(([z, cc]) => { const p = Q(0, 0, z); c.save(); c.beginPath(); c.ellipse(p[0], p[1], rr * sc * .55, rr * sc, 0, 0, TAU); c.strokeStyle = cc; c.lineWidth = 3; c.stroke(); c.restore(); });
+  // ブラシと外部回路（電球）
+  const lampP = Q(0.6, -3.2, zr1 - 0.3), lampR = Math.max(10, 0.36 * sc), brt = Math.min(1, Math.abs(cur) * Math.min(1, G.f / 3) * 1.1);
+  [[zr1, -1], [zr2, 1]].forEach(([z, s]) => { const b = Q(0, -rr - 0.12, z); c.save(); c.fillStyle = col.muted; c.fillRect(b[0] - 4, b[1], 8, 10); c.restore(); const e = Q(0, -2.6, z); line(c, [[b[0], b[1] + 10], e], col.ink, 1.6); line(c, [e, [lampP[0] + s * lampR, lampP[1]]], col.ink, 1.6); });
+  if(brt > 0.02){ const gr = c.createRadialGradient(lampP[0], lampP[1], 2, lampP[0], lampP[1], lampR * 3); gr.addColorStop(0, `rgba(255,200,60,${0.8 * brt})`); gr.addColorStop(1, "rgba(255,200,60,0)"); c.fillStyle = gr; c.beginPath(); c.arc(lampP[0], lampP[1], lampR * 3, 0, TAU); c.fill(); }
+  c.save(); c.beginPath(); c.arc(lampP[0], lampP[1], lampR, 0, TAU); c.fillStyle = col.sheet; c.fill(); c.fillStyle = `rgba(255,190,40,${0.15 + 0.8 * brt})`; c.fill(); c.strokeStyle = col.ink; c.lineWidth = 1.6; c.stroke(); c.restore();
+  mt(c, "電球", lampP[0] + lampR + 6, lampP[1], col.muted, 12, "left");
+  mt(c, "スリップリングとブラシ", Q(0, -rr - 0.5, zr1)[0] + 14, Q(0, -rr - 0.5, zr1)[1], col.muted, 12, "left", false, true);
+  // 電流の向き（辺の中ほど）
+  if(Math.abs(cur) > 0.08){ [[P1, cur], [P2, -cur]].forEach(([Pf, s]) => { const a = Pf(-0.3 * s), b = Pf(0.3 * s); arrowHead(c, b[0], b[1], b[0] - a[0], b[1] - a[1], col.cur, 7 + 5 * Math.abs(cur)); }); }
+  /* --- 回転軸の方向から見た図 --- */
+  if(wide) line(c, [[Rp.x + 1, Rp.y + 10], [Rp.x + 1, Rp.y + Rp.h - 10]], col.line, 1); else line(c, [[Rp.x + 8, Rp.y + 1], [Rp.x + Rp.w - 8, Rp.y + 1]], col.line, 1);
+  mt(c, "回転軸の方向（手前）から見た図", Rp.x + 10, Rp.y + 14, col.ink, 13, "left", true);
+  const s2 = Math.min(Rp.w / 7.6, (Rp.h - 30) / 5.4), cx = Rp.x + Rp.w / 2, cy = Rp.y + 26 + (Rp.h - 30) / 2, E = (x, y) => [cx + x * s2, cy - y * s2];
+  // 磁極の面
+  c.save(); c.fillStyle = rgba(col.nP, .8); const nl = E(-3.4, 2.2), nr = E(-2.7, -2.2); c.fillRect(nl[0], nl[1], nr[0] - nl[0], nr[1] - nl[1]); c.fillStyle = rgba(col.sP, .8); const sl = E(2.7, 2.2), sr = E(3.4, -2.2); c.fillRect(sl[0], sl[1], sr[0] - sl[0], sr[1] - sl[1]); c.restore();
+  mt(c, "N", (nl[0] + nr[0]) / 2, cy, "#fff", 16, "center", true); mt(c, "S", (sl[0] + sr[0]) / 2, cy, "#fff", 16, "center", true);
+  // 磁力線：コイルを貫くものは濃く
+  const ext = Math.abs(GR * sn); let cnt = 0;
+  for(let j = -NLG; j <= NLG; j++){ const y = j * 2.1 / NLG; if(Math.abs(y) > 2.1) continue; const through = Math.abs(y) < ext - 1e-9; if(through) cnt++;
+    line(c, [E(-2.7, y), E(2.7, y)], through ? col.fl : rgba(col.fl, .3), through ? 2.2 : 1.2); arrowHead(c, E(1.9, y)[0], E(1.9, y)[1], 1, 0, through ? col.fl : rgba(col.fl, .45), 6); }
+  G.count = cnt;
+  // コイル（線分）と回転の向き
+  const p1 = E(GR * cs, GR * sn), p2 = E(-GR * cs, -GR * sn);
+  line(c, [p1, p2], col.wire, 3);
+  c.save(); c.beginPath(); c.arc(cx, cy, GR * s2 + 14, -0.2, -1.2, true); c.strokeStyle = col.muted; c.lineWidth = 1.6; c.stroke(); c.restore();
+  arrowHead(c, cx + (GR * s2 + 14) * Math.cos(-1.2), cy + (GR * s2 + 14) * Math.sin(-1.2), -Math.sin(-1.2) * -1, Math.cos(-1.2) * -1, col.muted, 7);
+  [[p1, tv, col.nP], [p2, -tv, col.sP]].forEach(([p, s, cc]) => { c.save(); c.beginPath(); c.arc(p[0], p[1], 10, 0, TAU); c.fillStyle = col.sheet; c.fill(); c.lineWidth = 2.4; c.strokeStyle = cc; c.stroke(); c.restore();
+    if(Math.abs(s) > 0.08) dotSym(c, p[0], p[1], 7, s > 0, col.cur, 1.8); });
+  mt(c, `貫く磁力線：${cnt} 本`, cx, Rp.y + Rp.h - 10, col.fl, 13, "center", true, true);
+}
+function read3(){
+  const deg = ((G.phi * 180 / Math.PI) % 360 + 360) % 360, sn = Math.sin(G.phi), v = -Math.cos(G.phi);
+  $("oW").textContent = `${G.f / 2} 回/s（周波数 ${G.f / 2} Hz）`;
+  const trend = Math.abs(Math.cos(G.phi)) < 0.15 ? "ほとんど変化しない（電圧 ≒ 0）" : (sn * Math.cos(G.phi) > 0 ? "増えている" : "減っている");
+  $("read3").innerHTML = `コイルの角度：${deg.toFixed(0)}°　コイルを貫く磁力線：<b>${G.count} 本</b>（${trend}）<br>電圧（相対）：<b>${v >= 0 ? "＋" : "−"}${Math.abs(v * G.f / 2).toFixed(2)}</b>　${Math.abs(Math.cos(G.phi)) > 0.9 ? "← コイルの面が磁場と平行のとき、本数の変化が最も速く、電圧が最大" : Math.abs(Math.cos(G.phi)) < 0.15 ? "← コイルの面が磁場と垂直のとき、本数は最大（または 0 からの折り返し）で、変化が止まる瞬間" : ""}`;
+}
+$("play3").addEventListener("click", () => { G.play = !G.play; G.target = null; $("play3").textContent = G.play ? "一時停止" : "回す"; });
+$("quarter3").addEventListener("click", () => { G.play = false; $("play3").textContent = "回す"; G.target = (Math.round(G.phi / (Math.PI / 2)) + 1) * Math.PI / 2; });
+$("sW").addEventListener("input", e => { G.f = +e.target.value; read3(); });
+
+/* ---------- アニメーション ---------- */
+let last = null, uiT = 0;
+function tick(ts){
+  if(last == null) last = ts; const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
+  readColors();
+  // 1
+  const v = [0, 0.6, 1.2, 2.2, 3.4, 5][A.v];
+  let x = S1.xm;
+  if(!reduce){
+    if(S1.drag && S1.target != null) x += (S1.target - x) * Math.min(1, dt * 14);
+    else if(A.mode === "osc"){ x += A.dirn * v * dt; if(x > X_MAX){ x = X_MAX; A.dirn = -1; } if(x < X_MIN){ x = X_MIN; A.dirn = 1; } }
+  }
+  const phi = flux(x, S1.faceN), dphi = (phi - S1.phi) / Math.max(dt, 1e-3);
+  A.rate = (A.rate || 0) + ((dphi / DPHI) - (A.rate || 0)) * Math.min(1, dt * 10);
+  S1.xm = x; S1.phi = phi; S1.count = S1.countLines();
+  S1.emf = -S1.turns * A.rate * 0.35; S1.ph += dt * S1.emf * 0.6 * (S1.emf >= 0 ? 1 : 1);
+  A.t += dt; A.hist.push({ t: A.t, a: Math.abs(phi) / DPHI, b: S1.turns * A.rate }); while(A.hist.length && A.t - A.hist[0].t > 8.5) A.hist.shift();
+  S1.draw(); drawGraph(g1, GW1, GH1, A.hist, { T: 8, labA: "コイルを貫く磁力線の本数", labB: "誘導起電力（相対）", maxA: NL / 2, maxB: 40 });
+  // 2
+  if(!reduce) L2.t += dt;
+  const pp = pos2(L2.t), pt = PAT[L2.p]; S2.faceN = pt.N; const ph2 = flux(pp.x, pt.N), d2 = (ph2 - S2.phi) / Math.max(dt, 1e-3);
+  S2.xm = pp.x; S2.phi = ph2; S2.count = S2.countLines();
+  S2.emf = pp.moving ? -(pt.app ? 1 : -1) * Math.sign(pt.N ? 1 : -1) * 1.2 : 0; S2.ph += dt * S2.emf * 0.5;
+  S2.draw();
+  if(S2.ov.inc){ const p = S2.P([XC, CA + 1.15]); mt(S2.c, pp.moving ? (pt.app ? "本数が増えている ↑" : "本数が減っている ↓") : "（止まっている間は変化なし）", p[0], p[1], pp.moving ? col.ink : col.muted, 13, "center", true, true); }
+  // 3
+  if(!reduce){
+    if(G.play) G.phi += TAU * (G.f / 2) * dt * 0.5;
+    else if(G.target != null){ const st = TAU * 0.4 * dt; if(G.phi + st >= G.target){ G.phi = G.target; G.target = null; } else G.phi += st; }
+  }
+  if(G.play || G.target != null){ G.t += dt; G.hist.push({ t: G.t, a: Math.sin(G.phi) * NLG * GR / 2.1, b: -Math.cos(G.phi) * G.f / 2 }); while(G.hist.length && G.t - G.hist[0].t > 6.5) G.hist.shift(); }
+  genDraw(); drawGraph(g3, G.GW, G.GH, G.hist, { T: 6, labA: "コイルを貫く磁力線の本数（向きつき）", labB: "電圧（相対、＋−は向き）", maxA: NLG * GR / 2.1 * 1.1, maxB: 3.2, signedA: true });
+  uiT += dt; if(uiT > 0.15){ uiT = 0; read1(); read3(); }
+  requestAnimationFrame(tick);
+}
+function layoutAll(){ readColors(); S1.layout(); S2.layout(); [GW1, GH1] = setupCanvas(gr1, g1); genLayout(); }
+if(window.ResizeObserver){ const ro = new ResizeObserver(layoutAll); [S1.cv, S2.cv, gr1, cv3, gr3].forEach(e => ro.observe(e)); } else window.addEventListener("resize", layoutAll);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(layoutAll);
+
+$("qs").innerHTML = [
+  ["磁石をコイルの中に入れたまま止めると、検流計の針はどうなるか。それはなぜか。", "0 をさしたままになります。コイルを貫く磁力線がたくさんあっても、本数が変化していないからです。電磁誘導は「本数の変化」で起こります。"],
+  ["磁石を速く動かすと、遅く動かしたときと比べて誘導電流はどうなるか。", "大きくなります。1 s あたりの本数の変化（変化の速さ）が大きくなるからです。グラフで、本数の変化が急なところほど起電力が大きいことを確かめよう。"],
+  ["N 極を近づけるときと遠ざけるときで、誘導電流の向きはどうなるか。", "逆向きになります。近づけるときは本数が増えるのを妨げる向き、遠ざけるときは減るのを妨げる向きに流れるからです（レンツの法則）。"],
+  ["S 極を近づけたとき、コイルの磁石側の端は何極になるか。", "S 極になります。近づいてくる S 極を押し返す（退け合う）向きです。どの場合も、磁石の動きを妨げる向きの力がはたらきます。"],
+  ["もし誘導電流が、変化を「助ける」向きに流れたとしたら、どんなおかしなことが起こるか。", "磁石を少し近づけただけで、磁石が引き寄せられてどんどん加速し、電流も増え続けることになります。何もしないのにエネルギーが生まれてしまい、エネルギー保存の法則に反します。だから誘導電流は変化を妨げる向きに流れます。"],
+  ["交流発電機で、電圧が最大になるのはコイルの面がどの向きのときか。", "コイルの面が磁場と平行のときです。このとき、コイルを貫く磁力線は 0 本ですが、本数の変化が最も速くなります。本数が最大のとき（面が磁場と垂直）は、変化が止まる瞬間なので電圧は 0 です。"],
+  ["発電機の回転の速さを2倍にすると、交流の周波数と電圧の最大値はどうなるか。", "どちらも2倍になります。1 s あたりの回転数が周波数で、本数の変化も2倍速くなるからです。"]
+].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
+
+ui2(); read1(); read3(); layoutAll(); requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

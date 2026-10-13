@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>電流が磁場から受ける力とモーター</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: three sheets. (4) Force on a wire: 4 pattern buttons; canvas = cross-section between pole faces with a swinging wire | Fleming's left-hand axes. (5) Same pattern, canvas of field lines (fixed field / wire field / superposition) with the force from dense to sparse side. (6) DC motor: 3D sketch with commutator, brushes and battery | end view with forces and the commutator; toggles for commutator vs slip rings. */
+@font-face{font-family:"OhmFix";font-weight:400;src:local("Segoe UI"),local("Meiryo"),local("Hiragino Sans W3"),local("Roboto"),local("Arial");unicode-range:U+03A9,U+2126}
+:root{
+  --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
+  --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
+  --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3; --shade:#EEF2F6;
+  --nP:#D23A33; --sP:#2F6FD6; --fl:#1E8A4C; --wf:#E07B00; --cur:#C2780F; --wire:#7A4FC4; --frc:#C0267A;
+  --body:"OhmFix","BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --math:"Times New Roman",Times,"Noto Serif",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+    --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+    --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+    --nP:#FF6B60; --sP:#6FA2FF; --fl:#5FD08F; --wf:#FFA040; --cur:#F0A84A; --wire:#B79BFF; --frc:#FF6FB5; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+  --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+  --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+  --nP:#FF6B60; --sP:#6FA2FF; --fl:#5FD08F; --wf:#FFA040; --cur:#F0A84A; --wire:#B79BFF; --frc:#FF6FB5; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qv{font-family:var(--math);font-style:italic;font-size:1.08em}
+html{scroll-padding-top:110px}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.top-inner{max-width:1080px;margin:0 auto;padding:10px 16px 10px}
+.back{font-size:14px;color:var(--blue);text-decoration:none}
+h1{font-size:19px;margin:2px 0 0;line-height:1.4}
+.nav{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin-top:2px}
+.nav a{color:var(--blue);text-decoration:none}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:700}
+main{max-width:1080px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px;min-width:0}
+h2{font-size:20px;margin:0 0 4px;line-height:1.4}
+h3{font-size:17px;margin:0 0 6px}
+.lead{margin:0 0 12px;color:var(--muted);font-size:15px}
+.toc{display:flex;flex-wrap:wrap;gap:4px 16px;margin:0;padding:0;list-style:none;font-size:15px}
+.toc a{color:var(--blue);text-decoration:none;font-weight:700}
+.stage{position:relative;width:100%;aspect-ratio:2.2/1;background:var(--sheet);border:1px solid var(--line);border-radius:4px}
+@media (max-width:760px){.stage{aspect-ratio:10/15}}
+canvas{display:block;width:100%;height:100%}
+.pat{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 0 10px}
+@media (max-width:640px){.pat{grid-template-columns:1fr 1fr}}
+.pat button{border:1.5px solid var(--blue);background:none;color:var(--blue);border-radius:8px;padding:6px 8px;min-height:46px;font-weight:700;cursor:pointer;line-height:1.35}
+.pat button[aria-pressed="true"]{background:var(--btn);border-color:var(--btn);color:#fff}
+.ctrl{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-top:10px;font-size:14px;color:var(--muted)}
+.ctrl label{display:flex;align-items:center;gap:6px;min-height:40px}
+.ctrl input[type=checkbox],.ctrl input[type=radio]{width:20px;height:20px;accent-color:var(--blue)}
+.btn{border:0;border-radius:8px;padding:6px 16px;min-height:42px;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.btn.ghost{background:none;color:var(--blue);border:1.5px solid var(--blue)}
+.seg{display:inline-flex;border:1.5px solid var(--blue);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:none;color:var(--blue);padding:6px 12px;min-height:40px;font-weight:700;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--btn);color:#fff}
+.sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:6px 18px;margin-top:10px}
+.sl{display:grid;grid-template-columns:auto 1fr;gap:0 10px;align-items:center;font-size:14px}
+.sl output{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+.sl input[type=range]{grid-column:1/-1;width:100%;min-height:32px;accent-color:var(--blue)}
+.read{margin-top:10px;padding:8px 12px;background:var(--shade);border-radius:6px;font-size:15px;line-height:1.8}
+.read b{color:var(--blue)}
+.def{margin-top:12px;padding:12px 14px;border:1.5px solid var(--blue);border-radius:8px;background:var(--blue-soft);font-size:15px}
+.def h3{margin:0 0 4px;color:var(--blue);font-size:16px}
+.tbl{overflow-x:auto;margin-top:12px}
+table{border-collapse:collapse;width:100%;min-width:480px;font-size:14px}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:center}
+th{background:var(--shade);font-size:13px}
+tr.on td{background:var(--blue-soft);font-weight:700}
+.note{font-size:13px;color:var(--muted);margin:8px 0 0}
+.qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
+.qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
+.ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <a class="back" id="backLink" href="../index.html#/u/ac/0" hidden>‹ 電流と磁場・交流（Webテスト）へ</a>
+    <h1>電流が磁場から受ける力とモーター</h1>
+    <nav class="nav" id="nav" hidden aria-label="アニメーション">
+      <a href="index.html#elec">≡ アニメーション集</a>
+      <a href="ohm.html">電流の定義・オームの法則と電力</a>
+      <a href="circuit.html">回路シミュレーター</a>
+      <a href="magnetic.html">電流がつくる磁場</a>
+      <a href="motor.html" aria-current="page">電流が磁場から受ける力とモーター</a>
+      <a href="induction.html">電磁誘導と発電機</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <nav class="sheet" aria-label="このページの内容" style="padding:12px 16px">
+    <ul class="toc">
+      <li><a href="#force">1 フレミングの左手の法則（4つの場合）</a></li>
+      <li><a href="#mech">2 力が生じるわけ（磁場の重ね合わせ）</a></li>
+      <li><a href="#motor">3 直流モーターのしくみ（整流子）</a></li>
+    </ul>
+  </nav>
+
+  <section class="sheet" id="force" aria-labelledby="t1">
+    <h2 id="t1">1 磁場の中の電流が受ける力：フレミングの左手の法則</h2>
+    <p class="lead">磁石の N 極と S 極の間（ほぼ一様な磁場）に導線を通して電流を流すと、導線は力を受けて動きます。左は導線の方向から見た図（導線はブランコのようにつるしてあります）、右は左手の指の向きです。電流の向きと磁場の向きを変えて、4つの場合を確かめよう。</p>
+    <div class="pat" role="group" aria-label="4つの場合">
+      <button type="button" data-p="0" aria-pressed="true">① 電流 ⊙<br>N 極が上</button>
+      <button type="button" data-p="1" aria-pressed="false">② 電流 ⊗<br>N 極が上</button>
+      <button type="button" data-p="2" aria-pressed="false">③ 電流 ⊙<br>N 極が下</button>
+      <button type="button" data-p="3" aria-pressed="false">④ 電流 ⊗<br>N 極が下</button>
+    </div>
+    <div class="stage" id="st1"><canvas id="cv1" role="img" aria-label="左に、上下の磁極の間につるした導線の断面。電流の向きを⊙・⊗で表し、受ける力の向きに導線が振れる。右に、左手の中指・人差し指・親指の向きを表す3本の矢印。"></canvas></div>
+    <div class="sliders">
+      <label class="sl" for="sI"><span>電流の大きさ（相対）</span><output id="oI"></output><input type="range" id="sI" min="0" max="3" step="1" value="2"></label>
+    </div>
+    <div class="read" id="read1"></div>
+    <div class="def"><h3>フレミングの左手の法則</h3>左手の<b>中指・人差し指・親指</b>を互いに直角に開き、<b>中指を電流の向き</b>、<b>人差し指を磁場の向き</b>に合わせると、<b>親指の向きが導線の受ける力の向き</b>になる（「電・磁・力」の順に中指から）。力の大きさは、電流が大きいほど、磁場が強いほど大きい。電流と磁場が平行なときは力を受けない。</div>
+    <div class="tbl"><table>
+      <thead><tr><th>場合</th><th>電流の向き</th><th>磁場の向き（N → S）</th><th>力の向き</th></tr></thead>
+      <tbody id="tb1"></tbody>
+    </table></div>
+  </section>
+
+  <section class="sheet" id="mech" aria-labelledby="t2">
+    <h2 id="t2">2 力が生じるわけ：電流のまわりの磁場と磁石の磁場の重ね合わせ</h2>
+    <p class="lead">電流のまわりには円形の磁場ができます（右ねじの法則）。これが磁石の一様な磁場と重なり合うと、導線の片側では同じ向きで<b>強め合って磁力線が密</b>になり、反対側では逆向きで<b>弱め合って疎</b>になります。導線は、磁力線が<b>密な側から疎な側へ</b>押されます。上の「4つの場合」と連動しています。</p>
+    <div class="ctrl"><span>表示する磁場：</span>
+      <div class="seg" role="group" aria-label="表示する磁場">
+        <button type="button" data-v="fix" aria-pressed="false">磁石の磁場だけ</button>
+        <button type="button" data-v="wire" aria-pressed="false">電流の磁場だけ</button>
+        <button type="button" data-v="sum" aria-pressed="true">重ね合わせ</button>
+      </div>
+    </div>
+    <div class="stage" id="st2" style="margin-top:10px"><canvas id="cv2" role="img" aria-label="上下の磁極の間の一様な磁場と、導線のまわりの円形の磁場を重ね合わせた磁力線。片側が密、反対側が疎になり、密な側から疎な側へ向かう力の矢印。"></canvas></div>
+    <div class="read" id="read2"></div>
+    <p class="note">磁力線は、ゴムひものように縮もうとし、混み合ったところでは互いに押し合う性質がある、と考えると理解しやすくなります。図の磁力線は、本数が磁場の強さに比例するようにかいています。</p>
+  </section>
+
+  <section class="sheet" id="motor" aria-labelledby="t3">
+    <h2 id="t3">3 直流モーターのしくみ：整流子が半回転ごとに電流の向きを切りかえる</h2>
+    <p class="lead">磁場の中のコイルに電流を流すと、コイルの2つの辺が逆向きの力を受けて回転します。左は立体的に見た図、右は回転軸の方向（手前）から見た図です。「整流子なし」にすると、整流子のはたらきがわかります。</p>
+    <div class="ctrl">
+      <button type="button" class="btn" id="run3">電流を切る</button>
+      <span>整流子：</span>
+      <div class="seg" role="group" aria-label="整流子">
+        <button type="button" data-c="1" aria-pressed="true">あり（直流モーター）</button>
+        <button type="button" data-c="0" aria-pressed="false">なし（リング2つ）</button>
+      </div>
+      <button type="button" class="btn ghost" id="reset3">はじめから</button>
+    </div>
+    <div class="stage" id="st3" style="margin-top:10px"><canvas id="cv3" role="img" aria-label="N極とS極の間のコイル、整流子、ブラシ、電池。右は回転軸の方向から見た図で、コイルの両辺の電流（⊙・⊗）と受ける力の矢印、整流子とブラシを表示する。"></canvas></div>
+    <div class="read" id="read3"></div>
+    <div class="def"><h3>整流子のはたらき</h3>コイルの両端は、2つに分かれた半円形の金属（<b>整流子</b>）につながり、整流子は外の電池と<b>ブラシ</b>で接しています。コイルが半回転するごとに、それぞれのブラシが接する整流子が入れかわるので、<b>コイルを流れる電流の向きが半回転ごとに逆になります</b>。そのため、磁極に近い側の辺は、いつも同じ向き（例：N 極の前ではいつも下向き）の力を受け、コイルは同じ向きに回り続けます。整流子がないと、コイルは半回転を過ぎたところで逆向きの力を受けて押し戻され、往復するだけで回り続けません。</div>
+  </section>
+
+  <section class="sheet" aria-labelledby="qsTitle">
+    <h3 id="qsTitle">見てみよう</h3>
+    <ol class="qs" id="qs"></ol>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+if(/\/anim\//.test(location.pathname)){ $("backLink").hidden = false; $("nav").hidden = false; }
+const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+const TAU = Math.PI * 2;
+
+/* ---------- 描画の道具 ---------- */
+let col = {};
+const FONT = `"OhmFix","BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`, MF = `"Times New Roman",Times,serif`;
+function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","shade","sheet","nP","sP","fl","wf","cur","wire","frc","paper"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
+function hex2rgb(h){ h = h.replace("#", ""); if(h.length === 3) h = h.split("").map(x => x + x).join(""); const n = parseInt(h, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function rgba(h, a){ const A = hex2rgb(h); return `rgba(${A[0]},${A[1]},${A[2]},${a})`; }
+function line(c, pts, color, w, dash){ c.save(); c.strokeStyle = color; c.lineWidth = w; c.setLineDash(dash || []); c.lineJoin = "round"; c.lineCap = "round"; c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke(); c.restore(); }
+function mt(c, str, x, y, color, size, align, bold, bg){
+  size = size || 13;
+  const parts = str.split(/(\{[^}]*\})/).filter(Boolean).map(p => p[0] === "{" ? { s: p.slice(1, -1), it: 1 } : { s: p, it: 0 });
+  const fo = p => p.it ? `italic ${Math.round(size * 1.12)}px ${MF}` : `${bold ? "700 " : ""}${size}px ${FONT}`;
+  c.save(); c.textBaseline = "middle"; let w = 0; parts.forEach(p => { c.font = fo(p); p.w = c.measureText(p.s).width; w += p.w; });
+  let x0 = align === "right" ? x - w : align === "center" ? x - w / 2 : x;
+  if(bg){ c.fillStyle = col.sheet; c.globalAlpha = .88; c.fillRect(x0 - 3, y - size * .75, w + 6, size * 1.5); c.globalAlpha = 1; }
+  c.fillStyle = color; parts.forEach(p => { c.font = fo(p); c.textAlign = "left"; c.fillText(p.s, x0, y); x0 += p.w; }); c.restore(); return w;
+}
+function arrowHead(c, x, y, dx, dy, color, s){
+  const L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L; s = s || 7;
+  c.save(); c.fillStyle = color; c.beginPath(); c.moveTo(x + ux * s, y + uy * s); c.lineTo(x - ux * s * .7 - uy * s * .65, y - uy * s * .7 + ux * s * .65); c.lineTo(x - ux * s * .7 + uy * s * .65, y - uy * s * .7 - ux * s * .65); c.closePath(); c.fill(); c.restore();
+}
+function arrow(c, a, b, color, w, s){ line(c, [a, b], color, w); arrowHead(c, b[0], b[1], b[0] - a[0], b[1] - a[1], color, s || 8); }
+function dotSym(c, x, y, r, out, color, lw){
+  c.save(); c.strokeStyle = color; c.fillStyle = color; c.lineWidth = lw || Math.max(1.2, r * .18);
+  c.beginPath(); c.arc(x, y, r, 0, TAU); c.stroke();
+  if(out){ c.beginPath(); c.arc(x, y, Math.max(1.2, r * .28), 0, TAU); c.fill(); }
+  else { const k = r * .68; c.beginPath(); c.moveTo(x - k, y - k); c.lineTo(x + k, y + k); c.moveTo(x + k, y - k); c.lineTo(x - k, y + k); c.stroke(); }
+  c.restore();
+}
+function setupCanvas(cv, c){ const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); const W = Math.max(1, Math.round(r.width)), H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); c.setTransform(d, 0, 0, d, 0, 0); return [W, H]; }
+function panels(W, H, f){ const wide = W >= 700; return wide ? [{ x: 0, y: 0, w: W * f, h: H }, { x: W * f, y: 0, w: W * (1 - f), h: H }, wide] : [{ x: 0, y: 0, w: W, h: H * 0.55 }, { x: 0, y: H * 0.55, w: W, h: H * 0.45 }, wide]; }
+function divider(c, A, wide){ if(wide) line(c, [[A.x + 1, A.y + 10], [A.x + 1, A.y + A.h - 10]], col.line, 1); else line(c, [[A.x + 8, A.y + 1], [A.x + A.w - 8, A.y + 1]], col.line, 1); }
+
+/* ======================================================================
+   1・2 で共通の状態：電流（out = ⊙）と磁場（N 極が上なら磁場は下向き）
+   力の向き F ∝ I × B：⊙ と下向きの磁場 → 右向き
+   ====================================================================== */
+const PAT = [{ out: true, nUp: true }, { out: false, nUp: true }, { out: true, nUp: false }, { out: false, nUp: false }];
+const F = { p: 0, I: 2, x: 0, v: 0, view: "sum" };
+const fdir = pt => { const s = pt.out ? 1 : -1, by = pt.nUp ? -1 : 1; return -s * by; };   // ＋1 で右向き
+const cv1 = $("cv1"), c1 = cv1.getContext("2d"); let W1 = 0, H1 = 0;
+function draw1(){
+  const c = c1; if(W1 < 100) return; c.clearRect(0, 0, W1, H1);
+  const [A, B, wide] = panels(W1, H1, 0.55), pt = PAT[F.p], fd = fdir(pt);
+  /* --- 左：磁極の間の導線（導線の方向から見た図） --- */
+  mt(c, "導線の方向から見た図", A.x + 10, A.y + 14, col.ink, 13, "left", true);
+  const cx = A.x + A.w / 2, cy = A.y + A.h * 0.56, gw = Math.min(A.w * 0.62, 340), gh = Math.min(A.h * 0.5, 170);
+  const top = [cx - gw / 2, cy - gh / 2 - 34], bot = [cx - gw / 2, cy + gh / 2];
+  c.save(); c.fillStyle = pt.nUp ? col.nP : col.sP; c.fillRect(top[0], top[1], gw, 34); c.fillStyle = pt.nUp ? col.sP : col.nP; c.fillRect(bot[0], bot[1], gw, 34); c.restore();
+  mt(c, pt.nUp ? "N" : "S", cx, top[1] + 17, "#fff", 18, "center", true); mt(c, pt.nUp ? "S" : "N", cx, bot[1] + 17, "#fff", 18, "center", true);
+  // 一様な磁場
+  for(let k = 0; k < 7; k++){ const x = cx - gw / 2 + (k + 0.5) * gw / 7; line(c, [[x, cy - gh / 2], [x, cy + gh / 2]], rgba(col.fl, .55), 1.6); arrowHead(c, x, cy + (pt.nUp ? 12 : -12), 0, pt.nUp ? 1 : -1, rgba(col.fl, .85), 7); }
+  // 導線（ブランコ）：上の支点からつり下げ、力の向きに振れる
+  const piv = [cx, A.y + 34], L = cy - piv[1], wx = cx + F.x * gw * 0.32, wy = piv[1] + Math.sqrt(Math.max(1, L * L - (wx - cx) * (wx - cx)));
+  line(c, [piv, [wx, wy]], rgba(col.ink, .45), 1.4, [4, 3]);
+  c.save(); c.beginPath(); c.arc(wx, wy, 15, 0, TAU); c.fillStyle = col.sheet; c.fill(); c.restore();
+  dotSym(c, wx, wy, 13, pt.out, F.I ? col.cur : col.muted, 2.4);
+  if(F.I){ const len = 22 + 16 * F.I; arrow(c, [wx + fd * 18, wy], [wx + fd * (18 + len), wy], col.frc, 4, 12); mt(c, "力", wx + fd * (24 + len), wy - 14, col.frc, 14, fd > 0 ? "left" : "right", true, true); }
+  mt(c, F.I ? `電流 ${pt.out ? "⊙ 裏→表" : "⊗ 表→裏"}` : "電流 0", wx, wy + 30, col.cur, 13, "center", true, true);
+  mt(c, `磁場 ${pt.nUp ? "下向き" : "上向き"}（N → S）`, cx + gw / 2 - 4, cy - gh / 2 + 12, col.fl, 12, "right", true, true);
+  /* --- 右：左手の3本の指 --- */
+  divider(c, B, wide);
+  mt(c, "左手の指の向き", B.x + 10, B.y + 14, col.ink, 13, "left", true);
+  const o = [B.x + B.w * 0.5, B.y + B.h * 0.5], s = Math.min(B.w, B.h) * (wide ? 0.3 : 0.26);
+  // 手前（紙面の裏→表）は左下への斜めの矢印で表す
+  const toward = [-0.62, 0.48], vI = pt.out ? toward : [-toward[0], -toward[1]], vB = [0, pt.nUp ? 1 : -1], vF = [fd, 0];
+  // 手のひらのかたち（目安）
+  c.save(); c.globalAlpha = .12; c.fillStyle = col.ink; c.beginPath(); c.ellipse(o[0] - fd * s * 0.12, o[1] + s * 0.1, s * 0.42, s * 0.3, 0, 0, TAU); c.fill(); c.restore();
+  const tip = v => [o[0] + v[0] * s, o[1] + v[1] * s];
+  arrow(c, o, tip(vI), col.cur, 5, 13); arrow(c, o, tip(vB), col.fl, 5, 13); arrow(c, o, tip(vF), col.frc, 5, 13);
+  const lab = (v, t, cc) => { const p = [o[0] + v[0] * s * 1.25, o[1] + v[1] * s * 1.18]; mt(c, t, p[0], p[1], cc, 13, v[0] > 0.2 ? "left" : v[0] < -0.2 ? "right" : "center", true, true); };
+  lab(vI, "中指＝電流", col.cur); lab(vB, "人差し指＝磁場", col.fl); lab(vF, "親指＝力", col.frc);
+  mt(c, pt.out ? "（左下の矢印は手前＝紙面の裏→表）" : "（右上の矢印は奥＝紙面の表→裏）", B.x + B.w / 2, B.y + B.h - 12, col.muted, 11, "center", false, true);
+}
+function ui1(){
+  document.querySelectorAll(".pat button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.p === F.p ? "true" : "false"));
+  const pt = PAT[F.p], fd = fdir(pt);
+  $("oI").textContent = F.I ? `${F.I}` : "0（電流を流さない）";
+  $("read1").innerHTML = F.I ? `電流：<b>${pt.out ? "紙面の裏から表（⊙）" : "紙面の表から裏（⊗）"}</b>、磁場：<b>${pt.nUp ? "下向き（上が N 極）" : "上向き（下が N 極）"}</b> → 導線が受ける力：<b>${fd > 0 ? "右向き" : "左向き"}</b>。電流の向きか磁場の向きのどちらか一方を逆にすると、力の向きも逆になります。両方を逆にすると、力の向きは変わりません。` : "電流を流さないと、導線は力を受けません。";
+  $("tb1").innerHTML = PAT.map((p, i) => `<tr class="${i === F.p ? "on" : ""}"><td>${["①", "②", "③", "④"][i]}</td><td>${p.out ? "⊙ 裏→表" : "⊗ 表→裏"}</td><td>${p.nUp ? "下向き（上が N）" : "上向き（下が N）"}</td><td>${fdir(p) > 0 ? "右向き" : "左向き"}</td></tr>`).join("");
+  read2();
+}
+document.querySelectorAll(".pat button").forEach(b => b.addEventListener("click", () => { F.p = +b.dataset.p; ui1(); draw2(); }));
+$("sI").addEventListener("input", e => { F.I = +e.target.value; ui1(); draw2(); });
+
+/* ---------- 2 磁場の重ね合わせ（ベクトルポテンシャルの等高線） ---------- */
+const cv2 = $("cv2"), c2 = cv2.getContext("2d"); let W2 = 0, H2 = 0;
+function draw2(){
+  const c = c2; if(W2 < 100) return; readColors(); c.clearRect(0, 0, W2, H2);
+  const pt = PAT[F.p], s = pt.out ? 1 : -1, by = pt.nUp ? -1 : 1, fd = fdir(pt), I = F.I;
+  const B0 = 1, kI = 0.9 * I;
+  const useFix = F.view !== "wire", useWire = F.view !== "fix" && I > 0;
+  const gw = Math.min(W2 - 24, 760), gh = H2 - 92, x0 = (W2 - gw) / 2, y0 = 46, sc = gh / 6, cx = W2 / 2, cy = y0 + gh / 2;
+  // 磁極
+  c.save(); c.fillStyle = pt.nUp ? col.nP : col.sP; c.fillRect(x0, y0 - 30, gw, 28); c.fillStyle = pt.nUp ? col.sP : col.nP; c.fillRect(x0, y0 + gh + 2, gw, 28); c.restore();
+  mt(c, pt.nUp ? "N" : "S", cx, y0 - 16, "#fff", 16, "center", true); mt(c, pt.nUp ? "S" : "N", cx, y0 + gh + 16, "#fff", 16, "center", true);
+  // A(x, y) = −by·B0·x − s·kI·ln r  （磁力線 ＝ A の等高線、間隔 ΔA ＝ 一定）
+  const Af = (x, y) => (useFix ? -by * B0 * x : 0) - (useWire ? s * kI * Math.log(Math.max(1e-3, Math.hypot(x, y))) : 0);
+  const Bf = (x, y) => { const r2 = x * x + y * y + 1e-6; let bx = 0, byy = 0; if(useFix) byy += by * B0; if(useWire){ bx += -s * kI * y / r2; byy += s * kI * x / r2; } return [bx, byy]; };
+  const xm = gw / 2 / sc, ym = 3, nu = Math.round(gw / 4), nv = Math.round(gh / 4), du = 2 * xm / nu, dv = 2 * ym / nv;
+  const G = []; for(let j = 0; j <= nv; j++){ const row = []; for(let i = 0; i <= nu; i++) row.push(Af(-xm + i * du, -ym + j * dv)); G.push(row); }
+  const dA = 0.42 * B0; let amin = Infinity, amax = -Infinity; G.forEach(r => r.forEach(v => { if(isFinite(v)){ amin = Math.min(amin, v); amax = Math.max(amax, v); } }));
+  const P = (x, y) => [cx + x * sc, cy - y * sc];
+  c.save(); c.beginPath(); c.rect(x0, y0, gw, gh); c.clip();
+  c.strokeStyle = F.view === "wire" ? col.wf : col.fl; c.lineWidth = 1.7; c.beginPath();
+  const kmin = Math.ceil(amin / dA), kmax = Math.floor(amax / dA);
+  const marks = [];
+  for(let k = kmin; k <= kmax && k - kmin < 400; k++){
+    const L = (k + 0.5) * dA;
+    for(let j = 0; j < nv; j++) for(let i = 0; i < nu; i++){
+      const xA = -xm + i * du, yA = -ym + j * dv;
+      if(useWire && Math.hypot(xA + du / 2, yA + dv / 2) < 0.22) continue;
+      const p = [G[j][i], G[j][i + 1], G[j + 1][i + 1], G[j + 1][i]], X = [xA, xA + du, xA + du, xA], Y = [yA, yA, yA + dv, yA + dv], cr = [];
+      for(let e = 0; e < 4; e++){ const a = p[e], b = p[(e + 1) % 4]; if((a - L) * (b - L) < 0){ const t = (L - a) / (b - a); cr.push([X[e] + (X[(e + 1) % 4] - X[e]) * t, Y[e] + (Y[(e + 1) % 4] - Y[e]) * t]); } }
+      if(cr.length >= 2){ const a = P(cr[0][0], cr[0][1]), b = P(cr[1][0], cr[1][1]); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]);
+        if((i + j * 7 + k * 13) % 37 === 0) marks.push([(cr[0][0] + cr[1][0]) / 2, (cr[0][1] + cr[1][1]) / 2]); }
+    }
+  }
+  c.stroke();
+  marks.forEach(m => { const b = Bf(m[0], m[1]), p = P(m[0], m[1]); arrowHead(c, p[0], p[1], b[0], -b[1], F.view === "wire" ? col.wf : col.fl, 6); });
+  c.restore();
+  // 導線
+  const w = P(0, 0); c.save(); c.beginPath(); c.arc(w[0], w[1], 14, 0, TAU); c.fillStyle = col.sheet; c.fill(); c.restore();
+  if(I > 0) dotSym(c, w[0], w[1], 12, pt.out, col.cur, 2.4); else { c.save(); c.beginPath(); c.arc(w[0], w[1], 12, 0, TAU); c.strokeStyle = col.muted; c.lineWidth = 2; c.stroke(); c.restore(); }
+  // 密・疎と力
+  if(F.view === "sum" && I > 0){
+    const dense = -fd;   // 密な側は力と反対側
+    mt(c, "密（強め合う）", cx + dense * gw * 0.26, cy + gh * 0.34, col.ink, 14, "center", true, true);
+    mt(c, "疎（弱め合う）", cx - dense * gw * 0.26, cy + gh * 0.34, col.ink, 14, "center", true, true);
+    arrow(c, [w[0] + fd * 20, w[1]], [w[0] + fd * (60 + 18 * I), w[1]], col.frc, 5, 14);
+    mt(c, "力", w[0] + fd * (70 + 18 * I), w[1] - 16, col.frc, 15, fd > 0 ? "left" : "right", true, true);
+  }
+  mt(c, F.view === "fix" ? "磁石の磁場（一様）" : F.view === "wire" ? "電流のまわりの磁場（右ねじの法則）" : "重ね合わせた磁場", x0, 14, col.ink, 13, "left", true);
+}
+function read2(){
+  const pt = PAT[F.p], fd = fdir(pt), dense = fd > 0 ? "左" : "右", sparse = fd > 0 ? "右" : "左";
+  const circ = pt.out ? "反時計回り" : "時計回り", fixd = pt.nUp ? "下向き" : "上向き";
+  $("read2").innerHTML = F.I ? `電流 ${pt.out ? "⊙" : "⊗"} のまわりの磁場は<b>${circ}</b>。磁石の磁場は<b>${fixd}</b>。導線の<b>${dense}側</b>では2つの磁場が同じ向きで強め合い（密）、<b>${sparse}側</b>では逆向きで弱め合います（疎）。導線は密な${dense}側から疎な${sparse}側へ、つまり<b>${fd > 0 ? "右向き" : "左向き"}</b>に押されます。これはフレミングの左手の法則の向きと一致します。` : "電流が 0 のときは、磁石の一様な磁場だけで、導線は力を受けません。";
+}
+document.querySelectorAll("#mech .seg button").forEach(b => b.addEventListener("click", () => { F.view = b.dataset.v; document.querySelectorAll("#mech .seg button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false")); draw2(); }));
+
+/* ======================================================================
+   3 直流モーター
+   磁場は右向き（左 N、右 S）。辺1 の位置 R(cosφ, sinφ)。辺1 の電流（手前向きを正）を tv とすると、
+   辺1 の力は上向きに tv、トルク ∝ cosφ·tv。整流子ありでは tv ＝ sign(cosφ) → いつも反時計回り。
+   ====================================================================== */
+const cv3 = $("cv3"), c3 = cv3.getContext("2d"); let W3 = 0, H3 = 0;
+const M = { phi: 0.35, w: 0, on: true, comm: true, t: 0 };
+const MR = 1.5, ML = 2.0;
+function tv1(){ if(!M.on) return 0; if(M.comm){ const cs = Math.cos(M.phi); return Math.abs(cs) < 0.06 ? 0 : Math.sign(cs); } return 1; }
+function draw3(){
+  const c = c3; if(W3 < 100) return; c.clearRect(0, 0, W3, H3);
+  const [A, B, wide] = panels(W3, H3, 0.56), cs = Math.cos(M.phi), sn = Math.sin(M.phi), t1 = tv1();
+  /* --- 立体図 --- */
+  mt(c, "立体的に見た図", A.x + 10, A.y + 14, col.ink, 13, "left", true);
+  const sc = Math.min(A.w / 12.6, A.h / 8.8), ox = A.x + A.w * 0.5, oy = A.y + A.h * 0.45;
+  const Q = (x, y, z) => [ox + (x + z * 0.42) * sc, oy - (y + z * 0.26) * sc];
+  const pole = (x0, x1, isN) => { const zf = -ML - 0.2, zb = ML + 0.2, yt = 2, yb = -2;
+    const f = [Q(x0, yt, zf), Q(x1, yt, zf), Q(x1, yb, zf), Q(x0, yb, zf)], tp = [Q(x0, yt, zf), Q(x1, yt, zf), Q(x1, yt, zb), Q(x0, yt, zb)], sd = isN ? [Q(x1, yt, zf), Q(x1, yt, zb), Q(x1, yb, zb), Q(x1, yb, zf)] : [Q(x0, yt, zf), Q(x0, yt, zb), Q(x0, yb, zb), Q(x0, yb, zf)];
+    [[tp, .7], [sd, .55], [f, 1]].forEach(([pg, al]) => { c.save(); c.beginPath(); pg.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fillStyle = rgba(isN ? col.nP : col.sP, al); c.fill(); c.strokeStyle = col.ink; c.lineWidth = 1; c.stroke(); c.restore(); });
+    const m = Q((x0 + x1) / 2, 0, zf); mt(c, isN ? "N" : "S", m[0], m[1], "#fff", 20, "center", true); };
+  pole(-4.9, -3.9, true); pole(3.9, 4.9, false);
+  [-1.2, 0, 1.2].forEach(y => [-1.2, 1.2].forEach(z => { const a = Q(-3.9, y, z), b = Q(3.9, y, z); line(c, [a, b], rgba(col.fl, .5), 1.3, [6, 4]); }));
+  const P1 = z => Q(MR * cs, MR * sn, z), P2 = z => Q(-MR * cs, -MR * sn, z);
+  c.save(); c.beginPath(); [P1(-ML), P1(ML), P2(ML), P2(-ML)].forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fillStyle = rgba(col.wire, .12); c.fill(); c.restore();
+  line(c, [P1(ML), P2(ML)], col.wire, 3); line(c, [P1(-ML), P1(ML)], col.nP, 3.4); line(c, [P2(-ML), P2(ML)], col.sP, 3.4);
+  // 整流子（またはリング）
+  const zc = -ML - 1.0, rc = 0.48, axisEnd = Q(0, 0, zc - 0.5);
+  line(c, [Q(0, 0, -ML), axisEnd], col.muted, 3);
+  if(M.comm){
+    const C = Q(0, 0, zc);
+    // 半円1（辺1 につながる：中心の角が φ）、半円2（φ + π）。斜投影でも xy 面の円はそのまま円
+    [[M.phi, col.nP], [M.phi + Math.PI, col.sP]].forEach(([a0, cc]) => { c.save(); c.beginPath(); c.arc(C[0], C[1], rc * sc, -(a0 + Math.PI / 2 - 0.15), -(a0 - Math.PI / 2 + 0.15), false); c.strokeStyle = cc; c.lineWidth = 6; c.stroke(); c.restore(); });
+    line(c, [P1(-ML), Q(MR * cs * 0.3, MR * sn * 0.3, -ML - 0.4), Q(rc * Math.cos(M.phi), rc * Math.sin(M.phi), zc)], col.nP, 2);
+    line(c, [P2(-ML), Q(-MR * cs * 0.3, -MR * sn * 0.3, -ML - 0.4), Q(-rc * Math.cos(M.phi), -rc * Math.sin(M.phi), zc)], col.sP, 2);
+    mt(c, "整流子", C[0] - rc * sc - 8, C[1] - rc * sc - 6, col.muted, 12, "right", false, true);
+  } else {
+    [[zc, col.nP], [zc - 0.45, col.sP]].forEach(([z, cc]) => { const C = Q(0, 0, z); c.save(); c.beginPath(); c.arc(C[0], C[1], rc * sc, 0, TAU); c.strokeStyle = cc; c.lineWidth = 4; c.stroke(); c.restore(); });
+    line(c, [P1(-ML), Q(0, 0.05, -ML - 0.4), Q(0, 0, zc)], col.nP, 2); line(c, [P2(-ML), Q(0, -0.05, -ML - 0.4), Q(0, 0, zc - 0.45)], col.sP, 2);
+    mt(c, "リング（スリップリング）", Q(0, 0, zc)[0] - rc * sc - 8, Q(0, 0, zc)[1] - rc * sc - 6, col.muted, 12, "right", false, true);
+  }
+  // ブラシと電池（左のブラシが＋）
+  const bL = M.comm ? Q(-rc - 0.15, 0, zc) : Q(0, -rc - 0.15, zc), bR = M.comm ? Q(rc + 0.15, 0, zc) : Q(0, -rc - 0.15, zc - 0.45);
+  [bL, bR].forEach(b => { c.save(); c.fillStyle = col.muted; c.fillRect(b[0] - 5, b[1] - 5, 10, 10); c.restore(); });
+  const bat = Q(0, -3.3, zc), bw = 26;
+  line(c, [bL, [bL[0] - 16, bL[1]], [bL[0] - 16, bat[1]], [bat[0] - bw, bat[1]]], col.ink, 1.6); line(c, [bR, [bR[0] + 16, bR[1]], [bR[0] + 16, bat[1]], [bat[0] + bw, bat[1]]], col.ink, 1.6);
+  line(c, [[bat[0] - 4, bat[1] - 14], [bat[0] - 4, bat[1] + 14]], col.ink, 2.2); line(c, [[bat[0] + 4, bat[1] - 7], [bat[0] + 4, bat[1] + 7]], col.ink, 5);
+  line(c, [[bat[0] - bw, bat[1]], [bat[0] - 4, bat[1]]], col.ink, 1.6); line(c, [[bat[0] + 4, bat[1]], [bat[0] + bw, bat[1]]], col.ink, 1.6);
+  mt(c, "＋", bat[0] - 10, bat[1] - 20, col.red, 13, "center", true); mt(c, M.on ? "電池" : "電池（切）", bat[0] + 30, bat[1] + 16, col.muted, 12, "left");
+  // 電流と力（辺の中ほど）
+  if(t1){ [[P1, -t1], [P2, t1]].forEach(([Pf, s]) => { const a = Pf(-0.4 * s), b = Pf(0.4 * s); arrowHead(c, b[0], b[1], b[0] - a[0], b[1] - a[1], col.cur, 10); });
+    [[1, t1], [-1, -t1]].forEach(([sg, f]) => { const m = Q(sg * MR * cs, sg * MR * sn, 0), e = Q(sg * MR * cs, sg * MR * sn + f * 1.1, 0); arrow(c, m, e, col.frc, 3.4, 10); }); }
+  /* --- 回転軸の方向から見た図 --- */
+  divider(c, B, wide);
+  mt(c, "回転軸の方向（手前）から見た図", B.x + 10, B.y + 14, col.ink, 13, "left", true);
+  const s2 = Math.min(B.w / 8, (B.h - 30) / 5.8), cx = B.x + B.w / 2, cy = B.y + 28 + (B.h - 30) / 2, E = (x, y) => [cx + x * s2, cy - y * s2];
+  c.save(); c.fillStyle = rgba(col.nP, .8); let a = E(-3.6, 2.3), b = E(-2.9, -2.3); c.fillRect(a[0], a[1], b[0] - a[0], b[1] - a[1]); c.fillStyle = rgba(col.sP, .8); a = E(2.9, 2.3); b = E(3.6, -2.3); c.fillRect(a[0], a[1], b[0] - a[0], b[1] - a[1]); c.restore();
+  mt(c, "N", E(-3.25, 0)[0], cy, "#fff", 16, "center", true); mt(c, "S", E(3.25, 0)[0], cy, "#fff", 16, "center", true);
+  for(let j = -4; j <= 4; j++){ const y = j * 0.5; line(c, [E(-2.9, y), E(2.9, y)], rgba(col.fl, .35), 1.2); arrowHead(c, E(2.3, y)[0], E(2.3, y)[1], 1, 0, rgba(col.fl, .55), 5); }
+  const p1 = E(MR * cs, MR * sn), p2 = E(-MR * cs, -MR * sn);
+  line(c, [p1, p2], col.wire, 3);
+  // 整流子とブラシ（中央）
+  const rcp = Math.max(12, 0.42 * s2);
+  if(M.comm){
+    [[M.phi, col.nP], [M.phi + Math.PI, col.sP]].forEach(([a0, cc]) => { c.save(); c.beginPath(); c.arc(cx, cy, rcp, -(a0 + Math.PI / 2 - 0.18), -(a0 - Math.PI / 2 + 0.18), false); c.strokeStyle = cc; c.lineWidth = 6; c.stroke(); c.restore(); });
+    c.save(); c.fillStyle = col.muted; c.fillRect(cx - rcp - 12, cy - 5, 9, 10); c.fillRect(cx + rcp + 3, cy - 5, 9, 10); c.restore();
+    mt(c, "＋", cx - rcp - 18, cy - 12, col.red, 12, "center", true); mt(c, "−", cx + rcp + 18, cy - 12, col.ink, 12, "center", true);
+  }
+  [[p1, t1, col.nP], [p2, -t1, col.sP]].forEach(([p, s, cc]) => { c.save(); c.beginPath(); c.arc(p[0], p[1], 11, 0, TAU); c.fillStyle = col.sheet; c.fill(); c.lineWidth = 2.4; c.strokeStyle = cc; c.stroke(); c.restore();
+    if(s) { dotSym(c, p[0], p[1], 7.5, s > 0, col.cur, 1.8); arrow(c, [p[0], p[1] - s * 14], [p[0], p[1] - s * (14 + 0.9 * s2)], col.frc, 3.4, 10); } });
+  // 回転の向き
+  const tq = MR * cs * t1;
+  if(Math.abs(M.w) > 0.3){ const r = MR * s2 + 18, dir = Math.sign(M.w); c.save(); c.beginPath(); c.arc(cx, cy, r, -1.3, -0.3, false); c.strokeStyle = col.muted; c.lineWidth = 1.8; c.stroke(); c.restore();
+    // 反時計回り（dir > 0）なら −1.3 の端に、時計回りなら −0.3 の端に矢印
+    const th = dir > 0 ? -1.3 : -0.3; arrowHead(c, cx + r * Math.cos(th), cy + r * Math.sin(th), dir > 0 ? Math.sin(th) : -Math.sin(th), dir > 0 ? -Math.cos(th) : Math.cos(th), col.muted, 8); }
+  mt(c, !t1 ? (M.on ? "電流 0（整流子のすき間）" : "電流 0") : `回転させる力のはたらき：${tq > 0.05 ? "反時計回り" : tq < -0.05 ? "時計回り（押し戻す）" : "ほぼ 0"}`, cx, B.y + B.h - 12, tq < -0.05 ? col.red : col.ink, 13, "center", true, true);
+}
+function read3(){
+  const cs = Math.cos(M.phi), t1 = tv1(), deg = ((M.phi * 180 / Math.PI) % 360 + 360) % 360;
+  const side = cs > 0 ? "赤の辺が S 極側（右）、青の辺が N 極側（左）" : "赤の辺が N 極側（左）、青の辺が S 極側（右）";
+  $("read3").innerHTML = M.comm
+    ? `コイルの角度 ${deg.toFixed(0)}°：${side}。<br>${t1 ? `左のブラシ（＋）は${cs > 0 ? "青" : "赤"}の半円、右のブラシ（−）は${cs > 0 ? "赤" : "青"}の半円に接しています。電流は ${cs > 0 ? "青の辺 → 赤の辺" : "赤の辺 → 青の辺"} の順に流れ、<b>N 極側の辺はいつも下向き、S 極側の辺はいつも上向き</b>の力を受けます（反時計回りに回り続ける）。` : "ブラシが整流子のすき間にあり、一瞬電流が流れません。コイルは勢い（慣性）でここを通り過ぎ、その後は電流の向きが逆になります。"}`
+    : `整流子がない（リング2つ）と、コイルを流れる電流の向きはいつも同じ（青の辺 → 赤の辺）です。コイルの角度 ${deg.toFixed(0)}°：${side}。${Math.cos(M.phi) < 0 ? "<b>半回転を過ぎたので、力が回転を押し戻す向きにはたらいています。</b>" : "いまは反時計回りに回す力がはたらいています。"}コイルは行ったり来たりするだけで、回り続けません。`;
+}
+$("run3").addEventListener("click", () => { M.on = !M.on; $("run3").textContent = M.on ? "電流を切る" : "電流を流す"; });
+$("reset3").addEventListener("click", () => { M.phi = 0.35; M.w = 0; });
+document.querySelectorAll("#motor .seg button").forEach(b => b.addEventListener("click", () => { M.comm = b.dataset.c === "1"; document.querySelectorAll("#motor .seg button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false")); M.phi = 0.35; M.w = 0; }));
+
+/* ---------- アニメーション ---------- */
+let last = null, uiT = 0;
+function tick(ts){
+  if(last == null) last = ts; const dt = Math.min(0.04, (ts - last) / 1000); last = ts;
+  readColors();
+  if(!reduce){
+    // 1：ブランコ（目標の振れ ＝ 力に比例）
+    const target = F.I * fdir(PAT[F.p]) / 3; F.v += ((target - F.x) * 16 - F.v * 4.5) * dt; F.x += F.v * dt;
+    // 3：回転（トルク ∝ cosφ × 電流、摩擦あり）
+    const tq = 3.2 * MR * Math.cos(M.phi) * tv1(); M.w += (tq - 0.9 * M.w) * dt; M.phi += M.w * dt;
+  }
+  draw1(); draw3();
+  uiT += dt; if(uiT > 0.15){ uiT = 0; read3(); }
+  requestAnimationFrame(tick);
+}
+function layout(){ readColors(); [W1, H1] = setupCanvas(cv1, c1); [W2, H2] = setupCanvas(cv2, c2); [W3, H3] = setupCanvas(cv3, c3); draw1(); draw2(); draw3(); }
+if(window.ResizeObserver){ const ro = new ResizeObserver(layout); [cv1, cv2, cv3].forEach(e => ro.observe(e)); } else window.addEventListener("resize", layout);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+if(mq && mq.addEventListener) mq.addEventListener("change", () => { readColors(); draw2(); });
+
+$("qs").innerHTML = [
+  ["①の状態から、電流の向きだけを逆にすると、力の向きはどうなるか。電流と磁場の両方を逆にするとどうか。", "電流だけを逆にすると、力は逆向き（左向き）になります（②）。両方を逆にすると、力の向きはもとと同じ右向きです（④）。"],
+  ["電流と磁場の向きが平行（例：磁場の向きに電流を流す）だと、導線は力を受けるか。", "受けません。フレミングの左手の法則で中指と人差し指を同じ向きにはできないように、電流と磁場が平行なときは力は 0 です。力が最大になるのは、電流と磁場が垂直なときです。"],
+  ["「重ね合わせ」の図で、導線のどちら側が密になるかを、右ねじの法則を使って説明しよう。", "電流 ⊙ のまわりの磁場は反時計回りなので、導線の左側では下向き、右側では上向きです。磁石の磁場が下向き（上が N 極）なら、左側で強め合って密、右側で弱め合って疎になります。導線は密な左側から疎な右側へ押されます。"],
+  ["直流モーターで、整流子がないとコイルが回り続けないのはなぜか。", "半回転を過ぎると、各辺がいる磁極の側が入れかわるのに電流の向きが同じなので、力が回転を押し戻す向きにはたらくからです。整流子は半回転ごとに電流の向きを逆にして、回転の向きの力がはたらき続けるようにします。"],
+  ["コイルの面が磁場と垂直になった瞬間（整流子のすき間）に電流が流れなくても、モーターが止まらないのはなぜか。", "コイルは回転の勢い（慣性）で、その位置を通り過ぎるからです。通り過ぎた直後に電流の向きが逆になり、また同じ向きに回す力がはたらきます。"],
+  ["モーターと発電機の関係を説明しよう。", "モーターは、電流が磁場から受ける力で電気エネルギーを回転の運動エネルギーに変えます。発電機は逆に、コイルを回して電磁誘導で運動エネルギーを電気エネルギーに変えます。つくりはよく似ています。"]
+].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
+
+ui1(); layout(); requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
