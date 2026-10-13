@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
 <style>
-/* Layout: one-column list on graph paper — five groups (運動, 波の性質, 音, 熱, 電気) of tappable cards, each card = title + one-line purpose + related Web-test section. */
+/* Layout: one-column list on graph paper — six groups (運動, 仕事とエネルギー, 波の性質, 音, 熱, 電気) of tappable cards, each card = title + one-line purpose + related Web-test section. */
 :root{
   --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
   --blue:#2447B3; --blue-soft:#E7EDFB; --line:#CBD5DF; --sheet:#FFFFFF;
@@ -47,13 +47,13 @@ html{scroll-padding-top:90px}
 <header class="top">
   <div class="top-inner">
     <a class="back" id="backLink" href="../index.html" hidden>‹ 単元一覧（Webテスト）へ</a>
-    <h1>アニメーション集（運動・熱・波・音・電気）</h1>
+    <h1>アニメーション集（運動・エネルギー・熱・波・音・電気）</h1>
   </div>
 </header>
 
 <main>
   <section class="sheet">
-    <p class="intro">Webテストに取り組む前に、目に見えない粒子や波の動きを見て確かめよう。波は上から順に見ると、「波の速さ」→「波を3次元で見る」→「重ね合わせ・反射・定在波（定常波）」→「音」の順に理解が積み上がります。運動のシミュレーターは<a href="#motion">「運動」</a>、熱のアニメーションは<a href="#heat">下の「熱」</a>、電気は<a href="#elec">「電気」</a>にあります。各ページの「見てみよう」の問いにも答えてみよう。</p>
+    <p class="intro">Webテストに取り組む前に、目に見えない粒子や波の動きを見て確かめよう。波は上から順に見ると、「波の速さ」→「波を3次元で見る」→「重ね合わせ・反射・定在波（定常波）」→「音」の順に理解が積み上がります。運動のシミュレーターは<a href="#motion">「運動」</a>、仕事とエネルギーは<a href="#energy">「仕事とエネルギー」</a>、熱のアニメーションは<a href="#heat">下の「熱」</a>、電気は<a href="#elec">「電気」</a>にあります。各ページの「見てみよう」の問いにも答えてみよう。</p>
   </section>
 
   <section class="sheet" id="motion" aria-labelledby="g0">
@@ -64,6 +64,15 @@ html{scroll-padding-top:90px}
       <li><a class="card" href="projectile.html"><span class="t"><span class="num">25</span>投射運動ラボ（水平投射・斜方投射）</span><span class="d">初速度・角度・投げ出す位置を変えて投げ、水平方向（等速直線運動）と鉛直方向（等加速度直線運動）に分けたグラフで、最高点・着地点を確かめる</span><span class="r">関連：落体の運動 ①定義（発展）</span></a></li>
       <li><a class="card" href="monkey.html"><span class="t"><span class="num">26</span>モンキーハンティング</span><span class="d">枝のサルをねらって小球を発射し、同時にサルが手を離すと必ず当たるのはなぜか。小球もサルも同じ時刻に ½<i class="qv">gt</i>² だけ落ちることを、ストロボ・グラフ・「サルと一緒に落ちる視点」で確かめる。手を離さない・遅れて離す・無重力も比べられる</span><span class="r">関連：落体の運動 ①定義（発展）</span></a></li>
       <li><a class="card" href="relative.html"><span class="t"><span class="num">27</span>合成速度と相対速度</span><span class="d">一直線上：電車の中を歩く人（合成速度 <i class="qv">v</i> ＝ <i class="qv">V</i> ＋ <i class="qv">u</i>）、2台の車（相対速度 <i class="qv">v</i><sub>AB</sub> ＝ <i class="qv">v</i><sub>B</sub> − <i class="qv">v</i><sub>A</sub>）。平面上：川を渡る船（ベクトルの和、渡る時間は流れによらない）、雨と走る人・交差点の2台の車（ベクトルの差）。「地面から見る／いっしょに動いて見る」を切りかえ、速度の矢印の図とグラフで確かめる</span><span class="r">関連：速度・加速度 ①定義</span></a></li>
+    </ol>
+  </section>
+
+  <section class="sheet" id="energy" aria-labelledby="g5">
+    <h2 id="g5">仕事とエネルギー</h2>
+    <ol class="cards" start="28">
+      <li><a class="card" href="work.html"><span class="t"><span class="num">28</span>仕事と仕事率</span><span class="d">仕事の定義 <i class="qv">W</i> ＝ <i class="qv">Fx</i> cos <i class="qv">θ</i> と正・負・0（力の分解、力ごとの仕事の表）、力が一定でないときの F-x グラフの面積（短冊で近似）、仕事率 <i class="qv">P</i> ＝ <i class="qv">W</i>/<i class="qv">t</i>（W-t グラフの傾き）、仕事の原理（そのまま・斜面・動滑車）。運動エネルギーの増減とエネルギー図が連動</span><span class="r">関連：仕事と力学的エネルギー ①定義・②読解 A/B・③次元 E</span></a></li>
+      <li><a class="card" href="energy.html"><span class="t"><span class="num">29</span>運動エネルギーと位置エネルギー</span><span class="d">台車がものさしを押しこんで止まる思考実験から ½<i class="qv">mv</i>² を導く。仕事と運動エネルギーの関係 Δ<i class="qv">K</i> ＝ <i class="qv">W</i>。重力による位置エネルギー（重力がする仕事／重力とつりあう外力がする仕事の2つの説明、基準面より下で負になる証明）、弾性力による位置エネルギー ½<i class="qv">kx</i>²（F-x グラフの三角形）</span><span class="r">関連：仕事と力学的エネルギー ①定義・②読解 C</span></a></li>
+      <li><a class="card" href="mech.html"><span class="t"><span class="num">30</span>力学的エネルギー保存</span><span class="d">重力だけのときの証明（2点 A・B で「重力がする仕事 ＝ 位置エネルギーの差」「運動エネルギーの変化 ＝ された仕事」）。斜面・曲面・ふりこ・ばねで保存する条件を、力ごとの仕事で判定。摩擦・空気抵抗・人の力で保存しない場合の Δ<i class="qv">E</i> ＝ <i class="qv">W</i><sub>非保存力</sub> と熱</span><span class="r">関連：仕事と力学的エネルギー ①定義・②読解 E・④手順 問題1〜3</span></a></li>
     </ol>
   </section>
 
