@@ -37,6 +37,7 @@ window.UNIT_LIST = [
     { id: "ac",         title: "電流と磁場・交流",           file: "units/ac.js" }
   ]},
   { group: "エネルギーとその利用", units: [
+    { id: "anim-nuclear", title: "▶ 原子核と放射線のアニメーション", href: "anim/index.html#nuclear", note: "放射線の透過力と電離作用、崩壊と半減期（原子核を選べる）、核分裂の連鎖反応と制御棒、核融合" },
     { id: "energy-use", title: "エネルギーとその利用",       file: "units/energy-use.js" }
   ]}
 ];
