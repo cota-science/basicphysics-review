@@ -19,18 +19,37 @@ const T = I("T"), t = I("t"), Q = I("Q"), C = I("C"), c = I("c"), m = I("m"), U 
 const Q1 = Sb("Q","1"), Q2 = Sb("Q","2");
 
 const DEF_TABLE = `<div class="tbl"><table>
-<tr><th>用語</th><th>定義</th><th>式・単位</th></tr>
-<tr><td>熱運動</td><td>物質をつくる粒子の不規則な運動。温度が高いほど激しい</td><td>―</td></tr>
-<tr><td>絶対温度</td><td>−273 ℃（絶対零度）を 0 とする温度。目盛りの間隔はセルシウス温度と同じ</td><td>${T} ＝ ${t} ＋ 273〔K〕</td></tr>
-<tr><td>熱（熱量）</td><td>温度の高い物体から低い物体へ移動するエネルギー</td><td>${Q}〔J〕</td></tr>
-<tr><td>熱容量</td><td>物体全体の温度を 1 K 上げるのに必要な熱量</td><td>${Q} ＝ ${C}Δ${T}、${C}〔J/K〕</td></tr>
-<tr><td>比熱</td><td>物質 1 g の温度を 1 K 上げるのに必要な熱量</td><td>${Q} ＝ ${m}${c}Δ${T}、${c}〔J/(g·K)〕</td></tr>
-<tr><td>熱量の保存</td><td>熱が外に逃げないとき、高温の物体が失った熱量 ＝ 低温の物体が得た熱量</td><td>―</td></tr>
-<tr><td>潜熱</td><td>状態変化に使われる熱（融解熱・蒸発熱）。状態変化の間は温度が一定</td><td>―</td></tr>
-<tr><td>内部エネルギー</td><td>物体内の粒子の熱運動のエネルギーなどの総和</td><td>${U}〔J〕</td></tr>
-<tr><td>熱力学第一法則</td><td>内部エネルギーの変化 ＝ 気体が吸収した熱量 ＋ 気体が外部から<b>された</b>仕事</td><td>Δ${U} ＝ ${Q} ＋ ${W}</td></tr>
-<tr><td>熱効率</td><td>熱機関が高温の熱源から吸収した熱量のうち、外部にした仕事の割合。必ず 1 より小さい</td><td>${e} ＝ ${W}′ ÷ ${Q1}</td></tr>
-</table></div><p>水の比熱は 4.2 J/(g·K)。温度差は ℃ でも K でも同じ数値になる。</p>`;
+<colgroup><col style="width:6.6em"><col></colgroup>
+<tr><th>用語</th><th>定義（記号・式・単位）</th></tr>
+<tr><th colspan='2' style='text-align:left;background:var(--blue-soft)'>温度と熱運動</th></tr>
+<tr><td>熱運動</td><td>物質をつくる粒子（原子・分子）の不規則な運動。温度が高いほど激しい</td></tr>
+<tr><td>ブラウン運動</td><td>水に浮かんだ微粒子（花粉から出た粒子など）が、不規則に動き回る現象。周りの水分子が熱運動して、不規則にぶつかるために起こる</td></tr>
+<tr><td>セルシウス温度（セ氏温度）</td><td>1気圧で水が凍る温度を 0&nbsp;℃、沸騰する温度を 100&nbsp;℃ とし、その間を 100 等分して決めた温度<br><span style='color:var(--blue);font-weight:700'>${t}〔℃〕</span></td></tr>
+<tr><td>絶対温度</td><td>−273&nbsp;℃（絶対零度）を 0 とする温度。目盛りの間隔はセルシウス温度と同じ<br><span style='color:var(--blue);font-weight:700'>${T} ＝ ${t} ＋ 273〔K〕</span></td></tr>
+<tr><td>絶対温度の単位（ケルビン）</td><td>絶対温度の単位。温度差 1&nbsp;K は、温度差 1&nbsp;℃ と同じ大きさ<br><span style='color:var(--blue);font-weight:700'>K</span></td></tr>
+<tr><td>熱平衡</td><td>温度の異なる物体を接触させたとき、熱が移動して、やがて両方の温度が等しくなった状態</td></tr>
+<tr><td>熱膨張</td><td>温度が上がると、物体の長さや体積が大きくなる現象。粒子の熱運動が激しくなり、粒子の間隔が広がるために起こる</td></tr>
+<tr><th colspan='2' style='text-align:left;background:var(--blue-soft)'>熱量</th></tr>
+<tr><td>熱（熱量）</td><td>温度の高い物体から低い物体へ移動するエネルギー<br><span style='color:var(--blue);font-weight:700'>${Q}〔J〕</span></td></tr>
+<tr><td>熱容量</td><td>物体全体の温度を 1&nbsp;K 上げるのに必要な熱量<br><span style='color:var(--blue);font-weight:700'>${Q} ＝ ${C}Δ${T}、${C}〔J/K〕</span></td></tr>
+<tr><td>比熱（比熱容量）</td><td>物質 1&nbsp;g の温度を 1&nbsp;K 上げるのに必要な熱量。物質によって決まる<br><span style='color:var(--blue);font-weight:700'>${Q} ＝ ${m}${c}Δ${T}、${c}〔J/(g·K)〕</span></td></tr>
+<tr><td>熱量の保存</td><td>熱が外に逃げないとき、高温の物体が失った熱量 ＝ 低温の物体が得た熱量</td></tr>
+<tr><th colspan='2' style='text-align:left;background:var(--blue-soft)'>物質の状態変化</th></tr>
+<tr><td>物質の三態</td><td>物質の3つの状態（固体・液体・気体）。温度や圧力によって状態が変わる（状態変化）</td></tr>
+<tr><td>融解</td><td>固体が液体になる変化。融解が起こる温度が融点（逆向きの変化は凝固）</td></tr>
+<tr><td>蒸発</td><td>液体の表面で、液体が気体になる変化。沸点より低い温度でも起こる</td></tr>
+<tr><td>沸騰</td><td>液体の内部からも気体（気泡）が生じる変化。沸騰が起こる温度が沸点（1気圧の水では 100&nbsp;℃）</td></tr>
+<tr><td>潜熱</td><td>状態変化に使われる熱（融解熱・蒸発熱）。状態変化の間は温度が一定</td></tr>
+<tr><td>融解熱</td><td>融点で、固体 1&nbsp;g を同じ温度の液体にするのに必要な熱量（氷では約 3.3×10² J/g）<br><span style='color:var(--blue);font-weight:700'>〔J/g〕</span></td></tr>
+<tr><td>蒸発熱</td><td>沸点で、液体 1&nbsp;g を同じ温度の気体にするのに必要な熱量（水では約 2.3×10³ J/g）<br><span style='color:var(--blue);font-weight:700'>〔J/g〕</span></td></tr>
+<tr><th colspan='2' style='text-align:left;background:var(--blue-soft)'>内部エネルギーと熱機関</th></tr>
+<tr><td>内部エネルギー</td><td>物体内の粒子の熱運動のエネルギーなどの総和<br><span style='color:var(--blue);font-weight:700'>${U}〔J〕</span></td></tr>
+<tr><td>熱力学第一法則</td><td>内部エネルギーの変化 ＝ 気体が吸収した熱量 ＋ 気体が外部から<b>された</b>仕事<br><span style='color:var(--blue);font-weight:700'>Δ${U} ＝ ${Q} ＋ ${W}</span></td></tr>
+<tr><td>熱機関</td><td>熱を受け取り、その一部を仕事に変えるしくみ（蒸気機関、ガソリンエンジンなど）</td></tr>
+<tr><td>熱効率</td><td>熱機関が高温の熱源から吸収した熱量のうち、外部にした仕事の割合。必ず 1 より小さい<br><span style='color:var(--blue);font-weight:700'>${e} ＝ ${W}′ ÷ ${Q1}</span></td></tr>
+<tr><td>可逆変化</td><td>外部に何の変化も残さずに、もとの状態に戻すことができる変化（摩擦や空気抵抗のない振り子の運動など）</td></tr>
+<tr><td>不可逆変化</td><td>外部に何らかの変化を残さないと、もとの状態に戻すことができない変化。熱が高温の物体から低温の物体へ移る変化や、摩擦によって熱が発生する変化など。自然に起こる熱の現象は不可逆変化</td></tr>
+</table></div><p>水の比熱は 4.2&nbsp;J/(g·K)。温度差は ℃ でも K でも同じ数値になる。</p>`;
 const DIM_TABLE = `<div class="tbl"><table>
 <tr><th>量</th><th>単位</th></tr>
 <tr><td>熱量 ${Q}、内部エネルギー ${U}、仕事 ${W}</td><td>J</td></tr>
