@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>熱力学第一法則のアニメーション</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: one wide stage — vertical cylinder with gas particles (left; heater plate below, piston + rod above) and the energy band chart Q / W / ΔU / U (right); stacked on phones. Settings (Q, W sliders + presets), readouts, "what's happening now", questions. */
+:root{
+  --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
+  --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
+  --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3; --shade:#EEF2F6;
+  --heat:#D2452F; --cool:#2A7BC9; --work:#7A4FC4; --du:#1C2430;
+  --body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --math:"Times New Roman",Times,"Noto Serif",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+    --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+    --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+    --heat:#FF8068; --cool:#7DBBF5; --work:#B79BFF; --du:#E4E9F0; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+  --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+  --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37;
+  --heat:#FF8068; --cool:#7DBBF5; --work:#B79BFF; --du:#E4E9F0; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qv{font-family:var(--math);font-style:italic;font-size:1.08em}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.top-inner{max-width:1000px;margin:0 auto;padding:10px 16px 10px}
+.back{font-size:14px;color:var(--blue);text-decoration:none}
+h1{font-size:19px;margin:2px 0 0;line-height:1.4;text-wrap:balance}
+.nav{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin-top:2px}
+.nav a{color:var(--blue);text-decoration:none}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:700}
+
+main{max-width:1000px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px;min-width:0}
+h2{font-size:20px;margin:0 0 4px;line-height:1.4;text-wrap:balance}
+.lead{margin:0 0 12px;color:var(--muted);font-size:15px}
+.stage{position:relative;width:100%;aspect-ratio:2/1.08;background:var(--sheet);border:1px solid var(--line);border-radius:4px}
+@media (max-width:640px){.stage{aspect-ratio:10/18}}
+canvas{display:block;width:100%;height:100%;touch-action:manipulation}
+.keys{display:flex;flex-wrap:wrap;gap:4px 16px;margin:10px 0 0;padding:0;list-style:none;font-size:14px;color:var(--muted)}
+.keys li{display:flex;align-items:center;gap:6px}
+.grad{width:64px;height:10px;border-radius:5px;background:linear-gradient(90deg,#3874CC,#9678AA,#D63A2E)}
+.ring{width:12px;height:12px;border-radius:50%;display:inline-block;border:2.5px solid}
+
+.set{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+@media (max-width:640px){.set{grid-template-columns:minmax(0,1fr)}}
+.card{border:1.5px solid var(--line);border-top:5px solid var(--c);border-radius:8px;padding:10px 12px;min-width:0}
+.card h3{margin:0 0 2px;font-size:16px;color:var(--c)}
+.card p{margin:0;font-size:13px;color:var(--muted);line-height:1.6}
+.slider{display:grid;grid-template-columns:minmax(0,1fr) 5.6em;align-items:center;gap:10px;margin-top:4px}
+.slider input{width:100%;accent-color:var(--c);min-height:36px}
+.slider output{font-variant-numeric:tabular-nums;text-align:right;font-weight:700;font-size:18px;white-space:nowrap}
+.formula{margin-top:12px;padding:8px 12px;border:1.5px dashed var(--line);border-radius:8px;font-size:17px;font-weight:700;text-align:center;font-variant-numeric:tabular-nums}
+.formula .q{color:var(--heat)} .formula .w{color:var(--work)}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}
+.presets span{font-size:14px;color:var(--muted);margin-right:2px}
+.chip{border:1.5px solid var(--line);background:var(--sheet);border-radius:999px;padding:5px 12px;min-height:38px;font-size:14px;cursor:pointer}
+.chip:hover{border-color:var(--blue);color:var(--blue)}
+
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.btn{border:0;border-radius:8px;padding:9px 16px;min-height:44px;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.btn.ghost{background:none;color:var(--blue);border:1.5px solid var(--blue)}
+.btn:disabled{opacity:.45;cursor:default}
+.speed{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted);margin-left:auto}
+.speed select{min-height:40px;border:1.5px solid var(--line);border-radius:8px;background:var(--sheet);padding:4px 8px}
+.checks{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:6px}
+.checks label{display:flex;align-items:center;gap:8px;min-height:40px;cursor:pointer;font-size:15px}
+.checks input{width:20px;height:20px;accent-color:var(--blue)}
+
+.read{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
+@media (max-width:640px){.read{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.read div{border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;min-width:0}
+.read .k{display:block;font-size:12px;color:var(--muted);line-height:1.4}
+.read .v{display:block;font-weight:700;font-size:17px;font-variant-numeric:tabular-nums;line-height:1.55}
+.read .v small{font-size:13px;font-weight:400;color:var(--muted)}
+.now{margin-top:14px;padding:10px 14px;border-left:4px solid var(--blue);background:var(--blue-soft);border-radius:0 6px 6px 0}
+.now > b{display:block;font-size:15px}
+.now p{margin:2px 0 0;font-size:15px}
+.hint{font-size:13px;color:var(--muted);margin:10px 0 0}
+h3.qh{font-size:17px;margin:0 0 8px}
+.qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
+.qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
+.ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <a class="back" id="backLink" href="../index.html#/u/heat/0" hidden>‹ 熱とエネルギー（Webテスト）へ</a>
+    <h1>熱力学第一法則 Δ<i class="qv">U</i> ＝ <i class="qv">Q</i> ＋ <i class="qv">W</i></h1>
+    <nav class="nav" id="nav" hidden aria-label="アニメーション">
+      <a href="index.html#heat">≡ アニメーション集</a>
+      <a href="heat-equilibrium.html">熱の移動と熱平衡</a>
+      <a href="heat-motion.html">熱運動と状態変化</a>
+      <a href="phase-equilibrium.html#lv">蒸発と凝縮（気液平衡）</a>
+      <a href="phase-equilibrium.html#sl">融解と凝固（固液平衡）</a>
+      <a href="first-law.html" aria-current="page">熱力学第一法則</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="sheet" aria-labelledby="t1">
+    <h2 id="t1">熱と仕事で、気体の内部エネルギーはどう変わるか</h2>
+    <p class="lead">シリンダーの中の気体に、底の板から熱 <i class="qv">Q</i> を出し入れし、ピストンを押し引きして仕事 <i class="qv">W</i> をします。気体の内部エネルギー <i class="qv">U</i> は、粒子の熱運動のエネルギーの合計です。粒子が底の板やピストンにぶつかったときの速さの変化に注目しよう。</p>
+    <div class="stage"><canvas id="cv" role="img" aria-label="左に縦のシリンダー。底は加熱・冷却する板、上はピストン。中の気体の粒子は速さによって色が変わる。右に、熱量Q、仕事W、内部エネルギーの変化ΔU、内部エネルギーUの帯グラフ。"></canvas></div>
+    <ul class="keys">
+      <li><span class="grad"></span>粒子の速さ（遅い → 速い）</li>
+      <li><span class="ring" style="border-color:var(--heat)"></span>ぶつかって速くなった</li>
+      <li><span class="ring" style="border-color:var(--cool)"></span>ぶつかって遅くなった</li>
+    </ul>
+
+    <div class="set">
+      <div class="card" style="--c:var(--heat)">
+        <h3>熱量 <i class="qv">Q</i>（気体が吸収する熱量）</h3>
+        <p>＋：底の板で加熱する ／ −：底の板で冷やす（熱を放出させる）</p>
+        <div class="slider"><input type="range" id="sQ" min="-300" max="300" step="10" aria-label="熱量 Q"><output id="oQ" for="sQ"></output></div>
+      </div>
+      <div class="card" style="--c:var(--work)">
+        <h3>仕事 <i class="qv">W</i>（気体が外部から<b>される</b>仕事）</h3>
+        <p>＋：ピストンを押す（圧縮） ／ −：ピストンを引く（膨張。気体が外部に仕事をする）</p>
+        <div class="slider"><input type="range" id="sW" min="-300" max="300" step="10" aria-label="仕事 W"><output id="oW" for="sW"></output></div>
+      </div>
+    </div>
+    <div class="formula" id="formula"></div>
+    <div class="presets"><span>例：</span>
+      <button type="button" class="chip" data-q="200" data-w="0">加熱（体積一定）</button>
+      <button type="button" class="chip" data-q="0" data-w="200">断熱圧縮</button>
+      <button type="button" class="chip" data-q="0" data-w="-200">断熱膨張</button>
+      <button type="button" class="chip" data-q="150" data-w="-150">温度一定で膨張</button>
+      <button type="button" class="chip" data-q="300" data-w="-120">④手順 問題2</button>
+    </div>
+    <div class="controls">
+      <button type="button" class="btn" id="goBtn">変化させる</button>
+      <button type="button" class="btn ghost" id="playBtn">一時停止</button>
+      <button type="button" class="btn ghost" id="resetBtn">最初の状態に戻す</button>
+      <label class="speed" for="speedSel">速さ
+        <select id="speedSel"><option value="0.35">スロー</option><option value="1" selected>ふつう</option><option value="2">はやい</option></select>
+      </label>
+    </div>
+    <div class="checks">
+      <label for="ckTag"><input type="checkbox" id="ckTag" checked>注目する粒子と速度の矢印</label>
+      <label for="ckRing"><input type="checkbox" id="ckRing" checked>ぶつかったときの速さの変化</label>
+    </div>
+
+    <div class="read" aria-live="polite">
+      <div><span class="k">内部エネルギー <i class="qv">U</i></span><span class="v" id="rU"></span></div>
+      <div><span class="k">温度 <i class="qv">T</i></span><span class="v" id="rT"></span></div>
+      <div><span class="k">体積（はじめの何倍か）</span><span class="v" id="rV"></span></div>
+      <div><span class="k">粒子の平均の速さ</span><span class="v" id="rS"></span></div>
+    </div>
+    <div class="now" id="now"><b></b><p></p></div>
+    <p class="hint">2次元の理想気体（粒子どうしの引力なし）のモデルです。内部エネルギーは粒子の運動エネルギーの合計で、はじめを 500&nbsp;J、300&nbsp;K としています。<i class="qv">Q</i> は底の板にぶつかった粒子の運動エネルギーの増減の合計、<i class="qv">W</i> はピストンにぶつかった粒子の運動エネルギーの増減の合計を、それぞれ数えたものです。容器にタップすると、注目する粒子を選べます。</p>
+  </section>
+
+  <section class="sheet" aria-labelledby="qsTitle">
+    <h3 class="qh" id="qsTitle">見てみよう</h3>
+    <ol class="qs" id="qs"></ol>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id), TAU = 2 * Math.PI;
+const I = s => `<i class="qv">${s}</i>`;
+if(/\/anim\//.test(location.pathname)){ $("backLink").hidden = false; $("nav").hidden = false; }
+const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+const gauss = () => { let u = 0; while(u === 0) u = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * Math.random()); };
+
+/* ---------- 気体のモデル（2次元・弾性衝突） ---------- */
+const N = 50, R = 0.016, BW = 1, HMAX = 1.6, H0 = 0.6, HMIN = 0.16, U0J = 500, T0 = 300, V0 = 0.75;
+let P = [], hp = H0, up = 0, JS = 1, Ustart = 0;
+const st = { Qset: 300, Wset: -120, running: false, Qacc: 0, Wacc: 0, Qdone: true, Wdone: true, playing: true, speed: 1, tag: true, ring: true, hl: 0, fl: [], limit: false, Ubefore: 0, ran: false };
+function Kmodel(){ let s = 0; for(const p of P) s += 0.5 * (p.vx * p.vx + p.vy * p.vy); return s; }
+const UJ = () => Kmodel() * JS;
+function init(){
+  P = []; hp = H0; up = 0;
+  for(let i = 0; i < N; i++){
+    let x, y, ok = false, g = 0;
+    while(!ok && g++ < 200){ x = R + Math.random() * (BW - 2 * R); y = R + Math.random() * (H0 - 2 * R); ok = P.every(q => Math.hypot(q.x - x, q.y - y) > 2.4 * R); }
+    P.push({ x, y, vx: gauss() * V0 / Math.SQRT2, vy: gauss() * V0 / Math.SQRT2 });
+  }
+  JS = U0J / Kmodel();
+  st.Qacc = st.Wacc = 0; st.Qdone = st.Wdone = true; st.running = false; st.fl = []; st.limit = false; st.ran = false;
+  Ustart = UJ(); st.Ubefore = Ustart;
+}
+const vrms = () => Math.sqrt(2 * Kmodel() / N);
+function startRun(){
+  st.Ubefore = UJ(); st.Qacc = 0; st.Wacc = 0; st.limit = false; st.ran = true;
+  st.Qdone = st.Qset === 0; st.Wdone = st.Wset === 0; st.running = !(st.Qdone && st.Wdone);
+}
+function physics(dt){
+  // ピストンの動き（設定した仕事に達するまで）
+  if(st.running && !st.Wdone){
+    const rem = Math.abs(st.Wset - st.Wacc), sp = 0.13 * vrms() * Math.max(0.12, Math.min(1, rem / 60));
+    up = st.Wset > 0 ? -sp : sp;
+    const nh = hp + up * dt;
+    if(nh < HMIN || nh > HMAX){ up = 0; st.Wdone = true; st.limit = true; }
+  } else up = 0;
+  hp += up * dt;
+  for(const p of P){ p.x += p.vx * dt; p.y += p.vy * dt; }
+  // 粒子どうしの衝突（弾性・等しい質量）
+  for(let i = 0; i < N; i++) for(let j = i + 1; j < N; j++){
+    const a = P[i], b = P[j], dx = b.x - a.x, dy = b.y - a.y, d2 = dx * dx + dy * dy;
+    if(d2 < 4 * R * R && d2 > 1e-12){
+      const d = Math.sqrt(d2), nx = dx / d, ny = dy / d, rv = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+      if(rv > 0){ a.vx -= rv * nx; a.vy -= rv * ny; b.vx += rv * nx; b.vy += rv * ny; }
+      const o = (2 * R - d) / 2; a.x -= nx * o; a.y -= ny * o; b.x += nx * o; b.y += ny * o;
+    }
+  }
+  P.forEach((p, i) => {
+    if(p.x < R){ p.x = R; p.vx = Math.abs(p.vx); } if(p.x > BW - R){ p.x = BW - R; p.vx = -Math.abs(p.vx); }
+    // 底の板：熱の出入り
+    if(p.y < R && p.vy < 0){
+      p.y = R; p.vy = -p.vy;
+      if(st.running && !st.Qdone){
+        const K = 0.5 * (p.vx * p.vx + p.vy * p.vy) * JS, rem = st.Qset - st.Qacc;
+        let dK = rem > 0 ? Math.min(rem, 0.45 * K + 0.6) : -Math.min(-rem, 0.35 * K);
+        const f = Math.sqrt(Math.max(0.0001, (K + dK) / K)); p.vx *= f; p.vy *= f;
+        st.Qacc += dK; if(Math.abs(st.Qset - st.Qacc) < 1e-6){ st.Qacc = st.Qset; st.Qdone = true; }
+        if(st.ring) st.fl.push({ x: p.x, y: 0, c: dK > 0 ? "heat" : "cool", a: 1 });
+      }
+    }
+    // ピストン：仕事（動くピストンとの衝突で速さが変わる）
+    if(p.y > hp - R && p.vy - up > 0){
+      const vy0 = p.vy; p.vy = 2 * up - p.vy; p.y = hp - R;
+      const dK = 0.5 * (p.vy * p.vy - vy0 * vy0) * JS;
+      if(Math.abs(dK) > 1e-9){
+        st.Wacc += dK;
+        if(st.ring) st.fl.push({ x: p.x, y: hp, c: dK > 0 ? "heat" : "cool", a: 1 });
+        if(!st.Wdone && (st.Wset > 0 ? st.Wacc >= st.Wset : st.Wacc <= st.Wset)) st.Wdone = true;
+      }
+    }
+    if(p.y < R) p.y = R;
+  });
+  if(st.running && st.Qdone && st.Wdone){ st.running = false; up = 0; }
+  st.fl.forEach(f => f.a -= dt * 2.2); st.fl = st.fl.filter(f => f.a > 0);
+}
+
+/* ---------- 描画 ---------- */
+const cv = $("cv"), ctx = cv.getContext("2d"); let W = 0, H = 0, col = {}, LY = null;
+function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","shade","sheet","heat","cool","work","du"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
+function resize(){ const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0); LY = layout(); draw(); }
+function L(pts, color, w, dash){ ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore(); }
+function T(s, x, y, color, size, align, bold){ ctx.save(); ctx.fillStyle = color; ctx.font = `${bold ? "700 " : ""}${size || 12}px "BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`; ctx.textAlign = align || "left"; ctx.textBaseline = "middle"; ctx.fillText(s, x, y); ctx.restore(); }
+function arrow(x0, y0, x1, y1, color, w){ const a = Math.atan2(y1 - y0, x1 - x0), h = 5 + (w || 2) * 1.5; if(Math.hypot(x1 - x0, y1 - y0) < 2) return;
+  L([[x0, y0], [x1 - h * .6 * Math.cos(a), y1 - h * .6 * Math.sin(a)]], color, w || 2);
+  ctx.save(); ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 - h * Math.cos(a - .45), y1 - h * Math.sin(a - .45)); ctx.lineTo(x1 - h * Math.cos(a + .45), y1 - h * Math.sin(a + .45)); ctx.closePath(); ctx.fill(); ctx.restore(); }
+function scol(s){ const k = Math.max(0, Math.min(1, s / (V0 * 2))), a = [56, 116, 204], m = [150, 120, 170], b = [214, 58, 46];
+  const c = k < .5 ? a.map((v, i) => v + (m[i] - v) * k * 2) : m.map((v, i) => v + (b[i] - v) * (k - .5) * 2); return `rgb(${c.map(Math.round).join(",")})`; }
+function layout(){
+  const wide = W / H > 1.3;
+  if(wide){
+    const ch = H - 92, cw = Math.min(ch / HMAX, W * .3);
+    const cyl = { x: 60 + (W * .4 - 60 - cw) / 2, y: 46, w: cw, h: cw * HMAX };
+    const bar = { x: W * .44, y: 30, w: W - W * .44 - 18, h: H - 48 };
+    return { wide, cyl, bar };
+  } else {
+    const cw = Math.min(W * .5, (H * .5 - 70) / HMAX);
+    const cyl = { x: (W - cw) / 2, y: 46, w: cw, h: cw * HMAX };
+    const by = cyl.y + cyl.h + 46;
+    const bar = { x: 12, y: by, w: W - 24, h: H - by - 10 };
+    return { wide, cyl, bar };
+  }
+}
+function draw(){
+  if(!W || !LY) return; readColors(); ctx.clearRect(0, 0, W, H);
+  drawCyl(); drawBars();
+}
+function drawCyl(){
+  const c = LY.cyl, s = c.w / BW, PX = x => c.x + x * s, PY = y => c.y + c.h - y * s, ypis = PY(hp);
+  // シリンダー（壁）
+  ctx.save(); ctx.fillStyle = col.shade; ctx.globalAlpha = .4; ctx.fillRect(c.x, ypis, c.w, c.y + c.h - ypis); ctx.restore();
+  L([[c.x, c.y - 6], [c.x, c.y + c.h]], col.ink, 3); L([[c.x + c.w, c.y - 6], [c.x + c.w, c.y + c.h]], col.ink, 3);
+  // 底の板（加熱・冷却）
+  const heating = st.running && !st.Qdone && st.Qset > 0, cooling = st.running && !st.Qdone && st.Qset < 0;
+  const pc = heating ? col.heat : cooling ? col.cool : col.muted;
+  ctx.save(); ctx.fillStyle = pc; ctx.globalAlpha = heating || cooling ? .85 : .5; ctx.fillRect(c.x - 6, c.y + c.h, c.w + 12, 10); ctx.restore();
+  const yb = c.y + c.h + 10;
+  if(heating || cooling){ for(let k = 1; k <= 4; k++){ const x = c.x + c.w * k / 5; heating ? arrow(x, yb + 24, x, yb + 4, col.heat, 2.4) : arrow(x, yb + 4, x, yb + 24, col.cool, 2.4); }
+    T(heating ? "熱を加える" : "熱を奪う", c.x + c.w + 12, yb + 14, pc, 12, "left", true); }
+  else T("底の板", c.x + c.w + 12, yb + 2, col.muted, 11, "left");
+  // 粒子
+  const rr = Math.max(3, R * s * 1.15);
+  P.forEach((p, i) => { if(st.tag && i === st.hl) return; const sp = Math.hypot(p.vx, p.vy); ctx.save(); ctx.fillStyle = scol(sp); ctx.beginPath(); ctx.arc(PX(p.x), PY(p.y), rr, 0, TAU); ctx.fill(); ctx.restore(); });
+  if(st.tag){ const p = P[st.hl], sp = Math.hypot(p.vx, p.vy), x = PX(p.x), y = PY(p.y);
+    ctx.save(); ctx.fillStyle = scol(sp); ctx.strokeStyle = col.ink; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, y, rr * 1.35, 0, TAU); ctx.fill(); ctx.stroke(); ctx.restore();
+    const k = s * 0.22; arrow(x, y, x + p.vx * k, y - p.vy * k, col.ink, 2); }
+  st.fl.forEach(f => { ctx.save(); ctx.globalAlpha = f.a; ctx.strokeStyle = col[f.c]; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(PX(f.x), PY(f.y), rr * (1.4 + (1 - f.a) * 2.2), 0, TAU); ctx.stroke(); ctx.restore(); });
+  // ピストンと棒
+  const ph = Math.max(10, s * 0.07);
+  ctx.save(); ctx.fillStyle = col.muted; ctx.fillRect(c.x + 2, ypis - ph, c.w - 4, ph); ctx.restore();
+  L([[c.x + c.w / 2, ypis - ph], [c.x + c.w / 2, c.y - 14]], col.muted, 5);
+  ctx.save(); ctx.fillStyle = col.muted; ctx.fillRect(c.x + c.w / 2 - 16, c.y - 20, 32, 7); ctx.restore();
+  if(st.running && !st.Wdone && up !== 0){
+    const ax = c.x + c.w / 2 + 22, y0 = Math.max(c.y + 4, ypis - ph - 34);
+    up < 0 ? arrow(ax, y0 - 4, ax, y0 + 22, col.work, 3) : arrow(ax, y0 + 22, ax, y0 - 4, col.work, 3);
+    T(up < 0 ? "押す" : "引く", ax + 10, y0 + 9, col.work, 12, "left", true);
+  }
+  // 体積の目盛り（はじめの位置）
+  L([[c.x - 12, PY(H0)], [c.x - 2, PY(H0)]], col.muted, 1.5); T("はじめ", c.x - 14, PY(H0), col.muted, 10, "right");
+  T(`U ＝ ${Math.round(UJ())} J`, 12, 14, col.ink, 15, "left", true);
+}
+function drawBars(){
+  const b = LY.bar, rows = 5, lh = Math.min(64, (b.h - 30) / rows);
+  const x0 = b.x + 64, xw = b.w - 64 - 8, X0 = x0 + xw * .5, sc = xw * .5 / 650;   // 変化：±650 J
+  const XU = v => x0 + v / 1300 * xw;                                                 // U：0〜1300 J
+  T("エネルギーの帯グラフ（今回の変化）", b.x, b.y, col.ink, 13, "left", true);
+  let y = b.y + 22;
+  // 0 の線
+  L([[X0, y - 4], [X0, y + lh * 3 - 8]], col.muted, 1.2, [3, 3]);
+  T("0", X0, y + lh * 3 - 2, col.muted, 10, "center");
+  T("− 減る", x0, y + lh * 3 - 2, col.muted, 10, "left"); T("増える ＋", x0 + xw, y + lh * 3 - 2, col.muted, 10, "right");
+  const bh = Math.min(22, lh * .45);
+  const rowBar = (label, sub, target, acc, color, yy) => {
+    T(label, b.x, yy + bh / 2 - 6, color, 13, "left", true); T(sub, b.x, yy + bh / 2 + 9, col.muted, 10, "left");
+    ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]); ctx.strokeRect(Math.min(X0, X0 + target * sc), yy, Math.abs(target * sc), bh); ctx.restore();
+    ctx.save(); ctx.fillStyle = color; ctx.globalAlpha = .85; ctx.fillRect(Math.min(X0, X0 + acc * sc), yy, Math.abs(acc * sc), bh); ctx.restore();
+    const v = acc, far = Math.abs(target) > Math.abs(acc) && Math.sign(target) === Math.sign(acc || target) ? target : acc, tx = X0 + far * sc + (far >= 0 ? 6 : -6);
+    T(`${sg(v)} J`, tx, yy + bh / 2, color, 12, far >= 0 ? "left" : "right", true);
+  };
+  rowBar("熱量 Q", "吸収＋／放出−", st.Qset, st.Qacc, col.heat, y); y += lh;
+  rowBar("仕事 W", "された＋／した−", st.Wset, st.Wacc, col.work, y); y += lh;
+  // ΔU ＝ Q ＋ W（Q と W をつなげる）
+  const dU = UJ() - st.Ubefore;
+  T("ΔU", b.x, y + bh / 2 - 6, col.du, 13, "left", true); T("＝ Q ＋ W", b.x, y + bh / 2 + 9, col.muted, 10, "left");
+  const q1 = X0 + st.Qacc * sc, w1 = q1 + st.Wacc * sc;
+  ctx.save(); ctx.globalAlpha = .55; ctx.fillStyle = col.heat; ctx.fillRect(Math.min(X0, q1), y, Math.abs(q1 - X0), bh * .5); ctx.fillStyle = col.work; ctx.fillRect(Math.min(q1, w1), y, Math.abs(w1 - q1), bh * .5); ctx.restore();
+  if(Math.abs(w1 - q1) > 3) arrow(q1, y + bh * .25, w1, y + bh * .25, col.work, 1.6);
+  ctx.save(); ctx.fillStyle = col.du; ctx.globalAlpha = .85; ctx.fillRect(Math.min(X0, X0 + dU * sc), y + bh * .55, Math.abs(dU * sc), bh * .45); ctx.restore();
+  T(`${sg(dU)} J`, X0 + dU * sc + (dU >= 0 ? 6 : -6), y + bh * .78, col.du, 12, dU >= 0 ? "left" : "right", true);
+  y += lh + 28;
+  // 内部エネルギー U（はじめ／いま）
+  T("内部エネルギー U", b.x, y - 6, col.ink, 13, "left", true);
+  y += 8;
+  const u0 = st.Ubefore, u1 = UJ();
+  [["今回のはじめ", u0, .35], ["いま", u1, .85]].forEach(([lab, u, a], k) => {
+    const yy = y + k * (bh + 10);
+    T(lab, b.x, yy + bh / 2, col.muted, 11, "left");
+    ctx.save(); ctx.fillStyle = col.du; ctx.globalAlpha = a; ctx.fillRect(x0, yy, Math.max(0, XU(Math.min(u, 1300)) - x0), bh); ctx.restore();
+    T(`${Math.round(u)} J`, XU(Math.min(u, 1300)) + 6, yy + bh / 2, col.ink, 12, "left", true);
+  });
+  // 差の部分
+  const yA = y, yB = y + 2 * bh + 10;
+  if(Math.abs(u1 - u0) > 1) L([[XU(u0), yA], [XU(u0), yB]], col.muted, 1.2, [3, 3]);
+  for(let v = 0; v <= 1200; v += 400){ T(`${v}`, XU(v), yB + 9, col.muted, 10, "center"); }
+}
+const sg = v => { const r = Math.round(v); return r > 0 ? `＋${r}` : r < 0 ? `−${-r}` : "0"; };
+
+/* ---------- 表示 ---------- */
+function ui(){
+  const u = UJ(), Tk = T0 * u / U0J;
+  $("rU").innerHTML = `${Math.round(u)} <small>J</small>`;
+  $("rT").innerHTML = `${Math.round(Tk)} <small>K（${sg(Tk - 273).replace('＋', '')} ℃）</small>`;
+  $("rV").innerHTML = `${(hp / H0).toFixed(2)} <small>倍</small>`;
+  const vm = P.reduce((s, p) => s + Math.hypot(p.vx, p.vy), 0) / N, vm0 = V0 * 0.886;
+  $("rS").innerHTML = `${(vm / vm0).toFixed(2)} <small>倍（はじめを1）</small>`;
+  let h, p;
+  const dU = u - st.Ubefore;
+  if(st.running){
+    const parts = [];
+    if(!st.Qdone) parts.push(st.Qset > 0 ? "底の板にぶつかった粒子は、速くなって跳ね返ります（熱を吸収、Q＞0）。" : "底の板にぶつかった粒子は、遅くなって跳ね返ります（熱を放出、Q＜0）。");
+    if(!st.Wdone) parts.push(st.Wset > 0 ? "近づいてくるピストンにぶつかった粒子は、速くなって跳ね返ります（仕事をされる、W＞0）。" : "遠ざかっていくピストンにぶつかった粒子は、遅くなって跳ね返ります（気体が外部に仕事をする、W＜0）。");
+    h = "変化の途中"; p = parts.join("");
+  } else if(!st.ran){ h = "変化させる前"; p = `${I("Q")} と ${I("W")} を決めて、内部エネルギーの変化 Δ${I("U")} を予想してから「変化させる」を押そう。`; }
+  else {
+    const q = Math.round(st.Qacc), w = Math.round(st.Wacc);
+    h = `変化の結果：Δ${I("U")} ＝ ${sg(q)} ＋ (${sg(w)}) ＝ ${sg(q + w)} J`;
+    p = dU > 3 ? "内部エネルギーが増えたので、粒子の熱運動が激しくなり（平均の速さが大きくなり）、温度が上がりました。"
+      : dU < -3 ? "内部エネルギーが減ったので、粒子の熱運動がおだやかになり（平均の速さが小さくなり）、温度が下がりました。"
+      : "熱と仕事による増減が打ち消し合い、内部エネルギーはほとんど変わりません。粒子の平均の速さも温度も、ほぼ同じです。";
+    if(st.limit) p += "（ピストンが動ける範囲の端に達したので、設定した仕事の途中で止めました。）";
+  }
+  $("now").querySelector("b").innerHTML = `いま：${h}`; $("now").querySelector("p").innerHTML = p;
+}
+function syncSet(){
+  $("sQ").value = st.Qset; $("sW").value = st.Wset;
+  $("oQ").textContent = `${sg(st.Qset)} J`; $("oW").textContent = `${sg(st.Wset)} J`;
+  $("formula").innerHTML = `予想：Δ${I("U")} ＝ <span class="q">${I("Q")}</span> ＋ <span class="w">${I("W")}</span> ＝ <span class="q">(${sg(st.Qset)})</span> ＋ <span class="w">(${sg(st.Wset)})</span> ＝ ${sg(st.Qset + st.Wset)} J`;
+}
+$("sQ").addEventListener("input", e => { st.Qset = +e.target.value; syncSet(); });
+$("sW").addEventListener("input", e => { st.Wset = +e.target.value; syncSet(); });
+document.querySelectorAll(".chip").forEach(b => b.addEventListener("click", () => { st.Qset = +b.dataset.q; st.Wset = +b.dataset.w; syncSet(); }));
+function setPlaying(p){ st.playing = p; $("playBtn").textContent = p ? "一時停止" : "再生"; }
+$("goBtn").addEventListener("click", () => { if(st.running) return; startRun(); setPlaying(true); ui(); });
+$("playBtn").addEventListener("click", () => setPlaying(!st.playing));
+$("resetBtn").addEventListener("click", () => { init(); ui(); draw(); });
+$("speedSel").addEventListener("change", e => st.speed = +e.target.value);
+$("ckTag").addEventListener("change", e => { st.tag = e.target.checked; draw(); });
+$("ckRing").addEventListener("change", e => { st.ring = e.target.checked; st.fl = []; draw(); });
+cv.addEventListener("pointerdown", e => {
+  const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, c = LY.cyl, s = c.w / BW;
+  if(x < c.x || x > c.x + c.w || y < c.y || y > c.y + c.h) return;
+  let bi = 0, bd = 1e9; P.forEach((p, i) => { const d = Math.hypot(c.x + p.x * s - x, c.y + c.h - p.y * s - y); if(d < bd){ bd = d; bi = i; } });
+  st.hl = bi; draw();
+});
+let last = null, uiT = 0;
+function tick(ts){
+  if(last == null) last = ts; const dt = Math.min(0.04, (ts - last) / 1000); last = ts;
+  if(st.playing && !(reduce && !st.running)){ const n = 6, h = dt * st.speed / n; for(let k = 0; k < n; k++) physics(h); }
+  draw();
+  uiT += dt; if(uiT > 0.12){ uiT = 0; ui(); }
+  requestAnimationFrame(tick);
+}
+const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+if(mq && mq.addEventListener) mq.addEventListener("change", draw);
+new MutationObserver(draw).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+if(window.ResizeObserver) new ResizeObserver(resize).observe(cv); else window.addEventListener("resize", resize);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+
+$("qs").innerHTML = [
+  ["「加熱（体積一定）」で変化させよう。粒子が底の板にぶつかると、速さはどう変わるか。内部エネルギーと温度はどうなるか。", `底の板にぶつかった粒子は速くなって跳ね返ります。ピストンは動かないので ${I("W")} ＝ 0 で、Δ${I("U")} ＝ ${I("Q")} ＝ ＋200 J。粒子の熱運動が激しくなり、温度が上がります。`],
+  ["「断熱圧縮」で変化させよう。熱を加えていないのに温度が上がるのはなぜか。", `近づいてくるピストンにぶつかった粒子は、速くなって跳ね返ります（バットで打ち返したボールが速くなるのと同じ）。気体は仕事をされ（${I("W")} ＞ 0）、${I("Q")} ＝ 0 なので Δ${I("U")} ＝ ${I("W")} ＞ 0 となり、温度が上がります。自転車の空気入れが熱くなるのはこのためです。`],
+  ["「断熱膨張」で変化させよう。ピストンを引くと、粒子の速さはどうなるか。", `遠ざかっていくピストンにぶつかった粒子は、遅くなって跳ね返ります。気体が外部に仕事をする（${I("W")} ＜ 0）ので、Δ${I("U")} ＝ ${I("W")} ＜ 0 となり、温度が下がります。スプレー缶を使い続けると缶が冷たくなるのは、これに近い現象です。`],
+  ["「温度一定で膨張」で変化させよう。熱を 150 J 吸収したのに、温度が変わらないのはなぜか。", `気体が外部に 150 J の仕事をした（${I("W")} ＝ −150 J）ので、Δ${I("U")} ＝ 150 ＋ (−150) ＝ 0 J。吸収した熱が、すべて外部への仕事に使われたからです。`],
+  [`「④手順 問題2」（熱を 3.0×10² J 加え、気体が外部に 1.2×10² J の仕事をした）で、Δ${I("U")} を予想してから変化させよう。`, `${I("Q")} ＝ ＋300 J、気体が仕事を「した」ので ${I("W")} ＝ −120 J。Δ${I("U")} ＝ 300 ＋ (−120) ＝ ＋180 J です。帯グラフで、${I("Q")} の帯から ${I("W")} の帯の分だけ戻ったところが Δ${I("U")} になっています。`],
+  [`帯グラフで、${I("Q")} ＋ ${I("W")} と Δ${I("U")}（粒子の運動エネルギーの合計の変化）を比べよう。いつでも等しいのはなぜか。`, `粒子の運動エネルギーが変わるのは、底の板（熱）と動くピストン（仕事）にぶつかったときだけだからです。粒子どうしの衝突や、動かない壁との衝突では、運動エネルギーの合計は変わりません。熱力学第一法則は、エネルギー保存の法則を熱と仕事に広げたものです。`]
+].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
+
+init(); syncSet(); ui(); resize(); requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
