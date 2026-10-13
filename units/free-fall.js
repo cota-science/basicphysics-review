@@ -53,7 +53,7 @@ const SGN = ["正","負","0"];
 
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:`覚える量は重力加速度の大きさ <i class='qv'>g</i> ひとつだけ。あとは運動の名前と初速度の関係を覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/kinematics.html#ff-free","自由落下")}${ANIM("anim/kinematics.html#ff-down","鉛直投げ下ろし")}${ANIM("anim/kinematics.html#ff-up","鉛直投げ上げ")}${ANIM("anim/projectile.html#h","発展：水平投射・斜方投射")}`,
+  intro:`覚える量は重力加速度の大きさ <i class='qv'>g</i> ひとつだけ。あとは運動の名前と初速度の関係を覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/kinematics.html#ff-free","自由落下")}${ANIM("anim/kinematics.html#ff-down","鉛直投げ下ろし")}${ANIM("anim/kinematics.html#ff-up","鉛直投げ上げ")}${ANIM("anim/projectile.html#h","発展：水平投射・斜方投射")}${ANIM("anim/monkey.html#basic","発展：モンキーハンティング")}`,
   advice:"<i class='qv'>g</i> の大きさと向き、そして「加速度はどこでも鉛直下向きに <i class='qv'>g</i>」を覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
