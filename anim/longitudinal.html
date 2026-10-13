@@ -71,6 +71,10 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair}
 .checks label{display:flex;align-items:center;gap:8px;min-height:40px;cursor:pointer;font-size:15px}
 .checks input{width:20px;height:20px;accent-color:var(--blue)}
 .hint{font-size:13px;color:var(--muted);margin:10px 0 0}
+.seg{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.seg-label{font-size:14px;color:var(--muted);min-width:5.5em}
+.seg button{border:1.5px solid var(--line);background:var(--sheet);border-radius:999px;padding:6px 12px;min-height:40px;cursor:pointer;font-size:15px}
+.seg button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft);font-weight:700}
 h3{font-size:17px;margin:0 0 8px}
 .qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
 .qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
@@ -97,11 +101,11 @@ h3{font-size:17px;margin:0 0 8px}
 
 <main>
   <section class="sheet" aria-labelledby="t1">
-    <h2 id="t1">空気の粒子の動きと疎密</h2>
-    <p class="lead">左のスピーカーが左右に振動すると、空気の粒子も左右に振動し、粒子が集まった「密」と、まばらな「疎」が右へ伝わっていきます。粒子そのものは右へ進まず、その場で振動するだけです。</p>
-    <div class="stage"><canvas id="cv" role="img" aria-label="上段は空気の粒子、中段は変位を横波のように描いたグラフ、下段は密度のグラフ。密と疎の位置を縦の点線で結んでいる。"></canvas></div>
+    <h2 id="t1">媒質の動きと疎密</h2>
+    <p class="lead" id="lead">左のスピーカーが左右に振動すると、空気の粒子も左右に振動し、粒子が集まった「密」と、まばらな「疎」が右へ伝わっていきます。粒子そのものは右へ進まず、その場で振動するだけです。</p>
+    <div class="stage"><canvas id="cv" role="img" aria-label="上段は空気の粒子やつるまきばね、中段は変位を横波のように描いたグラフ、下段は密度のグラフ。密と疎の位置を縦の点線で結んでいる。"></canvas></div>
     <ul class="keys">
-      <li><span class="dot" style="background:var(--red)"></span>注目する粒子</li>
+      <li><span class="dot" style="background:var(--red)"></span>注目する点（粒子・ばねの巻き）</li>
       <li><span class="dot" style="background:var(--dense)"></span>密（粒子が集まっている）</li>
       <li><span class="dot" style="background:var(--sparse)"></span>疎（粒子がまばら）</li>
     </ul>
@@ -114,16 +118,21 @@ h3{font-size:17px;margin:0 0 8px}
       </label>
     </div>
     <div class="opts">
+      <div class="seg" role="group" aria-label="媒質のモデル"><span class="seg-label">媒質のモデル</span>
+        <button type="button" data-model="air" aria-pressed="false">空気の粒子</button>
+        <button type="button" data-model="spring" aria-pressed="false">つるまきばね</button>
+        <button type="button" data-model="both" aria-pressed="true">両方</button>
+      </div>
       <div class="slider"><label for="sF">振動数 <i class="qv">f</i></label><input type="range" id="sF" min="0.5" max="1.5" step="0.25" value="1"><output id="oF" for="sF"></output></div>
       <div class="slider"><label for="sA">振幅（誇張）</label><input type="range" id="sA" min="0.03" max="0.08" step="0.01" value="0.06"><output id="oA" for="sA"></output></div>
       <div class="checks">
         <label for="ckShade"><input type="checkbox" id="ckShade" checked>疎密を濃淡で表す</label>
         <label for="ckMarks"><input type="checkbox" id="ckMarks" checked>密・疎の位置</label>
-        <label for="ckArrow"><input type="checkbox" id="ckArrow" checked>変位の矢印（注目する粒子）</label>
+        <label for="ckArrow"><input type="checkbox" id="ckArrow" checked>変位の矢印（注目する点）</label>
         <label for="ckGraphs"><input type="checkbox" id="ckGraphs" checked>グラフ（変位・密度）</label>
       </div>
     </div>
-    <p class="hint">粒子の段をタップすると、その位置の粒子を赤で追いかけます。波の速さは 1.0 m/s、波長は <i class="qv">λ</i> ＝ <i class="qv">v</i>/<i class="qv">f</i> です（実際の音より大きく、ゆっくり描いたモデルです）。</p>
+    <p class="hint">図をタップすると、その位置の粒子やばねの巻きを赤で追いかけます。波の速さは 1.0 m/s、波長は <i class="qv">λ</i> ＝ <i class="qv">v</i>/<i class="qv">f</i> です（実際の音より大きく、ゆっくり描いたモデルです）。</p>
   </section>
   <section class="sheet" aria-labelledby="qsTitle">
     <h3 id="qsTitle">見てみよう</h3>
@@ -136,8 +145,8 @@ h3{font-size:17px;margin:0 0 8px}
 "use strict";
 const $ = id => document.getElementById(id), TAU = 2 * Math.PI;
 const I = s => `<i class="qv">${s}</i>`;
-const XMAX = 3, V = 1.0, DX = 0.04, ROWS = 7;
-const st = { f:1, A:0.06, t:0, playing:true, speed:0.5, probe:1.0, shade:true, marks:true, arrow:true, graphs:true };
+const XMAX = 3, V = 1.0, DX = 0.05, DXS = 0.075, ROWS = 7;   // DX：粒子の間隔、DXS：ばねの巻きの間隔
+const st = { model:"both", f:1, A:0.06, t:0, playing:true, speed:0.5, probe:1.05, shade:true, marks:true, arrow:true, graphs:true };
 const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 if(reduce) st.playing = false;
 if(/\/anim\//.test(location.pathname)){ $("backLink").hidden = false; $("nav").hidden = false; }
@@ -166,34 +175,60 @@ function arrow(x0, y0, x1, y1, color){
 function layout(){
   const pl = 34, pr = 14, gap = 12;
   const g = st.graphs;
-  const hP = g ? H * 0.42 : H - 40, hG = g ? (H - hP - 3 * gap - 22) / 2 : 0;
+  const both = st.model === "both";
+  const hP = g ? H * (both ? 0.5 : 0.42) : H - 40, hG = g ? (H - hP - 3 * gap - 22) / 2 : 0;
   const P = { top: 38, h: hP - 38 }, G1 = { top: hP + gap, h: hG }, G2 = { top: hP + 2 * gap + hG, h: hG };
-  return { X: x => pl + x / XMAX * (W - pl - pr), inv: px => (px - pl) / (W - pl - pr) * XMAX, pl, pr, P, G1, G2 };
+  const rows = both ? [{ kind:"air", top:P.top, h:(P.h - 14) / 2 }, { kind:"spring", top:P.top + (P.h + 14) / 2, h:(P.h - 14) / 2 }] : [{ kind:st.model, top:P.top, h:P.h }];
+  return { X: x => pl + x / XMAX * (W - pl - pr), inv: px => (px - pl) / (W - pl - pr) * XMAX, pl, pr, P, G1, G2, rows };
+}
+/* つるまきばね：らせんを少し斜めから見た形。巻き k の位置 ＝ kDX ＋ 変位 */
+function drawSpring(F, R, t, probeK){
+  const cy = R.top + R.h / 2, rad = R.h * 0.36, N = Math.round(XMAX / DXS), SEG = 18, tilt = DXS * 0.6;
+  const pt = u => { const xe = u * DXS, th = TAU * u; return [F.X(xe + xi(xe, t) + tilt * Math.sin(th)), cy - rad * Math.cos(th), Math.sin(th)]; };
+  // 左端の板（手で左右に動かす）
+  const hx = F.X(xi(0, t));
+  ctx.save(); ctx.fillStyle = col.muted; ctx.fillRect(hx - 12, cy - rad - 8, 8, 2 * rad + 16); ctx.restore();
+  T("手", hx - 8, cy - rad - 16, col.muted, 11, "center");
+  [false, true].forEach(front => {
+    for(let k = 0; k < N; k++){
+      const on = k === probeK;
+      ctx.save(); ctx.strokeStyle = on ? col.red : col.ink; ctx.lineWidth = on ? 2.8 : (front ? 1.8 : 1.1); ctx.globalAlpha = on ? (front ? 1 : .5) : (front ? .9 : .38); ctx.lineCap = "round";
+      ctx.beginPath(); let started = false;
+      for(let s = 0; s <= SEG; s++){ const p = pt(k + s / SEG); const isF = p[2] >= 0;
+        if(isF === front){ if(!started){ ctx.moveTo(p[0], p[1]); started = true; } else ctx.lineTo(p[0], p[1]); } else started = false; }
+      ctx.stroke(); ctx.restore();
+    }
+  });
 }
 function draw(){
   if(!W) return; readColors(); ctx.clearRect(0, 0, W, H);
   const F = layout(), t = st.t, l = lam();
   const P = F.P;
-  // 疎密の濃淡（帯）
-  if(st.shade){
-    const n = 150;
-    for(let i = 0; i < n; i++){ const x = XMAX * (i + .5) / n, d = dens(x, t) / 0.75;
-      if(Math.abs(d) < 0.03) continue;
-      ctx.save(); ctx.globalAlpha = Math.min(.32, Math.abs(d) * .32); ctx.fillStyle = d > 0 ? col.dense : col.sparse;
-      ctx.fillRect(F.X(XMAX * i / n), P.top, F.X(XMAX * (i + 1) / n) - F.X(XMAX * i / n) + .5, P.h); ctx.restore(); }
-  }
-  // スピーカー
-  const sx = F.X(xi(0, t)) - 8;
-  ctx.save(); ctx.fillStyle = col.muted; ctx.fillRect(sx - 10, P.top + P.h * .2, 10, P.h * .6); ctx.beginPath(); ctx.moveTo(sx, P.top + P.h * .3); ctx.lineTo(sx + 6, P.top + P.h * .15); ctx.lineTo(sx + 6, P.top + P.h * .85); ctx.lineTo(sx, P.top + P.h * .7); ctx.closePath(); ctx.fill(); ctx.restore();
-  // 粒子
-  const probeCol = Math.round(st.probe / DX);
-  parts.forEach(p => { if(p.x0 < 0) return; const x = p.x0 + xi(p.x0, t), yy = P.top + p.r * P.h;
-    const on = p.col === probeCol; ctx.save(); ctx.fillStyle = on ? col.red : col.ink; ctx.globalAlpha = on ? 1 : .62; ctx.beginPath(); ctx.arc(F.X(x), yy, on ? 4.2 : 2.6, 0, TAU); ctx.fill(); ctx.restore(); });
-  const px0 = probeCol * DX;
-  // 注目する粒子のもとの位置と変位の矢印
-  L([[F.X(px0), P.top + 2], [F.X(px0), P.top + P.h - 2]], col.red, 1, [2, 4]);
-  if(st.arrow) arrow(F.X(px0), P.top + P.h + 6, F.X(px0 + xi(px0, t)), P.top + P.h + 6, col.red);
-  T("空気の粒子", F.pl, 11, col.muted, 12);
+  const px0 = st.probe, probeCol = Math.round(px0 / DX), probeK = Math.round(px0 / DXS);
+  F.rows.forEach(R => {
+    // 疎密の濃淡（帯）
+    if(st.shade){
+      const n = 150;
+      for(let i = 0; i < n; i++){ const x = XMAX * (i + .5) / n, d = dens(x, t) / 0.75;
+        if(Math.abs(d) < 0.03) continue;
+        ctx.save(); ctx.globalAlpha = Math.min(.32, Math.abs(d) * .32); ctx.fillStyle = d > 0 ? col.dense : col.sparse;
+        ctx.fillRect(F.X(XMAX * i / n), R.top, F.X(XMAX * (i + 1) / n) - F.X(XMAX * i / n) + .5, R.h); ctx.restore(); }
+    }
+    if(R.kind === "air"){
+      // スピーカー
+      const sx = F.X(xi(0, t)) - 8;
+      ctx.save(); ctx.fillStyle = col.muted; ctx.fillRect(sx - 10, R.top + R.h * .2, 10, R.h * .6); ctx.beginPath(); ctx.moveTo(sx, R.top + R.h * .3); ctx.lineTo(sx + 6, R.top + R.h * .15); ctx.lineTo(sx + 6, R.top + R.h * .85); ctx.lineTo(sx, R.top + R.h * .7); ctx.closePath(); ctx.fill(); ctx.restore();
+      // 粒子
+      parts.forEach(p => { if(p.x0 < 0) return; const x = p.x0 + xi(p.x0, t), yy = R.top + p.r * R.h;
+        const on = p.col === probeCol; ctx.save(); ctx.fillStyle = on ? col.red : col.ink; ctx.globalAlpha = on ? 1 : .62; ctx.beginPath(); ctx.arc(F.X(x), yy, on ? 4.2 : 2.6, 0, TAU); ctx.fill(); ctx.restore(); });
+    } else drawSpring(F, R, t, probeK);
+    // 注目する点のもとの位置と変位の矢印
+    L([[F.X(px0), R.top + 2], [F.X(px0), R.top + R.h - 2]], col.red, 1, [2, 4]);
+    if(st.arrow) arrow(F.X(px0), R.top + R.h + 6, F.X(px0 + xi(px0, t)), R.top + R.h + 6, col.red);
+    const name = R.kind === "air" ? "空気の粒子" : "つるまきばね";
+    { ctx.save(); ctx.font = '12px BIZ UDPGothic,"Hiragino Sans",sans-serif'; const w = ctx.measureText(name).width; ctx.fillStyle = col.sheet; ctx.globalAlpha = .85; ctx.fillRect(W - F.pr - w - 6, R.top + R.h - 17, w + 8, 16); ctx.restore(); }
+    T(name, W - F.pr - 2, R.top + R.h - 9, col.muted, 12, "right");
+  });
   T(`先頭まで ${Math.min(V * t, XMAX).toFixed(2)} m`, W - F.pr, 11, col.muted, 11, "right");
 
   // 密・疎の位置
@@ -219,6 +254,13 @@ function draw(){
   }
 }
 /* ---------- UI ---------- */
+const LEAD = {
+  air:"左のスピーカーが左右に振動すると、空気の粒子も左右に振動し、粒子が集まった「密」と、まばらな「疎」が右へ伝わっていきます。粒子そのものは右へ進まず、その場で振動するだけです。",
+  spring:"つるまきばねの左端を手で左右に振動させると、ばねの巻きが詰まった「密」と、広がった「疎」が右へ伝わっていきます。ばねの巻きそのものは右へ進まず、その場で左右に振動するだけです。",
+  both:"上は空気の粒子、下はつるまきばね。どちらも同じ縦波で、媒質の各部分はその場で左右に振動するだけです。右へ伝わっていくのは、詰まった「密」と、まばらな「疎」の状態です。"
+};
+function setModel(m){ st.model = m; document.querySelectorAll("[data-model]").forEach(b => b.setAttribute("aria-pressed", b.dataset.model === m)); $("lead").textContent = LEAD[m]; draw(); }
+document.querySelectorAll("[data-model]").forEach(b => b.addEventListener("click", () => setModel(b.dataset.model)));
 function sync(){ $("oF").textContent = `${st.f.toFixed(2)} Hz`; $("oA").textContent = `${st.A.toFixed(2)} m`; }
 function setPlaying(p){ st.playing = p; $("playBtn").textContent = p ? "一時停止" : "再生"; }
 $("playBtn").addEventListener("click", () => setPlaying(!st.playing));
@@ -229,7 +271,7 @@ $("sF").addEventListener("input", e => { st.f = +e.target.value; sync(); st.t = 
 $("sA").addEventListener("input", e => { st.A = +e.target.value; sync(); draw(); });
 [["ckShade","shade"],["ckMarks","marks"],["ckArrow","arrow"],["ckGraphs","graphs"]].forEach(([id, k]) => $(id).addEventListener("change", e => { st[k] = e.target.checked; draw(); }));
 cv.addEventListener("pointerdown", e => { const r = cv.getBoundingClientRect(), F = layout(); const x = F.inv(e.clientX - r.left);
-  if(x >= 0 && x <= XMAX){ st.probe = Math.round(x / DX) * DX; draw(); } });
+  if(x >= 0 && x <= XMAX){ st.probe = Math.round(x / 0.15) * 0.15; /* 粒子とばねの巻きの両方がある位置（0.15 m ごと） */ draw(); } });
 let last = null;
 function tick(ts){ if(last == null) last = ts; const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
   if(st.playing){ st.t += dt * st.speed; if(st.t > 60) st.t -= Math.floor((st.t - 10) * st.f) / st.f; draw(); }
@@ -242,13 +284,14 @@ if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
 
 $("qs").innerHTML = [
   ["赤い粒子に注目しよう。粒子は波と一緒に右へ進んでいくか。", "進みません。もとの位置（赤い点線）を中心に左右に振動するだけです。右へ伝わっていくのは「密」と「疎」の状態です。"],
+  ["「つるまきばね」で赤い巻きに注目しよう。巻きは右へ進んでいくか。空気の粒子と比べよう。", "進みません。赤い巻きは、もとの位置（赤い点線）を中心に左右に振動するだけです。巻きが詰まった所が密、広がった所が疎で、この状態が右へ伝わります。ばねを伝わる縦波と、空気を伝わる音（縦波）は同じしくみです。"],
   ["「密」の位置で、中段の変位のグラフはどうなっているか。", "変位が 0 で、グラフが右下がりになっています。左側の粒子は右へ（上）、右側の粒子は左へ（下）ずれて、そこに集まっているからです。"],
   ["「疎」の位置で、変位のグラフはどうなっているか。", "変位が 0 で、グラフが右上がりになっています。両側の粒子がそこから離れる向きにずれています。"],
   ["変位が最大（中段の山や谷）の位置では、空気は密か、疎か。", "どちらでもありません。密度の変化は 0 です。変位の大きさと密度の大きさを取り違えないことが大切です。"],
   [`隣り合う「密」と「密」の間隔は何か。振動数 ${I("f")} を大きくすると、この間隔はどうなるか。`, `間隔は波長 ${I("λ")} です。速さは同じなので、${I("f")} を大きくすると ${I("λ")} ＝ ${I("v")}/${I("f")} は短くなります。音が高くなると、密と疎の間隔が狭くなります。`],
   ["コマ送りで「密」の位置を追いかけよう。1周期の間に密はどれだけ進むか。", `1波長進みます。横波と同じく、波の速さは ${I("v")} ＝ ${I("f")}${I("λ")} です。`]
 ].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
-sync(); setPlaying(st.playing); resize(); requestAnimationFrame(tick);
+sync(); setModel(st.model); setPlaying(st.playing); resize(); requestAnimationFrame(tick);
 })();
 </script>
 </body>
