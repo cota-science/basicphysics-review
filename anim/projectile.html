@@ -1,0 +1,1086 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>投射運動ラボ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic&family=BIZ+UDPGothic:wght@400;700&display=swap">
+<style>
+/* Layout: 左に「ストロボ写真」の実験台（運動の様子）、右に方眼紙のグラフ帳（x-t / v-t / a-t）。下に式と設定。 */
+:root{
+  --bg:#eef2f1; --surface:#ffffff; --surface2:#f6f8f8; --line:#d3dcda; --grid:#e6ecea; --grid2:#cfd9d6;
+  --ink:#18222e; --ink2:#4a5866; --ink3:#7b8894;
+  --ui:#24406a; --ui-soft:#e3eaf4;
+  --pos:#1d64d8; --pos-a:rgba(29,100,216,.20); --pos-b:rgba(29,100,216,.10);
+  --vel:#dd5a12; --vel-a:rgba(221,90,18,.22);
+  --acc:#22863a; --acc-a:rgba(34,134,58,.22);
+  --neg-a:rgba(196,40,90,.20); --neg:#c4285a;
+  --hl2:#7a4ad8; --hl2-a:rgba(122,74,216,.24);
+  --ghost:#8a96a3;
+  --f-ui:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --f-num:"BIZ UDGothic","BIZ UDPGothic",ui-monospace,"Consolas",monospace;
+  --f-sym:"Bookman Old Style","Cambria Math","Cambria","Times New Roman",serif;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10161c; --surface:#171f27; --surface2:#1d2630; --line:#2c3844; --grid:#222c36; --grid2:#33414e;
+  --ink:#e4ebf1; --ink2:#a9b6c2; --ink3:#7d8a96;
+  --ui:#8fb3ec; --ui-soft:#22324a;
+  --pos:#62a3ff; --pos-a:rgba(98,163,255,.24); --pos-b:rgba(98,163,255,.12);
+  --vel:#ff9150; --vel-a:rgba(255,145,80,.24);
+  --acc:#5dd27a; --acc-a:rgba(93,210,122,.22);
+  --neg-a:rgba(255,92,140,.22); --neg:#ff6e9a;
+  --hl2:#b293ff; --hl2-a:rgba(178,147,255,.26);
+  --ghost:#7e8b98; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#10161c; --surface:#171f27; --surface2:#1d2630; --line:#2c3844; --grid:#222c36; --grid2:#33414e;
+  --ink:#e4ebf1; --ink2:#a9b6c2; --ink3:#7d8a96;
+  --ui:#8fb3ec; --ui-soft:#22324a;
+  --pos:#62a3ff; --pos-a:rgba(98,163,255,.24); --pos-b:rgba(98,163,255,.12);
+  --vel:#ff9150; --vel-a:rgba(255,145,80,.24);
+  --acc:#5dd27a; --acc-a:rgba(93,210,122,.22);
+  --neg-a:rgba(255,92,140,.22); --neg:#ff6e9a;
+  --hl2:#b293ff; --hl2-a:rgba(178,147,255,.26);
+  --ghost:#7e8b98; color-scheme:dark;}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:14px;line-height:1.6;padding:0 16px 32px}
+.wrap{max-width:1360px;margin:0 auto}
+i.s,.s{font-family:var(--f-sym);font-style:italic;font-weight:400}
+sub,sup{font-size:.7em;line-height:0}
+sub .s, sub i{font-family:var(--f-sym)}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-block:14px 10px}
+.top h1{font-size:20px;margin:0;letter-spacing:.02em;text-wrap:balance}
+.top h1 small{font-size:12px;color:var(--ink3);font-weight:400;margin-left:8px}
+.top .back{color:var(--ui);text-decoration:none;font-size:13px;display:block}
+.top .hd{display:flex;flex-direction:column;gap:2px;min-width:0}
+.nav{display:flex;flex-wrap:wrap;gap:2px 14px;font-size:13px}
+.nav a{color:var(--ui);text-decoration:none}
+.nav a:hover{text-decoration:underline}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:700}
+.top .back:hover{text-decoration:underline}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tab{border:1px solid var(--line);background:var(--surface);color:var(--ink2);font:inherit;font-size:13.5px;padding:6px 14px;border-radius:999px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--ui);border-color:var(--ui);color:var(--surface);font-weight:700}
+.tab:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,label.chip:focus-within{outline:2px solid var(--ui);outline-offset:2px}
+
+/* main grid */
+.grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);min-width:0}
+.panel>h2{font-size:13px;margin:0;padding:9px 14px;border-bottom:1px solid var(--line);color:var(--ink2);letter-spacing:.06em;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.panel>h2 .sp{flex:1}
+.panel .body{padding:12px 14px}
+
+/* stage */
+.stage canvas{display:block;width:100%;height:clamp(260px,42vw,440px);border-radius:var(--r) var(--r) 0 0;touch-action:none}
+.transport{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}
+.btn{border:1px solid var(--line);background:var(--surface2);color:var(--ink);font:inherit;font-size:13px;padding:5px 11px;border-radius:7px;cursor:pointer;min-height:32px;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--ink3)}
+.btn.primary{background:var(--ui);border-color:var(--ui);color:var(--surface);font-weight:700;min-width:84px;justify-content:center}
+.btn[aria-pressed="true"]{background:var(--ui-soft);border-color:var(--ui);color:var(--ui);font-weight:700}
+.transport input[type=range]{flex:1;min-width:120px}
+.tread{font-family:var(--f-num);font-size:15px;min-width:92px;text-align:right}
+.transport select{font:inherit;font-size:13px;padding:4px 6px;border-radius:7px;border:1px solid var(--line);background:var(--surface2);color:var(--ink)}
+.readout{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line)}
+.readout div{padding:8px 12px;border-left:1px solid var(--line);min-width:0}
+.readout div:first-child{border-left:0}
+.readout .k{font-size:12px;color:var(--ink3)}
+.readout .v{font-family:var(--f-num);font-size:17px;white-space:nowrap}
+.readout .pos .v{color:var(--pos)} .readout .vel .v{color:var(--vel)} .readout .acc .v{color:var(--acc)}
+@media (max-width:520px){.readout{grid-template-columns:repeat(2,minmax(0,1fr))}.readout div:nth-child(3){border-left:0}.readout div:nth-child(n+3){border-top:1px solid var(--line)}}
+
+/* graph column */
+.gcol{display:flex;flex-direction:column;gap:0}
+.gcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.ghead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 10px 4px}
+.ghead .gt{font-weight:700;font-size:14px;margin-right:4px}
+.ghead .gt .s{font-size:16px}
+.ghead .meaning{font-size:12px;color:var(--ink3);flex:1;min-width:140px}
+.gcard canvas{display:block;width:100%;height:150px;touch-action:none;cursor:crosshair}
+.gfoot{font-size:12.5px;padding:4px 10px 7px;color:var(--ink2);min-height:24px;display:flex;flex-direction:column;gap:2px}
+.gfoot .ok{color:var(--acc);font-weight:700}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 9px 2px 6px;cursor:pointer;user-select:none;background:var(--surface2)}
+.chip input{margin:0;accent-color:var(--ui)}
+.chip.slope{border-color:color-mix(in srgb,var(--c) 55%,var(--line))}
+.chip .dot{width:9px;height:9px;border-radius:2px;background:var(--c)}
+.link{display:flex;justify-content:center;gap:18px;font-size:11.5px;color:var(--ink3);padding:3px 0;line-height:1.3}
+.link span{display:inline-flex;align-items:center;gap:4px}
+.link b{font-weight:700}
+
+/* params */
+.prm{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 18px}
+.field{display:flex;flex-direction:column;gap:2px;min-width:0}
+.field .lab{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.field .lab output{font-family:var(--f-num);color:var(--ink)}
+.field input[type=range]{width:100%;accent-color:var(--ui)}
+.field .hint{font-size:11.5px;color:var(--ink3)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg button{font:inherit;font-size:12.5px;border:0;border-left:1px solid var(--line);background:var(--surface2);color:var(--ink2);padding:5px 10px;cursor:pointer}
+.seg button:first-child{border-left:0}
+.seg button[aria-pressed="true"]{background:var(--ui);color:var(--surface);font-weight:700}
+.planets{display:flex;flex-wrap:wrap;gap:5px}
+.planets button{font:inherit;font-size:12.5px;border:1px solid var(--line);background:var(--surface2);color:var(--ink2);border-radius:999px;padding:3px 10px;cursor:pointer}
+.planets button[aria-pressed="true"]{background:var(--ui);border-color:var(--ui);color:var(--surface);font-weight:700}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.sub-h{font-size:12px;color:var(--ink3);letter-spacing:.06em;margin:0 0 4px}
+
+/* formulas */
+.fx{display:flex;flex-direction:column;gap:10px}
+.eq{display:grid;grid-template-columns:minmax(0,1fr);gap:2px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface2)}
+.eq .main{font-family:var(--f-sym);font-size:21px;line-height:1.5;color:var(--ink)}
+.eq .main .op{font-style:normal;padding:0 .18em}
+.eq .main .up{font-style:normal}
+.eq .subst{font-family:var(--f-num);font-size:12.5px;color:var(--ink2);overflow-x:auto;white-space:nowrap}
+.eq .tag{font-family:var(--f-ui);font-size:11.5px;color:var(--ink3)}
+.term{border-radius:5px;padding:0 3px;cursor:pointer;border-bottom:2px dotted var(--ink3);transition:background .12s}
+.term:hover,.term.on{background:var(--tc,var(--ui-soft))}
+.term.pin{outline:2px solid var(--tb,var(--ui));outline-offset:1px}
+.explain{border-left:4px solid var(--ui);background:var(--ui-soft);border-radius:0 8px 8px 0;padding:9px 12px;font-size:13.5px;min-height:62px}
+.explain .ttl{font-weight:700;margin-bottom:2px}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:.8em;line-height:1.1;margin:0 .1em}
+.frac>span:first-child{border-bottom:1px solid currentColor;padding:0 .15em}
+.note{font-size:12px;color:var(--ink3)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--ink2)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i.sw{width:14px;height:4px;border-radius:2px;background:var(--c);display:inline-block}
+.ghosts{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px}
+.ghosts .g{border:1px dashed var(--ghost);border-radius:999px;padding:1px 8px;color:var(--ink2)}
+.foot{font-size:11.5px;color:var(--ink3);margin-top:14px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+</style>
+<style>
+.g1{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px;align-items:start}
+.g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.05fr);gap:14px;align-items:start;margin-top:14px}
+@media (max-width:1180px){.g2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.g2 .fxp{grid-column:1/-1}}
+@media (max-width:900px){.g1{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.g2{grid-template-columns:minmax(0,1fr)}}
+.colh{font-size:13px;font-weight:700;margin:0 0 6px;padding:6px 10px;border-radius:8px;background:var(--surface);border:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}
+.colh span{font-weight:400;color:var(--ink3);font-size:12px}
+.g2 .gcard canvas{height:132px}
+.stage canvas{height:clamp(280px,40vw,460px)}
+.readout.six{grid-template-columns:repeat(3,minmax(0,1fr))}
+.readout.six div:nth-child(4){border-left:0}
+.readout.six div:nth-child(n+4){border-top:1px solid var(--line)}
+.readout .v{font-size:15.5px}
+.res{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px;font-size:13px}
+.res b{font-family:var(--f-num);font-weight:400}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="hd">
+      <a class="back" id="backLink" href="../index.html#/u/free-fall/0" hidden>‹ 落体の運動（Webテスト）へ</a>
+      <h1>投射運動ラボ<small>物理基礎・落体の運動（水平投射・斜方投射）</small></h1>
+      <nav class="nav" aria-label="アニメーション"><a href="index.html#motion">≡ アニメーション集</a><a href="kinematics.html">直線運動ラボ</a><a href="projectile.html" aria-current="page">投射運動ラボ</a></nav>
+    </div>
+    <div class="tabs" aria-label="よくある形">
+      <button class="tab" type="button" data-pre="h">水平投射</button>
+      <button class="tab" type="button" data-pre="o">斜方投射</button>
+      <button class="tab" type="button" data-pre="oc">崖から斜方投射</button>
+      <button class="tab" type="button" data-pre="v">鉛直投げ上げ</button>
+    </div>
+  </header>
+
+  <div class="g1">
+    <section class="panel stage">
+      <canvas id="scene" aria-label="投射運動のようす"></canvas>
+      <div id="transport"></div>
+      <div class="readout six">
+        <div><div class="k">時刻 <i class="s">t</i></div><div class="v num" id="r-t"></div></div>
+        <div class="pos"><div class="k">位置 <i class="s">x</i></div><div class="v num" id="r-x"></div></div>
+        <div class="pos"><div class="k">位置 <i class="s">y</i></div><div class="v num" id="r-y"></div></div>
+        <div class="vel"><div class="k">速さ <i class="s">v</i></div><div class="v num" id="r-v"></div></div>
+        <div class="vel"><div class="k">速度 <i class="s">v</i><sub><i class="s">x</i></sub></div><div class="v num" id="r-vx"></div></div>
+        <div class="vel"><div class="k">速度 <i class="s">v</i><sub><i class="s">y</i></sub></div><div class="v num" id="r-vy"></div></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>条件<span class="sp"></span>
+        <button class="btn" id="keep" type="button">この結果を残して比較</button>
+        <button class="btn" id="clear" type="button">比較を消す</button></h2>
+      <div class="body" style="display:flex;flex-direction:column;gap:12px">
+        <div class="prm" id="params"></div>
+        <div>
+          <p class="sub-h">重力加速度 <i class="s">g</i>（天体を選ぶ）</p>
+          <div id="planetsHost"></div>
+          <div class="field" style="margin-top:6px"><div class="lab"><span><i class="s">g</i>（自由に設定）</span><output id="gOut"></output></div>
+            <input type="range" id="gIn" min="0.5" max="30" step="0.01" value="9.8" aria-label="重力加速度"></div>
+          <div class="note" id="gNote"></div>
+        </div>
+        <div class="row">
+          <label class="chip"><input type="checkbox" id="optVec" checked> 速度・加速度の矢印</label>
+          <label class="chip"><input type="checkbox" id="optDec" checked> <i class="s">x</i>・<i class="s">y</i> 方向に分解</label>
+          <label class="chip"><input type="checkbox" id="optFull"> 軌道とグラフを最後まで表示</label>
+          <label class="chip">ストロボ間隔
+            <select id="optStrobe" style="font:inherit;font-size:12px;border:0;background:transparent;color:inherit">
+              <option value="auto">自動</option><option value="0.1">0.1 s</option><option value="0.2">0.2 s</option><option value="0.25">0.25 s</option><option value="0.5">0.5 s</option><option value="1">1 s</option></select></label>
+        </div>
+        <div class="res" id="res"></div>
+        <div class="ghosts" id="ghostList"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="g2">
+    <div><div class="colh">水平（<i class="s">x</i>）方向<span>力がはたらかない → 等速直線運動</span></div><div id="colX"></div></div>
+    <div><div class="colh">鉛直（<i class="s">y</i>）方向<span>上向きを正 → 加速度 −<i class="s">g</i> の等加速度直線運動</span></div><div id="colY"></div></div>
+    <section class="panel fxp">
+      <h2>式の意味<span class="sp"></span><span class="note" style="letter-spacing:0">点線の項にふれる／タップ</span></h2>
+      <div class="body fx">
+        <div id="fx" class="fx"></div>
+        <div class="explain" id="explain"></div>
+        <div class="legend">
+          <span><i class="sw" style="--c:var(--pos)"></i>位置・変位</span>
+          <span><i class="sw" style="--c:var(--vel)"></i>速度</span>
+          <span><i class="sw" style="--c:var(--acc)"></i>加速度</span>
+        </div>
+      </div>
+    </section>
+  </div>
+  <p class="foot">空気抵抗は無視しています。<i class="s">x</i> 軸は水平右向き、<i class="s">y</i> 軸は鉛直上向きを正、原点 O は投げ出した点の真下の地面です。グラフをドラッグすると時刻を動かせます。</p>
+</div>
+
+<script>
+/* 運動学ラボ 共通エンジン：グラフ・時間制御・式の項リンク */
+(function () {
+  'use strict';
+  const K = (window.K = {});
+
+  /* ---------- 天体 ---------- */
+  K.PLANETS = [
+    { id: 'earth', name: '地球', g: 9.8, sky: ['#bcdcf2', '#eef7fc'], skyD: ['#0f2234', '#1a3148'], ground: '#88a865', groundD: '#3a5230' },
+    { id: 'moon', name: '月', g: 1.62, sky: ['#05070b', '#191d25'], skyD: ['#03050a', '#141820'], ground: '#a9a9a4', groundD: '#6c6c68', stars: true },
+    { id: 'mars', name: '火星', g: 3.71, sky: ['#e2b18a', '#f6dcc4'], skyD: ['#3d2418', '#59372a'], ground: '#b65a33', groundD: '#7a3a21' },
+    { id: 'venus', name: '金星', g: 8.87, sky: ['#e4cf98', '#f6ebc9'], skyD: ['#3d3420', '#55482c'], ground: '#a8854c', groundD: '#6e5631' },
+    { id: 'jupiter', name: '木星', g: 24.79, sky: ['#d8b892', '#f2e2cb'], skyD: ['#3e2f22', '#5a4532'], ground: '#9b7552', groundD: '#654b34', noSurface: true },
+    { id: 'pluto', name: '冥王星', g: 0.62, sky: ['#0a0c14', '#20232e'], skyD: ['#05060c', '#181b24'], ground: '#c9bfae', groundD: '#7f776b', stars: true },
+  ];
+  K.planet = (id) => K.PLANETS.find((p) => p.id === id) || null;
+
+  /* ---------- 小物 ---------- */
+  K.clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  K.f = (v, d = 1) => {
+    if (!isFinite(v)) return '—';
+    const e = 0.5 * Math.pow(10, -d);
+    if (Math.abs(v) < e) v = 0;
+    return v.toFixed(d).replace('-', '−');
+  };
+  K.fs = (v, d = 1) => (v < 0 ? '(' + K.f(v, d) + ')' : K.f(v, d)); // 代入用：負は括弧
+  K.niceStep = (span, target) => {
+    if (!(span > 0)) return 1;
+    const raw = span / target, p = Math.pow(10, Math.floor(Math.log10(raw))), n = raw / p;
+    return (n < 1.5 ? 1 : n < 3 ? 2 : n < 7 ? 5 : 10) * p;
+  };
+  K.niceCeil = (v) => {
+    if (!(v > 0)) return 1;
+    const s = K.niceStep(v, 5);
+    return Math.ceil(v / s - 1e-9) * s;
+  };
+  K.css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  K.isDark = () => {
+    const a = document.documentElement.getAttribute('data-theme');
+    if (a) return a === 'dark';
+    return window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+  };
+  K.fit = (cv) => {
+    const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    const W = Math.max(1, Math.round(r.width * dpr)), H = Math.max(1, Math.round(r.height * dpr));
+    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, w: r.width, h: r.height };
+  };
+  K.$ = (s, r = document) => r.querySelector(s);
+  K.$$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+  /* ---------- 記法：*v*=物理量(斜体)  _x=下付き  ^2=上付き ---------- */
+  K.h = (s) => {
+    let out = '', it = false;
+    for (let i = 0; i < s.length; i++) {
+      const c = s[i];
+      if (c === '*') { out += it ? '</i>' : '<i class="s">'; it = !it; continue; }
+      if (c === '_' || c === '^') {
+        const n = s[++i]; const tag = c === '_' ? 'sub' : 'sup';
+        out += '<' + tag + '>' + (/[a-zA-Z]/.test(n) ? '<i class="s">' + n + '</i>' : n) + '</' + tag + '>';
+        continue;
+      }
+      out += c === '<' ? '&lt;' : c === '&' ? '&amp;' : c;
+    }
+    if (it) out += '</i>';
+    return out;
+  };
+  // canvas 版
+  const tokens = (s) => {
+    const r = []; let it = false;
+    for (let i = 0; i < s.length; i++) {
+      const c = s[i];
+      if (c === '*') { it = !it; continue; }
+      if (c === '_' || c === '^') { const n = s[++i]; r.push({ c: n, k: c === '_' ? 'sub' : 'sup', it: /[a-zA-Z]/.test(n) }); continue; }
+      r.push({ c, k: 'n', it });
+    }
+    return r;
+  };
+  K.fontSym = (px, it) => (it ? 'italic ' : '') + px + 'px ' + (it ? '"Bookman Old Style","Cambria Math",Cambria,"Times New Roman",serif' : '"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,sans-serif');
+  K.rich = (ctx, s, x, y, px = 12, align = 'left', measureOnly = false) => {
+    const tk = tokens(s);
+    let w = 0;
+    const seg = tk.map((t) => {
+      const sz = t.k === 'n' ? px : px * 0.72;
+      const font = K.fontSym(sz, t.it);
+      ctx.font = font;
+      const ww = ctx.measureText(t.c).width + (t.it && t.k === 'n' ? px * 0.06 : 0);
+      const o = { t, font, ww, dy: t.k === 'sub' ? px * 0.28 : t.k === 'sup' ? -px * 0.38 : 0 };
+      w += ww;
+      return o;
+    });
+    if (measureOnly) return w;
+    let cx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'left';
+    seg.forEach((o) => { ctx.font = o.font; ctx.fillText(o.t.c, cx, y + o.dy); cx += o.ww; });
+    return w;
+  };
+  // 背景つきラベル
+  K.tag = (ctx, s, x, y, color, px = 11.5, align = 'left', bg) => {
+    const w = K.rich(ctx, s, 0, 0, px, 'left', true);
+    let x0 = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+    ctx.save();
+    ctx.fillStyle = bg || K.css('--surface');
+    ctx.globalAlpha = 0.86;
+    const pad = 3;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x0 - pad, y - px * 0.72, w + pad * 2, px * 1.44, 4); else ctx.rect(x0 - pad, y - px * 0.72, w + pad * 2, px * 1.44);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = color;
+    K.rich(ctx, s, x0, y, px, 'left');
+    ctx.restore();
+    return w;
+  };
+  K.arrow = (ctx, x1, y1, x2, y2, color, lw = 2.2, head = 8, dash) => {
+    const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy);
+    if (L < 0.5) return;
+    const ux = dx / L, uy = dy / L, hh = Math.min(head, L * 0.6);
+    ctx.save();
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'round';
+    if (dash) ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - ux * hh * 0.8, y2 - uy * hh * 0.8); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - ux * hh - uy * hh * 0.5, y2 - uy * hh + ux * hh * 0.5);
+    ctx.lineTo(x2 - ux * hh + uy * hh * 0.5, y2 - uy * hh - ux * hh * 0.5);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  };
+  K.strobeTimes = (tEnd, dt) => {
+    const r = [];
+    if (!(dt > 0)) return r;
+    for (let k = 0; k * dt <= tEnd + 1e-9 && k < 400; k++) r.push(k * dt);
+    return r;
+  };
+  K.autoStrobe = (tEnd) => {
+    const c = [0.05, 0.1, 0.2, 0.25, 0.5, 1, 2];
+    for (const d of c) if (tEnd / d <= 16) return d;
+    return 2;
+  };
+  K.simpson = (fn, a, b, n = 60) => {
+    if (b <= a) return 0;
+    if (n % 2) n++;
+    const h = (b - a) / n;
+    let s = fn(a) + fn(b);
+    for (let i = 1; i < n; i++) s += (i % 2 ? 4 : 2) * fn(a + i * h);
+    return (s * h) / 3;
+  };
+
+  /* ---------- 等加速度運動 ---------- */
+  K.motion = (p0, v0, a) => ({
+    p0, v0, a,
+    p: (t) => p0 + v0 * t + 0.5 * a * t * t,
+    v: (t) => v0 + a * t,
+    acc: () => a,
+  });
+
+  /* ---------- グラフ ---------- */
+  class Graph {
+    constructor(cv, o) {
+      this.cv = cv; this.o = o;
+      this.fn = () => 0; this.dfn = null; this.tEnd = 1; this.tAxis = 1;
+      this.ghosts = []; this.hl = []; this.marks = [];
+      this.slope = false; this.area = false; this.full = false;
+      this.onScrub = null;
+      const scrub = (e) => {
+        if (!this.onScrub || !this._X) return;
+        const r = cv.getBoundingClientRect();
+        const t = ((e.clientX - r.left) - this._L) / this._pw * this.tAxis;
+        this.onScrub(K.clamp(t, 0, this.tEnd));
+      };
+      cv.addEventListener('pointerdown', (e) => { cv.setPointerCapture(e.pointerId); this._drag = true; scrub(e); });
+      cv.addEventListener('pointermove', (e) => { if (this._drag) scrub(e); });
+      cv.addEventListener('pointerup', () => (this._drag = false));
+      cv.addEventListener('pointercancel', () => (this._drag = false));
+    }
+    range() {
+      let lo = 0, hi = 0;
+      const take = (fn, T) => {
+        for (let i = 0; i <= 120; i++) { const v = fn((T * i) / 120); if (isFinite(v)) { lo = Math.min(lo, v); hi = Math.max(hi, v); } }
+      };
+      take(this.fn, this.tEnd);
+      this.ghosts.forEach((g) => take(g.fn, g.tEnd));
+      if (hi - lo < 1e-9) { hi = 1; lo = Math.min(lo, -0) ; if (lo === 0) lo = -1; }
+      const span = hi - lo;
+      const st = K.niceStep(span, 4);
+      let ymin = Math.floor(lo / st - 1e-9) * st, ymax = Math.ceil(hi / st + 1e-9) * st;
+      if (ymax - hi < 0.06 * span && hi > 0) ymax += st;
+      if (lo - ymin < 0.06 * span && lo < 0) ymin -= st;
+      if (ymin === 0 && lo >= 0) ymin = -st * 0.5; // 0 の軸線を見やすく少し下を空ける
+      if (ymax === 0 && hi <= 0) ymax = st * 0.5;
+      return { ymin, ymax, st };
+    }
+    draw(t) {
+      const { ctx, w, h } = K.fit(this.cv);
+      const C = (n) => K.css(n);
+      const col = C(this.o.color);
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = C('--surface'); ctx.fillRect(0, 0, w, h);
+      const L = 50, R = 14, T = 10, B = 24, pw = Math.max(10, w - L - R), ph = Math.max(10, h - T - B);
+      const { ymin, ymax, st } = this.range();
+      const tA = this.tAxis;
+      const X = (tt) => L + (tt / tA) * pw, Y = (v) => T + ((ymax - v) / (ymax - ymin)) * ph;
+      this._X = X; this._L = L; this._pw = pw; this._T = T; this._ph = ph;
+      // 方眼
+      const ts = K.niceStep(tA, Math.max(3, Math.floor(pw / 62)));
+      const minorT = ts / 5, minorY = st / 5;
+      ctx.lineWidth = 1;
+      if (pw / (tA / minorT) > 5) {
+        ctx.strokeStyle = C('--grid'); ctx.beginPath();
+        for (let x = 0; x <= tA + 1e-9; x += minorT) { ctx.moveTo(Math.round(X(x)) + 0.5, T); ctx.lineTo(Math.round(X(x)) + 0.5, T + ph); }
+        for (let y = Math.ceil(ymin / minorY) * minorY; y <= ymax + 1e-9; y += minorY) { ctx.moveTo(L, Math.round(Y(y)) + 0.5); ctx.lineTo(L + pw, Math.round(Y(y)) + 0.5); }
+        ctx.stroke();
+      }
+      ctx.strokeStyle = C('--grid2'); ctx.beginPath();
+      for (let x = 0; x <= tA + 1e-9; x += ts) { ctx.moveTo(Math.round(X(x)) + 0.5, T); ctx.lineTo(Math.round(X(x)) + 0.5, T + ph); }
+      for (let y = Math.ceil(ymin / st - 1e-9) * st; y <= ymax + 1e-9; y += st) { ctx.moveTo(L, Math.round(Y(y)) + 0.5); ctx.lineTo(L + pw, Math.round(Y(y)) + 0.5); }
+      ctx.stroke();
+      // 目盛り
+      ctx.fillStyle = C('--ink3'); ctx.font = '11px ' + C('--f-num');
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      const dY = st < 1 ? (st < 0.1 ? 2 : 1) : 0;
+      for (let y = Math.ceil(ymin / st - 1e-9) * st; y <= ymax + 1e-9; y += st) ctx.fillText(K.f(y, dY), L - 5, Y(y));
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      const dT = ts < 1 ? (ts < 0.1 ? 2 : 1) : 0;
+      for (let x = 0; x <= tA + 1e-9; x += ts) { if (X(x) > L + pw - 34) continue; ctx.fillText(K.f(x, dT), X(x), T + ph + 5); }
+      ctx.fillStyle = C('--ink2');
+      K.rich(ctx, '*t* [s]', L + pw, T + ph + 12, 12, 'right');
+      // 軸
+      ctx.strokeStyle = C('--ink3'); ctx.lineWidth = 1.3; ctx.beginPath();
+      ctx.moveTo(L, Y(0)); ctx.lineTo(L + pw, Y(0)); ctx.moveTo(L + 0.5, T); ctx.lineTo(L + 0.5, T + ph); ctx.stroke();
+
+      ctx.save();
+      ctx.beginPath(); ctx.rect(L, T - 2, pw + 2, ph + 4); ctx.clip();
+      const tc = K.clamp(t, 0, this.tEnd);
+      // 面積
+      if (this.area && tc > 0) {
+        const n = Math.max(2, Math.ceil((80 * tc) / tA));
+        ctx.beginPath(); ctx.moveTo(X(0), Y(0));
+        for (let i = 0; i <= n; i++) { const tt = (tc * i) / n; ctx.lineTo(X(tt), Y(this.fn(tt))); }
+        ctx.lineTo(X(tc), Y(0)); ctx.closePath();
+        const path = new Path2D(); // 再利用用
+        ctx.save(); ctx.clip();
+        ctx.fillStyle = C(this.o.areaColor); ctx.fillRect(L, T - 2, pw, Y(0) - T + 2);
+        ctx.fillStyle = C('--neg-a'); ctx.fillRect(L, Y(0), pw, T + ph - Y(0) + 2);
+        // 負の部分に斜線
+        ctx.strokeStyle = C('--neg'); ctx.globalAlpha = 0.35; ctx.lineWidth = 1; ctx.beginPath();
+        for (let k = -ph; k < pw + ph; k += 7) { ctx.moveTo(L + k, Y(0)); ctx.lineTo(L + k + ph, Y(0) + ph); }
+        ctx.save(); ctx.beginPath(); ctx.rect(L, Y(0), pw, ph); ctx.clip();
+        ctx.beginPath();
+        for (let k = -ph; k < pw + ph; k += 7) { ctx.moveTo(L + k, Y(0)); ctx.lineTo(L + k + ph, Y(0) + ph); }
+        ctx.stroke(); ctx.restore();
+        ctx.restore();
+        void path;
+      }
+      // 式ハイライト
+      this.hl.forEach((o) => this.drawHL(ctx, o, X, Y, C));
+      // 比較（前回）
+      this.ghosts.forEach((g) => {
+        ctx.strokeStyle = C('--ghost'); ctx.lineWidth = 1.6; ctx.setLineDash([5, 4]);
+        ctx.beginPath();
+        for (let i = 0; i <= 120; i++) { const tt = (g.tEnd * i) / 120; i ? ctx.lineTo(X(tt), Y(g.fn(tt))) : ctx.moveTo(X(tt), Y(g.fn(tt))); }
+        ctx.stroke(); ctx.setLineDash([]);
+      });
+      // 予測（全体）
+      if (this.full) {
+        ctx.strokeStyle = col; ctx.globalAlpha = 0.28; ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i <= 160; i++) { const tt = (this.tEnd * i) / 160; i ? ctx.lineTo(X(tt), Y(this.fn(tt))) : ctx.moveTo(X(tt), Y(this.fn(tt))); }
+        ctx.stroke(); ctx.globalAlpha = 1;
+      }
+      // 本体
+      ctx.strokeStyle = col; ctx.lineWidth = 2.6; ctx.lineJoin = 'round';
+      ctx.beginPath();
+      const n2 = Math.max(2, Math.ceil((160 * tc) / tA));
+      for (let i = 0; i <= n2; i++) { const tt = (tc * i) / n2; i ? ctx.lineTo(X(tt), Y(this.fn(tt))) : ctx.moveTo(X(tt), Y(this.fn(tt))); }
+      ctx.stroke();
+      // 接線
+      if (this.slope && this.dfn) {
+        const m = this.dfn(tc), y0 = this.fn(tc), sc = C(this.o.slopeColor);
+        const span = tA * 0.32;
+        ctx.strokeStyle = sc; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(X(tc - span), Y(y0 - m * span)); ctx.lineTo(X(tc + span), Y(y0 + m * span)); ctx.stroke();
+        const dt = K.niceStep(tA, 6);
+        const ta = tc + dt <= tA * 0.97 ? tc : tc - dt;
+        const fa = y0 + m * (ta - tc);
+        ctx.fillStyle = sc; ctx.globalAlpha = 0.13;
+        ctx.beginPath(); ctx.moveTo(X(ta), Y(fa)); ctx.lineTo(X(ta + dt), Y(fa)); ctx.lineTo(X(ta + dt), Y(fa + m * dt)); ctx.closePath(); ctx.fill();
+        ctx.globalAlpha = 1; ctx.setLineDash([3, 3]); ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(X(ta), Y(fa)); ctx.lineTo(X(ta + dt), Y(fa)); ctx.lineTo(X(ta + dt), Y(fa + m * dt)); ctx.stroke(); ctx.setLineDash([]);
+        const below = m >= 0;
+        K.tag(ctx, 'Δ*t* = ' + K.f(dt, dt < 1 ? 2 : 1) + ' s', X(ta + dt / 2), Y(fa) + (below ? 11 : -11), sc, 11, 'center');
+        const rightRoom = L + pw - X(ta + dt) > 80;
+        K.tag(ctx, 'Δ' + this.o.symS + ' = ' + K.f(m * dt, 2), X(ta + dt) + (rightRoom ? 5 : -5), Y(fa + (m * dt) / 2), sc, 11, rightRoom ? 'left' : 'right');
+      }
+      // 連動マーク（他のグラフから）
+      this.marks.forEach((o) => this.drawHL(ctx, o, X, Y, C));
+      // カーソル
+      ctx.strokeStyle = C('--ink2'); ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(X(tc), T); ctx.lineTo(X(tc), T + ph); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = col; ctx.strokeStyle = C('--surface'); ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(X(tc), Y(this.fn(tc)), 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.restore();
+      // 縦軸ラベル
+      ctx.fillStyle = col;
+      K.tag(ctx, this.o.ylab, L + 6, T + 9, col, 12.5, 'left');
+    }
+    drawHL(ctx, o, X, Y, C) {
+      const c = o.color ? C(o.color) : C('--ui');
+      ctx.save();
+      if (o.type === 'poly') {
+        ctx.fillStyle = C(o.fill); ctx.beginPath();
+        o.pts.forEach((p, i) => (i ? ctx.lineTo(X(p[0]), Y(p[1])) : ctx.moveTo(X(p[0]), Y(p[1]))));
+        ctx.closePath(); ctx.fill();
+        if (o.color) { ctx.strokeStyle = c; ctx.lineWidth = 1.6; ctx.stroke(); }
+        if (o.label) K.tag(ctx, o.label, X(o.at[0]), Y(o.at[1]), c, 12, 'center');
+      } else if (o.type === 'arrow') {
+        if (o.guide) { ctx.strokeStyle = c; ctx.setLineDash([3, 3]); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(X(0), Y(o.y0)); ctx.lineTo(X(o.t), Y(o.y0)); ctx.stroke(); ctx.setLineDash([]); }
+        const x = X(o.t) + (o.dx || 8);
+        if (Math.abs(Y(o.y1) - Y(o.y0)) > 3) K.arrow(ctx, x, Y(o.y0), x, Y(o.y1), c, 2.2, 7);
+        else { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, Y(o.y0), 3, 0, 7); ctx.fill(); }
+        if (o.label) K.tag(ctx, o.label, x + 6, (Y(o.y0) + Y(o.y1)) / 2, c, 11.5, 'left');
+      } else if (o.type === 'dot') {
+        ctx.strokeStyle = c; ctx.lineWidth = 2.2; ctx.fillStyle = C('--surface');
+        ctx.beginPath(); ctx.arc(X(o.t), Y(o.y), 6.5, 0, 7); ctx.fill(); ctx.stroke();
+        if (o.label) {
+          const lx = X(o.t) + (o.t > this.tAxis * 0.6 ? -10 : 10);
+          const ly = Y(o.y) - 13 < this._T + 8 ? Y(o.y) + 15 : Y(o.y) - 13;
+          K.tag(ctx, o.label, lx, ly, c, 11.5, o.t > this.tAxis * 0.6 ? 'right' : 'left');
+        }
+      } else if (o.type === 'line') {
+        ctx.strokeStyle = c; ctx.lineWidth = 1.8; ctx.setLineDash(o.dash || [6, 4]);
+        ctx.beginPath(); o.pts.forEach((p, i) => (i ? ctx.lineTo(X(p[0]), Y(p[1])) : ctx.moveTo(X(p[0]), Y(p[1])))); ctx.stroke();
+        ctx.setLineDash([]);
+        if (o.label) K.tag(ctx, o.label, X(o.at[0]), Y(o.at[1]), c, 11.5, o.align || 'left');
+      }
+      ctx.restore();
+    }
+  }
+  K.Graph = Graph;
+
+  /* ---------- 3枚組グラフ（位置・速度・加速度） ---------- */
+  // o: { p:'x', v:'v', a:'a', name:'' }  記法文字列
+  class MotionColumn {
+    constructor(host, o) {
+      this.o = o;
+      const P = o.p, V = o.v, A = o.a;
+      const id = 'c' + Math.random().toString(36).slice(2, 7);
+      host.innerHTML = `
+      <div class="gcol">
+        <div class="gcard">
+          <div class="ghead"><span class="gt">${K.h(P)}-${K.h('*t*')} 図</span>
+            <span class="meaning">接線の傾き → 速度 ${K.h(V)}</span>
+            <label class="chip slope" style="--c:var(--vel)"><input type="checkbox" id="${id}-ps"><i class="dot"></i>接線の傾き</label></div>
+          <canvas aria-label="位置と時間のグラフ"></canvas>
+          <div class="gfoot" data-f="p"></div>
+        </div>
+        <div class="link"><span>↓ 上の図の<b>傾き</b>＝下の図の値</span><span>↑ 下の図の<b>面積</b>＝上の図の変化量</span></div>
+        <div class="gcard">
+          <div class="ghead"><span class="gt">${K.h(V)}-${K.h('*t*')} 図</span>
+            <span class="meaning">傾き → 加速度 ${K.h(A)}　面積 → 変位 Δ${K.h(P)}</span>
+            <label class="chip slope" style="--c:var(--acc)"><input type="checkbox" id="${id}-vs"><i class="dot"></i>接線の傾き</label>
+            <label class="chip slope" style="--c:var(--pos)"><input type="checkbox" id="${id}-va"><i class="dot"></i>面積</label></div>
+          <canvas aria-label="速度と時間のグラフ"></canvas>
+          <div class="gfoot" data-f="v"></div>
+        </div>
+        <div class="link"><span>↓ 上の図の<b>傾き</b>＝下の図の値</span><span>↑ 下の図の<b>面積</b>＝上の図の変化量</span></div>
+        <div class="gcard">
+          <div class="ghead"><span class="gt">${K.h(A)}-${K.h('*t*')} 図</span>
+            <span class="meaning">面積 → 速度の変化 Δ${K.h(V)}</span>
+            <label class="chip slope" style="--c:var(--vel)"><input type="checkbox" id="${id}-aa"><i class="dot"></i>面積</label></div>
+          <canvas aria-label="加速度と時間のグラフ"></canvas>
+          <div class="gfoot" data-f="a"></div>
+        </div>
+      </div>`;
+      const cvs = K.$$('canvas', host);
+      const sym = (s) => s.replace(/\*/g, '');
+      this.gp = new Graph(cvs[0], { color: '--pos', slopeColor: '--vel', areaColor: '--pos-a', ylab: P + ' [m]', symS: P });
+      this.gv = new Graph(cvs[1], { color: '--vel', slopeColor: '--acc', areaColor: '--pos-a', ylab: V + ' [m/s]', symS: V });
+      this.ga = new Graph(cvs[2], { color: '--acc', slopeColor: '--acc', areaColor: '--vel-a', ylab: A + ' [m/s^2]', symS: A });
+      this.ga.o.ylab = A + ' [m/s²]';
+      this.foot = { p: K.$('[data-f=p]', host), v: K.$('[data-f=v]', host), a: K.$('[data-f=a]', host) };
+      this.cb = { ps: K.$('#' + id + '-ps', host), vs: K.$('#' + id + '-vs', host), va: K.$('#' + id + '-va', host), aa: K.$('#' + id + '-aa', host) };
+      Object.values(this.cb).forEach((c) => c.addEventListener('change', () => this.onChange && this.onChange()));
+      this.hl = { p: [], v: [], a: [] };
+      void sym;
+    }
+    set onScrub(fn) { [this.gp, this.gv, this.ga].forEach((g) => (g.onScrub = fn)); }
+    setFull(b) { [this.gp, this.gv, this.ga].forEach((g) => (g.full = b)); }
+    setMotion(m, tEnd, tAxis, ghosts = []) {
+      this.m = m; this.tEnd = tEnd;
+      const G = [[this.gp, m.p, (t) => m.v(t), 'p'], [this.gv, m.v, () => m.a, 'v'], [this.ga, () => m.a, () => 0, 'a']];
+      G.forEach(([g, fn, dfn, k]) => {
+        g.fn = fn; g.dfn = dfn; g.tEnd = tEnd; g.tAxis = tAxis;
+        g.ghosts = ghosts.map((gh) => ({ tEnd: gh.tEnd, fn: k === 'p' ? gh.m.p : k === 'v' ? gh.m.v : () => gh.m.a }));
+      });
+    }
+    draw(t) {
+      const m = this.m; if (!m) return;
+      const tc = K.clamp(t, 0, this.tEnd);
+      const P = this.o.p, V = this.o.v, A = this.o.a;
+      const cb = this.cb;
+      this.gp.slope = cb.ps.checked; this.gv.slope = cb.vs.checked; this.gv.area = cb.va.checked; this.ga.area = cb.aa.checked;
+      const p = m.p(tc), v = m.v(tc), a = m.a;
+      // 連動マーク
+      const mp = [], mv = [], ma = [];
+      if (cb.ps.checked) mv.push({ type: 'dot', t: tc, y: v, color: '--vel', label: '← ' + P + '-*t* 図の傾き' });
+      if (cb.vs.checked) ma.push({ type: 'dot', t: tc, y: a, color: '--acc', label: '← ' + V + '-*t* 図の傾き' });
+      if (cb.va.checked) mp.push({ type: 'arrow', t: tc, y0: m.p0, y1: p, color: '--pos', guide: true, label: 'Δ' + P + '（' + V + '-*t* 図の面積）' });
+      if (cb.aa.checked) mv.push({ type: 'arrow', t: tc, y0: m.v0, y1: v, color: '--vel', guide: true, label: 'Δ' + V + '（' + A + '-*t* 図の面積）' });
+      this.gp.hl = this.hl.p; this.gv.hl = this.hl.v; this.ga.hl = this.hl.a;
+      this.gp.marks = mp; this.gv.marks = mv; this.ga.marks = ma;
+      this.gp.draw(tc); this.gv.draw(tc); this.ga.draw(tc);
+      // 数値の読み取り（グラフから数値積分して、式の値と照合）
+      const H = K.h, f = K.f;
+      const fp = [], fv = [], fa = [];
+      if (cb.ps.checked) fp.push(`接線の傾き ＝ <b class="num" style="color:var(--vel)">${f(v, 2)} m/s</b> ＝ この瞬間の速度 ${H(V)}`);
+      else fp.push(`<span class="note">「接線の傾き」で、この瞬間の速度を読み取れます</span>`);
+      if (cb.vs.checked) fv.push(`接線の傾き ＝ <b class="num" style="color:var(--acc)">${f(a, 2)} m/s²</b> ＝ 加速度 ${H(A)}`);
+      if (cb.va.checked) {
+        const ar = K.simpson(m.v, 0, tc);
+        const neg = (m.v0 < 0 || v < 0) ? '<span class="note">（<i>t</i> 軸より下の面積は負として数える）</span>' : '';
+        fv.push(`面積（0〜${f(tc, 2)} s）＝ <b class="num" style="color:var(--pos)">${f(ar, 2)} m</b> ＝ 変位 Δ${H(P)} ＝ ${H(P)} − ${H(P.replace(/\*$/, '') + '_0').replace('</i><sub>', '</i><sub>')} ＝ ${f(p, 2)} − ${f(m.p0, 2).replace(/^−/, '(−') + (m.p0 < 0 ? ')' : '')} <span class="ok">✔ 一致</span> ${neg}`);
+      }
+      if (!cb.vs.checked && !cb.va.checked) fv.push(`<span class="note">「接線の傾き」で加速度、「面積」で変位を読み取れます</span>`);
+      if (cb.aa.checked) {
+        const ar = a * tc;
+        fa.push(`面積（0〜${f(tc, 2)} s）＝ <b class="num" style="color:var(--vel)">${f(ar, 2)} m/s</b> ＝ 速度の変化 Δ${H(V)} ＝ ${f(v, 2)} − ${f(m.v0, 2).replace(/^−/, '(−') + (m.v0 < 0 ? ')' : '')} <span class="ok">✔ 一致</span>`);
+      } else fa.push(`<span class="note">「面積」で、0 s からの速度の変化を読み取れます</span>`);
+      this.foot.p.innerHTML = fp.map((s) => '<div>' + s + '</div>').join('');
+      this.foot.v.innerHTML = fv.map((s) => '<div>' + s + '</div>').join('');
+      this.foot.a.innerHTML = fa.map((s) => '<div>' + s + '</div>').join('');
+    }
+  }
+  K.MotionColumn = MotionColumn;
+
+  /* ---------- 時間制御 ---------- */
+  class Player {
+    constructor(render) {
+      this.t = 0; this.tEnd = 1; this.speed = 1; this.playing = false; this.render = render; this.dirty = true;
+      this.loop = this.loop.bind(this);
+      requestAnimationFrame(this.loop);
+      const mark = () => (this.dirty = true);
+      window.addEventListener('resize', mark);
+      if (window.ResizeObserver) new ResizeObserver(mark).observe(document.body);
+      if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', mark);
+      new MutationObserver(mark).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    }
+    loop(now) {
+      if (this.playing) {
+        const dt = Math.min(0.1, (now - this.last) / 1000); this.last = now;
+        this.t += dt * this.speed;
+        if (this.t >= this.tEnd) { this.t = this.tEnd; this.playing = false; this.onState && this.onState(); }
+        this.dirty = true;
+      }
+      if (this.dirty) { this.dirty = false; try { this.render(this.t); } catch (e) { console.error(e); } }
+      requestAnimationFrame(this.loop);
+    }
+    play() { if (this.t >= this.tEnd - 1e-6) this.t = 0; this.playing = true; this.last = performance.now(); this.onState && this.onState(); }
+    pause() { this.playing = false; this.onState && this.onState(); }
+    toggle() { this.playing ? this.pause() : this.play(); }
+    seek(t) { this.t = K.clamp(t, 0, this.tEnd); this.dirty = true; }
+    setEnd(T) { this.tEnd = T; if (this.t > T) this.t = T; this.dirty = true; }
+  }
+  K.Player = Player;
+
+  K.transportHTML = () => `
+    <div class="transport">
+      <button class="btn primary" id="tp-play" type="button">▶ 再生</button>
+      <button class="btn" id="tp-reset" type="button" title="最初に戻す">⏮</button>
+      <button class="btn" id="tp-back" type="button" title="ストロボ1コマ戻る">◀|</button>
+      <button class="btn" id="tp-fwd" type="button" title="ストロボ1コマ進む">|▶</button>
+      <input type="range" id="tp-t" min="0" max="1000" value="0" aria-label="時刻">
+      <span class="tread" id="tp-read">t = 0.00 s</span>
+      <select id="tp-speed" aria-label="再生速度"><option value="0.25">×0.25</option><option value="0.5">×0.5</option><option value="1" selected>×1</option><option value="2">×2</option></select>
+    </div>`;
+  K.bindTransport = (player, getStep) => {
+    const play = K.$('#tp-play'), sl = K.$('#tp-t'), rd = K.$('#tp-read');
+    play.onclick = () => player.toggle();
+    K.$('#tp-reset').onclick = () => { player.pause(); player.seek(0); };
+    const step = (s) => { player.pause(); const d = getStep(); const k = Math.round(player.t / d + 1e-6); player.seek((k + s) * d); };
+    K.$('#tp-back').onclick = () => step(-1);
+    K.$('#tp-fwd').onclick = () => step(1);
+    sl.oninput = () => { player.pause(); player.seek((sl.value / 1000) * player.tEnd); };
+    K.$('#tp-speed').onchange = (e) => (player.speed = +e.target.value);
+    player.onState = () => { play.textContent = player.playing ? '⏸ 停止' : '▶ 再生'; };
+    window.addEventListener('keydown', (e) => {
+      if (e.target.closest('input,select,textarea,button')) return;
+      if (e.code === 'Space') { e.preventDefault(); player.toggle(); }
+      if (e.code === 'ArrowRight') step(1);
+      if (e.code === 'ArrowLeft') step(-1);
+    });
+    return (t) => { sl.value = player.tEnd > 0 ? Math.round((t / player.tEnd) * 1000) : 0; rd.textContent = 't = ' + K.f(t, 2) + ' s'; };
+  };
+
+  /* ---------- 式の項 ⇔ グラフ ---------- */
+  K.bindTerms = (root, explainEl, defs, onFocus, idle) => {
+    let pinned = null, hover = null;
+    const show = () => {
+      const k = hover || pinned;
+      K.$$('.term', root).forEach((el) => { el.classList.toggle('on', el.dataset.k === k); el.classList.toggle('pin', el.dataset.k === pinned); });
+      const d = k && defs()[k];
+      explainEl.innerHTML = d ? `<div class="ttl">${d.t}</div><div>${d.d}</div>` : idle;
+      if (d && d.c) explainEl.style.borderLeftColor = 'var(' + d.c + ')'; else explainEl.style.borderLeftColor = '';
+      onFocus(k);
+    };
+    root.addEventListener('pointerover', (e) => { const el = e.target.closest('.term'); if (el && e.pointerType === 'mouse') { hover = el.dataset.k; show(); } });
+    root.addEventListener('pointerout', (e) => { const el = e.target.closest('.term'); if (el && e.pointerType === 'mouse') { hover = null; show(); } });
+    root.addEventListener('click', (e) => { const el = e.target.closest('.term'); if (!el) return; pinned = pinned === el.dataset.k ? null : el.dataset.k; hover = null; show(); });
+    root.addEventListener('keydown', (e) => { const el = e.target.closest('.term'); if (el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); el.click(); } });
+    show();
+    return { refresh: show, get key() { return hover || pinned; } };
+  };
+  K.term = (k, html, c) => `<span class="term" tabindex="0" data-k="${k}" style="${c ? `--tc:var(${c}-a);--tb:var(${c})` : ''}">${html}</span>`;
+
+  /* ---------- 天体ボタン ---------- */
+  K.planetHTML = (id) => `<div class="planets" id="${id}">${K.PLANETS.map((p) => `<button type="button" data-p="${p.id}">${p.name}<span class="num" style="opacity:.7;margin-left:4px">${p.g}</span></button>`).join('')}</div>`;
+
+  /* ---------- 背景 ---------- */
+  K.sky = (ctx, w, h, pl, groundY) => {
+    const dark = K.isDark();
+    const s = pl ? (dark ? pl.skyD : pl.sky) : dark ? ['#16202a', '#1e2a36'] : ['#e9f0f4', '#f7fafb'];
+    const gr = ctx.createLinearGradient(0, 0, 0, groundY);
+    gr.addColorStop(0, s[0]); gr.addColorStop(1, s[1]);
+    ctx.fillStyle = gr; ctx.fillRect(0, 0, w, h);
+    if (pl && pl.stars) {
+      ctx.fillStyle = 'rgba(255,255,255,.75)';
+      for (let i = 0; i < 70; i++) { const x = ((i * 97.13) % 1) * w, y = ((i * 53.71) % 1) * groundY * 0.9; ctx.fillRect((x + i * 37) % w, (y + i * 11) % (groundY * 0.9), 1.3, 1.3); }
+    }
+    ctx.fillStyle = pl ? (dark ? pl.groundD : pl.ground) : K.css('--grid2');
+    ctx.fillRect(0, groundY, w, h - groundY);
+  };
+  // 背景色に合わせた文字色
+  K.sceneInk = (pl) => {
+    const dark = K.isDark();
+    if (pl && pl.stars) return { ink: '#e8ecf2', ink2: '#b9c2cc', line: 'rgba(255,255,255,.35)' };
+    return dark ? { ink: '#e4ebf1', ink2: '#a9b6c2', line: 'rgba(255,255,255,.28)' } : { ink: '#18222e', ink2: '#4a5866', line: 'rgba(24,34,46,.35)' };
+  };
+})();
+
+</script>
+<script>
+(function () {
+  'use strict';
+  const { $, $$, f, fs, h: H } = K;
+  const S = { x0: 0, y0: 0, v0: 20, th: 45, planet: 'earth', g: 9.8, strobe: 'auto', vec: true, dec: true, full: false };
+  let ghosts = [], MOT = null, focusKey = null;
+  const player = new K.Player(render);
+  $('#transport').innerHTML = K.transportHTML();
+  const syncTransport = K.bindTransport(player, () => strobeDt());
+  const cx = new K.MotionColumn($('#colX'), { p: '*x*', v: '*v*_x', a: '*a*_x' });
+  const cy = new K.MotionColumn($('#colY'), { p: '*y*', v: '*v*_y', a: '*a*_y' });
+  [cx, cy].forEach((c) => { c.onScrub = (t) => { player.pause(); player.seek(t); }; c.onChange = () => (player.dirty = true); });
+
+  function compute() {
+    const r = (S.th * Math.PI) / 180, vx = S.v0 * Math.cos(r), vy = S.v0 * Math.sin(r), g = S.g;
+    const X = K.motion(S.x0, vx, 0), Y = K.motion(S.y0, vy, -g);
+    const tEnd = Math.min(60, Math.max(0.02, (vy + Math.sqrt(Math.max(0, vy * vy + 2 * g * S.y0))) / g));
+    const t1 = vy > 0 ? vy / g : 0;
+    return { X, Y, tEnd, vx, vy, t1, H: Y.p(t1), R: X.p(tEnd) };
+  }
+  const strobeDt = () => (S.strobe === 'auto' ? K.autoStrobe(MOT.tEnd) : +S.strobe);
+  const planet = () => K.planet(S.planet);
+
+  /* 条件 */
+  const field = (id, lab, min, max, step, val, unit, hint) => `
+    <div class="field"><div class="lab"><span>${lab}</span><output id="o-${id}"></output></div>
+      <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}" data-unit="${unit}">
+      ${hint ? `<div class="hint">${hint}</div>` : ''}</div>`;
+  $('#params').innerHTML =
+    field('v0', '初速度の大きさ ' + H('*v*_0'), 0, 40, 0.5, S.v0, 'm/s') +
+    field('th', '投げ上げる角度 ' + H('*θ*'), -60, 90, 1, S.th, '°', '0° で水平投射、90° で鉛直投げ上げ、負で斜め下向き') +
+    field('y0', '投げ出す高さ ' + H('*y*_0'), 0, 80, 1, S.y0, 'm') +
+    field('x0', '投げ出す水平位置 ' + H('*x*_0'), 0, 30, 0.5, S.x0, 'm', '原点 O から投げ出す点までの水平距離');
+  $$('#params input').forEach((el) => el.addEventListener('input', () => { S[el.id] = +el.value; syncOutputs(); update(); }));
+  function syncOutputs() {
+    $$('#params input').forEach((el) => { el.value = S[el.id]; const st = +el.step; $('#o-' + el.id).textContent = f(S[el.id], st < 1 ? 1 : 0) + ' ' + el.dataset.unit; });
+    $$('#planets button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.p === S.planet));
+    $('#gOut').textContent = f(S.g, 2) + ' m/s²'; $('#gIn').value = S.g;
+    const pl = planet();
+    $('#gNote').textContent = pl ? (pl.noSurface ? pl.name + 'には固体の地面がありません（仮想的な地面で計算）。' : pl.name + '：g = ' + pl.g + ' m/s²（地球の ' + f(pl.g / 9.8, 2) + ' 倍）') : 'カスタム：g = ' + f(S.g, 2) + ' m/s²';
+    $$('.tab').forEach((b) => { const p = PRE[b.dataset.pre]; b.setAttribute('aria-selected', p.th === S.th && p.y0 === S.y0 && p.v0 === S.v0 && p.x0 === S.x0); });
+  }
+  const PRE = { h: { v0: 10, th: 0, y0: 20, x0: 0 }, o: { v0: 20, th: 45, y0: 0, x0: 0 }, oc: { v0: 15, th: 30, y0: 20, x0: 0 }, v: { v0: 20, th: 90, y0: 0, x0: 0 } };
+  $$('.tab').forEach((b) => (b.onclick = () => { Object.assign(S, PRE[b.dataset.pre]); ghosts = []; syncOutputs(); update(); player.pause(); player.seek(MOT.tEnd); }));
+  $('#planetsHost').innerHTML = K.planetHTML('planets');
+  $('#planets').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; S.planet = b.dataset.p; S.g = K.planet(S.planet).g; syncOutputs(); update(); };
+  $('#gIn').oninput = (e) => { S.g = +e.target.value; S.planet = (K.PLANETS.find((p) => Math.abs(p.g - S.g) < 0.005) || {}).id || null; syncOutputs(); update(); };
+  $('#optVec').onchange = (e) => { S.vec = e.target.checked; player.dirty = true; };
+  $('#optDec').onchange = (e) => { S.dec = e.target.checked; player.dirty = true; };
+  $('#optFull').onchange = (e) => { S.full = e.target.checked; cx.setFull(S.full); cy.setFull(S.full); player.dirty = true; };
+  $('#optStrobe').onchange = (e) => { S.strobe = e.target.value; player.dirty = true; };
+  $('#keep').onclick = () => {
+    const pl = planet();
+    ghosts.push({ ...MOT, m: null, label: `${pl ? pl.name : 'g=' + f(S.g, 1)} v₀=${f(S.v0)} θ=${S.th}° y₀=${S.y0}` });
+    if (ghosts.length > 4) ghosts.shift();
+    update();
+  };
+  $('#clear').onclick = () => { ghosts = []; update(); };
+
+  function update() {
+    MOT = compute();
+    const tAxis = K.niceCeil(Math.max(MOT.tEnd, ...ghosts.map((g) => g.tEnd)));
+    cx.setMotion(MOT.X, MOT.tEnd, tAxis, ghosts.map((g) => ({ m: g.X, tEnd: g.tEnd })));
+    cy.setMotion(MOT.Y, MOT.tEnd, tAxis, ghosts.map((g) => ({ m: g.Y, tEnd: g.tEnd })));
+    cx.setFull(S.full); cy.setFull(S.full);
+    player.setEnd(MOT.tEnd);
+    $('#res').innerHTML =
+      `<div>最高点に達する時刻　<b>${MOT.vy > 0 ? f(MOT.t1, 2) + ' s' : '—'}</b></div><div>最高点の高さ　<b>${f(MOT.H, 2)} m</b></div>` +
+      `<div>着地する時刻　<b>${f(MOT.tEnd, 2)} s</b></div><div>着地点の <i class="s">x</i>　<b>${f(MOT.R, 2)} m</b>（水平到達距離 ${f(MOT.R - S.x0, 2)} m）</div>`;
+    $('#ghostList').innerHTML = ghosts.length ? '<span class="note">比較中（点線）：</span>' + ghosts.map((g) => `<span class="g">${g.label}</span>`).join('') : '';
+    buildFormulas();
+    player.dirty = true;
+  }
+
+  /* 式 */
+  const T = K.term, I = (s) => `<i>${s}</i>`, op = (s) => `<span class="op">${s}</span>`;
+  const half = `<span class="frac up"><span>1</span><span>2</span></span>`;
+  function buildFormulas() {
+    const v0 = I('v') + '<sub class="up">0</sub>', cos = '<span class="up">cos</span>' + I('θ'), sin = '<span class="up">sin</span>' + I('θ');
+    const vx = I('v') + '<sub>' + I('x') + '</sub>', vy = I('v') + '<sub>' + I('y') + '</sub>';
+    $('#fx').innerHTML = `
+      <div class="sub-h">水平方向（等速直線運動）</div>
+      <div class="eq"><div class="main">${T('vx', vx, '--vel')}${op('=')}${v0}${cos}</div><div class="subst" data-s="vx"></div></div>
+      <div class="eq"><div class="main">${I('x')}${op('=')}${T('x0', I('x') + '<sub class="up">0</sub>', '--pos')}${op('+')}${T('vxt', v0 + cos + '·' + I('t'), '--pos')}</div><div class="subst" data-s="x"></div></div>
+      <div class="sub-h" style="margin-top:4px">鉛直方向（加速度 −${I('g')} の等加速度直線運動）</div>
+      <div class="eq"><div class="main">${vy}${op('=')}${T('vy0', v0 + sin, '--vel')}${op('−')}${T('gt', I('g') + I('t'), '--vel')}</div><div class="subst" data-s="vy"></div></div>
+      <div class="eq"><div class="main">${I('y')}${op('=')}${T('y0', I('y') + '<sub class="up">0</sub>', '--pos')}${op('+')}${T('vy0t', v0 + sin + '·' + I('t'), '--pos')}${op('−')}${T('hgt2', half + I('g') + I('t') + '<sup class="up">2</sup>', '--hl2')}</div><div class="subst" data-s="y"></div></div>
+      <div class="eq"><div class="main" style="font-size:18px">${T('eq3', `${vy}<sup class="up">2</sup>${op('−')}(${v0}${sin})<sup class="up">2</sup>${op('=')}−2${I('g')}(${I('y')}${op('−')}${I('y')}<sub class="up">0</sub>)`, '--pos')}</div><div class="subst" data-s="e3"></div></div>
+      <div class="row">${T('top', '<span style="font-family:var(--f-ui);font-style:normal">最高点（' + vy + ' = 0）</span>', '--acc')}${T('land', '<span style="font-family:var(--f-ui);font-style:normal">着地（' + I('y') + ' = 0）</span>', '--pos')}</div>`.replace(/<i>/g, '<i class="s">');
+    terms.refresh();
+  }
+  function updateSubst(t) {
+    const m = MOT, el = (k) => $(`#fx [data-s="${k}"]`), tt = f(t, 2), r = (S.th * Math.PI) / 180;
+    if (!el('vx')) return;
+    el('vx').textContent = `vx = ${f(S.v0, 1)} × cos${S.th}° = ${f(S.v0, 1)} × ${f(Math.cos(r), 3)} = ${f(m.vx, 2)} m/s（一定）`;
+    el('x').textContent = `x = ${f(S.x0, 1)} + ${fs(m.vx, 2)} × ${tt} = ${f(m.X.p(t), 2)} m`;
+    el('vy').textContent = `vy = ${f(S.v0, 1)} × sin${S.th}° − ${f(S.g, 2)} × ${tt} = ${fs(m.vy, 2)} − ${f(S.g * t, 2)} = ${f(m.Y.v(t), 2)} m/s`;
+    el('y').textContent = `y = ${f(S.y0, 1)} + ${fs(m.vy, 2)} × ${tt} − ½ × ${f(S.g, 2)} × ${tt}² = ${f(S.y0, 1)} + ${fs(m.vy * t, 2)} − ${f(0.5 * S.g * t * t, 2)} = ${f(m.Y.p(t), 2)} m`;
+    const L = m.Y.v(t) ** 2 - m.vy ** 2, R = -2 * S.g * (m.Y.p(t) - S.y0);
+    el('e3').textContent = `左辺 = ${f(L, 2)}　右辺 = −2 × ${f(S.g, 2)} × ${fs(m.Y.p(t) - S.y0, 2)} = ${f(R, 2)}`;
+  }
+  function highlights(k, t) {
+    const o = { x: { p: [], v: [], a: [] }, y: { p: [], v: [], a: [] } };
+    if (!k || !MOT) return o;
+    const X = MOT.X, Y = MOT.Y, tA = cy.gp.tAxis, g = S.g;
+    const y1 = Y.p0 + Y.v0 * t;
+    if (k === 'vx') {
+      o.x.v.push({ type: 'line', pts: [[0, X.v0], [tA, X.v0]], color: '--vel', dash: [2, 0], label: '*v*_x = 一定', at: [tA * 0.55, X.v0] });
+      o.x.p.push({ type: 'poly', pts: [[t, X.p(t)], [t + tA * 0.15, X.p(t)], [t + tA * 0.15, X.p(t) + X.v0 * tA * 0.15]], fill: '--vel-a', color: '--vel', label: '傾き = *v*_x', at: [t + tA * 0.08, X.p(t) + X.v0 * tA * 0.11] });
+    }
+    if (k === 'x0') o.x.p.push({ type: 'dot', t: 0, y: X.p0, color: '--pos', label: '*x*_0（切片）' });
+    if (k === 'vxt') {
+      o.x.v.push({ type: 'poly', pts: [[0, 0], [0, X.v0], [t, X.v0], [t, 0]], fill: '--pos-a', color: '--pos', label: '*v*_x × *t*', at: [t / 2, X.v0 / 2] });
+      o.x.p.push({ type: 'arrow', t, y0: X.p0, y1: X.p(t), color: '--pos', guide: true, label: '*v*_x*t* = ' + f(X.v0 * t, 2) + ' m' });
+    }
+    if (k === 'vy0') {
+      o.y.v.push({ type: 'dot', t: 0, y: Y.v0, color: '--vel', label: '*v*_0 sin*θ*（切片）' });
+      o.y.p.push({ type: 'line', pts: [[0, Y.p0], [tA * 0.3, Y.p0 + Y.v0 * tA * 0.3]], color: '--vel', label: '*t* = 0 の接線の傾き', at: [tA * 0.31, Y.p0 + Y.v0 * tA * 0.3] });
+    }
+    if (k === 'gt') {
+      o.y.v.push({ type: 'arrow', t, y0: Y.v0, y1: Y.v(t), color: '--vel', guide: true, label: '−*gt* = ' + f(-g * t, 2) + ' m/s' });
+      o.y.a.push({ type: 'poly', pts: [[0, 0], [0, -g], [t, -g], [t, 0]], fill: '--vel-a', color: '--vel', label: '(−*g*) × *t*', at: [t / 2, -g / 2] });
+    }
+    if (k === 'y0') o.y.p.push({ type: 'dot', t: 0, y: Y.p0, color: '--pos', label: '*y*_0（切片）' });
+    if (k === 'vy0t') {
+      o.y.v.push({ type: 'poly', pts: [[0, 0], [0, Y.v0], [t, Y.v0], [t, 0]], fill: '--pos-a', color: '--pos', label: '*v*_0 sin*θ* × *t*', at: [t / 2, Y.v0 / 2] });
+      o.y.p.push({ type: 'line', pts: [[0, Y.p0], [t, y1]], color: '--pos', dash: [5, 4], label: '重力がなかったら', at: [t * 0.5, (Y.p0 + y1) / 2], align: 'right' });
+      o.y.p.push({ type: 'arrow', t, y0: Y.p0, y1, color: '--pos', guide: true, label: f(Y.v0 * t, 2) + ' m' });
+    }
+    if (k === 'hgt2') {
+      o.y.v.push({ type: 'poly', pts: [[0, Y.v0], [t, Y.v0], [t, Y.v(t)]], fill: '--hl2-a', color: '--hl2', label: '½*gt*^2', at: [(2 * t) / 3, (2 * Y.v0 + Y.v(t)) / 3] });
+      o.y.p.push({ type: 'line', pts: [[0, Y.p0], [t, y1]], color: '--pos', dash: [5, 4] });
+      o.y.p.push({ type: 'arrow', t, y0: y1, y1: Y.p(t), color: '--hl2', label: '−½*gt*^2 = ' + f(-0.5 * g * t * t, 2) + ' m' });
+    }
+    if (k === 'eq3') {
+      o.y.v.push({ type: 'poly', pts: [[0, 0], [0, Y.v0], [t, Y.v(t)], [t, 0]], fill: '--pos-a', color: '--pos', label: '台形の面積 = Δ*y*', at: [t / 2, (Y.v0 + Y.v(t)) / 4] });
+      o.y.p.push({ type: 'arrow', t, y0: Y.p0, y1: Y.p(t), color: '--pos', guide: true, label: 'Δ*y*' });
+    }
+    if (k === 'top' && MOT.vy > 0) {
+      o.y.v.push({ type: 'dot', t: MOT.t1, y: 0, color: '--acc', label: '*v*_y = 0（*t* 軸と交わる）' });
+      o.y.p.push({ type: 'dot', t: MOT.t1, y: MOT.H, color: '--acc', label: '最高点：接線が水平' });
+      o.y.p.push({ type: 'line', pts: [[MOT.t1 - tA * 0.15, MOT.H], [MOT.t1 + tA * 0.15, MOT.H]], color: '--vel', dash: [2, 0] });
+      o.x.v.push({ type: 'dot', t: MOT.t1, y: X.v0, color: '--acc', label: '*v*_x は変わらない' });
+    }
+    if (k === 'land') {
+      o.y.p.push({ type: 'dot', t: MOT.tEnd, y: 0, color: '--pos', label: '*y* = 0' });
+      o.x.p.push({ type: 'dot', t: MOT.tEnd, y: MOT.R, color: '--pos', label: '着地点 *x* = ' + f(MOT.R, 1) + ' m' });
+    }
+    return o;
+  }
+  function defs() {
+    if (!MOT) return {};
+    const i = (s) => `<i class="s">${s}</i>`, v0 = i('v') + '<sub>0</sub>', vx = i('v') + '<sub>' + i('x') + '</sub>', vy = i('v') + '<sub>' + i('y') + '</sub>';
+    return {
+      vx: { c: '--vel', t: `${vx} = ${v0} cos${i('θ')}：水平方向の速度は変わらない`, d: `水平方向には力がはたらかない（加速度 0）ので、初速度の水平成分 ${v0} cos${i('θ')} のまま一定です。${i('x')}-${i('t')} 図は直線になり、その傾きが ${vx} です。` },
+      x0: { c: '--pos', t: `${i('x')}<sub>0</sub>：投げ出した点の水平位置`, d: `${i('x')}-${i('t')} 図の縦軸の切片です。` },
+      vxt: { c: '--pos', t: `${v0} cos${i('θ')}·${i('t')}：水平方向の変位`, d: `${vx}-${i('t')} 図の長方形の面積です。水平方向は等速直線運動なので、変位は時間に比例します。ストロボの影（地面上の点）が等間隔に並ぶのはこのためです。` },
+      vy0: { c: '--vel', t: `${v0} sin${i('θ')}：鉛直方向の初速度`, d: `初速度を分解した鉛直成分です。${vy}-${i('t')} 図の縦軸の切片であり、${i('y')}-${i('t')} 図の ${i('t')} = 0 での接線の傾きです。水平投射（${i('θ')} = 0°）では 0 になります。` },
+      gt: { c: '--vel', t: `−${i('gt')}：重力による鉛直方向の速度の変化`, d: `鉛直方向の加速度は −${i('g')}（上向きを正としたので負）。${i('t')} 秒間で速度は ${i('g')}×${i('t')} だけ下向きに変わります。${i('a')}<sub>${i('y')}</sub>-${i('t')} 図の面積（負）です。` },
+      y0: { c: '--pos', t: `${i('y')}<sub>0</sub>：投げ出した点の高さ`, d: `${i('y')}-${i('t')} 図の縦軸の切片です。` },
+      vy0t: { c: '--pos', t: `${v0} sin${i('θ')}·${i('t')}：重力がなかった場合の鉛直方向の変位`, d: `${vy}-${i('t')} 図の長方形の面積です。重力がなければ、物体は投げた向きにまっすぐ進み、この分だけ上がります。` },
+      hgt2: { c: '--hl2', t: `−½${i('gt')}²：重力によって落ちた分`, d: `${vy}-${i('t')} 図の三角形の面積（負）です。「重力がなかったら進むはずの直線」から、自由落下と同じ ½${i('gt')}² だけ下にずれます。` },
+      eq3: { c: '--pos', t: `時刻 ${i('t')} を含まない式`, d: `鉛直方向の等加速度直線運動の式 ${i('v')}² − ${v0}² = 2${i('a')}(${i('y')} − ${i('y')}<sub>0</sub>) に、${i('a')} = −${i('g')}、初速度 ${v0} sin${i('θ')} を入れたものです。最高点の高さを求めるときに便利です。` },
+      top: { c: '--acc', t: `最高点：${vy} = 0`, d: `最高点では鉛直方向の速度が 0 になります（水平方向の速度 ${vx} は残る）。${vy} = ${v0} sin${i('θ')} − ${i('gt')} = 0 より ${i('t')}<sub>1</sub> = ${v0} sin${i('θ')}/${i('g')} = ${f(MOT.t1, 2)} s。高さは ${f(MOT.H, 2)} m。${i('y')}-${i('t')} 図では接線が水平になる点です。` },
+      land: { c: '--pos', t: `着地：${i('y')} = 0`, d: `${i('y')} = ${i('y')}<sub>0</sub> + ${v0} sin${i('θ')}·${i('t')} − ½${i('gt')}² = 0 を解いた時刻 ${f(MOT.tEnd, 2)} s を、${i('x')} の式に代入すると着地点 ${i('x')} = ${f(MOT.R, 2)} m が求まります。水平方向と鉛直方向は、同じ時刻 ${i('t')} でつながっています。` },
+    };
+  }
+  const terms = K.bindTerms($('#fx'), $('#explain'), defs, (k) => { focusKey = k; player.dirty = true; },
+    '<div class="ttl">運動を2つの方向に分けて考える</div><div>投射運動は「水平方向の等速直線運動」と「鉛直方向の等加速度直線運動」の組み合わせです。式の点線の項にふれる（タップする）と、グラフのどこにあたるかを表示します。</div>');
+
+  /* 情景 */
+  const cv = $('#scene');
+  function drawScene(t) {
+    const { ctx, w, h } = K.fit(cv), C = K.css, pl = planet(), ink = K.sceneInk(pl);
+    ctx.clearRect(0, 0, w, h);
+    const runs = [MOT, ...ghosts];
+    let xmin = 0, xmax = 0, ymax = 0;
+    runs.forEach((r) => { for (let i = 0; i <= 80; i++) { const tt = (r.tEnd * i) / 80; xmin = Math.min(xmin, r.X.p(tt)); xmax = Math.max(xmax, r.X.p(tt)); ymax = Math.max(ymax, r.Y.p(tt)); } });
+    ymax = Math.max(ymax, 2);
+    xmax = Math.max(xmax, xmin + ymax * 0.6, xmin + 4);
+    const mL = 44, mR = 24, mT = 26, mB = 40;
+    const sc = Math.min((w - mL - mR) / ((xmax - xmin) * 1.04), (h - mT - mB) / (ymax * 1.08));
+    const gY = h - mB, X = (x) => mL + (x - xmin) * sc, Y = (y) => gY - y * sc;
+    K.sky(ctx, w, h, pl, gY);
+    // 方眼
+    const st = K.niceStep(Math.max((w - mL - mR) / sc, (gY - mT) / sc), 8);
+    ctx.strokeStyle = ink.line; ctx.globalAlpha = 0.35; ctx.lineWidth = 1; ctx.beginPath();
+    for (let x = Math.ceil(xmin / st) * st; X(x) <= w; x += st) { ctx.moveTo(X(x) + 0.5, gY); ctx.lineTo(X(x) + 0.5, 0); }
+    for (let y = st; Y(y) >= 0; y += st) { ctx.moveTo(mL, Y(y) + 0.5); ctx.lineTo(w, Y(y) + 0.5); }
+    ctx.stroke(); ctx.globalAlpha = 1;
+    ctx.fillStyle = ink.ink2; ctx.font = '11px ' + C('--f-num'); ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (let x = Math.ceil(xmin / st) * st; X(x) <= w - 20; x += st) ctx.fillText(Math.abs(x) < 1e-9 ? 'O' : f(x, st < 1 ? 1 : 0), X(x), gY + 5);
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (let y = st; Y(y) >= 12; y += st) ctx.fillText(f(y, st < 1 ? 1 : 0), X(0) - 6, Y(y));
+    // 軸
+    ctx.strokeStyle = ink.ink; ctx.lineWidth = 1.4;
+    K.arrow(ctx, X(0), gY, w - 8, gY, ink.ink, 1.4, 8); K.arrow(ctx, X(0), gY, X(0), 6, ink.ink, 1.4, 8);
+    ctx.fillStyle = ink.ink; K.rich(ctx, '*x* [m]', w - 10, gY + 24, 12, 'right'); K.rich(ctx, '*y* [m]', X(0) + 8, 14, 12, 'left');
+    if (pl) { ctx.fillStyle = ink.ink2; ctx.font = '12px ' + C('--f-ui'); ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.fillText(pl.name + '　g = ' + pl.g + ' m/s²', w - 12, 8); }
+    // 台
+    if (S.y0 > 0) {
+      ctx.fillStyle = K.isDark() ? '#3d4955' : '#c3cbd2';
+      const xr = X(S.x0); ctx.fillRect(Math.max(0, xr - 60), Y(S.y0), Math.min(60, xr), gY - Y(S.y0));
+    }
+    const dt = strobeDt();
+    // 比較
+    ghosts.forEach((r) => {
+      ctx.strokeStyle = C('--ghost'); ctx.lineWidth = 1.6; ctx.setLineDash([5, 4]); ctx.beginPath();
+      for (let i = 0; i <= 120; i++) { const tt = (r.tEnd * i) / 120; i ? ctx.lineTo(X(r.X.p(tt)), Y(r.Y.p(tt))) : ctx.moveTo(X(r.X.p(tt)), Y(r.Y.p(tt))); }
+      ctx.stroke(); ctx.setLineDash([]);
+      const tt = Math.min(t, r.tEnd); ctx.fillStyle = C('--ghost'); ctx.globalAlpha = 0.55; ctx.beginPath(); ctx.arc(X(r.X.p(tt)), Y(r.Y.p(tt)), 7, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+    });
+    const m = MOT, tc = Math.min(t, m.tEnd);
+    // 軌道
+    if (S.full) { ctx.strokeStyle = C('--pos'); ctx.globalAlpha = 0.3; ctx.lineWidth = 1.6; ctx.setLineDash([4, 4]); ctx.beginPath(); for (let i = 0; i <= 160; i++) { const tt = (m.tEnd * i) / 160; i ? ctx.lineTo(X(m.X.p(tt)), Y(m.Y.p(tt))) : ctx.moveTo(X(m.X.p(tt)), Y(m.Y.p(tt))); } ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
+    ctx.strokeStyle = C('--pos'); ctx.lineWidth = 1.6; ctx.globalAlpha = 0.7; ctx.beginPath();
+    for (let i = 0; i <= 120; i++) { const tt = (tc * i) / 120; i ? ctx.lineTo(X(m.X.p(tt)), Y(m.Y.p(tt))) : ctx.moveTo(X(m.X.p(tt)), Y(m.Y.p(tt))); }
+    ctx.stroke(); ctx.globalAlpha = 1;
+    // ストロボと分解（影）
+    const ts = K.strobeTimes(m.tEnd, dt).filter((s) => s <= tc + 1e-9);
+    if (S.dec) {
+      ts.forEach((s) => {
+        ctx.fillStyle = C('--vel'); ctx.globalAlpha = 0.75;
+        ctx.fillRect(X(m.X.p(s)) - 3, gY - 3, 6, 6); // x 方向の影
+        ctx.beginPath(); ctx.arc(X(0), Y(m.Y.p(s)), 3.4, 0, 7); ctx.fill(); // y 方向の影
+        ctx.globalAlpha = 1;
+      });
+    }
+    ts.forEach((s) => { ctx.strokeStyle = C('--pos'); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X(m.X.p(s)), Y(m.Y.p(s)), 6, 0, 7); ctx.stroke(); });
+    const bx = X(m.X.p(tc)), by = Y(m.Y.p(tc));
+    if (S.dec) {
+      const yx = X(0);
+      ctx.strokeStyle = ink.line; ctx.setLineDash([3, 3]); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, gY); ctx.moveTo(bx, by); ctx.lineTo(yx, by); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = C('--vel'); ctx.fillRect(bx - 5, gY - 5, 10, 10);
+      ctx.beginPath(); ctx.arc(yx, by, 5.5, 0, 7); ctx.fill();
+      ctx.font = '11px ' + C('--f-ui'); ctx.fillStyle = ink.ink2; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('■ 地面への影：等間隔（等速直線運動）', mL, gY + 22 > h - 14 ? h - 14 : gY + 22);
+    }
+    // 物体
+    ctx.fillStyle = C('--ui'); ctx.beginPath(); ctx.arc(bx, by, 8, 0, 7); ctx.fill();
+    if (S.vec) {
+      const vs = 70 / Math.max(S.v0, Math.hypot(m.vx, m.Y.v(m.tEnd)), 1);
+      const vx = m.vx, vy = m.Y.v(tc);
+      if (S.dec) {
+        K.arrow(ctx, bx, by, bx + vx * vs, by, C('--vel'), 1.8, 7, [4, 3]);
+        K.arrow(ctx, bx, by, bx, by - vy * vs, C('--vel'), 1.8, 7, [4, 3]);
+        ctx.fillStyle = C('--vel'); K.rich(ctx, '*v*_x', bx + vx * vs + (vx >= 0 ? 6 : -6), by + 10, 12, vx >= 0 ? 'left' : 'right');
+        K.rich(ctx, '*v*_y', bx + 8, by - vy * vs, 12, 'left');
+      }
+      K.arrow(ctx, bx, by, bx + vx * vs, by - vy * vs, C('--vel'), 3, 10);
+      ctx.fillStyle = C('--vel'); K.rich(ctx, '*v*', bx + vx * vs + 8, by - vy * vs - 8, 14, 'left');
+      const gl = K.clamp(S.g * 6, 0, 130);
+      K.arrow(ctx, bx - 14, by, bx - 14, by + gl, C('--acc'), 2.4, 8, [5, 3]);
+      ctx.fillStyle = C('--acc'); K.rich(ctx, '*g*', bx - 20, by + gl, 13, 'right');
+    }
+    if (focusKey === 'top' && m.vy > 0) { K.tag(ctx, '最高点 ' + f(m.H, 2) + ' m（*v*_y = 0）', X(m.X.p(m.t1)), Y(m.H) - 16, C('--acc'), 12, 'center'); ctx.strokeStyle = C('--acc'); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X(m.X.p(m.t1)), Y(m.H), 10, 0, 7); ctx.stroke(); }
+    if (focusKey === 'land' || t >= m.tEnd - 1e-6) { K.tag(ctx, '着地 *x* = ' + f(m.R, 2) + ' m', X(m.R), gY - 16, C('--pos'), 12, 'center'); }
+  }
+
+  function render(t) {
+    if (!MOT) return;
+    drawScene(t);
+    const tc = K.clamp(t, 0, MOT.tEnd), hl = highlights(focusKey, tc);
+    cx.hl = hl.x; cy.hl = hl.y;
+    cx.draw(t); cy.draw(t);
+    syncTransport(t);
+    const vx = MOT.vx, vy = MOT.Y.v(tc);
+    $('#r-t').textContent = f(tc, 2) + ' s';
+    $('#r-x').textContent = f(MOT.X.p(tc), 2) + ' m';
+    $('#r-y').textContent = f(MOT.Y.p(tc), 2) + ' m';
+    $('#r-v').textContent = f(Math.hypot(vx, vy), 2) + ' m/s';
+    $('#r-vx').textContent = f(vx, 2) + ' m/s';
+    $('#r-vy').textContent = f(vy, 2) + ' m/s';
+    updateSubst(tc);
+  }
+
+  const hk = (location.hash || '').slice(1);
+  if (PRE[hk]) Object.assign(S, PRE[hk]);
+  syncOutputs(); update();
+  player.seek(MOT.tEnd);
+  window.addEventListener('hashchange', () => { const k = location.hash.slice(1); if (PRE[k]) { Object.assign(S, PRE[k]); ghosts = []; syncOutputs(); update(); player.pause(); player.seek(MOT.tEnd); } });
+  if (/\/anim\//.test(location.pathname)) $('#backLink').hidden = false;
+})();
+</script>
+
+</body>
+</html>
