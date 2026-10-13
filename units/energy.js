@@ -41,6 +41,7 @@ const SPRING_SLOPE = `<svg class="graph" viewBox="0 0 320 150" role="img" aria-l
 <polygon points="200,130 300,130 300,60" fill="currentColor" opacity=".15" stroke="currentColor"/>
 <text x="30" y="92" font-size="12" fill="var(--blue)"><tspan font-style="italic" font-family="Times New Roman,Times,serif">k</tspan> ＝ 200 N/m</text>
 </svg>`;
+const ANIM = (href, label) => `<a href='${href}' style='display:inline-block;margin:8px 6px 0 0;padding:6px 12px;border:1.5px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:700;text-decoration:none;line-height:1.5'>▶ ${label}</a>`;
 const TF = ["正しい","誤り"];
 const SGN = ["正","負","0"];
 const UNITQ = ["J（仕事・エネルギー）","W（仕事率）","m/s（速さ）","N（力）"];
@@ -48,7 +49,7 @@ const YN = ["使える","使えない"];
 
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:"仕事の定義には、必ず「どの力が」「どの物体に」を入れて覚えます。",
+  intro:`仕事の定義には、必ず「どの力が」「どの物体に」を入れて覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/work.html#def","仕事の定義と正負")}${ANIM("anim/work.html#fx","F-x グラフと仕事")}${ANIM("anim/work.html#power","仕事率")}${ANIM("anim/work.html#principle","仕事の原理")}${ANIM("anim/energy.html#kinetic","運動エネルギー（思考実験）")}${ANIM("anim/energy.html#theorem","仕事と運動エネルギー")}${ANIM("anim/energy.html#gravity","重力による位置エネルギー")}${ANIM("anim/energy.html#spring","弾性力による位置エネルギー")}${ANIM("anim/mech.html#proof","力学的エネルギー保存の証明")}${ANIM("anim/mech.html#cond","保存する条件")}${ANIM("anim/mech.html#nc","保存しない場合")}`,
   advice:"仕事の定義（<i class='qv'>θ</i> は力の向きと移動の向きがなす角）と、力学的エネルギー保存則が成り立つ条件を覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
@@ -84,14 +85,14 @@ const SECTIONS = [
     {id:"ra4",type:"num",prompt:"重い荷物を持ち上げたまま、その場で 1 分間じっとしていた。人が荷物にした仕事は？",answer:0,tol:0.001,unit:"J",
      explain:"荷物は移動していないので仕事は 0。疲れるのは筋肉の中で起きていることです。"}
   ]},
-  { title:"B. 仕事の符号を判定する", lead:"次の力が物体にする仕事は、正・負・0 のどれか。", qs:[
+  { title:"B. 仕事の符号を判定する", lead:`次の力が物体にする仕事は、正・負・0 のどれか。答えたら確かめよう：${ANIM("anim/work.html#def","力の向きと仕事の符号")}`, qs:[
     {id:"rb1",type:"choice",prompt:"粗い水平面をすべっている物体に、動摩擦力がする仕事",options:SGN,answer:1,explain:"移動の向きと逆向き（<i class='qv'>θ</i> ＝ 180°）なので負。"},
     {id:"rb2",type:"choice",prompt:"水平面をすべっている物体に、垂直抗力がする仕事",options:SGN,answer:2,explain:"移動の向きと垂直なので 0。"},
     {id:"rb3",type:"choice",prompt:"投げ上げたボールが上昇する間に、重力がボールにする仕事",options:SGN,answer:1,explain:"重力は下向き、移動は上向きなので負。ボールは減速します。"},
     {id:"rb4",type:"choice",prompt:"同じボールが落下する間に、重力がボールにする仕事",options:SGN,answer:0,explain:"重力と移動が同じ向きなので正。ボールは加速します。"},
     {id:"rb5",type:"choice",prompt:"振り子のおもりが振れている間に、糸の張力がおもりにする仕事",options:SGN,answer:2,explain:"張力はいつも移動の向き（円の接線）と垂直なので 0。"}
   ]},
-  { title:"C. 基準面を読む", lead:"床からの高さ 0.80 m の机の上に、質量 1.0 kg の物体がある。", qs:[
+  { title:"C. 基準面を読む", lead:`床からの高さ 0.80 m の机の上に、質量 1.0 kg の物体がある。答えたら確かめよう：${ANIM("anim/energy.html#gravity","基準面と位置エネルギー")}`, qs:[
     {id:"rc1",type:"choice",prompt:"床を基準水平面とすると、物体の重力による位置エネルギーは？",options:SGN,answer:0,explain:"基準水平面より上にあるので正（<i class='qv'>mgh</i> ≒ 7.8 J）。"},
     {id:"rc2",type:"num",prompt:"机の面を基準水平面とすると、物体の重力による位置エネルギーはいくらか。",answer:0,tol:0.001,unit:"J",
      traps:{"7.84":"基準水平面が机の面なので、高さ <i class='qv'>h</i> ＝ 0 です。"},explain:"基準水平面上にあるので <i class='qv'>h</i> ＝ 0、<i class='qv'>U</i> ＝ 0。"},
@@ -107,7 +108,7 @@ const SECTIONS = [
      explain:"正しい。どちらも仕事をするのは重力だけなので、<i class='qv'>mgh</i> ＝ ½<i class='qv'>mv</i>² で同じ速さになります（向きは違います）。"},
     {id:"rd6",type:"choice",prompt:"仕事率が大きいほど、した仕事も必ず大きい。",options:TF,answer:1,explain:"誤り。仕事 ＝ 仕事率 × 時間。時間が短ければ仕事は小さくなります。"}
   ]},
-  { title:"E. 力学的エネルギー保存則が使えるか", lead:"空気抵抗は無視する。", qs:[
+  { title:"E. 力学的エネルギー保存則が使えるか", lead:`空気抵抗は無視する。答えたら確かめよう：${ANIM("anim/mech.html#cond","保存する運動")}${ANIM("anim/mech.html#nc","保存しない運動")}`, qs:[
     {id:"re1",type:"choice",prompt:"なめらかな曲面を物体がすべり下りる。",options:YN,answer:0,explain:"垂直抗力は仕事をしないので、仕事をするのは重力だけ。使えます。"},
     {id:"re2",type:"choice",prompt:"粗い水平面上を物体がすべって止まる。",options:YN,answer:1,explain:"動摩擦力が負の仕事をするので使えません。"},
     {id:"re3",type:"choice",prompt:"糸につるしたおもりが振り子運動をする。",options:YN,answer:0,explain:"張力は仕事をしないので使えます。"},
@@ -158,7 +159,7 @@ const SECTIONS = [
   advice:"受ける力ごとに仕事の正・負・0 を判定し、保存が使えるかを確かめてから式を立てよう。",
   ref:{label:"7ステップを見る", html:STEPS},
   groups:[
-  { title:"問題1（すべてのステップ）",
+  { title:"問題1（すべてのステップ）", lead:`解き終えたら確かめよう：${ANIM("anim/mech.html#p1","問題1の運動とエネルギー図")}`,
     quote:"質量 2.0 kg の物体を、水平な床からの高さ 5.0 m の位置で静かにはなした。物体はなめらかな曲面をすべり下り、床の高さに達した。このときの速さを求めよ。", qs:[
     {id:"s11",type:"blanks",prompt:"ステップ1　始めと終わりの状態を整理する（床を基準水平面とする）。",text:"始め：高さ {0}、速さ {1}<br>終わり：高さ {2}、速さ <i class='qv'>v</i>",
      options:[["0","5.0 m","2.0 m"],["0","5.0 m/s","わからない"],["5.0 m","0","わからない"]],answer:[1,0,1],
@@ -176,7 +177,7 @@ const SECTIONS = [
     {id:"s16",type:"choice",prompt:"ステップ7　質量を 2 倍にすると、速さはどうなるか。",options:["2 倍","√2 倍","変わらない"],answer:2,
      explain:"<i class='qv'>m</i> が約分で消えるので、質量によりません。同じ高さからの自由落下と同じ速さです。"}
   ]},
-  { title:"問題2（前半だけ誘導）",
+  { title:"問題2（前半だけ誘導）", lead:`解き終えたら確かめよう：${ANIM("anim/mech.html#p2","問題2の運動とエネルギー図")}`,
     quote:"質量 2.0 kg の物体が、粗い水平面上を速さ 6.0 m/s ですべり出した。動摩擦係数を 0.30 とする。物体が止まるまでにすべる距離を、有効数字2桁で求めよ。", qs:[
     {id:"s21",type:"blanks",prompt:"ステップ2　受ける力と、その仕事。",text:"重力：{0}　垂直抗力：{1}　動摩擦力：{2}",
      options:[SGN,SGN,SGN],answer:[2,2,1],explain:"重力と垂直抗力は移動の向きと垂直で 0。動摩擦力は移動の向きと逆向きで負。"},
@@ -190,7 +191,7 @@ const SECTIONS = [
      traps:{"12.2":"½ を忘れていませんか。","60":"動摩擦力は <i class='qv'>μ</i>′<i class='qv'>mg</i>。<i class='qv'>g</i> を掛けていますか。","1":"<i class='qv'>v</i>₀ を 2 乗していますか。"},
      explain:"<i class='qv'>x</i> ＝ <i class='qv'>v</i>₀² ÷ (2<i class='qv'>μ</i>′<i class='qv'>g</i>) ＝ 36 ÷ 5.88 ≒ 6.1 m。"}
   ]},
-  { title:"問題3（答えだけ入力・弾性力と重力）", lead:"紙に7ステップを書いて解き、答えを入力せよ。",
+  { title:"問題3（答えだけ入力・弾性力と重力）", lead:`紙に7ステップを書いて解き、答えを入力せよ。解き終えたら確かめよう：${ANIM("anim/mech.html#p3","問題3の運動とエネルギー図")}`,
     quote:"なめらかな水平面上で、ばね定数 200 N/m のばねを 0.10 m 押し縮め、その先に質量 0.50 kg の物体を置いて静かにはなした。物体はばねから離れた後、なめらかな斜面を上った。", figure:SPRING_SLOPE, qs:[
     {id:"s31",type:"num",prompt:"(1) ばねから離れたときの物体の速さ（有効数字2桁）",answer:2.0,tol:0.02,unit:"m/s",
      traps:{"6.3":"弾性力による位置エネルギーは ½<i class='qv'>kx</i>² です（½<i class='qv'>kx</i> ではありません）。","4":"√ をとり忘れていませんか。","2.8":"½<i class='qv'>kx</i>² の ½ を忘れていませんか。"},
