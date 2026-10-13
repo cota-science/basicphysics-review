@@ -31,7 +31,7 @@ window.UNIT_LIST = [
     { id: "sound",      title: "音",                         file: "units/sound.js" }
   ]},
   { group: "電気", units: [
-    { id: "anim-elec",  title: "▶ 電気のアニメーション",     href: "anim/index.html#elec", note: "電流の定義・オームの法則と電力、回路シミュレーター、電流がつくる磁場" },
+    { id: "anim-elec",  title: "▶ 電気のアニメーション",     href: "anim/index.html#elec", note: "オームの法則と電力、回路シミュレーター、電流と磁場、モーター、電磁誘導と発電機" },
     { id: "current",    title: "電流と電気抵抗",             file: "units/current.js" },
     { id: "ac",         title: "電流と磁場・交流",           file: "units/ac.js" }
   ]},
