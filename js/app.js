@@ -1,5 +1,5 @@
 /*
- * 物理基礎 Webテスト 本体
+ * 物理基礎ラボ 本体
  * 通常は編集不要です。問題は units/ フォルダの単元ファイルに書きます。
  */
 (function(){
@@ -279,10 +279,10 @@ function renderMenu(){
   document.body.classList.remove("in-unit");
   document.getElementById("unitBar").hidden = true;
   document.getElementById("scoreMini").textContent = "";
-  document.title = "物理基礎 Webテスト";
+  document.title = "物理基礎ラボ";
   const sum = load("summary", {});
   let h = `<div class="sheet menu"><h2>単元を選ぶ</h2>
-    <p class="intro">どの単元も「①定義 → ②読解 → ③次元 → ④手順 → まとめ」の順に進みます。答えはこの端末に保存されるので、途中でやめても続きから解けます。</p>`;
+    <p class="intro"><b>物理基礎ラボ</b>：見て、動かして、解いて確かめる。▶ のページはアニメーションやシミュレーター、そのほかは演習（Webテスト）です。<br>どの単元も「①定義 → ②読解 → ③次元 → ④手順 → まとめ」の順に進みます。答えはこの端末に保存されるので、途中でやめても続きから解けます。</p>`;
   (window.UNIT_LIST || []).forEach(g => {
     h += `<h3>${g.group}</h3><ul class="units">`;
     g.units.forEach(u => {
@@ -342,7 +342,7 @@ function route(){
     document.getElementById("unitBar").hidden = false;
     document.getElementById("homeLink").textContent = "‹ 単元一覧";
     document.getElementById("unitTitle").textContent = u.title || entry.title;
-    document.title = `${u.title || entry.title}｜物理基礎 Webテスト`;
+    document.title = `${u.title || entry.title}｜物理基礎ラボ`;
     let w = null;
     if(!warned[u.id]){ w = validate(u); warned[u.id] = true; }
     renderSection(w);
@@ -350,7 +350,7 @@ function route(){
   }).catch(showError);
 }
 window.addEventListener("hashchange", () => {
-  if(!/^#\/u\//.test(location.hash)) document.getElementById("homeLink").textContent = "物理基礎 Webテスト";
+  if(!/^#\/u\//.test(location.hash)) document.getElementById("homeLink").textContent = "物理基礎ラボ";
   route();
 });
 

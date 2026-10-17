@@ -168,7 +168,7 @@ sub .s, sub i{font-family:var(--f-sym)}
 <div class="wrap">
   <header class="top">
     <div class="hd">
-      <a class="back" id="backLink" href="../index.html#/u/kinematics/0" hidden>‹ 速度・加速度（Webテスト）へ</a>
+      <a class="back" id="backLink" href="../index.html#/u/kinematics/0" hidden>‹ 速度・加速度（演習）へ</a>
       <h1>直線運動ラボ<small>物理基礎・運動の表し方／落体の運動</small></h1>
       <nav class="nav" aria-label="アニメーション"><a href="index.html#motion">≡ アニメーション集</a><a href="average.html">平均と瞬間</a><a href="kinematics.html" aria-current="page">直線運動ラボ</a><a href="relative.html">合成速度と相対速度</a><a href="projectile.html">投射運動ラボ</a><a href="monkey.html">モンキーハンティング</a></nav>
     </div>
@@ -1331,7 +1331,7 @@ sub .s, sub i{font-family:var(--f-sym)}
     const ff = S.mode === 'fall';
     const b = $('#backLink');
     b.href = '../index.html#/u/' + (ff ? 'free-fall' : 'kinematics') + '/0';
-    b.textContent = '‹ ' + (ff ? '落体の運動' : '速度・加速度') + '（Webテスト）へ';
+    b.textContent = '‹ ' + (ff ? '落体の運動' : '速度・加速度') + '（演習）へ';
   }
   function setMode(m, keepHash) {
     S.mode = m; player.pause();
