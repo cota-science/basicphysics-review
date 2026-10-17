@@ -2,6 +2,7 @@
  * 単元：波の性質
  * 横波・縦波、振幅・波長・周期・振動数、v ＝ fλ、y-x グラフと y-t グラフの読み分け、
  * 重ね合わせ、反射（自由端・固定端）、定在波（定常波）。
+ * ②読解 D〜F：縦波の横波表示（密・疎）、反射波の作図と端の節・腹、重ね合わせと独立性。
  */
 (function(){
 
@@ -101,6 +102,70 @@ ${row(196, 4, `${SI("f")} ＝ 4 Hz（1 s 間に4回）`, `${SI("T")} ＝ 0.25 s`
 })();
 const FT_NOTE = `<p>1 s 間に ${f} 回振動し、1回に ${T}〔s〕かかる。${f} 回分の時間をつなげるとちょうど 1 s になるので、<b>${f}${T} ＝ 1</b>（${f} ＝ 1/${T}、${T} ＝ 1/${f}）。振動数が2倍になると、周期は半分になる。</p>
 <p>単位で確かめる：${f}〔Hz ＝ 1/s〕×${T}〔s〕→ 1/s × s ＝ 1（単位なし）。</p>`;
+
+/* 縦波を横波のように表したグラフ：右向き（x の正の向き）の変位を y の正にとる。λ ＝ 0.40 m、y ＝ A sin(2πx/λ) */
+const LONG = (() => {
+  const k = 260 / 0.60, X = m => 40 + m * k;
+  let ticks = "", pts = "";
+  for(let i = 1; i <= 6; i++) ticks += `<line x1="${X(i/10)}" y1="78" x2="${X(i/10)}" y2="84" stroke="currentColor"/><text x="${X(i/10) - 9}" y="98" font-size="10" fill="currentColor">${(i/10).toFixed(1)}</text>`;
+  [["a",0,81],["b",0.1,38],["c",0.2,81],["d",0.3,124],["e",0.4,81]].forEach(([n,m,cy]) => {
+    pts += `<circle cx="${X(m)}" cy="${cy}" r="4.5" fill="var(--red)"/><text x="${X(m) + (m === 0 ? 6 : -4)}" y="${cy === 124 ? cy + 18 : cy - 9}" font-size="13" fill="var(--red)">${n}</text>`;
+  });
+  return `<svg class="graph" viewBox="0 0 320 170" role="img" aria-label="縦波のある時刻の変位を、右向きの変位を上にとって横波のように表したグラフ。波長0.40 m。点aはx＝0で変位0、点bはx＝0.10 mで右向きに最大、点cはx＝0.20 mで変位0、点dはx＝0.30 mで左向きに最大、点eはx＝0.40 mで変位0。">
+<line x1="40" y1="81" x2="306" y2="81" stroke="currentColor" stroke-width="1.2"/>
+<line x1="40" y1="150" x2="40" y2="12" stroke="currentColor" stroke-width="1.2"/>
+<text x="4" y="34" font-size="10" fill="currentColor">右向き</text><text x="4" y="136" font-size="10" fill="currentColor">左向き</text>
+${ticks}
+<polyline points="${sine(40, 300, 40, 81, 43, 0.40 * k, 0)}" fill="none" stroke="var(--blue)" stroke-width="2.6"/>
+${pts}
+<text x="48" y="16" font-size="12" fill="currentColor">変位 ${SI("y")}（右向きを正）</text><text x="272" y="122" font-size="12" fill="currentColor">${SI("x")}〔m〕</text>
+<line x1="228" y1="160" x2="290" y2="160" stroke="currentColor" stroke-width="1.6"/><polygon points="290,155 300,160 290,165" fill="currentColor"/>
+<text x="200" y="154" font-size="11" fill="currentColor">波の進む向き</text>
+</svg>`;
+})();
+
+/* 端に向かって進むパルス（左側がゆるやか、右側（進む向きの前）が急） */
+const REFL = `<svg class="graph" viewBox="0 0 320 120" role="img" aria-label="右へ進む山形のパルスが、右の端に向かっている。パルスは左側がゆるやかに上がり、右側（前側）が急に下がる形。">
+<line x1="20" y1="80" x2="270" y2="80" stroke="currentColor" stroke-width="1.6"/>
+<line x1="270" y1="30" x2="270" y2="104" stroke="currentColor" stroke-width="2.4"/>
+${[34,46,58,70,82,94].map(yy => `<line x1="270" y1="${yy}" x2="280" y2="${yy - 10}" stroke="currentColor"/>`).join("")}
+<text x="282" y="22" font-size="12" text-anchor="end" fill="currentColor">端</text>
+<polyline points="60,80 150,30 180,80" fill="none" stroke="var(--blue)" stroke-width="3" stroke-linejoin="round"/>
+<line x1="186" y1="44" x2="228" y2="44" stroke="currentColor" stroke-width="1.6"/><polygon points="228,39 238,44 228,49" fill="currentColor"/>
+<text x="62" y="104" font-size="11" fill="currentColor">ゆるやか</text><text x="160" y="104" font-size="11" fill="currentColor">急（前側）</text>
+</svg>`;
+/* 反射後のパルスの選択肢（左向きに進む）。steep：急な側 "L"/"R"、up：山なら true */
+const RP = (lab, up, steep) => {
+  const y0 = 30, h = up ? -22 : 22, a = 40, b = 130, m = steep === "L" ? a + 20 : b - 20;
+  return `<span style='display:inline-flex;align-items:center;gap:8px'><b>${lab}</b><svg width="170" height="60" viewBox="0 0 170 60" aria-label="${up ? "山" : "谷"}、${steep === "L" ? "左側" : "右側"}が急">
+<line x1="6" y1="${y0}" x2="152" y2="${y0}" stroke="currentColor" stroke-width="1.3"/>
+<line x1="152" y1="4" x2="152" y2="56" stroke="currentColor" stroke-width="2"/>
+<polyline points="${a},${y0} ${m},${y0 + h} ${b},${y0}" fill="none" stroke="var(--blue)" stroke-width="2.6" stroke-linejoin="round"/>
+<line x1="8" y1="${up ? 50 : 10}" x2="30" y2="${up ? 50 : 10}" stroke="currentColor" stroke-width="1.3"/><polygon points="8,${up ? 46 : 6} 2,${up ? 50 : 10} 8,${up ? 54 : 14}" fill="currentColor"/>
+</svg></span>`;
+};
+const RPOPT = [RP("ア", true, "L"), RP("イ", true, "R"), RP("ウ", false, "L"), RP("エ", false, "R")];
+
+/* 2つのパルスが向かい合って進む（1 目盛り ＝ 1 cm、どちらも 1 cm/s） */
+const SUP = (() => {
+  const X = c => 30 + c * 26, Y = c => 82 - c * 20;
+  let g = "";
+  for(let i = 0; i <= 10; i++) g += `<line x1="${X(i)}" y1="${Y(3)}" x2="${X(i)}" y2="${Y(-2)}" stroke="currentColor" opacity=".18"/><text x="${X(i)}" y="${Y(-2) + 14}" font-size="10" text-anchor="middle" fill="currentColor">${i}</text>`;
+  for(let j = -2; j <= 3; j++) g += `<line x1="${X(0)}" y1="${Y(j)}" x2="${X(10)}" y2="${Y(j)}" stroke="currentColor" opacity=".18"/>`;
+  return `<svg class="graph" viewBox="0 0 320 190" role="img" aria-label="時刻0の2つのパルス。Aは x＝0〜2 cm にある高さ2 cm の山で右へ、Bは x＝6〜8 cm にある深さ1 cm の谷で左へ、どちらも1 cm/sで進む。点Pは x＝4 cm。">
+${g}
+<line x1="${X(0)}" y1="${Y(0)}" x2="${X(10)}" y2="${Y(0)}" stroke="currentColor" stroke-width="1.3"/>
+<polyline points="${X(0)},${Y(0)} ${X(0)},${Y(2)} ${X(2)},${Y(2)} ${X(2)},${Y(0)}" fill="none" stroke="var(--blue)" stroke-width="3"/>
+<polyline points="${X(6)},${Y(0)} ${X(6)},${Y(-1)} ${X(8)},${Y(-1)} ${X(8)},${Y(0)}" fill="none" stroke="var(--red)" stroke-width="3"/>
+<text x="${X(1)}" y="${Y(2) - 8}" font-size="13" text-anchor="middle" fill="var(--blue)" font-weight="700">A</text>
+<line x1="${X(2.3)}" y1="${Y(2)}" x2="${X(3.6)}" y2="${Y(2)}" stroke="var(--blue)" stroke-width="1.6"/><polygon points="${X(3.6)},${Y(2) - 5} ${X(3.6) + 9},${Y(2)} ${X(3.6)},${Y(2) + 5}" fill="var(--blue)"/>
+<text x="${X(7)}" y="${Y(-1) + 18}" font-size="13" text-anchor="middle" fill="var(--red)" font-weight="700">B</text>
+<line x1="${X(5.7)}" y1="${Y(-1)}" x2="${X(4.4)}" y2="${Y(-1)}" stroke="var(--red)" stroke-width="1.6"/><polygon points="${X(4.4)},${Y(-1) - 5} ${X(4.4) - 9},${Y(-1)} ${X(4.4)},${Y(-1) + 5}" fill="var(--red)"/>
+<circle cx="${X(4)}" cy="${Y(0)}" r="4" fill="currentColor"/><text x="${X(4) + 5}" y="${Y(0) - 6}" font-size="13" font-weight="700" fill="currentColor">P</text>
+<text x="${X(10)}" y="${Y(-2) + 28}" font-size="11" text-anchor="end" fill="currentColor">${SI("x")}〔cm〕　1目盛り ＝ 1 cm（縦・横とも）</text>
+<text x="${X(0)}" y="12" font-size="11" fill="currentColor">${SI("y")}〔cm〕　A・B ともに速さ 1 cm/s</text>
+</svg>`;
+})();
 
 const DEF_TABLE = `<div class="tbl"><table>
 <colgroup><col style="width:6.6em"><col></colgroup>
@@ -219,6 +284,46 @@ const SECTIONS = [
     {id:"rc4",type:"choice",prompt:"自由端で反射するとき、山は山として反射する。",options:TF,answer:0,explain:"正しい。固定端では谷として反射します。"},
     {id:"rc5",type:"choice",prompt:"定在波（定常波）は、波形が左右どちらにも進まない。",options:TF,answer:0,explain:"正しい。節の位置は動かず、腹の位置でその場の振動をくり返します。"},
     {id:"rc6",type:"choice",prompt:"振幅が大きい波ほど、速く伝わる。",options:TF,answer:1,explain:"誤り。振幅は波の速さに関係しません。"}
+  ]},
+  { title:"D. 縦波を横波のように表したグラフを読む", lead:`縦波（疎密波）のある時刻の変位を、右向き（${x} の正の向き）の変位を ${y} の正にとって、横波のように表したグラフ。点 a〜e は、媒質の各点のもとの位置。答えたら確かめよう：${ANIM("anim/longitudinal.html","縦波（疎密波）")}`, figure:LONG, qs:[
+    {id:"rd1",type:"choice",prompt:"点 b の媒質は、この瞬間どちら向きにずれているか。",options:["右向きに最大","左向きに最大","ずれていない"],answer:0,
+     explain:`${y} が正の最大なので、右向きに最大だけずれています。縦波のグラフの「上」は「右向き」の意味です。`},
+    {id:"rd2",type:"choice",prompt:"媒質が最も密になっている点はどれか。",options:["a","b","c","d","e"],answer:2,
+     explain:"c の左側の点（b）は右へ、右側の点（d）は左へずれているので、c に向かって集まり、密になります。"},
+    {id:"rd3",type:"multi",prompt:"媒質が最も疎になっている点をすべて選べ。",options:["a","b","c","d","e"],answer:[0,4],
+     explain:"a・e では、左側の点が左へ、右側の点が右へずれていて、まわりの点が離れていくので疎になります。"},
+    {id:"rd4",type:"choice",prompt:"変位が最大の点（b・d）の位置では、媒質の密度はどうなっているか。",options:["密","疎","密でも疎でもない（もとの密度）"],answer:2,
+     explain:"b のまわりの点はどれも同じくらい右へずれているので、間隔は変わりません。密・疎は変位が 0 の点にできます。"},
+    {id:"rd5",type:"num",prompt:"隣り合う密と密の間隔は何 m か。",answer:0.40,tol:0.005,unit:"m",
+     traps:{"0.2":"それは密と疎の間隔（半波長）です。","0.1":"変位が最大の点と密の点の間隔（1/4 波長）です。"},
+     explain:"密と密の間隔は 1 波長で 0.40 m。縦波の波長は「密から次の密まで」です。"}
+  ]},
+  { title:"E. 反射波を作図する・端は節か腹か", lead:`山形のパルスが右へ進み、右の端で反射する。答えたら確かめよう：${ANIM("anim/transverse.html#ref","反射と定在波（定常波）")}`, figure:REFL, qs:[
+    {id:"re1",type:"choice",prompt:"右の端が<b>固定端</b>のとき、完全に反射して左へ進むパルスの形はどれか。",options:RPOPT,answer:2,
+     explain:"固定端：端がないとして端の向こうへ進んだ波を描き、上下を反転させてから端で左右に折り返します。山は谷になり、前側だった急な側は、左へ進む反射波でも前側（左側）になります。"},
+    {id:"re2",type:"choice",prompt:"右の端が<b>自由端</b>のとき、完全に反射して左へ進むパルスの形はどれか。",options:RPOPT,answer:0,
+     explain:"自由端：端の向こうへ進んだ波を、上下はそのまま、端で左右に折り返します。山は山のまま、急な側は左側（前側）になります。"},
+    {id:"re3",type:"choice",prompt:"固定端反射の反射波を作図する手順として正しいものはどれか。",
+     options:["端の向こうへ進んだはずの波を描き、上下を反転させてから、端を軸に折り返す","端の向こうへ進んだはずの波を描き、上下はそのままで、端を軸に折り返す","入射波を上下に反転させるだけで、折り返さない"],answer:0,
+     explain:"2番目は自由端の手順です。反射波は逆向きに進むので、必ず端で折り返します。"},
+    {id:"re4",type:"blanks",prompt:"連続した波が端で反射し、入射波と反射波が重なって定在波（定常波）ができた。",text:"固定端は定在波の{0}に、自由端は定在波の{1}になる。",
+     options:[["節","腹"],["節","腹"]],answer:[0,1],
+     explain:"固定端は動けないので、いつも変位 0 の節です。自由端は入射波と反射波が同じ向きに重なるので、大きく振動する腹です。"},
+    {id:"re5",type:"choice",prompt:"固定端で定在波（定常波）ができたとき、端から最も近い腹までの距離は？",options:[`${L}/4`,`${L}/2`,`${L}`],answer:0,
+     explain:`端は節。節と節の間隔が ${L}/2 で、腹はその真ん中にあるので、端から ${L}/4 です。`}
+  ]},
+  { title:"F. 重ね合わせと独立性", lead:`時刻 0 に、A（高さ 2 cm の山）と B（深さ 1 cm の谷）が向かい合って進んでいる。答えたら確かめよう：${ANIM("anim/transverse.html#sup","波の重ね合わせ")}`, figure:SUP, qs:[
+    {id:"rf1",type:"num",prompt:"時刻 3.0 s のとき、点 P（<i class='qv'>x</i> ＝ 4 cm）の変位は何 cm か。",answer:1,tol:0.01,unit:"cm",
+     traps:{"3":"B は谷なので、変位は負（−1 cm）です。2 ＋ (−1) を計算します。","-1":"A の山の変位 ＋2 cm も加えます。","2":"3.0 s 後には B も P に届いています。"},
+     explain:"3.0 s 後、A は x ＝ 3〜5 cm、B も x ＝ 3〜5 cm に来て、ぴったり重なります。変位は 2 ＋ (−1) ＝ 1 cm。"},
+    {id:"rf2",type:"choice",prompt:"時刻 3.0 s の合成波の形はどれか。",options:["x ＝ 3〜5 cm に高さ 1 cm の山","x ＝ 3〜5 cm に高さ 3 cm の山","どこも変位 0（平ら）"],answer:0,
+     explain:"重なった部分の変位は、それぞれの変位の和です（重ね合わせの原理）。"},
+    {id:"rf3",type:"choice",prompt:"時刻 6.0 s のとき、A はどうなっているか。",options:["x ＝ 6〜8 cm に、高さ 2 cm の山のまま進んでいる","x ＝ 6〜8 cm に、高さ 1 cm の山になって進んでいる","B と打ち消しあって消えている"],answer:0,
+     explain:"すれ違った後、それぞれの波はもとの形のまま進みます（波の独立性）。6.0 s で 6 cm 進むので、A は x ＝ 6〜8 cm にあります。"},
+    {id:"rf4",type:"choice",prompt:"同じ形の山と谷がぴったり重なって変位がどこも 0 になった瞬間、2つの波は消えてなくなっている。",options:TF,answer:1,
+     explain:"誤り。その瞬間だけ変位が打ち消しあっていますが、それぞれの波は進み続け、すれ違った後はもとの形で現れます。"},
+    {id:"rf5",type:"choice",prompt:`振幅 ${A} の同じ波が逆向きに進んで重なり、定在波（定常波）ができた。腹の振幅は？`,options:[`${A}/2`,`${A}`,`2${A}`],answer:2,
+     explain:`腹では2つの波がいつも同じ向きに重なるので、振幅は ${A} ＋ ${A} ＝ 2${A} です。節では打ち消しあって 0 です。`}
   ]}]
 },
 { id:"dim", tab:"③次元", title:"③ 次元チェック",
