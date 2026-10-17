@@ -29,6 +29,10 @@ const DEF_TABLE = `<div class="tbl"><table>
 <tr><td>絶対温度の単位（ケルビン）</td><td>絶対温度の単位。温度差 1&nbsp;K は、温度差 1&nbsp;℃ と同じ大きさ<br><span style='color:var(--blue);font-weight:700'>K</span></td></tr>
 <tr><td>熱平衡</td><td>温度の異なる物体を接触させたとき、熱が移動して、やがて両方の温度が等しくなった状態</td></tr>
 <tr><td>熱膨張</td><td>温度が上がると、物体の長さや体積が大きくなる現象。粒子の熱運動が激しくなり、粒子の間隔が広がるために起こる</td></tr>
+<tr><th colspan='2' style='text-align:left;background:var(--blue-soft)'>熱の伝わり方（中学の復習）</th></tr>
+<tr><td>伝導（熱伝導）</td><td>物体の中や、接している物体の間で、高温の部分から低温の部分へ熱が伝わる。粒子の熱運動が隣の粒子へ次々と伝わる。金属は熱を伝えやすい</td></tr>
+<tr><td>対流</td><td>温められた液体や気体が移動して、熱が運ばれる。温められた部分は膨張して密度が小さくなり、上へ移動する。固体では起こらない</td></tr>
+<tr><td>放射（熱放射）</td><td>高温の物体が出す赤外線などの電磁波によって、離れた物体へ熱が伝わる。物質がなくても（真空中でも）伝わる</td></tr>
 <tr><th colspan='2' style='text-align:left;background:var(--blue-soft)'>熱量</th></tr>
 <tr><td>熱（熱量）</td><td>温度の高い物体から低い物体へ移動するエネルギー<br><span style='color:var(--blue);font-weight:700'>${Q}〔J〕</span></td></tr>
 <tr><td>熱容量</td><td>物体全体の温度を 1&nbsp;K 上げるのに必要な熱量<br><span style='color:var(--blue);font-weight:700'>${Q} ＝ ${C}Δ${T}、${C}〔J/K〕</span></td></tr>
@@ -71,6 +75,9 @@ const CURVE = `<svg class="graph" viewBox="0 0 320 175" role="img" aria-label="�
 </svg>`;
 const ANIM = (href, label) => `<a href='${href}' style='display:inline-block;margin:8px 6px 0 0;padding:6px 12px;border:1.5px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:700;text-decoration:none;line-height:1.5'>▶ ${label}</a>`;
 const TF = ["正しい","誤り"];
+/* 小中学校で学んだ内容の復習であることを示すバッジ */
+const REV = `<span style='display:inline-block;font-size:12px;font-weight:700;color:var(--blue);border:1px solid var(--blue);border-radius:4px;padding:0 5px;margin-left:4px;vertical-align:1px'>中学の復習</span>`;
+const HT = ["伝導","対流","放射"];
 const UNITQ = ["J（熱量）","J/K（熱容量）","J/(g·K)（比熱）","K（温度差）"];
 
 const SECTIONS = [
@@ -155,6 +162,20 @@ const SECTIONS = [
     {id:"rd3",type:"choice",prompt:"区間 D が区間 B より長いことから分かることはどれか。",
      options:["蒸発熱は融解熱より大きい","沸騰中は加熱が弱まる","水は氷より比熱が大きい"],answer:0,
      explain:"加熱の割合が一定なので、水平部分の長さは状態変化に必要な熱量に比例します。"}
+  ]},
+  { title:`E. 熱の伝わり方${REV}`, lead:"小学校・中学校で学んだ、熱の3つの伝わり方（伝導・対流・放射）を確かめる。", qs:[
+    {id:"re1",type:"choice",prompt:"金属のスプーンを熱い湯に入れておくと、湯に入れていない持ち手まで熱くなる。",options:HT,answer:0,
+     explain:"伝導。スプーンの中を、高温の部分から低温の部分へ熱が伝わります。金属は特に熱を伝えやすい物質です。"},
+    {id:"re2",type:"choice",prompt:"なべの底だけを加熱しても、やがて水全体が温まる。",options:HT,answer:1,
+     explain:"対流。温められた水は膨張して密度が小さくなり上へ、冷たい水は下へ移動して、水全体が混ざりながら温まります。"},
+    {id:"re3",type:"choice",prompt:"たき火から離れていても、たき火に向いた顔だけが温かく感じる。",options:HT,answer:2,
+     explain:"放射。たき火が出す赤外線などが顔に届いて吸収されます。間の空気を温めて伝わるのではないので、向いている側だけが温かくなります。"},
+    {id:"re4",type:"choice",prompt:"太陽の熱は、ほとんど物質のない宇宙空間を通って地球に届く。この伝わり方は？",options:HT,answer:2,
+     explain:"放射。伝導と対流は物質がないと起こりませんが、放射（電磁波）は真空中でも伝わります。"},
+    {id:"re5",type:"choice",prompt:"エアコンの暖房では、温かい空気を下向きに吹き出すとよい。",options:TF,answer:0,
+     explain:"正しい。温かい空気は密度が小さく上にたまりやすいので、下向きに吹き出すと対流で部屋全体が温まりやすくなります。"},
+    {id:"re6",type:"choice",prompt:"対流は、固体の中でも起こる。",options:TF,answer:1,
+     explain:"誤り。対流は液体や気体そのものが移動して熱を運ぶ伝わり方です。固体の中では、熱は伝導で伝わります。"}
   ]}]
 },
 { id:"dim", tab:"③次元", title:"③ 次元チェック",
