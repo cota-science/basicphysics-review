@@ -49,9 +49,12 @@ const PULLEY = `<svg class="graph" viewBox="0 0 320 180" role="img" aria-label="
 const TF = ["正しい","誤り"];
 const UNITQ = ["N（力）","m/s²（加速度）","kg（質量）","単位なし"];
 
+/* 力学ラボ（anim/）へのボタン */
+const ANIM = (href, label) => `<a href='${href}' style='display:inline-block;margin:8px 6px 0 0;padding:6px 12px;border:1.5px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:700;text-decoration:none;line-height:1.5'>▶ ${label}</a>`;
+
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:"運動の法則は3つ、摩擦力は3種類。摩擦力は「どの面がどの物体に及ぼすか」まで言えるようにします。",
+  intro:`運動の法則は3つ、摩擦力は3種類。摩擦力は「どの面がどの物体に及ぼすか」まで言えるようにします。<br>力学ラボで確かめよう：<br>${ANIM("anim/newton.html#inertia","慣性の法則")}${ANIM("anim/newton.html#law2","運動の法則")}${ANIM("anim/newton.html#action","作用・反作用")}${ANIM("anim/friction.html#floor","摩擦力（水平面）")}${ANIM("anim/friction.html#slope","摩擦力（斜面）")}${ANIM("anim/newton.html#eom","摩擦を含む運動方程式")}`,
   advice:"運動方程式の <i class='qv'>F</i> は「着目物体が受ける力の合力」であること、静止摩擦力と動摩擦力の違いを覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
@@ -78,7 +81,7 @@ const SECTIONS = [
   intro:"「運動の向きの力」を描く癖を、「重力以外の力は触れている物体からしか受けない」という原則で直します。",
   advice:"力を描くたびに「その力を及ぼしているのは何か」と自分に問い、答えられない力は消そう。",
   groups:[
-  { title:"A. 慣性を読む", qs:[
+  { title:"A. 慣性を読む", lead:`答えたら確かめよう：${ANIM("anim/newton.html#inertia","慣性の法則")}`, qs:[
     {id:"ra1",type:"choice",prompt:"水平でなめらかな氷の上を、物体が等速ですべっている。物体が受ける力の合力は？",
      options:["運動の向きに一定の大きさ","0","運動と逆向き"],answer:1,
      explain:"等速直線運動 → 加速度 0 → 合力 0。動いていても合力は 0 です。"},
@@ -94,7 +97,7 @@ const SECTIONS = [
      options:["地球が物体に及ぼす重力","面が物体に及ぼす垂直抗力","面が物体に及ぼす左向きの動摩擦力","物体が右に進むための右向きの力","大きさ <i class='qv'>ma</i> の力"],answer:[0,1,2],
      explain:"「右向きの力」を及ぼしている物体はありません。<i class='qv'>ma</i> は力ではありません。物体は動摩擦力で減速していきます。"}
   ]},
-  { title:"C. 静止摩擦力を読む", lead:"水平な床の上の箱を水平に押す。箱と床の間の最大摩擦力の大きさは 19.6 N。", qs:[
+  { title:"C. 静止摩擦力を読む", lead:`水平な床の上の箱を水平に押す。箱と床の間の最大摩擦力の大きさは 19.6 N。答えたら確かめよう：${ANIM("anim/friction.html#floor","静止摩擦力と動摩擦力")}`, qs:[
     {id:"rc1",type:"num",prompt:"10 N で押したが、箱は動かなかった。静止摩擦力の大きさは？",answer:10,tol:0.05,unit:"N",
      traps:{"19.6":"19.6 N は最大値です。動いていないので、押す力とつり合っています。"},
      explain:"静止しているので、静止摩擦力は押す力とつり合って 10 N。"},
@@ -176,7 +179,7 @@ const SECTIONS = [
   advice:"物体ごとに受ける力を挙げ、加速度の向きを正にして運動方程式を立てよう。",
   ref:{label:"7ステップを見る", html:STEPS},
   groups:[
-  { title:"問題1（すべてのステップ）",
+  { title:"問題1（すべてのステップ）", lead:`解き終えたら確かめよう：${ANIM("anim/newton.html#law2","運動の法則")}`,
     quote:"なめらかな水平面上に静止している質量 2.0 kg の物体に、水平方向に 6.0 N の力を加え続けた。(1) 物体の加速度の大きさ、(2) 力を加え始めてから 4.0 s 後の速さを求めよ。", qs:[
     {id:"s11",type:"multi",prompt:"ステップ2　物体が受ける力をすべて選べ。",
      options:["地球が物体に及ぼす重力","面が物体に及ぼす垂直抗力","加えた 6.0 N の力","面が物体に及ぼす摩擦力","大きさ <i class='qv'>ma</i> の力"],answer:[0,1,2],
@@ -195,7 +198,7 @@ const SECTIONS = [
     {id:"s16",type:"choice",prompt:"ステップ7　物体の質量を 2 倍にすると、加速度の大きさはどうなるはずか。",options:["2 倍","½ 倍","変わらない"],answer:1,
      explain:"<i class='qv'>a</i> ＝ <i class='qv'>F</i> ÷ <i class='qv'>m</i> なので ½ 倍。質量が大きいほど加速しにくいという感覚と合っています。"}
   ]},
-  { title:"問題2（前半だけ誘導）",
+  { title:"問題2（前半だけ誘導）", lead:`解き終えたら確かめよう：${ANIM("anim/newton.html#eom","摩擦を含む運動方程式")}${ANIM("anim/friction.html#floor","摩擦力（水平面）")}`,
     quote:"質量 5.0 kg の物体が、動摩擦係数 0.20 の粗い水平面上にある。物体に水平方向に 20 N の力を加え続けると、物体はすべり続けた。物体の加速度の大きさを有効数字2桁で求めよ。", qs:[
     {id:"s21",type:"multi",prompt:"ステップ2　物体が受ける力をすべて選べ。",
      options:["地球が物体に及ぼす重力","面が物体に及ぼす垂直抗力","引く力 20 N","面が物体に及ぼす動摩擦力","物体が進むための力"],answer:[0,1,2,3],

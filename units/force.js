@@ -62,9 +62,12 @@ const TF = ["正しい","誤り"];
 const PAIR = ["つり合いの2力","作用・反作用の2力","どちらでもない"];
 const UNITQ = ["N（力）","m（伸び）","N/m（ばね定数）","kg（質量）"];
 
+/* 力学ラボ（anim/）へのボタン */
+const ANIM = (href, label) => `<a href='${href}' style='display:inline-block;margin:8px 6px 0 0;padding:6px 12px;border:1.5px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:700;text-decoration:none;line-height:1.5'>▶ ${label}</a>`;
+
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:"どの力も、定義の文に「何が」「何に」を入れて覚えます。",
+  intro:`どの力も、定義の文に「何が」「何に」を入れて覚えます。<br>力学ラボで確かめよう：<br>${ANIM("anim/forces.html#draw","力の作図")}${ANIM("anim/spring.html#hang","フックの法則（弾性力）")}${ANIM("anim/balance.html#two","力のつりあい")}${ANIM("anim/newton.html#action","作用・反作用")}`,
   advice:"力の定義を「〇〇が△△に及ぼす力」の形で言えるように覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
@@ -110,7 +113,7 @@ const SECTIONS = [
      options:["地球が本に及ぼす重力","地球がりんごに及ぼす重力","机が本に及ぼす垂直抗力","りんごが本を押す力","本が机を押す力"],answer:[0,2,3],
      explain:"本が受けるのは、重力と、触れている机・りんごからの力の3つ。「りんごの重力」はりんごが受ける力、「本が机を押す力」は机が受ける力です。"}
   ]},
-  { title:"C. つり合いか、作用・反作用か", lead:"同じ場面（机・本・りんご）で考える。", figure:SCENE, qs:[
+  { title:"C. つり合いか、作用・反作用か", lead:`同じ場面（机・本・りんご）で考える。答えたら確かめよう：${ANIM("anim/balance.html#two","2力のつりあい")}${ANIM("anim/newton.html#action","作用・反作用")}`, figure:SCENE, qs:[
     {id:"rc1",type:"choice",prompt:"地球が本に及ぼす重力と、本が地球に及ぼす引力",options:PAIR,answer:1,
      explain:"「A が B に」と「B が A に」の組なので、作用・反作用です。"},
     {id:"rc2",type:"choice",prompt:"本がりんごに及ぼす垂直抗力と、りんごが本を押す力",options:PAIR,answer:1,
@@ -194,7 +197,7 @@ const SECTIONS = [
   advice:"着目物体と受ける力を書き出してから、軸ごとにつり合いの式を立てよう。",
   ref:{label:"7ステップを見る", html:STEPS},
   groups:[
-  { title:"問題1（すべてのステップ）",
+  { title:"問題1（すべてのステップ）", lead:`解き終えたら確かめよう：${ANIM("anim/spring.html#hang","ばねにおもりをつるす")}`,
     quote:"ばね定数 49 N/m の軽いばねの上端を天井に固定し、下端に質量 2.0 kg のおもりをつるした。おもりは静止している。ばねの伸びを求めよ。", qs:[
     {id:"s11",type:"choice",prompt:"ステップ1　着目物体はどれか。",options:["ばね","おもり","天井"],answer:1,
      explain:"伸びを決めているのはおもりが受ける力のつり合いです。"},
@@ -211,7 +214,7 @@ const SECTIONS = [
     {id:"s16",type:"choice",prompt:"ステップ7　質量を 2 倍にすると、伸びはどうなるはずか。",options:["2 倍","½ 倍","変わらない"],answer:0,
      explain:"<i class='qv'>x</i> ＝ <i class='qv'>mg</i> ÷ <i class='qv'>k</i> なので伸びは質量に比例。重いほど伸びるという感覚と合っています。"}
   ]},
-  { title:"問題2（ステップ1〜2だけ誘導）",
+  { title:"問題2（ステップ1〜2だけ誘導）", lead:`解き終えたら確かめよう：${ANIM("anim/balance.html#two","2力のつりあい")}${ANIM("anim/newton.html#action","作用・反作用")}`,
     quote:"質量 3.0 kg の箱が水平な床に置かれている。この箱を上から手で 10 N の力で押したが、箱は静止したままだった。(1) 床が箱に及ぼす垂直抗力の大きさを求めよ。(2) (1) の力の反作用は、何が何に及ぼす力か。", qs:[
     {id:"s21",type:"multi",prompt:"ステップ1・2　箱に着目する。箱が受ける力をすべて選べ。",
      options:["地球が箱に及ぼす重力","手が箱を押す力","床が箱に及ぼす垂直抗力","箱が床を押す力"],answer:[0,1,2],
@@ -223,7 +226,7 @@ const SECTIONS = [
      options:["地球が箱に及ぼす重力","箱が床を押す力（下向き 39.4 N）","手が箱を押す力"],answer:1,
      explain:"「床が箱に」の反作用は「箱が床に」。同じ大きさで逆向きです。"}
   ]},
-  { title:"問題3（答えだけ入力・力の分解）", lead:"紙に7ステップを書いて解き、答えを入力せよ。cos 30° ≒ 0.866、tan 30° ≒ 0.577。",
+  { title:"問題3（答えだけ入力・力の分解）", lead:`紙に7ステップを書いて解き、答えを入力せよ。cos 30° ≒ 0.866、tan 30° ≒ 0.577。解き終えたら確かめよう：${ANIM("anim/balance.html#three","3力のつりあい")}${ANIM("anim/forces.html#resolve","力の分解")}`,
     quote:"質量 1.0 kg のおもりを糸でつるし、おもりに水平方向の力 <i class='qv'>F</i> を加えたところ、糸が鉛直方向と 30° の角をなして静止した。", figure:STRING30, qs:[
     {id:"s31",type:"num",prompt:"(1) 糸の張力の大きさ <i class='qv'>T</i>（有効数字2桁）",answer:11,tol:0.35,unit:"N",
      traps:{"9.8":"張力のうち重力とつり合うのは鉛直成分だけです。<i class='qv'>T</i> cos 30° ＝ <i class='qv'>mg</i>。","19.6":"sin 30° で割っていませんか。鉛直成分は <i class='qv'>T</i> cos 30° です。","8.5":"cos 30° を掛けていませんか。<i class='qv'>T</i> ＝ <i class='qv'>mg</i> ÷ cos 30° です。"},

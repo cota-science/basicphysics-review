@@ -318,6 +318,21 @@ L.nav = function(){
   const el = document.getElementById('nav'); if (!el) return;
   const here = location.pathname.split('/').pop() || 'index.html';
   el.innerHTML = '<a href="index.html#force">≡ 力学ラボ</a>' + L.PAGES.map(([h, t]) => `<a href="${h}"${h === here ? ' aria-current="page"' : ''}>${t}</a>`).join('');
+  /* スマホ：ページ一覧と補足説明は「メニュー」ボタンで開閉（既定は閉じる） */
+  const top = el.closest('.top'), hd = el.parentElement;
+  if (!top || !hd || hd.querySelector('.navbtn')) return;
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'navbtn';
+  btn.setAttribute('aria-controls', 'nav'); btn.setAttribute('aria-expanded', 'false');
+  btn.innerHTML = '<span class="ic" aria-hidden="true">☰</span><span class="tx">メニュー</span>';
+  const set = on => {
+    top.classList.toggle('open', on);
+    btn.setAttribute('aria-expanded', String(on));
+    btn.querySelector('.ic').textContent = on ? '×' : '☰';
+    btn.querySelector('.tx').textContent = on ? '閉じる' : 'メニュー';
+  };
+  btn.addEventListener('click', () => set(!top.classList.contains('open')));
+  hd.insertBefore(btn, hd.firstChild);
 };
 document.addEventListener('DOMContentLoaded', L.nav);
 L.clamp = (v, a, b) => Math.max(a, Math.min(b, v));
