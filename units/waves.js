@@ -2,7 +2,7 @@
  * 単元：波の性質
  * 横波・縦波、振幅・波長・周期・振動数、v ＝ fλ、y-x グラフと y-t グラフの読み分け、
  * 重ね合わせ、反射（自由端・固定端）、定在波（定常波）。
- * ②読解 D〜F：縦波の横波表示（密・疎）、反射波の作図と端の節・腹、重ね合わせと独立性。
+ * ②読解 D〜G：縦波の横波表示（密・疎）、反射波の作図と端の節・腹、重ね合わせと独立性、波が届く時刻と2点の振動のずれ。
  */
 (function(){
 
@@ -167,6 +167,24 @@ ${g}
 </svg>`;
 })();
 
+/* 波源から x 軸の正の向きへ進む波（λ ＝ 0.40 m、T ＝ 0.50 s、v ＝ 0.80 m/s）。観測点 A・B・C */
+const DELAY = (() => {
+  const X = m => 24 + m * 130, cy = 62;
+  let ticks = "";
+  for(let i = 0; i <= 4; i++){ const m = i * 0.5; ticks += `<line x1="${X(m)}" y1="${cy - 3}" x2="${X(m)}" y2="${cy + 3}" stroke="currentColor"/><text x="${X(m)}" y="${cy + 17}" font-size="10" text-anchor="middle" fill="currentColor">${m.toFixed(1)}</text>`; }
+  const dot = (m, n, c) => `<circle cx="${X(m)}" cy="${cy}" r="5" fill="${c}"/><text x="${X(m)}" y="${cy - 12}" font-size="13" font-weight="700" text-anchor="middle" fill="${c}">${n}</text>`;
+  return `<svg class="graph" viewBox="0 0 320 120" role="img" aria-label="x軸上に、波源（x＝0）、点A（x＝1.2 m）、点B（x＝1.4 m）、点C（x＝1.6 m）が並んでいる。波は波源からx軸の正の向きへ進む。波長は0.40 m、周期は0.50 s。">
+<line x1="${X(0)}" y1="${cy}" x2="${X(2.0)}" y2="${cy}" stroke="currentColor" stroke-width="1.3"/>
+${ticks}
+<rect x="${X(0) - 7}" y="${cy - 16}" width="14" height="32" rx="3" fill="var(--blue-soft)" stroke="var(--blue)" stroke-width="1.5"/>
+<text x="${X(0) + 12}" y="${cy - 34}" font-size="11" fill="var(--blue)">波源（時刻 0 に上向きに振動を始める）</text>
+${dot(1.2, "A", "var(--red)")}${dot(1.4, "B", "var(--blue)")}${dot(1.6, "C", "var(--red)")}
+<line x1="${X(0.35)}" y1="${cy + 36}" x2="${X(1.0)}" y2="${cy + 36}" stroke="currentColor" stroke-width="1.5"/><polygon points="${X(1.0)},${cy + 31} ${X(1.0) + 9},${cy + 36} ${X(1.0)},${cy + 41}" fill="currentColor"/>
+<text x="${X(1.0) + 14}" y="${cy + 40}" font-size="11" fill="currentColor">波の進む向き</text>
+<text x="312" y="${cy + 40}" font-size="11" text-anchor="end" fill="currentColor">${SI("x")}〔m〕</text>
+</svg>`;
+})();
+
 const DEF_TABLE = `<div class="tbl"><table>
 <colgroup><col style="width:6.6em"><col></colgroup>
 <tr><th>用語</th><th>定義（記号・式・単位）</th></tr>
@@ -324,6 +342,26 @@ const SECTIONS = [
      explain:"誤り。その瞬間だけ変位が打ち消しあっていますが、それぞれの波は進み続け、すれ違った後はもとの形で現れます。"},
     {id:"rf5",type:"choice",prompt:`振幅 ${A} の同じ波が逆向きに進んで重なり、定在波（定常波）ができた。腹の振幅は？`,options:[`${A}/2`,`${A}`,`2${A}`],answer:2,
      explain:`腹では2つの波がいつも同じ向きに重なるので、振幅は ${A} ＋ ${A} ＝ 2${A} です。節では打ち消しあって 0 です。`}
+  ]},
+  { title:"G. 波が届く時刻と、離れた2点の振動のずれ", lead:`波源から右へ伝わる波を、x 軸上の点 A・B・C で観察する。波の速さは ${v} ＝ ${L}/${T} ＝ 0.40 ÷ 0.50 ＝ 0.80 m/s。答えたら確かめよう：${ANIM("anim/wave-3d.html","波を3次元で見る（観測点を動かす・B を追加）")}`, figure:DELAY, qs:[
+    {id:"rg1",type:"num",prompt:"波源が時刻 0 に振動を始めた。波が点 A（波源から 1.2 m）に届いて、A が振動を始めるのは何 s 後か。",answer:1.5,tol:0.01,unit:"s",
+     traps:{"0.96":"距離 × 速さではなく、距離 ÷ 速さです。（時間 ＝ 距離 ÷ 速さ）","0.5":"それは周期です。A に届くまでの時間は、距離 ÷ 波の速さです。"},
+     explain:"波は一定の速さ 0.80 m/s で進むので、時間 ＝ 距離 ÷ 速さ ＝ 1.2 ÷ 0.80 ＝ 1.5 s。"},
+    {id:"rg2",type:"num",prompt:"点 B は A より 0.20 m 先にある。B が振動を始めるのは、A が振動を始めてから何 s 後か。",answer:0.25,tol:0.005,unit:"s",
+     traps:{"0.16":"距離 × 速さではなく、距離 ÷ 速さです。","0.2":"0.20 は距離（m）です。時間は 0.20 ÷ 0.80 です。"},
+     explain:"0.20 ÷ 0.80 ＝ 0.25 s。0.20 m は半波長なので、ちょうど半周期（0.50 s の半分）です。"},
+    {id:"rg3",type:"choice",prompt:`A と B の ${y}-${t} グラフ（それぞれの点の振動）を重ねて描くと、どうなっているか。`,
+     options:["B は A と上下が逆（A が山のとき B は谷）","B は A とまったく同じ","B は A より振幅が小さい"],answer:0,
+     explain:"B の振動は A の振動を半周期（0.25 s）遅らせたもの。半周期ずれると、山と谷が入れかわります。半波長はなれた2点は、いつも反対向きに振動します。"},
+    {id:"rg4",type:"num",prompt:"点 C は A より 0.40 m（1 波長）先にある。C が振動を始めるのは、A が振動を始めてから何 s 後か。",answer:0.50,tol:0.005,unit:"s",
+     traps:{"0.32":"距離 × 速さではなく、距離 ÷ 速さです。"},
+     explain:`0.40 ÷ 0.80 ＝ 0.50 s。ちょうど 1 周期 ${T} です。`},
+    {id:"rg5",type:"choice",prompt:`A と C の ${y}-${t} グラフを比べると、どうなっているか。`,
+     options:["C は A と同じ向きに動き、山も谷も同時にくる（同じ振動を 1 周期遅らせただけ）","C は A と上下が逆","C は A より振動数が小さい"],answer:0,
+     explain:"1 周期ずらした振動は、もとの振動と重なります。1 波長はなれた2点は、いつも同じ向きに振動します。振動数は波の全体で同じです。"},
+    {id:"rg6",type:"num",prompt:"時刻 1.0 s のとき、波の先頭（まだ振動していない点との境）は、波源から何 m の所にあるか。",answer:0.80,tol:0.01,unit:"m",
+     traps:{"1.0":"波は 1.0 s 間に、速さ 0.80 m/s で進んだ距離だけ進みます。"},
+     explain:"距離 ＝ 速さ × 時間 ＝ 0.80 × 1.0 ＝ 0.80 m。A（1.2 m）にはまだ届いていません。"}
   ]}]
 },
 { id:"dim", tab:"③次元", title:"③ 次元チェック",
