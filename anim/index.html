@@ -47,13 +47,13 @@ html{scroll-padding-top:90px}
 <header class="top">
   <div class="top-inner">
     <a class="back" id="backLink" href="../index.html" hidden>‹ 単元一覧（Webテスト）へ</a>
-    <h1>アニメーション集（運動・エネルギー・熱・波・音・電気）</h1>
+    <h1>アニメーション集（運動・エネルギー・熱・波・音・電気・付録）</h1>
   </div>
 </header>
 
 <main>
   <section class="sheet">
-    <p class="intro">Webテストに取り組む前に、目に見えない粒子や波の動きを見て確かめよう。波は上から順に見ると、「波の速さ」→「波を3次元で見る」→「重ね合わせ・反射・定在波（定常波）」→「音」の順に理解が積み上がります。運動のシミュレーターは<a href="#motion">「運動」</a>、仕事とエネルギーは<a href="#energy">「仕事とエネルギー」</a>、熱のアニメーションは<a href="#heat">下の「熱」</a>、電気は<a href="#elec">「電気」</a>にあります。各ページの「見てみよう」の問いにも答えてみよう。</p>
+    <p class="intro">Webテストに取り組む前に、目に見えない粒子や波の動きを見て確かめよう。波は上から順に見ると、「波の速さ」→「波を3次元で見る」→「重ね合わせ・反射・定在波（定常波）」→「音」の順に理解が積み上がります。運動のシミュレーターは<a href="#motion">「運動」</a>、数学（微分・積分・ベクトル）とつなげるページは<a href="#math">「付録：数学とつなげる」</a>、仕事とエネルギーは<a href="#energy">「仕事とエネルギー」</a>、熱のアニメーションは<a href="#heat">下の「熱」</a>、電気は<a href="#elec">「電気」</a>にあります。各ページの「見てみよう」の問いにも答えてみよう。</p>
   </section>
 
   <section class="sheet" id="motion" aria-labelledby="g0">
@@ -117,6 +117,13 @@ html{scroll-padding-top:90px}
       <li><a class="card" href="motor.html"><span class="t"><span class="num">20</span>電流が磁場から受ける力とモーター</span><span class="d">フレミングの左手の法則（電流と磁場の向きの4つの場合）、力が生じるわけ（電流の磁場と磁石の磁場の重ね合わせ、密な側から疎な側へ）、直流モーターと整流子のはたらき</span><span class="r">関連：電流と磁場・交流 ①定義</span></a></li>
       <li><a class="card" href="induction.html"><span class="t"><span class="num">21</span>電磁誘導と交流発電機</span><span class="d">コイルを貫く磁力線の本数の変化の速さと誘導起電力、レンツの法則（N 極・S 極を近づける・遠ざける4つの場合）、交流発電機のしくみ（スリップリングとブラシ）</span><span class="r">関連：電流と磁場・交流 ①定義・②読解 B</span></a></li>
       <li><a class="card" href="transformer.html"><span class="t"><span class="num">22</span>変圧器と送電</span><span class="d">1次・2次コイルの巻き数と電圧を変えて、電圧の比 ＝ 巻き数の比、電力が等しいことを確かめる（直流では電圧が生じない）。送電電圧を変えて、失われる電力 <i class="qv">rI</i>² が 1/<i class="qv">V</i>² で小さくなることを確かめる</span><span class="r">関連：電流と磁場・交流 ①定義・④手順 問題1・問題2</span></a></li>
+    </ol>
+  </section>
+  <section class="sheet" id="math" aria-labelledby="g6">
+    <h2 id="g6">付録：数学とつなげる</h2>
+    <ol class="cards" start="31">
+      <li><a class="card" href="calculus.html"><span class="t"><span class="num">31</span>微分・積分で見る運動（数学Ⅱ）</span><span class="d">平均変化率の極限 ＝ 瞬間の速度（<i class="qv">x</i> が2次式なら平均の速度が <i class="qv">h</i> の1次式になる）、導関数で <i class="qv">x</i> → <i class="qv">v</i> → <i class="qv">a</i>（接線の傾きを写しとる、増減表で折り返しを読む）、短冊の和 → 定積分 ＝ 変位（道のりとの違い、積分定数 ＝ 初期条件）、等加速度直線運動の3式を微分・積分で導く</span><span class="r">関連：付録 数学で読む力学、速度・加速度、落体の運動</span></a></li>
+      <li><a class="card" href="vector.html"><span class="t"><span class="num">32</span>ベクトルで見る運動と力（数学C）</span><span class="d">ベクトルの和・差・実数倍・成分（速度・力・変位で読みかえる、軸を傾けると成分が変わる）、位置・速度・加速度ベクトル（斜方投射・等速円運動、始点をそろえた Δ<i class="qv">v</i>）、力のつりあい（力の多角形、軸の選び方、運動方程式）、仕事 ＝ 力と変位の内積</span><span class="r">関連：付録 数学で読む力学、力とつり合い、運動の法則、仕事と力学的エネルギー</span></a></li>
     </ol>
   </section>
 </main>

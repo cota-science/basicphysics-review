@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>微分・積分で見る運動</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* 付録：数学とつなげる（数学Ⅱ 極限・微分・積分 × 物理基礎 運動）。average.html と同じ方眼紙のワークシート。 */
+:root{
+  --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
+  --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
+  --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3;
+  --pos:#1d64d8; --vel:#dd5a12; --acc:#22863a; --sec:#CF2A2A; --tan:#6B3FB5; --math-soft:#F3EEFB;
+  --body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --math:"Times New Roman",Times,"Noto Serif",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+    --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+    --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0;
+    --pos:#62a3ff; --vel:#ff9150; --acc:#5dd27a; --sec:#FF7A70; --tan:#C3A2FF; --math-soft:#2A2340; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+  --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+  --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0;
+  --pos:#62a3ff; --vel:#ff9150; --acc:#5dd27a; --sec:#FF7A70; --tan:#C3A2FF; --math-soft:#2A2340; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qv{font-family:var(--math);font-style:italic;font-size:1.08em}
+.qu{font-family:var(--math);font-style:normal;font-size:1.08em}
+.m{font-family:var(--math);font-size:1.08em}
+.bar{text-decoration:overline}
+sub,sup{font-size:.7em;line-height:0}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:.82em;line-height:1.15;margin:0 .1em}
+.fr>span:first-child{border-bottom:1px solid currentColor;padding:0 .15em}
+.lim{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.1;margin-right:.15em}
+.lim>span:last-child{font-size:.7em}
+.int{font-family:var(--math);font-size:1.5em;vertical-align:middle;line-height:1}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.top-inner{max-width:760px;margin:0 auto;padding:10px 16px 0}
+.back{font-size:14px;color:var(--blue);text-decoration:none}
+h1{font-size:19px;margin:2px 0 0;line-height:1.4;text-wrap:balance}
+.nav{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin-top:2px}
+.nav a{color:var(--blue);text-decoration:none}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:700}
+.tabs{display:flex;gap:2px;padding-top:4px;overflow-x:auto;scrollbar-width:none}
+.tab{flex:1 0 auto;border:0;background:none;padding:8px 8px 10px;font-size:15px;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer;line-height:1.35;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);font-weight:700;border-bottom-color:var(--blue)}
+main{max-width:760px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.panel{display:grid;gap:16px;min-width:0}
+.panel[hidden]{display:none}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px;min-width:0}
+h2{font-size:20px;margin:0 0 4px;line-height:1.4;text-wrap:balance}
+h3{font-size:17px;margin:0 0 8px}
+.lead{margin:0 0 12px;color:var(--muted);font-size:15px}
+.seg{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:10px}
+.seg-label{font-size:14px;color:var(--muted);min-width:5.5em}
+.seg button{border:1.5px solid var(--line);background:var(--sheet);border-radius:999px;padding:6px 12px;min-height:40px;cursor:pointer;font-size:15px}
+.seg button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft);font-weight:700}
+.stage{position:relative;width:100%;background:var(--sheet);border:1px solid var(--line);border-radius:4px;touch-action:pan-y}
+.stage.g1{aspect-ratio:2/1}.stage.g2{aspect-ratio:3/1}
+@media (max-width:520px){.stage.g1{aspect-ratio:1.35/1}.stage.g2{aspect-ratio:2/1}}
+canvas{display:block;width:100%;height:100%}
+.cap{font-size:14px;margin:12px 0 4px;font-weight:700}
+.read{margin:10px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:6px;display:grid;gap:4px;font-variant-numeric:tabular-nums}
+.read p{margin:0;font-size:15px}
+.s{color:var(--sec);font-weight:700}.tn{color:var(--tan);font-weight:700}
+.cp{color:var(--pos);font-weight:700}.cv{color:var(--vel);font-weight:700}.ca{color:var(--acc);font-weight:700}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.btn{border:0;border-radius:8px;padding:9px 16px;min-height:44px;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.btn.ghost{background:none;color:var(--blue);border:1.5px solid var(--blue)}
+.slider{display:grid;grid-template-columns:8.5em minmax(0,1fr) 5em;align-items:center;gap:10px;margin-top:10px}
+.slider label{font-size:15px}
+.slider input{width:100%;accent-color:var(--blue);min-height:32px}
+.slider[hidden]{display:none}
+.slider output{font-variant-numeric:tabular-nums;text-align:right;font-weight:700}
+@media (max-width:520px){.slider{grid-template-columns:6.8em minmax(0,1fr) 4.6em}}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}
+.chips .lab{font-size:14px;color:var(--muted);margin-right:4px}
+.chips button{border:1.5px solid var(--line);background:var(--sheet);border-radius:8px;min-width:52px;min-height:40px;cursor:pointer;font-variant-numeric:tabular-nums}
+.chips button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft);font-weight:700}
+.tbl{overflow-x:auto;margin-top:12px}
+table{border-collapse:collapse;font-size:14px;min-width:100%;font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:center}
+th{background:var(--blue-soft);font-weight:700}
+td.l{text-align:left}
+tr.cur td{background:var(--red-soft);font-weight:700}
+.hint{font-size:13px;color:var(--muted);margin:8px 0 0}
+.mathbox{border:1.5px solid var(--tan);background:var(--math-soft);border-radius:8px;padding:10px 14px;margin:12px 0 0}
+.mathbox .t{font-size:13px;font-weight:700;color:var(--tan);margin:0 0 2px}
+.mathbox p{margin:2px 0}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+@media (max-width:560px){.pair{grid-template-columns:1fr}}
+.pair>div{border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.pair .t{font-size:13px;font-weight:700;margin:0 0 4px}
+.pair .math .t{color:var(--tan)}.pair .phys .t{color:var(--blue)}
+.eq{font-size:17px;margin:4px 0;overflow-x:auto}
+.check{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:15px}
+.check input{width:20px;height:20px;accent-color:var(--blue)}
+.qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
+.qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
+.ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+.steps{display:grid;gap:12px;margin-top:8px}
+.step{border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:6px;padding:10px 14px}
+.step[hidden]{display:none}
+.step h4{margin:0 0 4px;font-size:16px}
+.step p{margin:4px 0}
+.step .why{font-size:14px;color:var(--muted)}
+svg.fig{display:block;width:100%;max-width:420px;height:auto;margin:8px auto 0}
+.inc td.up{color:var(--pos);font-weight:700}.inc td.dn{color:var(--red);font-weight:700}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <a class="back" id="backLink" href="../index.html#/u/math-link/0" hidden>‹ 付録：数学で読む力学（Webテスト）へ</a>
+    <h1>微分・積分で見る運動</h1>
+    <nav class="nav" id="nav" hidden aria-label="アニメーション">
+      <a href="index.html#math">≡ アニメーション集</a>
+      <a href="calculus.html" aria-current="page">微分・積分で見る運動</a>
+      <a href="vector.html">ベクトルで見る運動と力</a>
+      <a href="average.html">平均と瞬間</a>
+      <a href="kinematics.html">直線運動ラボ</a>
+    </nav>
+    <div class="tabs" role="tablist" aria-label="内容">
+      <button class="tab" role="tab" data-tab="lim" type="button">1 極限</button>
+      <button class="tab" role="tab" data-tab="diff" type="button">2 微分</button>
+      <button class="tab" role="tab" data-tab="int" type="button">3 積分</button>
+      <button class="tab" role="tab" data-tab="derive" type="button">4 3式を導く</button>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- ============ 1 極限 ============ -->
+<div class="panel" id="p-lim">
+  <section class="sheet">
+    <h2>平均変化率の極限 ＝ 瞬間の速度</h2>
+    <p class="lead">数学Ⅱの「平均変化率」は、物理では平均の速度です。<i class="qv">h</i>（＝ Δ<i class="qv">t</i>）を 0 に近づけた極限が「微分係数」で、物理では瞬間の速度になります。<i class="qv">x</i> を2次式にすると、平均の速度が <i class="qv">h</i> の1次式になり、<i class="qv">h</i> → 0 で何に近づくかが式で見えます。</p>
+    <div class="seg" role="group" aria-label="運動" id="lim-seg"><span class="seg-label">運動</span></div>
+    <div class="cap" id="lim-cap"></div>
+    <div class="stage g1"><canvas id="cv-lim" role="img" aria-label="x-t 図。点Aと点Bを結ぶ直線（赤、傾き＝平均の速度）と、点Aでの接線（紫、傾き＝瞬間の速度）。"></canvas></div>
+    <div class="chips" role="group" aria-label="時間の幅 h" id="lim-h"><span class="lab"><i class="qv">h</i>（＝ Δ<i class="qv">t</i>）</span></div>
+    <div class="slider"><label for="lim-t1">時刻 <i class="qv">t</i><sub>1</sub>（点A）</label><input type="range" id="lim-t1" min="0" max="4" step="0.5" value="1"><output id="lim-t1o"></output></div>
+    <div class="controls">
+      <button type="button" class="btn" id="lim-go"><i class="qv">h</i> を 0 に近づける</button>
+    </div>
+    <div class="read" aria-live="polite" id="lim-read"></div>
+    <div class="mathbox" id="lim-alg"></div>
+    <div class="tbl"><table id="lim-tbl"></table></div>
+  </section>
+  <section class="sheet">
+    <h3>数学の言葉と物理の言葉</h3>
+    <div class="pair">
+      <div class="math"><p class="t">数学Ⅱ</p>
+        <p class="eq"><i class="qv">f</i> ′(<i class="qv">a</i>) ＝ <span class="lim"><span>lim</span><span><i class="qv">h</i>→0</span></span><span class="fr"><span><i class="qv">f</i>(<i class="qv">a</i>＋<i class="qv">h</i>) − <i class="qv">f</i>(<i class="qv">a</i>)</span><span><i class="qv">h</i></span></span></p></div>
+      <div class="phys"><p class="t">物理基礎</p>
+        <p class="eq"><i class="qv">v</i> ＝ <span class="lim"><span>lim</span><span>Δ<i class="qv">t</i>→0</span></span><span class="fr"><span>Δ<i class="qv">x</i></span><span>Δ<i class="qv">t</i></span></span> ＝ <span class="fr"><span>d<i class="qv">x</i></span><span>d<i class="qv">t</i></span></span></p></div>
+    </div>
+    <div class="tbl"><table>
+      <tr><th>数学Ⅱ</th><th>物理基礎（運動）</th></tr>
+      <tr><td>関数 <i class="qv">y</i> ＝ <i class="qv">f</i>(<i class="qv">x</i>)</td><td>位置 <i class="qv">x</i>（時刻 <i class="qv">t</i> の関数）</td></tr>
+      <tr><td><i class="qv">x</i> の値 <i class="qv">a</i></td><td>時刻 <i class="qv">t</i><sub>1</sub></td></tr>
+      <tr><td><i class="qv">x</i> の増分 <i class="qv">h</i></td><td>時間 Δ<i class="qv">t</i></td></tr>
+      <tr><td><i class="qv">y</i> の増分 <i class="qv">f</i>(<i class="qv">a</i>＋<i class="qv">h</i>) − <i class="qv">f</i>(<i class="qv">a</i>)</td><td>変位 Δ<i class="qv">x</i></td></tr>
+      <tr><td>平均変化率（2点を結ぶ直線の傾き）</td><td>平均の速度</td></tr>
+      <tr><td>微分係数 <i class="qv">f</i> ′(<i class="qv">a</i>)（接線の傾き）</td><td>瞬間の速度 <i class="qv">v</i>(<i class="qv">t</i><sub>1</sub>)</td></tr>
+      <tr><td>導関数 <i class="qv">f</i> ′(<i class="qv">x</i>)</td><td>速度を表す式 <i class="qv">v</i>(<i class="qv">t</i>) ＝ d<i class="qv">x</i>/d<i class="qv">t</i></td></tr>
+    </table></div>
+    <p class="hint">物理では、変数が時刻 <i class="qv">t</i> なので「<i class="qv">t</i> で微分する」と言います。d<i class="qv">x</i>/d<i class="qv">t</i> は「ディーエックス ディーティー」と読み、分数ではなく「<i class="qv">x</i> を <i class="qv">t</i> で微分したもの」を表す記号です。加速度も同じで、<i class="qv">a</i> ＝ d<i class="qv">v</i>/d<i class="qv">t</i>（<a href="average.html#a">平均と瞬間（加速度）</a>）。</p>
+  </section>
+  <section class="sheet"><h3>見てみよう</h3><ol class="qs" id="qs-lim"></ol></section>
+</div>
+
+<!-- ============ 2 微分 ============ -->
+<div class="panel" id="p-diff" hidden>
+  <section class="sheet">
+    <h2>導関数：<i class="qv">x</i> を微分すると <i class="qv">v</i>、<i class="qv">v</i> を微分すると <i class="qv">a</i></h2>
+    <p class="lead">上の図の接線の傾きを、下の図に高さとして写しとります。「なぞる」を押すと、接線が動きながら <i class="qv">v</i>-<i class="qv">t</i> 図と <i class="qv">a</i>-<i class="qv">t</i> 図ができていきます。図をドラッグしても時刻を動かせます。</p>
+    <div class="seg" role="group" aria-label="運動" id="diff-seg"><span class="seg-label">運動</span></div>
+    <div class="cap"><span class="cp"><i class="qv">x</i>-<i class="qv">t</i> 図</span>（位置）：接線の傾き ＝ その時刻の速度</div>
+    <div class="stage g2"><canvas id="cv-dx" role="img" aria-label="x-t 図と時刻 t での接線"></canvas></div>
+    <div class="cap"><span class="cv"><i class="qv">v</i>-<i class="qv">t</i> 図</span>（速度）：高さ ＝ 上の接線の傾き、接線の傾き ＝ 加速度</div>
+    <div class="stage g2"><canvas id="cv-dv" role="img" aria-label="v-t 図。上の接線の傾きを高さとして写しとる。"></canvas></div>
+    <div class="cap"><span class="ca"><i class="qv">a</i>-<i class="qv">t</i> 図</span>（加速度）：高さ ＝ 上の接線の傾き</div>
+    <div class="stage g2"><canvas id="cv-da" role="img" aria-label="a-t 図"></canvas></div>
+    <div class="slider"><label for="diff-t">時刻 <i class="qv">t</i></label><input type="range" id="diff-t" min="0" max="6" step="0.01" value="1"><output id="diff-to"></output></div>
+    <div class="controls">
+      <button type="button" class="btn" id="diff-go">▶ なぞる</button>
+      <label class="check"><input type="checkbox" id="diff-all">グラフを最後まで表示する</label>
+    </div>
+    <div class="read" aria-live="polite" id="diff-read"></div>
+    <div class="mathbox" id="diff-eq"></div>
+  </section>
+  <section class="sheet">
+    <h3>増減表で運動を読む</h3>
+    <p class="lead">数学Ⅱの増減表は、そのまま運動の表になります。<i class="qv">v</i> ＝ d<i class="qv">x</i>/d<i class="qv">t</i> の符号が正なら正の向きに進み（<i class="qv">x</i> が増加）、負なら負の向きに進みます（<i class="qv">x</i> が減少）。<i class="qv">v</i> ＝ 0 で符号が変わる時刻が「折り返し」で、<i class="qv">x</i> の極大・極小です。</p>
+    <div class="tbl"><table class="inc" id="diff-inc"></table></div>
+    <p class="hint" id="diff-incnote"></p>
+  </section>
+  <section class="sheet"><h3>見てみよう</h3><ol class="qs" id="qs-diff"></ol></section>
+</div>
+
+<!-- ============ 3 積分 ============ -->
+<div class="panel" id="p-int" hidden>
+  <section class="sheet">
+    <h2>積分：<i class="qv">v</i>-<i class="qv">t</i> 図の面積 ＝ 変位</h2>
+    <p class="lead">時間を <i class="qv">N</i> 個に分けると、短い時間の間は速度がほぼ一定なので、変位 ≒ <i class="qv">v</i>Δ<i class="qv">t</i>（短冊の面積）です。短冊を細かくすると、短冊の面積の和は定積分の値に近づきます。下の図には、積分してできる <i class="qv">x</i>-<i class="qv">t</i> 図をかきます。</p>
+    <div class="seg" role="group" aria-label="何から何を求めるか" id="int-mode"><span class="seg-label">求めるもの</span></div>
+    <div class="seg" role="group" aria-label="運動" id="int-seg"><span class="seg-label">運動</span></div>
+    <div class="cap" id="int-cap1"></div>
+    <div class="stage g1"><canvas id="cv-ir" role="img" aria-label="変化の割合のグラフと、0 から t までの短冊"></canvas></div>
+    <div class="chips" role="group" aria-label="分ける数 N" id="int-n"><span class="lab">分ける数 <i class="qv">N</i></span></div>
+    <div class="slider"><label for="int-t">積分の上端 <i class="qv">t</i></label><input type="range" id="int-t" min="0.1" max="6" step="0.1" value="4"><output id="int-to"></output></div>
+    <div class="slider"><label for="int-c" id="int-clab"></label><input type="range" id="int-c" min="-5" max="5" step="0.5" value="0"><output id="int-co"></output></div>
+    <div class="read" aria-live="polite" id="int-read"></div>
+    <div class="cap" id="int-cap2"></div>
+    <div class="stage g1"><canvas id="cv-iq" role="img" aria-label="積分してできるグラフ。短冊の和を折れ線で、定積分を曲線で示す。"></canvas></div>
+    <div class="mathbox" id="int-eq"></div>
+  </section>
+  <section class="sheet"><h3>見てみよう</h3><ol class="qs" id="qs-int"></ol></section>
+</div>
+
+<!-- ============ 4 3式を導く ============ -->
+<div class="panel" id="p-derive" hidden>
+  <section class="sheet">
+    <h2>等加速度直線運動の3式を、微分・積分で導く</h2>
+    <p class="lead">3つの式は、「加速度 <i class="qv">a</i> が一定」という1つの条件から出てきます。1段階ずつ進めよう。</p>
+    <div class="steps" id="steps">
+      <div class="step"><h4>0　条件を式にする</h4>
+        <p>加速度が一定：<i class="qv">a</i> ＝ <span class="fr"><span>d<i class="qv">v</i></span><span>d<i class="qv">t</i></span></span> ＝ 一定</p>
+        <p>はじめの状態（初期条件）：<i class="qv">t</i> ＝ 0 で <i class="qv">x</i> ＝ 0、<i class="qv">v</i> ＝ <i class="qv">v</i><sub>0</sub></p>
+        <p class="why">「静止していた」「原点から」などの問題文の言葉は、この初期条件を決めています。</p></div>
+      <div class="step" hidden><h4>1　<i class="qv">a</i> を積分して <i class="qv">v</i> を求める</h4>
+        <p><i class="qv">v</i> ＝ <span class="int">∫</span><i class="qv">a</i> d<i class="qv">t</i> ＝ <i class="qv">at</i> ＋ <i class="qv">C</i><sub>1</sub>　（<i class="qv">C</i><sub>1</sub> は積分定数）</p>
+        <p><i class="qv">t</i> ＝ 0 を代入すると <i class="qv">v</i><sub>0</sub> ＝ <i class="qv">C</i><sub>1</sub>。よって</p>
+        <p class="eq"><b><i class="qv">v</i> ＝ <i class="qv">v</i><sub>0</sub> ＋ <i class="qv">at</i></b></p>
+        <p class="why">積分定数は、物理では「はじめの値」です。グラフでは、<i class="qv">a</i>-<i class="qv">t</i> 図の長方形の面積 <i class="qv">at</i> が速度の変化 Δ<i class="qv">v</i> です。</p></div>
+      <div class="step" hidden><h4>2　<i class="qv">v</i> を積分して <i class="qv">x</i> を求める</h4>
+        <p><i class="qv">x</i> ＝ <span class="int">∫</span>(<i class="qv">v</i><sub>0</sub> ＋ <i class="qv">at</i>) d<i class="qv">t</i> ＝ <i class="qv">v</i><sub>0</sub><i class="qv">t</i> ＋ <span class="fr"><span>1</span><span>2</span></span><i class="qv">at</i><sup>2</sup> ＋ <i class="qv">C</i><sub>2</sub></p>
+        <p><i class="qv">t</i> ＝ 0 で <i class="qv">x</i> ＝ 0 なので <i class="qv">C</i><sub>2</sub> ＝ 0。よって</p>
+        <p class="eq"><b><i class="qv">x</i> ＝ <i class="qv">v</i><sub>0</sub><i class="qv">t</i> ＋ <span class="fr"><span>1</span><span>2</span></span><i class="qv">at</i><sup>2</sup></b></p>
+        <p class="why">グラフでは、<i class="qv">v</i>-<i class="qv">t</i> 図の台形の面積です。台形を、長方形 <i class="qv">v</i><sub>0</sub><i class="qv">t</i> と三角形 ½<i class="qv">t</i> × <i class="qv">at</i> に分けると、2つの項がそれぞれの面積になります。</p>
+        <svg class="fig" viewBox="0 0 420 210" role="img" aria-label="v-t 図の台形を、高さ v0 の長方形と、底辺 t・高さ at の三角形に分けた図">
+          <rect x="50" y="110" width="300" height="70" fill="var(--pos)" opacity=".18"/>
+          <polygon points="50,110 350,110 350,30" fill="var(--pos)" opacity=".34"/>
+          <line x1="50" y1="180" x2="400" y2="180" stroke="var(--ink)" stroke-width="1.5"/>
+          <line x1="50" y1="195" x2="50" y2="12" stroke="var(--ink)" stroke-width="1.5"/>
+          <line x1="50" y1="110" x2="350" y2="30" stroke="var(--vel)" stroke-width="3"/>
+          <line x1="350" y1="30" x2="350" y2="180" stroke="var(--muted)" stroke-dasharray="4 4"/>
+          <text x="402" y="196" font-size="15" fill="var(--ink)" font-style="italic" font-family="Times New Roman,serif">t</text>
+          <text x="30" y="20" font-size="15" fill="var(--ink)" font-style="italic" font-family="Times New Roman,serif">v</text>
+          <text x="20" y="115" font-size="14" fill="var(--ink)" font-family="Times New Roman,serif"><tspan font-style="italic">v</tspan><tspan font-size="10" dy="3">0</tspan></text>
+          <text x="345" y="198" font-size="14" fill="var(--ink)" font-style="italic" font-family="Times New Roman,serif">t</text>
+          <text x="160" y="152" font-size="15" fill="var(--ink)" font-family="Times New Roman,serif"><tspan font-style="italic">v</tspan><tspan font-size="10" dy="3">0</tspan><tspan dy="-3" font-style="italic">t</tspan></text>
+          <text x="250" y="102" font-size="15" fill="var(--ink)" font-family="Times New Roman,serif">½<tspan font-style="italic">at</tspan><tspan font-size="10" dy="-6">2</tspan></text>
+          <text x="358" y="75" font-size="14" fill="var(--acc)" font-style="italic" font-family="Times New Roman,serif">at</text>
+          <line x1="354" y1="32" x2="354" y2="108" stroke="var(--acc)" stroke-width="2"/>
+        </svg></div>
+      <div class="step" hidden><h4>3　微分して確かめる</h4>
+        <p><span class="fr"><span>d<i class="qv">x</i></span><span>d<i class="qv">t</i></span></span> ＝ <i class="qv">v</i><sub>0</sub> ＋ <i class="qv">at</i> ＝ <i class="qv">v</i>　　<span class="fr"><span>d<i class="qv">v</i></span><span>d<i class="qv">t</i></span></span> ＝ <i class="qv">a</i></p>
+        <p class="why">積分した結果を微分するともとに戻ります（数学Ⅱ：<span class="m">(<i class="qv">t</i><sup>2</sup>)′ ＝ 2<i class="qv">t</i></span> なので ½<i class="qv">at</i><sup>2</sup> を微分すると <i class="qv">at</i>）。式を覚えていなくても、微分で確かめられます。</p></div>
+      <div class="step" hidden><h4>4　<i class="qv">t</i> を消去する</h4>
+        <p>1 の式から <i class="qv">t</i> ＝ <span class="fr"><span><i class="qv">v</i> − <i class="qv">v</i><sub>0</sub></span><span><i class="qv">a</i></span></span>。これを 2 の式に代入すると</p>
+        <p><i class="qv">x</i> ＝ <i class="qv">v</i><sub>0</sub>・<span class="fr"><span><i class="qv">v</i> − <i class="qv">v</i><sub>0</sub></span><span><i class="qv">a</i></span></span> ＋ <span class="fr"><span>1</span><span>2</span></span><i class="qv">a</i>・<span class="fr"><span>(<i class="qv">v</i> − <i class="qv">v</i><sub>0</sub>)<sup>2</sup></span><span><i class="qv">a</i><sup>2</sup></span></span>　両辺に 2<i class="qv">a</i> を掛けて整理すると</p>
+        <p class="eq"><b><i class="qv">v</i><sup>2</sup> − <i class="qv">v</i><sub>0</sub><sup>2</sup> ＝ 2<i class="qv">ax</i></b></p>
+        <p class="why">2<i class="qv">ax</i> ＝ 2<i class="qv">v</i><sub>0</sub>(<i class="qv">v</i> − <i class="qv">v</i><sub>0</sub>) ＋ (<i class="qv">v</i> − <i class="qv">v</i><sub>0</sub>)<sup>2</sup> ＝ (<i class="qv">v</i> − <i class="qv">v</i><sub>0</sub>)(<i class="qv">v</i> ＋ <i class="qv">v</i><sub>0</sub>) ＝ <i class="qv">v</i><sup>2</sup> − <i class="qv">v</i><sub>0</sub><sup>2</sup>。この式は、新しい法則ではなく、1 と 2 から <i class="qv">t</i> を消しただけの式です。</p></div>
+      <div class="step" hidden><h4>まとめ</h4>
+        <p>3式は「<i class="qv">a</i> が一定」のときにだけ成り立ちます。<a href="#int">3 積分</a>の「2回止まる」のように加速度が変わる運動では使えませんが、微分・積分はどんな運動にも使えます。</p>
+        <div class="tbl"><table>
+          <tr><th>やること</th><th>数学</th><th>グラフでは</th></tr>
+          <tr><td class="l"><i class="qv">x</i> → <i class="qv">v</i> → <i class="qv">a</i></td><td>微分する</td><td class="l">接線の傾き</td></tr>
+          <tr><td class="l"><i class="qv">a</i> → <i class="qv">v</i> → <i class="qv">x</i></td><td>積分する</td><td class="l">グラフと <i class="qv">t</i> 軸の間の面積（＋はじめの値）</td></tr>
+        </table></div></div>
+    </div>
+    <div class="controls">
+      <button type="button" class="btn" id="step-next">次の段階 ▶</button>
+      <button type="button" class="btn ghost" id="step-all">すべて表示</button>
+      <button type="button" class="btn ghost" id="step-reset">はじめから</button>
+    </div>
+  </section>
+  <section class="sheet"><h3>見てみよう</h3><ol class="qs" id="qs-derive"></ol></section>
+</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const I = s => `<i class="qv">${s}</i>`;
+const FR = (a, b) => `<span class="fr"><span>${a}</span><span>${b}</span></span>`;
+const DXDT = (a, b) => FR(`d${I(a)}`, `d${I(b)}`);
+if(/\/anim\//.test(location.pathname)){ $("backLink").hidden = false; $("nav").hidden = false; }
+const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- 数の表示 ---------- */
+function num(v, d){ if(d === undefined) d = 2; if(Math.abs(v) < 1e-12) v = 0;
+  let s = v.toFixed(d); if(s.indexOf(".") >= 0) s = s.replace(/0+$/, "").replace(/\.$/, "");
+  if(s === "-0") s = "0"; return s.replace("-", "−"); }
+function sig(v){ const a = Math.abs(v); return num(v, a >= 100 ? 1 : a >= 10 ? 3 : 4); }
+function coefHTML(c){ // 分数で表せる係数は分数で
+  for(const d of [1, 2, 3, 4, 6, 9]){ const n = c * d; if(Math.abs(n - Math.round(n)) < 1e-9){
+    const r = Math.round(n); if(d === 1) return { s:String(Math.abs(r)), neg:r < 0 };
+    return { s:FR(Math.abs(r), d), neg:r < 0 }; } }
+  return { s:num(Math.abs(c)), neg:c < 0 };
+}
+const SUP = ["", "", "²", "³", "⁴"];
+function polyHTML(P, v){ v = v || "t"; let out = "";
+  for(let k = P.length - 1; k >= 0; k--){ const c = P[k] || 0; if(Math.abs(c) < 1e-12) continue;
+    const cf = coefHTML(c); let body = (k > 0 && cf.s === "1") ? "" : cf.s;
+    if(k > 0) body += I(v) + SUP[k];
+    out += out === "" ? (cf.neg ? "−" : "") + body : (cf.neg ? " − " : " ＋ ") + body; }
+  return out || "0"; }
+/* ---------- 多項式 ---------- */
+const ev = (P, t) => P.reduce((s, c, k) => s + (c || 0) * Math.pow(t, k), 0);
+const der = P => P.length <= 1 ? [0] : P.slice(1).map((c, k) => c * (k + 1));
+const antider = (P, C) => [C || 0].concat(P.map((c, k) => c / (k + 1)));
+function roots(P, a, b){ // 次数2以下の多項式の (a, b) 内の根
+  const p = P.slice(); while(p.length > 1 && Math.abs(p[p.length - 1]) < 1e-12) p.pop();
+  let r = [];
+  if(p.length === 2) r = [-p[0] / p[1]];
+  else if(p.length === 3){ const D = p[1] * p[1] - 4 * p[2] * p[0]; if(D > 1e-12){ const q = Math.sqrt(D); r = [(-p[1] - q) / (2 * p[2]), (-p[1] + q) / (2 * p[2])].sort((x, y) => x - y); } else if(Math.abs(D) <= 1e-12) r = [-p[1] / (2 * p[2])]; }
+  return r.filter(x => x > a + 1e-9 && x < b - 1e-9);
+}
+
+/* ---------- canvas ---------- */
+const col = {};
+function readColors(){ const cs = getComputedStyle(document.documentElement);
+  ["ink","muted","blue","red","line","grid","sheet","pos","vel","acc","sec","tan","red-soft","blue-soft"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
+const CV = {}, CX = {}, SZ = {};
+["lim","dx","dv","da","ir","iq"].forEach(k => { CV[k] = $("cv-" + k); CX[k] = CV[k].getContext("2d"); });
+function fit(k){ const c = CV[k], r = c.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5);
+  SZ[k] = { w:Math.max(1, Math.round(r.width)), h:Math.max(1, Math.round(r.height)) };
+  c.width = Math.round(SZ[k].w * d); c.height = Math.round(SZ[k].h * d); CX[k].setTransform(d, 0, 0, d, 0, 0); }
+function niceStep(range, n){ const raw = range / n, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p; return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p; }
+function niceRange(lo, hi){ if(hi - lo < 1e-9){ lo -= 1; hi += 1; } const pad = (hi - lo) * 0.08; lo -= pad; hi += pad; if(lo > 0) lo = 0; if(hi < 0) hi = 0; return [lo, hi]; }
+/* 座標系をつくって軸・目盛りをかく */
+function frame(k, tr, yr, lab){
+  const g = CX[k], w = SZ[k].w, h = SZ[k].h, L = 46, R = 22, T = 14, B = 26;
+  const F = { g, w, h, L, R, T, B, tr, yr,
+    X:t => L + (t - tr[0]) / (tr[1] - tr[0]) * (w - L - R),
+    Y:y => T + (yr[1] - y) / (yr[1] - yr[0]) * (h - T - B),
+    tOf:px => tr[0] + (px - L) / (w - L - R) * (tr[1] - tr[0]) };
+  g.clearRect(0, 0, w, h);
+  g.font = "12px " + getComputedStyle(document.body).fontFamily; g.textBaseline = "middle";
+  const ys = niceStep(yr[1] - yr[0], h < 150 ? 3 : 5), ts = 1;
+  g.strokeStyle = col.grid; g.lineWidth = 1;
+  for(let y = Math.ceil(yr[0] / ys) * ys; y <= yr[1] + 1e-9; y += ys){ g.beginPath(); g.moveTo(L, F.Y(y)); g.lineTo(w - R, F.Y(y)); g.stroke();
+    g.fillStyle = col.muted; g.textAlign = "right"; g.fillText(num(y, 2), L - 6, F.Y(y)); }
+  for(let t = Math.ceil(tr[0]); t <= tr[1] + 1e-9; t += ts){ g.strokeStyle = col.grid; g.beginPath(); g.moveTo(F.X(t), T); g.lineTo(F.X(t), h - B); g.stroke();
+    g.fillStyle = col.muted; g.textAlign = "center"; g.fillText(num(t, 1), F.X(t), h - B + 13); }
+  g.strokeStyle = col.ink; g.lineWidth = 1.4; g.beginPath(); g.moveTo(L, F.Y(0)); g.lineTo(w - R + 8, F.Y(0)); g.moveTo(L, h - B); g.lineTo(L, T - 4); g.stroke();
+  g.fillStyle = col.ink; g.font = "italic 15px " + "'Times New Roman',Times,serif"; g.textAlign = "left";
+  g.fillText("t", w - R + 6, F.Y(0) - 10); g.fillText(lab, 6, T);
+  g.font = "12px " + getComputedStyle(document.body).fontFamily;
+  return F;
+}
+function curve(F, f, a, b, color, w, dash){ const g = F.g; g.save(); g.strokeStyle = color; g.lineWidth = w || 2.5; if(dash) g.setLineDash(dash);
+  g.beginPath(); const n = 240; for(let i = 0; i <= n; i++){ const t = a + (b - a) * i / n, y = f(t); i ? g.lineTo(F.X(t), F.Y(y)) : g.moveTo(F.X(t), F.Y(y)); }
+  g.stroke(); g.restore(); }
+function seg(F, t1, y1, t2, y2, color, w, dash){ const g = F.g; g.save(); g.strokeStyle = color; g.lineWidth = w || 2; if(dash) g.setLineDash(dash);
+  g.beginPath(); g.moveTo(F.X(t1), F.Y(y1)); g.lineTo(F.X(t2), F.Y(y2)); g.stroke(); g.restore(); }
+function dot(F, t, y, color, r, label){ const g = F.g; g.save(); g.fillStyle = color; g.beginPath(); g.arc(F.X(t), F.Y(y), r || 5, 0, 7); g.fill();
+  if(label){ g.fillStyle = col.ink; g.font = "bold 14px " + getComputedStyle(document.body).fontFamily; g.textAlign = "left"; g.fillText(label, F.X(t) + 7, F.Y(y) - 11); } g.restore(); }
+function clipLine(F, t0, y0, slope, color, dash, w){ // 傾き slope の直線を図の中だけにかく
+  const a = F.tr[0], b = F.tr[1]; seg(F, a, y0 + slope * (a - t0), b, y0 + slope * (b - t0), color, w || 2, dash);
+}
+function vline(F, t, color){ const g = F.g; g.save(); g.strokeStyle = color; g.globalAlpha = .45; g.setLineDash([3, 4]); g.lineWidth = 1;
+  g.beginPath(); g.moveTo(F.X(t), F.T); g.lineTo(F.X(t), F.h - F.B); g.stroke(); g.restore(); }
+function clipRect(F){ const g = F.g; g.save(); g.beginPath(); g.rect(F.L, F.T - 2, F.w - F.L - F.R + 2, F.h - F.T - F.B + 4); g.clip(); }
+function text(F, s, x, y, color, align){ const g = F.g; g.save(); g.fillStyle = color; g.textAlign = align || "left"; g.font = "bold 13px " + getComputedStyle(document.body).fontFamily; g.fillText(s, x, y); g.restore(); }
+
+/* ---------- タブ ---------- */
+const TABS = ["lim", "diff", "int", "derive"];
+let tab = "lim";
+function showTab(k, push){
+  if(TABS.indexOf(k) < 0) k = "lim"; tab = k;
+  document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === k));
+  TABS.forEach(t => $("p-" + t).hidden = t !== k);
+  if(push && history.replaceState) history.replaceState(null, "", "#" + k);
+  requestAnimationFrame(() => { Object.keys(CV).forEach(fit); drawAll(); });
+}
+document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab, true)));
+window.addEventListener("hashchange", () => showTab(location.hash.slice(1)));
+function chips(box, items, cur, onPick, fmt){
+  box.querySelectorAll("button").forEach(b => b.remove());
+  items.forEach(v => { const b = document.createElement("button"); b.type = "button"; b.innerHTML = fmt ? fmt(v) : v; b.setAttribute("aria-pressed", v === cur);
+    b.addEventListener("click", () => { box.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); onPick(v); }); box.appendChild(b); });
+}
+function segBtns(box, map, cur, onPick){ chips(box, Object.keys(map), cur, onPick, k => map[k].name); }
+
+/* ================= 1 極限 ================= */
+const LIM = {
+  acc:{ name:"だんだん速くなる", P:[0, 0, 0.5], T:6 },
+  back:{ name:"行って戻る", P:[0, 5, -1], T:5 },
+  uni:{ name:"等速", P:[1, 2], T:6 }
+};
+const HS = [2, 1, 0.5, 0.1, 0.01, 0.001];
+const L = { p:"acc", t1:1, h:1, anim:null };
+segBtns($("lim-seg"), LIM, L.p, k => { L.p = k; const T = LIM[k].T; $("lim-t1").max = T - 2; if(L.t1 > T - 2) L.t1 = T - 2; $("lim-t1").value = L.t1; drawLim(); });
+chips($("lim-h"), HS, L.h, v => { stopLim(); L.h = v; drawLim(); }, v => num(v, 3) + " s");
+$("lim-t1").addEventListener("input", e => { L.t1 = +e.target.value; drawLim(); });
+function stopLim(){ if(L.anim){ cancelAnimationFrame(L.anim); L.anim = null; } }
+$("lim-go").addEventListener("click", () => {
+  stopLim(); const t0 = performance.now(), dur = reduce ? 1 : 4000;
+  const stepF = now => { const u = Math.min(1, (now - t0) / dur); L.h = Math.pow(10, Math.log10(2) + (Math.log10(0.001) - Math.log10(2)) * u);
+    $("lim-h").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", "false"));
+    drawLim(); if(u < 1) L.anim = requestAnimationFrame(stepF); else { L.h = 0.001; L.anim = null;
+      $("lim-h").querySelectorAll("button").forEach((b, i) => b.setAttribute("aria-pressed", HS[i] === 0.001)); drawLim(); } };
+  L.anim = requestAnimationFrame(stepF);
+});
+function drawLim(){
+  const c = LIM[L.p], P = c.P, p = P[2] || 0, q = P[1] || 0, t1 = L.t1, h = L.h, t2 = t1 + h;
+  const x1 = ev(P, t1), x2 = ev(P, t2), A = 2 * p * t1 + q, avg = (x2 - x1) / h;
+  $("lim-t1o").textContent = num(t1, 1) + " s";
+  $("lim-cap").innerHTML = `<span class="cp">${I("x")}-${I("t")} 図</span>　${I("x")} ＝ ${polyHTML(P)}　〔m〕`;
+  if(tab === "lim" && SZ.lim){
+    let lo = Infinity, hi = -Infinity; for(let i = 0; i <= 100; i++){ const y = ev(P, c.T * i / 100); lo = Math.min(lo, y); hi = Math.max(hi, y); }
+    const F = frame("lim", [0, c.T], niceRange(lo, hi), "x");
+    clipRect(F);
+    curve(F, t => ev(P, t), 0, c.T, col.pos, 3);
+    clipLine(F, t1, x1, A, col.tan, [7, 5], 2);
+    clipLine(F, t1, x1, avg, col.sec, null, 2.2);
+    if(h >= 0.05){ // 傾きの三角形
+      seg(F, t1, x1, t2, x1, col.muted, 1.5, [4, 3]); seg(F, t2, x1, t2, x2, col.muted, 1.5, [4, 3]);
+      text(F, "h", (F.X(t1) + F.X(t2)) / 2, F.Y(x1) + (x2 >= x1 ? 14 : -14), col.ink, "center");
+      text(F, "Δx", F.X(t2) + 6, (F.Y(x1) + F.Y(x2)) / 2, col.ink);
+    }
+    F.g.restore();
+    dot(F, t1, x1, col.ink, 5, "A"); if(h >= 0.05) dot(F, t2, x2, col.sec, 5, "B");
+  }
+  const hs = num(h, h >= 0.1 ? 2 : h >= 0.01 ? 3 : 4);
+  $("lim-read").innerHTML = `<p><span class="s">平均の速度</span>（直線 AB の傾き）＝ ${FR(`${I("x")}(${num(t2, 4)}) − ${I("x")}(${num(t1, 1)})`, hs)} ＝ <b>${sig(avg)} m/s</b></p>
+    <p><span class="tn">瞬間の速度</span>（点Aでの接線の傾き）＝ ${I("v")}(${num(t1, 1)}) ＝ <b>${sig(A)} m/s</b></p>`;
+  // 文字式で
+  const Ah = coefHTML(A), ph = coefHTML(p);
+  const termA = (A < 0 ? "−" : "") + Ah.s, termAh = Math.abs(A) < 1e-12 ? "" : (A < 0 ? "−" : "") + (Ah.s === "1" ? "" : Ah.s) + I("h");
+  const lin = Math.abs(p) < 1e-12 ? `${termA}　（${I("h")} によらない）` : `${termA} ${p < 0 ? "−" : "＋"} ${ph.s === "1" ? "" : ph.s}${I("h")}`;
+  const h2 = `${ph.s === "1" ? "" : ph.s}${I("h")}²`;
+  const dxs = Math.abs(p) < 1e-12 ? termAh : termAh === "" ? `${p < 0 ? "−" : ""}${h2}` : `${termAh} ${p < 0 ? "−" : "＋"} ${h2}`;
+  $("lim-alg").innerHTML = `<p class="t">文字式で（数学Ⅱの計算）　${I("t")}<sub>1</sub> ＝ ${num(t1, 1)} のとき</p>
+    <p>Δ${I("x")} ＝ ${I("x")}(${num(t1, 1)} ＋ ${I("h")}) − ${I("x")}(${num(t1, 1)}) ＝ ${dxs}</p>
+    <p>${FR(`Δ${I("x")}`, `Δ${I("t")}`)} ＝ ${FR(`Δ${I("x")}`, I("h"))} ＝ ${lin}</p>
+    <p>${I("h")} → 0 のとき ${Math.abs(p) < 1e-12 ? "" : `${I("h")} の項が 0 に近づくので、`}<span class="tn">${I("v")}(${num(t1, 1)}) ＝ ${sig(A)} m/s</span></p>
+    <p class="hint" style="margin-top:6px">導関数で求めると：${I("v")} ＝ ${DXDT("x", "t")} ＝ ${polyHTML(der(P))} に ${I("t")} ＝ ${num(t1, 1)} を代入して ${sig(A)} m/s</p>`;
+  let tb = `<tr><th>${I("h")}〔s〕</th><th>Δ${I("x")}〔m〕</th><th>平均の速度 Δ${I("x")}/${I("h")}〔m/s〕</th></tr>`;
+  HS.forEach(hh => { const d = ev(P, t1 + hh) - x1; tb += `<tr class="${Math.abs(hh - h) < 1e-9 ? "cur" : ""}"><td>${num(hh, 3)}</td><td>${num(d, 6)}</td><td>${num(d / hh, 4)}</td></tr>`; });
+  tb += `<tr><td>→ 0</td><td>→ 0</td><td class="tn">→ ${sig(A)}</td></tr>`;
+  $("lim-tbl").innerHTML = tb;
+}
+
+/* ================= 2 微分 ================= */
+const DIF = {
+  uni:{ name:"等速直線運動", P:[1, 2] },
+  acc:{ name:"静止から等加速度", P:[0, 0, 0.5] },
+  up:{ name:"減速して戻る", P:[0, 6, -1] },
+  cub:{ name:"折り返して再び進む", P:[0, 8, -3, 1 / 3] }
+};
+const D = { p:"cub", t:1, anim:null };
+segBtns($("diff-seg"), DIF, D.p, k => { D.p = k; drawDiff(); });
+$("diff-t").addEventListener("input", e => { stopDiff(); D.t = +e.target.value; drawDiff(); });
+$("diff-all").addEventListener("change", drawDiff);
+function stopDiff(){ if(D.anim){ cancelAnimationFrame(D.anim); D.anim = null; $("diff-go").textContent = "▶ なぞる"; } }
+$("diff-go").addEventListener("click", () => {
+  if(D.anim){ stopDiff(); return; }
+  if(D.t >= 5.99) D.t = 0; const start = D.t, t0 = performance.now();
+  $("diff-go").textContent = "❚❚ 止める";
+  const stepF = now => { D.t = Math.min(6, start + (now - t0) / 1000 * (reduce ? 60 : 1)); $("diff-t").value = D.t; drawDiff();
+    if(D.t < 6) D.anim = requestAnimationFrame(stepF); else stopDiff(); };
+  D.anim = requestAnimationFrame(stepF);
+});
+function rangeOf(f){ let lo = Infinity, hi = -Infinity; for(let i = 0; i <= 120; i++){ const y = f(6 * i / 120); lo = Math.min(lo, y); hi = Math.max(hi, y); } return niceRange(lo, hi); }
+const FR_D = {};
+function drawDiff(){
+  const P = DIF[D.p].P, V = der(P), Aa = der(V), t = D.t, all = $("diff-all").checked;
+  $("diff-to").textContent = num(t, 2) + " s";
+  const x = ev(P, t), v = ev(V, t), a = ev(Aa, t), ja = ev(der(Aa), t);
+  if(tab === "diff" && SZ.dx){
+    const tEnd = all ? 6 : t;
+    let F = FR_D.dx = frame("dx", [0, 6], rangeOf(s => ev(P, s)), "x");
+    clipRect(F); curve(F, s => ev(P, s), 0, 6, col.pos, 3); clipLine(F, t, x, v, col.tan, [7, 5], 2); F.g.restore(); vline(F, t, col.ink); dot(F, t, x, col.pos, 5);
+    text(F, "傾き " + num(v, 2), Math.min(F.X(t) + 8, F.w - 96), F.T + 8, col.tan);
+    F = FR_D.dv = frame("dv", [0, 6], rangeOf(s => ev(V, s)), "v");
+    clipRect(F); curve(F, s => ev(V, s), 0, 6, col.vel, 1.2, [3, 5]); if(tEnd > 0) curve(F, s => ev(V, s), 0, tEnd, col.vel, 3);
+    clipLine(F, t, v, a, col.tan, [7, 5], 2); F.g.restore(); vline(F, t, col.ink); dot(F, t, v, col.vel, 5);
+    text(F, "傾き " + num(a, 2), Math.min(F.X(t) + 8, F.w - 96), F.T + 8, col.tan);
+    F = FR_D.da = frame("da", [0, 6], rangeOf(s => ev(Aa, s)), "a");
+    clipRect(F); curve(F, s => ev(Aa, s), 0, 6, col.acc, 1.2, [3, 5]); if(tEnd > 0) curve(F, s => ev(Aa, s), 0, tEnd, col.acc, 3); F.g.restore();
+    vline(F, t, col.ink); dot(F, t, a, col.acc, 5);
+  }
+  $("diff-read").innerHTML = `<p>時刻 ${I("t")} ＝ ${num(t, 2)} s：　<span class="cp">${I("x")} ＝ ${num(x, 2)} m</span>　<span class="cv">${I("v")} ＝ ${num(v, 2)} m/s</span>　<span class="ca">${I("a")} ＝ ${num(a, 2)} m/s²</span></p>
+    <p>${v > 1e-9 ? "正の向きに進んでいる" : v < -1e-9 ? "負の向きに進んでいる" : "一瞬止まっている"}。${Math.abs(v) < 1e-9 ? "" : (v * a > 1e-9 ? "速さは大きくなっている（" + I("v") + " と " + I("a") + " が同じ符号）。" : v * a < -1e-9 ? "速さは小さくなっている（" + I("v") + " と " + I("a") + " が逆の符号）。" : "速さは変わらない（" + I("a") + " ＝ 0）。")}</p>`;
+  $("diff-eq").innerHTML = `<p class="t">導関数（数学Ⅱ：(${I("t")}<sup>${I("n")}</sup>)′ ＝ ${I("n")}${I("t")}<sup>${I("n")}−1</sup>、定数の微分は 0）</p>
+    <p class="eq"><span class="cp">${I("x")}</span> ＝ ${polyHTML(P)}</p>
+    <p class="eq"><span class="cv">${I("v")}</span> ＝ ${DXDT("x", "t")} ＝ ${polyHTML(V)}</p>
+    <p class="eq"><span class="ca">${I("a")}</span> ＝ ${DXDT("v", "t")} ＝ ${polyHTML(Aa)}</p>
+    ${Math.abs(ja) > 1e-9 || P.length > 3 ? `<p class="hint">この運動は ${I("a")} が時刻とともに変わるので、等加速度直線運動の3式は使えません。</p>` : ""}`;
+  // 増減表
+  const rs = roots(V, 0, 6), pts = [0].concat(rs, [6]);
+  let r1 = `<tr><th>${I("t")}〔s〕</th>`, r2 = `<tr><th>${I("v")} ＝ ${I("x")}′</th>`, r3 = `<tr><th>${I("x")}〔m〕</th>`;
+  pts.forEach((pt, i) => {
+    r1 += `<td>${num(pt, 2)}</td>`; const vv = ev(V, pt); r2 += `<td>${Math.abs(vv) < 1e-9 ? "0" : vv > 0 ? "＋" : "−"}</td>`;
+    let tag = ""; if(i > 0 && i < pts.length - 1){ const vl = ev(V, (pts[i - 1] + pt) / 2), vr = ev(V, (pt + pts[i + 1]) / 2); tag = vl > 0 && vr < 0 ? "<br>極大" : vl < 0 && vr > 0 ? "<br>極小" : ""; }
+    r3 += `<td>${num(ev(P, pt), 2)}${tag}</td>`;
+    if(i < pts.length - 1){ const m = (pt + pts[i + 1]) / 2, vm = ev(V, m); r1 += `<td>…</td>`; r2 += `<td class="${vm > 0 ? "up" : "dn"}">${vm > 0 ? "＋" : "−"}</td>`; r3 += `<td class="${vm > 0 ? "up" : "dn"}">${vm > 0 ? "↗" : "↘"}</td>`; }
+  });
+  $("diff-inc").innerHTML = r1 + "</tr>" + r2 + "</tr>" + r3 + "</tr>";
+  $("diff-incnote").innerHTML = rs.length ? `${rs.map(r => I("t") + " ＝ " + num(r, 2) + " s").join("、")} で ${I("v")} ＝ 0 になり、進む向きが変わります（折り返し）。${I("x")} の極大・極小は、運動では「いちばん遠くまで行った位置」「戻ってきていちばん近づいた位置」です。`
+    : `0〜6 s の間に ${I("v")} の符号は変わらないので、物体は折り返しません。`;
+}
+function dragT(k, set){ const c = CV[k]; let on = false;
+  const mv = e => { const F = k.startsWith("d") ? FR_D[k] : FR_I[k]; if(!F) return; const r = c.getBoundingClientRect(); const t = F.tOf(e.clientX - r.left); set(Math.max(F.tr[0], Math.min(F.tr[1], t))); };
+  c.addEventListener("pointerdown", e => { on = true; c.setPointerCapture(e.pointerId); mv(e); });
+  c.addEventListener("pointermove", e => { if(on) mv(e); });
+  c.addEventListener("pointerup", () => on = false); c.addEventListener("pointercancel", () => on = false); }
+["dx", "dv", "da"].forEach(k => dragT(k, t => { stopDiff(); D.t = Math.round(t * 100) / 100; $("diff-t").value = D.t; drawDiff(); }));
+
+/* ================= 3 積分 ================= */
+const MODES = {
+  v:{ name:`${I("v")}-${I("t")} → 変位`, rate:"v", acc:"x", ur:"m/s", uq:"m", cRate:"vel", cQ:"pos", c0:"はじめの位置 " + I("x") + "<sub>0</sub>", qn:"変位", rn:"速度",
+      presets:{ uni:{ name:"等速", P:[2] }, acc:{ name:"等加速度", P:[1, 1] }, back:{ name:"減速して逆向きへ", P:[6, -2] }, two:{ name:"2回止まる", P:[8, -6, 1] } }, def:"back" },
+  a:{ name:`${I("a")}-${I("t")} → 速度の変化`, rate:"a", acc:"v", ur:"m/s²", uq:"m/s", cRate:"acc", cQ:"vel", c0:"はじめの速度 " + I("v") + "<sub>0</sub>", qn:"速度の変化", rn:"加速度",
+      presets:{ uni:{ name:"一定", P:[1.5] }, inc:{ name:"だんだん大きく", P:[0, 0.5] }, back:{ name:"減って逆向きへ", P:[3, -1] } }, def:"uni" }
+};
+const NS = [1, 2, 4, 8, 16, 32, 100];
+const G = { m:"v", p:{ v:"back", a:"uni" }, n:4, t:4, c:0 };
+const FR_I = {};
+segBtns($("int-mode"), MODES, G.m, k => { G.m = k; buildIntSeg(); drawInt(); });
+function buildIntSeg(){ const M = MODES[G.m]; segBtns($("int-seg"), M.presets, G.p[G.m], k => { G.p[G.m] = k; drawInt(); }); }
+buildIntSeg();
+chips($("int-n"), NS, G.n, v => { G.n = v; drawInt(); });
+$("int-t").addEventListener("input", e => { G.t = +e.target.value; drawInt(); });
+$("int-c").addEventListener("input", e => { G.c = +e.target.value; drawInt(); });
+function absInt(P, a, b){ // ∫|f| の厳密値
+  const F = antider(P), pts = [a].concat(roots(P, a, b), [b]); let s = 0;
+  for(let i = 0; i < pts.length - 1; i++) s += Math.abs(ev(F, pts[i + 1]) - ev(F, pts[i])); return s; }
+function drawInt(){
+  const M = MODES[G.m], P = M.presets[G.p[G.m]].P, Fp = antider(P, G.c), tc = G.t, N = G.n, w = tc / N;
+  $("int-to").textContent = num(tc, 1) + " s"; $("int-co").textContent = num(G.c, 1) + " " + M.uq; $("int-clab").innerHTML = M.c0;
+  $("int-cap1").innerHTML = `<span class="c${M.rate === "v" ? "v" : "a"}">${I(M.rate)}-${I("t")} 図</span>：${I(M.rate)} ＝ ${polyHTML(P)}〔${M.ur}〕。短冊の面積 ${I(M.rate)}Δ${I("t")} ＝ 短い時間の${M.qn}`;
+  $("int-cap2").innerHTML = `<span class="c${M.acc === "x" ? "p" : "v"}">${I(M.acc)}-${I("t")} 図</span>：曲線の高さ ＝ ${M.c0} ＋（0〜${I("t")} の面積）。赤い折れ線は短冊の面積を順に足したもの`;
+  let S = 0; const cum = [[0, G.c]];
+  for(let i = 0; i < N; i++){ S += ev(P, i * w) * w; cum.push([(i + 1) * w, G.c + S]); }
+  const exact = ev(Fp, tc) - ev(Fp, 0);
+  if(tab === "int" && SZ.ir){
+    let F = FR_I.ir = frame("ir", [0, 6], rangeOf(s => ev(P, s)), M.rate);
+    const g = F.g; clipRect(F);
+    for(let i = 0; i < N; i++){ const t0 = i * w, hgt = ev(P, t0); g.fillStyle = hgt >= 0 ? col[M.cQ] : col.red; g.globalAlpha = hgt >= 0 ? .22 : .2;
+      const x0 = F.X(t0), x1 = F.X(t0 + w), y0 = F.Y(0), y1 = F.Y(hgt); g.fillRect(x0, Math.min(y0, y1), x1 - x0, Math.abs(y1 - y0));
+      g.globalAlpha = .8; g.strokeStyle = hgt >= 0 ? col[M.cQ] : col.red; g.lineWidth = N > 40 ? .5 : 1; g.strokeRect(x0, Math.min(y0, y1), x1 - x0, Math.abs(y1 - y0)); g.globalAlpha = 1; }
+    curve(F, s => ev(P, s), 0, 6, col[M.cRate], 3); g.restore();
+    vline(F, tc, col.ink);
+    F = FR_I.iq = frame("iq", [0, 6], (() => { let lo = Infinity, hi = -Infinity; for(let i = 0; i <= 120; i++){ const y = ev(antider(P, 0), 6 * i / 120); lo = Math.min(lo, y); hi = Math.max(hi, y); } return niceRange(lo - 5, hi + 5); })(), M.acc);
+    clipRect(F); curve(F, s => ev(Fp, s), 0, 6, col[M.cQ], 1.2, [3, 5]); curve(F, s => ev(Fp, s), 0, tc, col[M.cQ], 3);
+    clipLine(F, tc, ev(Fp, tc), ev(P, tc), col.tan, [7, 5], 1.6);
+    const g2 = F.g; g2.save(); g2.strokeStyle = col.sec; g2.lineWidth = 2; g2.beginPath(); cum.forEach((p, i) => i ? g2.lineTo(F.X(p[0]), F.Y(p[1])) : g2.moveTo(F.X(p[0]), F.Y(p[1]))); g2.stroke();
+    g2.fillStyle = col.sec; cum.forEach(p => { if(N <= 32){ g2.beginPath(); g2.arc(F.X(p[0]), F.Y(p[1]), 3, 0, 7); g2.fill(); } }); g2.restore();
+    F.g.restore(); vline(F, tc, col.ink); dot(F, tc, ev(Fp, tc), col[M.cQ], 5);
+  }
+  const unit = M.uq, dist = G.m === "v" ? absInt(P, 0, tc) : null;
+  $("int-read").innerHTML = `<p><span class="s">短冊の面積の和</span>（${I("N")} ＝ ${N}）：Σ ${I(M.rate)}Δ${I("t")} ＝ <b>${num(S, 3)} ${unit}</b></p>
+    <p><span class="tn">定積分</span>：<span class="int">∫</span><sub>0</sub><sup>${num(tc, 1)}</sup> ${I(M.rate)} d${I("t")} ＝ <b>${num(exact, 3)} ${unit}</b>（＝ 0〜${num(tc, 1)} s の${M.qn}）</p>
+    <p>差：${num(S - exact, 3)} ${unit}　${N >= 32 ? "（" + I("N") + " を大きくすると差は 0 に近づく）" : "→ " + I("N") + " を大きくしてみよう"}</p>
+    ${dist !== null ? `<p>道のり：<span class="int">∫</span><sub>0</sub><sup>${num(tc, 1)}</sup> |${I("v")}| d${I("t")} ＝ <b>${num(dist, 3)} m</b>　${Math.abs(dist - Math.abs(exact)) > 1e-6 ? "（折り返したので変位の大きさと違う。" + I("t") + " 軸より下の面積は負の変位）" : "（折り返していないので変位の大きさと等しい）"}</p>` : ""}`;
+  const Q0 = M.acc + "<sub>0</sub>";
+  $("int-eq").innerHTML = `<p class="t">不定積分と積分定数（数学Ⅱ：<span class="int" style="font-size:1.2em">∫</span>${I("t")}<sup>${I("n")}</sup> d${I("t")} ＝ ${FR(1, I("n") + "＋1")}${I("t")}<sup>${I("n")}＋1</sup> ＋ ${I("C")}）</p>
+    <p class="eq">${I(M.acc)} ＝ <span class="int">∫</span>(${polyHTML(P)}) d${I("t")} ＝ ${polyHTML(antider(P, 0))} ＋ ${I("C")}</p>
+    <p>${I("t")} ＝ 0 で ${I(M.acc)} ＝ ${I(Q0)} なので、積分定数 ${I("C")} ＝ ${I(Q0)}（いまは ${num(G.c, 1)} ${unit}）。</p>
+    <p class="eq">${I(M.acc)} ＝ ${polyHTML(Fp)}</p>
+    <p class="hint">「${M.c0}」のスライダーを動かすと、下の曲線は上下に平行移動するだけで、形（各時刻の接線の傾き ＝ ${I(M.rate)}）は変わりません。下の図の紫の破線は時刻 ${I("t")} での接線で、その傾きは上の図の高さ ${I(M.rate)}(${num(tc, 1)}) ＝ ${num(ev(P, tc), 2)} ${M.ur} と同じです（積分してから微分すると、もとに戻る）。</p>`;
+}
+["ir", "iq"].forEach(k => dragT(k, t => { G.t = Math.max(0.1, Math.round(t * 10) / 10); $("int-t").value = G.t; drawInt(); }));
+
+/* ================= 4 3式を導く ================= */
+const STEPS = [...document.querySelectorAll("#steps .step")];
+let shown = 1;
+function showSteps(){ STEPS.forEach((s, i) => s.hidden = i >= shown); $("step-next").disabled = shown >= STEPS.length; $("step-next").style.opacity = shown >= STEPS.length ? .5 : 1; }
+$("step-next").addEventListener("click", () => { shown = Math.min(STEPS.length, shown + 1); showSteps(); STEPS[shown - 1].scrollIntoView({ behavior:reduce ? "auto" : "smooth", block:"nearest" }); });
+$("step-all").addEventListener("click", () => { shown = STEPS.length; showSteps(); });
+$("step-reset").addEventListener("click", () => { shown = 1; showSteps(); });
+showSteps();
+
+/* ---------- 見てみよう ---------- */
+function qs(id, list){ $(id).innerHTML = list.map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join(""); }
+qs("qs-lim", [
+  [`「だんだん速くなる」で ${I("t")}<sub>1</sub> ＝ 2 s にし、「${I("h")} を 0 に近づける」を押そう。平均の速度はどんな値に近づくか。文字式の欄では、どの項が消えていくか。`, `${I("x")} ＝ 0.5${I("t")}² なので、Δ${I("x")}/${I("h")} ＝ 2 ＋ 0.5${I("h")}。${I("h")} → 0 で 0.5${I("h")} の項が 0 に近づき、平均の速度は 2 m/s に近づきます。これが時刻 2 s の瞬間の速度で、導関数 ${I("v")} ＝ ${I("t")} に 2 を代入した値と同じです。`],
+  [`「等速」では、${I("h")} をどう変えても赤い直線と紫の接線が重なっている。文字式で理由を説明しよう。`, `${I("x")} ＝ 2${I("t")} ＋ 1 は1次式なので、Δ${I("x")}/${I("h")} ＝ 2 となり ${I("h")} を含みません。平均の速度がいつも瞬間の速度と等しい運動が、等速直線運動です。`],
+  [`「行って戻る」で ${I("t")}<sub>1</sub> ＝ 2.5 s にしたときの瞬間の速度はいくらか。このとき物体はどうなっているか。`, `${I("v")} ＝ 5 − 2${I("t")} に代入して 0 m/s。接線が水平で、物体は一瞬止まって折り返します（${I("x")} の極大）。`],
+  [`表で、${I("h")} を 1/10 にすると、平均の速度と瞬間の速度の差はどうなるか（「だんだん速くなる」で確かめよう）。`, `差は 0.5${I("h")} なので、${I("h")} を 1/10 にすると差も 1/10 になります（0.5 → 0.05 → 0.005 …）。差がいくらでも小さくなることを「極限が 1 である」などと表します。`]
+]);
+qs("qs-diff", [
+  [`「折り返して再び進む」で「なぞる」を押そう。${I("x")}-${I("t")} 図の接線が水平になる時刻に、${I("v")}-${I("t")} 図では何が起きているか。`, `${I("v")}-${I("t")} 図のグラフが ${I("t")} 軸と交わり、${I("v")} ＝ 0 になっています（${I("t")} ＝ 2 s と 4 s）。増減表の極大・極小の時刻と同じで、物体が折り返す時刻です。`],
+  [`同じ運動で、${I("t")} ＝ 3 s の加速度はいくらか。このとき速度はどうなっているか。`, `${I("a")} ＝ 2${I("t")} − 6 なので 0 m/s²。${I("v")}-${I("t")} 図では、負の速度がいちばん小さい（負の向きにいちばん速い）点で、接線が水平です。速度が 0 でなくても加速度は 0 になれます。`],
+  [`「減速して戻る」（${I("x")} ＝ 6${I("t")} − ${I("t")}²）は、どんな落体の運動と同じ形か。`, `${I("a")} ＝ −2 m/s² で一定、${I("v")}<sub>0</sub> ＝ 6 m/s なので、鉛直投げ上げ（上向き正）と同じ形です（重力加速度を 2 m/s² にした場合）。最高点は ${I("v")} ＝ 0 の ${I("t")} ＝ 3 s、${I("x")} ＝ 9 m。`],
+  [`「静止から等加速度」の3つのグラフの形（放物線・直線・水平な直線）は、微分すると次数が1つ下がることとどう対応しているか。`, `${I("x")} が2次式（放物線）→ ${I("v")} は1次式（直線）→ ${I("a")} は定数（水平な直線）。等加速度直線運動は「${I("x")} が ${I("t")} の2次式で表される運動」ともいえます。`]
+]);
+qs("qs-int", [
+  [`「等加速度」で ${I("N")} を 1 → 100 と変えよう。短冊の面積の和は、どの値に近づくか。`, `${I("t")} ＝ 4 s までなら 12 m に近づきます。台形の面積 (1 ＋ 5) × 4 ÷ 2 ＝ 12 m や、${I("x")} ＝ ${I("t")} ＋ 0.5${I("t")}² に 4 を代入した値と同じです。`],
+  [`「減速して逆向きへ」で上端を 6 s にしよう。変位と道のりはそれぞれいくらか。`, `変位は ${I("t")} 軸より上の面積 9 m と下の面積 −9 m の和で 0 m（出発点に戻る）。道のりは |${I("v")}| の面積で 18 m です。定積分は「符号つきの面積」なので、道のりではなく変位を表します。`],
+  [`「2回止まる」で、下の ${I("x")}-${I("t")} 図の接線の傾きと、上の図の ${I("v")} の値を比べよう。`, `どの時刻でも等しくなっています。${I("x")} は ${I("v")} を積分したものなので、${I("x")} を微分すると ${I("v")} に戻ります（数学Ⅱ：${FR("d", "d" + I("t"))}<span class="int" style="font-size:1.2em">∫</span><sub>0</sub><sup>${I("t")}</sup> ${I("f")}(${I("s")}) d${I("s")} ＝ ${I("f")}(${I("t")})）。`],
+  [`「${I("a")}-${I("t")} → 速度の変化」の「一定」で、はじめの速度を 2 m/s にしよう。速度の式はどうなるか。`, `${I("v")} ＝ 2 ＋ 1.5${I("t")}。${I("v")} ＝ ${I("v")}<sub>0</sub> ＋ ${I("at")} そのものです。積分定数 ${I("C")} がはじめの速度 ${I("v")}<sub>0</sub> になっています。`]
+]);
+qs("qs-derive", [
+  [`落体の運動（鉛直上向きを正、${I("a")} ＝ −${I("g")}、${I("t")} ＝ 0 で ${I("y")} ＝ 0、${I("v")} ＝ ${I("v")}<sub>0</sub>）の ${I("v")} と ${I("y")} の式を、積分で求めよう。`, `${I("v")} ＝ <span class="int" style="font-size:1.2em">∫</span>(−${I("g")}) d${I("t")} ＝ ${I("v")}<sub>0</sub> − ${I("gt")}、${I("y")} ＝ <span class="int" style="font-size:1.2em">∫</span>(${I("v")}<sub>0</sub> − ${I("gt")}) d${I("t")} ＝ ${I("v")}<sub>0</sub>${I("t")} − ½${I("gt")}²。鉛直投げ上げの式です。`],
+  [`はじめの位置が ${I("x")}<sub>0</sub>（0 ではない）のとき、段階 2 の式はどう変わるか。`, `${I("t")} ＝ 0 で ${I("x")} ＝ ${I("x")}<sub>0</sub> なので ${I("C")}<sub>2</sub> ＝ ${I("x")}<sub>0</sub>。${I("x")} ＝ ${I("x")}<sub>0</sub> ＋ ${I("v")}<sub>0</sub>${I("t")} ＋ ½${I("at")}²。教科書の ${I("x")} は「位置」ではなく「変位 ${I("x")} − ${I("x")}<sub>0</sub>」を表していると考えられます。`],
+  [`${I("x")} ＝ ${I("v")}<sub>0</sub>${I("t")} ＋ ½${I("at")}² の ½ を書き忘れた式 ${I("x")} ＝ ${I("v")}<sub>0</sub>${I("t")} ＋ ${I("at")}² を、微分して確かめよう。`, `微分すると ${I("v")} ＝ ${I("v")}<sub>0</sub> ＋ 2${I("at")} となり、${I("v")} ＝ ${I("v")}<sub>0</sub> ＋ ${I("at")} と合いません。係数の誤りは次元チェックでは見つかりませんが、微分すれば見つけられます。`]
+]);
+
+/* ---------- 描画 ---------- */
+function drawAll(){ readColors(); drawLim(); drawDiff(); drawInt(); }
+function resize(){ Object.keys(CV).forEach(fit); drawAll(); }
+const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+if(mq && mq.addEventListener) mq.addEventListener("change", drawAll);
+new MutationObserver(drawAll).observe(document.documentElement, { attributes:true, attributeFilter:["data-theme"] });
+if(window.ResizeObserver){ const ro = new ResizeObserver(resize); Object.values(CV).forEach(c => ro.observe(c)); } else window.addEventListener("resize", resize);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(drawAll);
+showTab(location.hash.slice(1) || "lim");
+})();
+</script>
+</body>
+</html>

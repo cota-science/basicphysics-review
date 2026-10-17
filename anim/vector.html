@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ベクトルで見る運動と力</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* 付録：数学とつなげる（数学C ベクトル × 物理基礎 運動・力・仕事）。calculus.html と同じ作り。 */
+:root{
+  --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
+  --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
+  --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3;
+  --pos:#1d64d8; --vel:#dd5a12; --acc:#22863a; --sec:#CF2A2A; --tan:#6B3FB5; --math-soft:#F3EEFB; --va:#1F8A4C; --vb:#2447B3; --vr:#7A3FC0;
+  --body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --math:"Times New Roman",Times,"Noto Serif",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+    --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+    --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0;
+    --pos:#62a3ff; --vel:#ff9150; --acc:#5dd27a; --sec:#FF7A70; --tan:#C3A2FF; --math-soft:#2A2340; --va:#5DD27A; --vb:#93AAFF; --vr:#C3A2FF; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+  --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+  --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0;
+  --pos:#62a3ff; --vel:#ff9150; --acc:#5dd27a; --sec:#FF7A70; --tan:#C3A2FF; --math-soft:#2A2340; --va:#5DD27A; --vb:#93AAFF; --vr:#C3A2FF; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qv{font-family:var(--math);font-style:italic;font-size:1.08em}
+.qu{font-family:var(--math);font-style:normal;font-size:1.08em}
+.m{font-family:var(--math);font-size:1.08em}
+.bar{text-decoration:overline}
+sub,sup{font-size:.7em;line-height:0}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:.82em;line-height:1.15;margin:0 .1em}
+.fr>span:first-child{border-bottom:1px solid currentColor;padding:0 .15em}
+.lim{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.1;margin-right:.15em}
+.lim>span:last-child{font-size:.7em}
+.int{font-family:var(--math);font-size:1.5em;vertical-align:middle;line-height:1}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.top-inner{max-width:760px;margin:0 auto;padding:10px 16px 0}
+.back{font-size:14px;color:var(--blue);text-decoration:none}
+h1{font-size:19px;margin:2px 0 0;line-height:1.4;text-wrap:balance}
+.nav{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin-top:2px}
+.nav a{color:var(--blue);text-decoration:none}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:700}
+.tabs{display:flex;gap:2px;padding-top:4px;overflow-x:auto;scrollbar-width:none}
+.tab{flex:1 0 auto;border:0;background:none;padding:8px 8px 10px;font-size:15px;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer;line-height:1.35;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);font-weight:700;border-bottom-color:var(--blue)}
+main{max-width:760px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.panel{display:grid;gap:16px;min-width:0}
+.panel[hidden]{display:none}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px;min-width:0}
+h2{font-size:20px;margin:0 0 4px;line-height:1.4;text-wrap:balance}
+h3{font-size:17px;margin:0 0 8px}
+.lead{margin:0 0 12px;color:var(--muted);font-size:15px}
+.seg{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:10px}
+.seg-label{font-size:14px;color:var(--muted);min-width:5.5em}
+.seg button{border:1.5px solid var(--line);background:var(--sheet);border-radius:999px;padding:6px 12px;min-height:40px;cursor:pointer;font-size:15px}
+.seg button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft);font-weight:700}
+.stage{position:relative;width:100%;background:var(--sheet);border:1px solid var(--line);border-radius:4px;touch-action:pan-y}
+.stage.g1{aspect-ratio:2/1}.stage.g2{aspect-ratio:3/1}
+@media (max-width:520px){.stage.g1{aspect-ratio:1.35/1}.stage.g2{aspect-ratio:2/1}}
+canvas{display:block;width:100%;height:100%}
+.cap{font-size:14px;margin:12px 0 4px;font-weight:700}
+.read{margin:10px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:6px;display:grid;gap:4px;font-variant-numeric:tabular-nums}
+.read p{margin:0;font-size:15px}
+.s{color:var(--sec);font-weight:700}.tn{color:var(--tan);font-weight:700}
+.cp{color:var(--pos);font-weight:700}.cv{color:var(--vel);font-weight:700}.ca{color:var(--acc);font-weight:700}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.btn{border:0;border-radius:8px;padding:9px 16px;min-height:44px;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.btn.ghost{background:none;color:var(--blue);border:1.5px solid var(--blue)}
+.slider{display:grid;grid-template-columns:8.5em minmax(0,1fr) 5em;align-items:center;gap:10px;margin-top:10px}
+.slider label{font-size:15px}
+.slider input{width:100%;accent-color:var(--blue);min-height:32px}
+.slider[hidden]{display:none}
+.slider output{font-variant-numeric:tabular-nums;text-align:right;font-weight:700}
+@media (max-width:520px){.slider{grid-template-columns:6.8em minmax(0,1fr) 4.6em}}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}
+.chips .lab{font-size:14px;color:var(--muted);margin-right:4px}
+.chips button{border:1.5px solid var(--line);background:var(--sheet);border-radius:8px;min-width:52px;min-height:40px;cursor:pointer;font-variant-numeric:tabular-nums}
+.chips button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft);font-weight:700}
+.tbl{overflow-x:auto;margin-top:12px}
+table{border-collapse:collapse;font-size:14px;min-width:100%;font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:center}
+th{background:var(--blue-soft);font-weight:700}
+td.l{text-align:left}
+tr.cur td{background:var(--red-soft);font-weight:700}
+.hint{font-size:13px;color:var(--muted);margin:8px 0 0}
+.mathbox{border:1.5px solid var(--tan);background:var(--math-soft);border-radius:8px;padding:10px 14px;margin:12px 0 0}
+.mathbox .t{font-size:13px;font-weight:700;color:var(--tan);margin:0 0 2px}
+.mathbox p{margin:2px 0}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+@media (max-width:560px){.pair{grid-template-columns:1fr}}
+.pair>div{border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.pair .t{font-size:13px;font-weight:700;margin:0 0 4px}
+.pair .math .t{color:var(--tan)}.pair .phys .t{color:var(--blue)}
+.eq{font-size:17px;margin:4px 0;overflow-x:auto}
+.check{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:15px}
+.check input{width:20px;height:20px;accent-color:var(--blue)}
+.qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
+.qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
+.ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+.steps{display:grid;gap:12px;margin-top:8px}
+.step{border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:6px;padding:10px 14px}
+.step[hidden]{display:none}
+.step h4{margin:0 0 4px;font-size:16px}
+.step p{margin:4px 0}
+.step .why{font-size:14px;color:var(--muted)}
+svg.fig{display:block;width:100%;max-width:420px;height:auto;margin:8px auto 0}
+.inc td.up{color:var(--pos);font-weight:700}.inc td.dn{color:var(--red);font-weight:700}
+.vec{position:relative;display:inline-block;font-family:var(--math);font-style:italic;font-size:1.08em;line-height:1.2}
+.vec::after{content:"";position:absolute;left:.06em;right:-.08em;top:-.06em;border-top:1.3px solid currentColor}
+.vec::before{content:"";position:absolute;right:-.16em;top:calc(-.06em - .17em + .6px);border-left:.32em solid currentColor;border-top:.17em solid transparent;border-bottom:.17em solid transparent}
+.stage.sq{aspect-ratio:1/1;max-width:520px;margin:0 auto}
+.stage.wide{aspect-ratio:3/2}.stage.half{aspect-ratio:2/1;max-width:520px;margin:0 auto}
+@media (max-width:520px){.stage.wide{aspect-ratio:1.4/1}.stage.half{aspect-ratio:1.3/1}}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.fgrid{grid-template-columns:1fr}}
+.fgrid .stage.sq{max-width:none}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <a class="back" id="backLink" href="../index.html#/u/math-link/0" hidden>‹ 付録：数学で読む力学（Webテスト）へ</a>
+    <h1>ベクトルで見る運動と力</h1>
+    <nav class="nav" id="nav" hidden aria-label="アニメーション">
+      <a href="index.html#math">≡ アニメーション集</a>
+      <a href="calculus.html">微分・積分で見る運動</a>
+      <a href="vector.html" aria-current="page">ベクトルで見る運動と力</a>
+      <a href="relative.html">合成速度と相対速度</a>
+      <a href="projectile.html">投射運動ラボ</a>
+    </nav>
+    <div class="tabs" role="tablist" aria-label="内容">
+      <button class="tab" role="tab" data-tab="ops" type="button">1 和・差</button>
+      <button class="tab" role="tab" data-tab="motion" type="button">2 運動</button>
+      <button class="tab" role="tab" data-tab="force" type="button">3 つりあい</button>
+      <button class="tab" role="tab" data-tab="work" type="button">4 仕事</button>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- ============ 1 和・差・成分 ============ -->
+<div class="panel" id="p-ops">
+  <section class="sheet">
+    <h2>ベクトルの和・差・実数倍・成分</h2>
+    <p class="lead">矢印の先の ● をドラッグして、2つのベクトル <span class="vec">a</span>（緑）と <span class="vec">b</span>（青）を変えよう。物理で何を表すかを選ぶと、同じ計算が物理の言葉で読めます。</p>
+    <div class="seg" role="group" aria-label="物理で表すもの" id="ops-ctx"><span class="seg-label">表すもの</span></div>
+    <div class="seg" role="group" aria-label="計算" id="ops-op"><span class="seg-label">計算</span></div>
+    <div class="stage sq"><canvas id="cv-ops" role="img" aria-label="方眼の上の2つのベクトルと、その和・差・実数倍・成分"></canvas></div>
+    <div class="slider" id="ops-kbox" hidden><label for="ops-k">実数 <i class="qv">k</i></label><input type="range" id="ops-k" min="-2" max="2" step="0.5" value="1.5"><output id="ops-ko"></output></div>
+    <div class="slider" id="ops-phbox" hidden><label for="ops-ph">軸の傾き <i class="qv">φ</i></label><input type="range" id="ops-ph" min="0" max="90" step="5" value="0"><output id="ops-pho"></output></div>
+    <div class="read" aria-live="polite" id="ops-read"></div>
+    <div class="mathbox" id="ops-eq"></div>
+  </section>
+  <section class="sheet"><h3>見てみよう</h3><ol class="qs" id="qs-ops"></ol></section>
+</div>
+
+<!-- ============ 2 平面の運動 ============ -->
+<div class="panel" id="p-motion" hidden>
+  <section class="sheet">
+    <h2>位置・速度・加速度はベクトル</h2>
+    <p class="lead">原点 O から物体へ引いた位置ベクトル <span class="vec">r</span> の変化が変位 Δ<span class="vec">r</span> です。Δ<span class="vec">r</span>/Δ<i class="qv">t</i>（平均の速度、赤）は、Δ<i class="qv">t</i> を 0 に近づけると軌道の接線の向きの速度 <span class="vec">v</span>（橙）になります。</p>
+    <div class="seg" role="group" aria-label="運動" id="mo-seg"><span class="seg-label">運動</span></div>
+    <div class="stage wide"><canvas id="cv-mo" role="img" aria-label="軌道、位置ベクトル r1 と r2、変位 Δr、平均の速度と瞬間の速度"></canvas></div>
+    <div class="chips" role="group" aria-label="時間の幅" id="mo-dt"><span class="lab">Δ<i class="qv">t</i></span></div>
+    <div class="slider"><label for="mo-t">時刻 <i class="qv">t</i><sub>1</sub></label><input type="range" id="mo-t" min="0" max="1" step="0.01" value="0.3"><output id="mo-to"></output></div>
+    <div class="controls"><button type="button" class="btn" id="mo-go">Δ<i class="qv">t</i> を 0 に近づける</button></div>
+    <p class="hint" id="mo-scale"></p>
+    <div class="cap">速度ベクトルの始点をそろえる：速度の変化 Δ<span class="vec">v</span>（緑）の向き ＝ 加速度の向き</div>
+    <div class="stage half"><canvas id="cv-ho" role="img" aria-label="始点をそろえた2つの速度ベクトルと、その差 Δv"></canvas></div>
+    <div class="read" aria-live="polite" id="mo-read"></div>
+    <div class="tbl"><table id="mo-tbl"></table></div>
+    <div class="mathbox" id="mo-eq"></div>
+  </section>
+  <section class="sheet"><h3>見てみよう</h3><ol class="qs" id="qs-motion"></ol></section>
+</div>
+
+<!-- ============ 3 力のつりあい ============ -->
+<div class="panel" id="p-force" hidden>
+  <section class="sheet">
+    <h2>力のつりあい：合力 ＝ <span class="vec">0</span></h2>
+    <p class="lead">物体が受ける力をすべて足した合力 Σ<span class="vec">F</span> が <span class="vec">0</span> のとき、力はつりあっています。2つめの図は力の矢印を順につないだもの（力の多角形）で、つりあうと閉じます。成分で書くと、<i class="qv">x</i> 成分の和も <i class="qv">y</i> 成分の和も 0 です。</p>
+    <div class="seg" role="group" aria-label="場面" id="fo-seg"><span class="seg-label">場面</span></div>
+    <div class="fgrid">
+      <div class="stage sq"><canvas id="cv-fo" role="img" aria-label="物体と、物体が受ける力の矢印"></canvas></div>
+      <div class="stage sq"><canvas id="cv-fp" role="img" aria-label="力の矢印を順につないだ図。合力を紫で示す。"></canvas></div>
+    </div>
+    <div id="fo-sliders"></div>
+    <div class="seg" role="group" aria-label="成分に分ける軸" id="fo-ax" style="margin-top:10px"><span class="seg-label">成分の軸</span></div>
+    <div class="controls"><button type="button" class="btn" id="fo-solve">つりあう大きさにする</button></div>
+    <div class="read" aria-live="polite" id="fo-read"></div>
+    <div class="tbl"><table id="fo-tbl"></table></div>
+    <div class="mathbox" id="fo-eq"></div>
+  </section>
+  <section class="sheet"><h3>見てみよう</h3><ol class="qs" id="qs-force"></ol></section>
+</div>
+
+<!-- ============ 4 仕事と内積 ============ -->
+<div class="panel" id="p-work" hidden>
+  <section class="sheet">
+    <h2>仕事 ＝ 力と変位の内積</h2>
+    <p class="lead">物体が変位 <span class="vec">s</span>（青）だけ動く間、一定の力 <span class="vec">F</span>（赤）を受け続けるとき、力がする仕事は内積 <i class="qv">W</i> ＝ <span class="vec">F</span>・<span class="vec">s</span> です。矢印の先の ● をドラッグしよう。</p>
+    <div class="seg" role="group" aria-label="力の向き" id="wk-seg"><span class="seg-label">力の向き</span></div>
+    <div class="stage wide"><canvas id="cv-wk" role="img" aria-label="物体の変位 s と力 F。F の s 方向の成分を示す。"></canvas></div>
+    <div class="read" aria-live="polite" id="wk-read"></div>
+    <div class="mathbox" id="wk-eq"></div>
+    <p class="hint">力が途中で変わるときは、変位を細かく分けて内積を足し合わせます（一直線上なら <i class="qv">F</i>-<i class="qv">x</i> 図の面積 ＝ <span class="int">∫</span><i class="qv">F</i> d<i class="qv">x</i>）。<a href="work.html">仕事と仕事率</a>の F-x グラフで確かめよう。</p>
+  </section>
+  <section class="sheet"><h3>見てみよう</h3><ol class="qs" id="qs-work"></ol></section>
+</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const I = s => `<i class="qv">${s}</i>`, V = s => `<span class="vec">${s}</span>`;
+const FR = (a, b) => `<span class="fr"><span>${a}</span><span>${b}</span></span>`;
+if(/\/anim\//.test(location.pathname)){ $("backLink").hidden = false; $("nav").hidden = false; }
+const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+const DEG = Math.PI / 180;
+function num(v, d){ if(d === undefined) d = 2; if(Math.abs(v) < 1e-9) v = 0; let s = v.toFixed(d); if(s.indexOf(".") >= 0) s = s.replace(/0+$/, "").replace(/\.$/, ""); if(s === "-0") s = "0"; return s.replace("-", "−"); }
+const len = v => Math.hypot(v[0], v[1]);
+const ang = v => { let a = Math.atan2(v[1], v[0]) / DEG; return a; };
+const add = (p, q) => [p[0] + q[0], p[1] + q[1]], sub = (p, q) => [p[0] - q[0], p[1] - q[1]], mul = (k, p) => [k * p[0], k * p[1]], dot = (p, q) => p[0] * q[0] + p[1] * q[1];
+const comp = v => `(${num(v[0])}, ${num(v[1])})`;
+
+/* ---------- canvas ---------- */
+const col = {};
+function readColors(){ const cs = getComputedStyle(document.documentElement);
+  ["ink","muted","blue","red","line","grid","sheet","pos","vel","acc","sec","tan","red-soft","blue-soft","va","vb","vr","gr"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
+const CV = {}, CX = {}, SZ = {}, WF = {};
+["ops","mo","ho","fo","fp","wk"].forEach(k => { CV[k] = $("cv-" + k); CX[k] = CV[k].getContext("2d"); });
+function fit(k){ const c = CV[k], r = c.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5);
+  SZ[k] = { w:Math.max(1, Math.round(r.width)), h:Math.max(1, Math.round(r.height)) };
+  c.width = Math.round(SZ[k].w * d); c.height = Math.round(SZ[k].h * d); CX[k].setTransform(d, 0, 0, d, 0, 0); }
+const FONT = () => getComputedStyle(document.body).fontFamily;
+/* 縦横同じ縮尺の座標（xr, yr の範囲が必ず入る） */
+function world(k, xr, yr, opt){
+  opt = opt || {}; const g = CX[k], w = SZ[k].w, h = SZ[k].h, pad = 14;
+  const s = Math.min((w - 2 * pad) / (xr[1] - xr[0]), (h - 2 * pad) / (yr[1] - yr[0]));
+  const cx = (xr[0] + xr[1]) / 2, cy = (yr[0] + yr[1]) / 2;
+  const F = WF[k] = { g, w, h, s, X:x => w / 2 + (x - cx) * s, Y:y => h / 2 - (y - cy) * s, inv:(px, py) => [cx + (px - w / 2) / s, cy - (py - h / 2) / s] };
+  g.clearRect(0, 0, w, h);
+  if(opt.grid !== false){
+    const x0 = Math.floor(cx - w / 2 / s), x1 = Math.ceil(cx + w / 2 / s), y0 = Math.floor(cy - h / 2 / s), y1 = Math.ceil(cy + h / 2 / s), st = opt.step || 1;
+    g.strokeStyle = col.grid; g.lineWidth = 1; g.beginPath();
+    for(let x = Math.ceil(x0 / st) * st; x <= x1; x += st){ g.moveTo(F.X(x), 0); g.lineTo(F.X(x), h); }
+    for(let y = Math.ceil(y0 / st) * st; y <= y1; y += st){ g.moveTo(0, F.Y(y)); g.lineTo(w, F.Y(y)); }
+    g.stroke();
+  }
+  if(opt.axes){ g.strokeStyle = col.muted; g.lineWidth = 1.2; g.beginPath(); g.moveTo(0, F.Y(0)); g.lineTo(w, F.Y(0)); g.moveTo(F.X(0), 0); g.lineTo(F.X(0), h); g.stroke();
+    g.fillStyle = col.muted; g.font = "italic 15px 'Times New Roman',serif"; g.textAlign = "right"; g.textBaseline = "alphabetic"; g.fillText("x", w - 6, F.Y(0) - 6); g.textAlign = "left"; g.fillText("y", F.X(0) + 6, 16);
+    g.font = "13px " + FONT(); g.fillText("O", F.X(0) + 4, F.Y(0) + 15); }
+  return F;
+}
+function arrow(F, p, d, color, w, opt){ opt = opt || {}; const g = F.g, x0 = F.X(p[0]), y0 = F.Y(p[1]), x1 = F.X(p[0] + d[0]), y1 = F.Y(p[1] + d[1]);
+  const L = Math.hypot(x1 - x0, y1 - y0); g.save(); g.strokeStyle = color; g.fillStyle = color; g.lineWidth = w || 3; g.globalAlpha = opt.alpha || 1; if(opt.dash) g.setLineDash(opt.dash);
+  if(L < 1){ g.restore(); return; }
+  const hl = Math.min(14 + w, L * 0.45), ux = (x1 - x0) / L, uy = (y1 - y0) / L;
+  g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1 - ux * hl * 0.8, y1 - uy * hl * 0.8); g.stroke(); g.setLineDash([]);
+  g.beginPath(); g.moveTo(x1, y1); g.lineTo(x1 - ux * hl - uy * hl * 0.42, y1 - uy * hl + ux * hl * 0.42); g.lineTo(x1 - ux * hl + uy * hl * 0.42, y1 - uy * hl - ux * hl * 0.42); g.closePath(); g.fill();
+  if(opt.label){ const lx = x0 + (x1 - x0) * (opt.at || 0.55) - uy * (opt.off || 16), ly = y0 + (y1 - y0) * (opt.at || 0.55) + ux * (opt.off || 16); vlabel(g, opt.label, lx, ly, color, opt.sub); }
+  g.restore(); }
+/* 矢印つきの文字（例：a⃗）をかく */
+function vlabel(g, s, x, y, color, sub, plain){ g.save(); g.fillStyle = color; g.strokeStyle = color; g.textAlign = "center"; g.textBaseline = "middle";
+  g.font = "italic bold 17px 'Times New Roman',serif"; const wv = g.measureText(s).width; g.lineWidth = 3; g.strokeStyle = col.sheet; g.lineJoin = "round"; g.strokeText(s, x, y); g.fillText(s, x, y);
+  if(!plain){ g.strokeStyle = color; g.lineWidth = 1.3; g.beginPath(); g.moveTo(x - wv / 2, y - 11); g.lineTo(x + wv / 2 + 2, y - 11); g.stroke(); g.beginPath(); g.moveTo(x + wv / 2 + 4, y - 11); g.lineTo(x + wv / 2 - 1, y - 14); g.lineTo(x + wv / 2 - 1, y - 8); g.closePath(); g.fill(); }
+  if(sub){ g.font = "12px 'Times New Roman',serif"; g.textAlign = "left"; g.strokeStyle = col.sheet; g.lineWidth = 3; g.strokeText(sub, x + wv / 2 + 1, y + 6); g.fillText(sub, x + wv / 2 + 1, y + 6); }
+  g.restore(); }
+function line(F, p, q, color, w, dash){ const g = F.g; g.save(); g.strokeStyle = color; g.lineWidth = w || 1.5; if(dash) g.setLineDash(dash); g.beginPath(); g.moveTo(F.X(p[0]), F.Y(p[1])); g.lineTo(F.X(q[0]), F.Y(q[1])); g.stroke(); g.restore(); }
+function handle(F, p, color){ const g = F.g; g.save(); g.fillStyle = color; g.strokeStyle = col.sheet; g.lineWidth = 2; g.beginPath(); g.arc(F.X(p[0]), F.Y(p[1]), 7, 0, 7); g.fill(); g.stroke(); g.restore(); }
+function txt(F, s, x, y, color, align, size){ const g = F.g; g.save(); g.fillStyle = color; g.textAlign = align || "left"; g.textBaseline = "middle"; g.font = "bold " + (size || 13) + "px " + FONT(); g.fillText(s, x, y); g.restore(); }
+/* ドラッグ（handles() がつかめる点の一覧 [{p, set}] を返す） */
+function draggable(k, handles){ const c = CV[k]; let cur = null;
+  const pos = e => { const r = c.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  c.addEventListener("pointerdown", e => { const F = WF[k]; if(!F) return; const [px, py] = pos(e); let best = null, bd = 26;
+    handles().forEach(hd => { const d = Math.hypot(F.X(hd.p[0]) - px, F.Y(hd.p[1]) - py); if(d < bd){ bd = d; best = hd; } });
+    if(best){ cur = best; c.setPointerCapture(e.pointerId); e.preventDefault(); } });
+  c.addEventListener("pointermove", e => { if(!cur) return; const F = WF[k]; const [px, py] = pos(e); cur.set(F.inv(px, py)); });
+  const end = () => cur = null; c.addEventListener("pointerup", end); c.addEventListener("pointercancel", end);
+  c.addEventListener("pointermove", e => { if(cur) return; const F = WF[k]; if(!F) return; const [px, py] = pos(e); c.style.cursor = handles().some(hd => Math.hypot(F.X(hd.p[0]) - px, F.Y(hd.p[1]) - py) < 26) ? "grab" : "default"; });
+}
+const snap = (p, st) => [Math.round(p[0] / st) * st, Math.round(p[1] / st) * st];
+const clampV = (p, m) => [Math.max(-m, Math.min(m, p[0])), Math.max(-m, Math.min(m, p[1]))];
+
+/* ---------- タブ ---------- */
+const TABS = ["ops", "motion", "force", "work"]; let tab = "ops";
+function showTab(k, push){ if(TABS.indexOf(k) < 0) k = "ops"; tab = k;
+  document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === k));
+  TABS.forEach(t => $("p-" + t).hidden = t !== k);
+  if(push && history.replaceState) history.replaceState(null, "", "#" + k);
+  requestAnimationFrame(() => { Object.keys(CV).forEach(fit); drawAll(); }); }
+document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab, true)));
+window.addEventListener("hashchange", () => showTab(location.hash.slice(1)));
+function chips(box, keys, cur, onPick, fmt){ box.querySelectorAll("button").forEach(b => b.remove());
+  keys.forEach(v => { const b = document.createElement("button"); b.type = "button"; b.innerHTML = fmt ? fmt(v) : v; b.setAttribute("aria-pressed", v === cur);
+    b.addEventListener("click", () => { box.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); onPick(v); }); box.appendChild(b); }); }
+const segBtns = (box, map, cur, onPick) => chips(box, Object.keys(map), cur, onPick, k => map[k].name);
+
+/* ================= 1 和・差・成分 ================= */
+const CTX = {
+  vel:{ name:"速度", u:"m/s", a:["v", "A"], b:["v", "B"],
+    sum:`合成速度：流れる水の速度 ${V("v")}<sub>A</sub> と、水に対する船の速度 ${V("v")}<sub>B</sub> を足すと、岸から見た船の速度になる。`,
+    diff:`相対速度：${V("v")}<sub>AB</sub> ＝ ${V("v")}<sub>B</sub> − ${V("v")}<sub>A</sub> は「A から見た B の速度」。A の矢印の先から B の矢印の先へ向かう矢印。`,
+    scale:`速度を ${I("k")} 倍：${I("k")} ＞ 0 なら同じ向きで速さが ${I("k")} 倍、${I("k")} ＜ 0 なら逆向き。（例：加速度 × 時間 ＝ 速度の変化）`,
+    dec:`速度を ${I("x")} 成分・${I("y")} 成分に分ける。投射運動を水平方向と鉛直方向に分けて考えるのと同じ。` },
+  force:{ name:"力", u:"N", a:["F", "1"], b:["F", "2"],
+    sum:`合力：2つの力 ${V("F")}<sub>1</sub>、${V("F")}<sub>2</sub> を、同じはたらきをする1つの力に置きかえたもの（平行四辺形の対角線）。`,
+    diff:`${V("F")}<sub>2</sub> − ${V("F")}<sub>1</sub> は、${V("F")}<sub>1</sub> に何を加えると ${V("F")}<sub>2</sub> になるか。−${V("F")}<sub>1</sub> を加えることと同じ。`,
+    scale:`力を ${I("k")} 倍：${I("k")} ＜ 0 なら逆向き。たとえば重力 ${V("W")} ＝ ${I("m")}${V("g")} は、重力加速度 ${V("g")} の ${I("m")} 倍。`,
+    dec:`力の分解：斜面上の物体では、軸を斜面に平行・垂直にとって重力を分ける。軸のとり方で成分は変わるが、もとの力は同じ。` },
+  disp:{ name:"変位", u:"m", a:["r", "A"], b:["r", "B"],
+    sum:`変位の和：${V("r")}<sub>A</sub> だけ移動してから ${V("r")}<sub>B</sub> だけ移動すると、全体の変位は ${V("r")}<sub>A</sub> ＋ ${V("r")}<sub>B</sub>。道のりの和とは違う。`,
+    diff:`位置の差：${V("r")}<sub>B</sub> − ${V("r")}<sub>A</sub> は、A の位置から B の位置へ向かう変位（A から見た B の位置）。`,
+    scale:`変位を ${I("k")} 倍：等速度で ${I("k")} 倍の時間動くと、変位も ${I("k")} 倍（${V("r")} ＝ ${V("v")}${I("t")}）。`,
+    dec:`変位を成分に分ける：東向きに何 m、北向きに何 m のように表す。` }
+};
+const OPS = { sum:{ name:"和 a＋b" }, diff:{ name:"差 b−a" }, scale:{ name:"実数倍 ka" }, dec:{ name:"成分に分ける" } };
+const O = { ctx:"vel", op:"sum", a:[3, 1], b:[1, 3], k:1.5, ph:0 };
+segBtns($("ops-ctx"), CTX, O.ctx, k => { O.ctx = k; drawOps(); });
+chips($("ops-op"), Object.keys(OPS), O.op, k => { O.op = k; $("ops-kbox").hidden = k !== "scale"; $("ops-phbox").hidden = k !== "dec"; drawOps(); }, k => OPS[k].name.replace(/([abk])/g, "<i class='qv'>$1</i>"));
+$("ops-k").addEventListener("input", e => { O.k = +e.target.value; drawOps(); });
+$("ops-ph").addEventListener("input", e => { O.ph = +e.target.value; drawOps(); });
+draggable("ops", () => [{ p:O.a, set:p => { O.a = clampV(snap(p, 0.5), 5); drawOps(); } }, ...(O.op === "scale" || O.op === "dec" ? [] : [{ p:O.b, set:p => { O.b = clampV(snap(p, 0.5), 5); drawOps(); } }])]);
+function drawOps(){
+  const c = CTX[O.ctx], a = O.a, b = O.b, u = c.u, an = c.a, bn = c.b;
+  const NA = `${V(an[0])}<sub>${an[1]}</sub>`, NB = `${V(bn[0])}<sub>${bn[1]}</sub>`;
+  $("ops-ko").textContent = num(O.k, 1); $("ops-pho").textContent = O.ph + "°";
+  let res = null, eqs = "", rd = "";
+  if(O.op === "sum") res = add(a, b); else if(O.op === "diff") res = sub(b, a); else if(O.op === "scale") res = mul(O.k, a);
+  if(tab === "ops" && SZ.ops){
+    const F = world("ops", [-6, 6], [-6, 6], { axes:true });
+    if(O.op === "sum"){
+      line(F, a, add(a, b), col.vb, 1.5, [5, 4]); line(F, b, add(a, b), col.va, 1.5, [5, 4]);
+      arrow(F, a, b, col.vb, 2.5, { alpha:.45 });
+      arrow(F, [0, 0], res, col.vr, 4, { label:O.ctx === "vel" ? "v" : O.ctx === "force" ? "F" : "r", sub:O.ctx === "vel" ? "" : "", at:.6, off:-16 });
+    } else if(O.op === "diff"){
+      arrow(F, a, res, col.vr, 4, { label:an[0], sub:an[1] + bn[1], at:.5, off:-16 });
+      arrow(F, [0, 0], mul(-1, a), col.va, 2, { alpha:.45, dash:[5, 4] }); arrow(F, mul(-1, a), b, col.vb, 2, { alpha:.35 });
+      arrow(F, [0, 0], res, col.vr, 2, { alpha:.45, dash:[5, 4] });
+      vlabel(F.g, "−" + an[0], F.X(-a[0] / 2) - 14, F.Y(-a[1] / 2) - 6, col.va, an[1]);
+    } else if(O.op === "scale"){
+      arrow(F, [0, 0], res, col.vr, 6, { alpha:.55, label:"k" + an[0], sub:an[1], off:-18 });
+    } else {
+      const e1 = [Math.cos(O.ph * DEG), Math.sin(O.ph * DEG)], e2 = [-e1[1], e1[0]];
+      line(F, mul(-7, e1), mul(7, e1), col.tan, 1.5); line(F, mul(-7, e2), mul(7, e2), col.tan, 1.5);
+      const c1 = dot(a, e1), c2 = dot(a, e2);
+      line(F, a, mul(c1, e1), col.muted, 1.2, [4, 4]); line(F, a, mul(c2, e2), col.muted, 1.2, [4, 4]);
+      arrow(F, [0, 0], mul(c1, e1), col.tan, 3.5); arrow(F, [0, 0], mul(c2, e2), col.tan, 3.5);
+      txt(F, O.ph ? "x′" : "x", F.X(6.3 * e1[0]), F.Y(6.3 * e1[1]) + 12, col.tan, "center", 14); txt(F, O.ph ? "y′" : "y", F.X(5.6 * e2[0]) + 12, F.Y(5.6 * e2[1]), col.tan, "center", 14);
+    }
+    arrow(F, [0, 0], a, col.va, 3.5, { label:an[0], sub:an[1], off:16 }); handle(F, a, col.va);
+    if(O.op === "sum" || O.op === "diff"){ arrow(F, [0, 0], b, col.vb, 3.5, { label:bn[0], sub:bn[1], off:-16 }); handle(F, b, col.vb); }
+  }
+  const mag = v => `${num(len(v))} ${u}`;
+  const NR = O.op === "sum" ? (O.ctx === "vel" ? `${V("v")}（合成速度）` : O.ctx === "force" ? `${V("F")}（合力）` : `${V("r")}（全体の変位）`)
+           : O.op === "diff" ? (O.ctx === "vel" ? `${V("v")}<sub>AB</sub>（相対速度）` : `${NB} − ${NA}`) : `${I("k")}${NA}`;
+  if(O.op === "dec"){
+    const e1 = [Math.cos(O.ph * DEG), Math.sin(O.ph * DEG)], e2 = [-e1[1], e1[0]], c1 = dot(a, e1), c2 = dot(a, e2);
+    rd = `<p>${NA} ＝ ${comp(a)} ${u}（${I("x")}, ${I("y")} 軸）　大きさ |${NA}| ＝ ${mag(a)}</p>
+      <p class="tn">${O.ph ? `軸を ${O.ph}° 傾けた ${I("x")}′, ${I("y")}′ 軸の成分：(${num(c1)}, ${num(c2)}) ${u}` : `${I("x")} 成分 ${num(c1)} ${u}、${I("y")} 成分 ${num(c2)} ${u}`}</p>
+      <p>成分の2乗の和の平方根：√(${c1 < 0 ? "(" + num(c1) + ")" : num(c1)}² ＋ ${c2 < 0 ? "(" + num(c2) + ")" : num(c2)}²) ＝ ${num(Math.hypot(c1, c2))} ${u}（軸を傾けても大きさは同じ）</p>`;
+    eqs = `<p class="t">数学C：成分表示と大きさ</p><p>${V("a")} ＝ (${I("a")}<sub>1</sub>, ${I("a")}<sub>2</sub>) のとき |${V("a")}| ＝ √(${I("a")}<sub>1</sub>² ＋ ${I("a")}<sub>2</sub>²)。向きが ${I("x")} 軸から角 ${I("θ")} のとき、${I("a")}<sub>1</sub> ＝ |${V("a")}| cos ${I("θ")}、${I("a")}<sub>2</sub> ＝ |${V("a")}| sin ${I("θ")}。</p><p>${c.dec}</p>`;
+  } else {
+    rd = `<p><span style="color:var(--va);font-weight:700">${NA} ＝ ${comp(a)}</span>　${O.op !== "scale" ? `<span style="color:var(--vb);font-weight:700">${NB} ＝ ${comp(b)}</span>` : ""}　〔${u}〕</p>
+      <p><span style="color:var(--vr);font-weight:700">${NR} ＝ ${comp(res)} ${u}</span>　大きさ ${mag(res)}${len(res) > 1e-9 ? `、${I("x")} 軸から ${num(ang(res), 0)}°` : ""}</p>`;
+    const opEq = O.op === "sum" ? `(${I("a")}<sub>1</sub>, ${I("a")}<sub>2</sub>) ＋ (${I("b")}<sub>1</sub>, ${I("b")}<sub>2</sub>) ＝ (${I("a")}<sub>1</sub> ＋ ${I("b")}<sub>1</sub>, ${I("a")}<sub>2</sub> ＋ ${I("b")}<sub>2</sub>)　→　${comp(a)} ＋ ${comp(b)} ＝ ${comp(res)}`
+      : O.op === "diff" ? `${V("b")} − ${V("a")} ＝ (${I("b")}<sub>1</sub> − ${I("a")}<sub>1</sub>, ${I("b")}<sub>2</sub> − ${I("a")}<sub>2</sub>)　→　${comp(b)} − ${comp(a)} ＝ ${comp(res)}`
+      : `${I("k")}${V("a")} ＝ (${I("ka")}<sub>1</sub>, ${I("ka")}<sub>2</sub>)　→　${num(O.k, 1)} × ${comp(a)} ＝ ${comp(res)}`;
+    eqs = `<p class="t">数学C：成分で計算する</p><p>${opEq}</p><p>${c[O.op]}</p>${O.op === "sum" ? `<p class="hint">大きさは足し算にならない：|${NA}| ＋ |${NB}| ＝ ${num(len(a) + len(b))} ${u} ですが、|${NA} ＋ ${NB}| ＝ ${num(len(res))} ${u}。</p>` : ""}`;
+  }
+  $("ops-read").innerHTML = rd; $("ops-eq").innerHTML = eqs;
+}
+
+/* ================= 2 平面の運動 ================= */
+const G = 9.8;
+const MOT = {
+  proj:{ name:"斜方投射", T:2 * 8 / G, pos:t => [4 * t, 8 * t - G / 2 * t * t], vel:t => [4, 8 - G * t], acc:() => [0, -G], k:0.25, xr:[-0.5, 7.2], yr:[-0.6, 4], dts:[0.8, 0.4, 0.2, 0.1, 0.01], t1:0.3 },
+  circ:{ name:"等速円運動（発展）", T:2 * Math.PI, pos:t => [3 * Math.cos(t), 3 * Math.sin(t)], vel:t => [-3 * Math.sin(t), 3 * Math.cos(t)], acc:t => [-3 * Math.cos(t), -3 * Math.sin(t)], k:0.5, xr:[-4.6, 4.6], yr:[-4.2, 4.2], dts:[2, 1, 0.5, 0.1, 0.01], t1:0.5 }
+};
+const M = { p:"proj", dt:0.4, t1:0.3, anim:null };
+function buildMoChips(){ const c = MOT[M.p]; chips($("mo-dt"), c.dts, M.dt, v => { stopMo(); M.dt = v; drawMo(); }, v => num(v, 2) + " s"); }
+segBtns($("mo-seg"), MOT, M.p, k => { stopMo(); M.p = k; const c = MOT[k]; M.dt = c.dts[1]; M.t1 = c.t1; $("mo-t").max = num(c.T, 2).replace("−", "-"); $("mo-t").value = M.t1; buildMoChips(); drawMo(); });
+buildMoChips(); $("mo-t").max = MOT.proj.T.toFixed(2);
+$("mo-t").addEventListener("input", e => { M.t1 = +e.target.value; drawMo(); });
+function stopMo(){ if(M.anim){ cancelAnimationFrame(M.anim); M.anim = null; } }
+$("mo-go").addEventListener("click", () => { stopMo(); const c = MOT[M.p], d0 = c.dts[0], t0 = performance.now(), dur = reduce ? 1 : 4000;
+  const f = now => { const u = Math.min(1, (now - t0) / dur); M.dt = Math.pow(10, Math.log10(d0) + (Math.log10(0.01) - Math.log10(d0)) * u);
+    $("mo-dt").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", "false")); drawMo();
+    if(u < 1) M.anim = requestAnimationFrame(f); else { M.dt = 0.01; M.anim = null; buildMoChips(); drawMo(); } };
+  M.anim = requestAnimationFrame(f); });
+function drawMo(){
+  const c = MOT[M.p], t1 = M.t1, dt = M.dt, t2 = t1 + dt, r1 = c.pos(t1), r2 = c.pos(t2), dr = sub(r2, r1), vb = mul(1 / dt, dr), v1 = c.vel(t1), v2 = c.vel(t2), dv = sub(v2, v1), ab = mul(1 / dt, dv), a1 = c.acc(t1);
+  $("mo-to").textContent = num(t1, 2) + " s";
+  $("mo-scale").innerHTML = `速度の矢印は「速度 × ${c.k} s」の長さでかいています（${c.k} s の間にその速度で進む変位）。方眼1目盛り ＝ 1 m。`;
+  if(tab === "motion" && SZ.mo){
+    const F = world("mo", c.xr, c.yr, { axes:true }), g = F.g;
+    if(M.p === "proj"){ g.save(); g.fillStyle = col.muted; g.globalAlpha = .12; g.fillRect(0, F.Y(0), F.w, F.h - F.Y(0)); g.restore(); }
+    g.save(); g.strokeStyle = col.muted; g.lineWidth = 1.5; g.beginPath(); for(let i = 0; i <= 200; i++){ const p = c.pos(c.T * i / 200); i ? g.lineTo(F.X(p[0]), F.Y(p[1])) : g.moveTo(F.X(p[0]), F.Y(p[1])); } g.stroke(); g.restore();
+    if(t2 > c.T && M.p === "proj"){ g.save(); g.strokeStyle = col.muted; g.setLineDash([3, 4]); g.beginPath(); for(let i = 0; i <= 40; i++){ const p = c.pos(c.T + (t2 - c.T) * i / 40); i ? g.lineTo(F.X(p[0]), F.Y(p[1])) : g.moveTo(F.X(p[0]), F.Y(p[1])); } g.stroke(); g.restore(); }
+    arrow(F, [0, 0], r1, col.pos, 1.8, { alpha:.6, label:"r", sub:"1", at:.5, off:14 });
+    arrow(F, [0, 0], r2, col.pos, 1.8, { alpha:.6, label:"r", sub:"2", at:.5, off:-14 });
+    arrow(F, r1, dr, col.pos, 3.5, { label:"Δr", at:.5, off:-16 });
+    arrow(F, r1, mul(c.k, vb), col.sec, 3, { alpha:.9 });
+    arrow(F, r1, mul(c.k, v1), col.vel, 3.5, { label:"v", at:1.08, off:0 });
+    const g2 = F.g; g2.save(); g2.fillStyle = col.ink; [r1, r2].forEach((p, i) => { g2.beginPath(); g2.arc(F.X(p[0]), F.Y(p[1]), 5, 0, 7); g2.fill(); }); g2.restore();
+    txt(F, "P₁", F.X(r1[0]) - 12, F.Y(r1[1]) + 14, col.ink, "center"); txt(F, "P₂", F.X(r2[0]) + 12, F.Y(r2[1]) + 14, col.ink, "center");
+    // 始点をそろえた速度
+    const vs = [v1, v2]; let m = 1; vs.forEach(v => m = Math.max(m, Math.abs(v[0]), Math.abs(v[1])));
+    const H = world("ho", [-m * 1.15, m * 1.15], [-m * 1.15, m * 1.15], { axes:true, step:M.p === "proj" ? 2 : 1 });
+    arrow(H, [0, 0], v1, col.vel, 3, { label:"v", sub:"1", off:14 });
+    arrow(H, [0, 0], v2, col.vel, 3, { alpha:.55, label:"v", sub:"2", off:-14 });
+    arrow(H, v1, dv, col.acc, 3.5, { label:"Δv", off:16 });
+    txt(H, "方眼1目盛り ＝ " + (M.p === "proj" ? 2 : 1) + " m/s", 8, 14, col.muted, "left", 12);
+  }
+  $("mo-read").innerHTML = `<p>Δ${I("t")} ＝ ${num(dt, 3)} s：<span class="cp">Δ${V("r")} ＝ ${comp(dr)} m</span></p>
+    <p><span class="s">平均の速度 Δ${V("r")}/Δ${I("t")} ＝ ${comp(vb)} m/s</span>（大きさ ${num(len(vb))} m/s）</p>
+    <p><span class="cv">瞬間の速度 ${V("v")} ＝ ${comp(v1)} m/s</span>（大きさ ${num(len(v1))} m/s）</p>
+    <p><span class="ca">平均の加速度 Δ${V("v")}/Δ${I("t")} ＝ ${comp(ab)} m/s²</span>　→　加速度 ${V("a")} ＝ ${comp(a1)} m/s²（大きさ ${num(len(a1))} m/s²）</p>`;
+  const tb = `<tr><th></th><th>${I("x")} 成分</th><th>${I("y")} 成分</th><th>大きさ</th></tr>
+    <tr><td class="l">位置 ${V("r")}〔m〕</td><td>${num(r1[0])}</td><td>${num(r1[1])}</td><td>${num(len(r1))}</td></tr>
+    <tr><td class="l">速度 ${V("v")}〔m/s〕</td><td>${num(v1[0])}</td><td>${num(v1[1])}</td><td>${num(len(v1))}</td></tr>
+    <tr><td class="l">加速度 ${V("a")}〔m/s²〕</td><td>${num(a1[0])}</td><td>${num(a1[1])}</td><td>${num(len(a1))}</td></tr>`;
+  $("mo-tbl").innerHTML = tb;
+  $("mo-eq").innerHTML = M.p === "proj" ? `<p class="t">成分ごとに微分する（初速度 (4, 8) m/s、${I("g")} ＝ 9.8 m/s²）</p>
+    <p>${I("x")} ＝ 4${I("t")}　→　${I("v")}<sub>x</sub> ＝ ${FR("d" + I("x"), "d" + I("t"))} ＝ 4　→　${I("a")}<sub>x</sub> ＝ ${FR("d" + I("v") + "<sub>x</sub>", "d" + I("t"))} ＝ 0</p>
+    <p>${I("y")} ＝ 8${I("t")} − 4.9${I("t")}²　→　${I("v")}<sub>y</sub> ＝ 8 − 9.8${I("t")}　→　${I("a")}<sub>y</sub> ＝ −9.8</p>
+    <p>${V("v")} ＝ (${I("v")}<sub>x</sub>, ${I("v")}<sub>y</sub>)、${V("a")} ＝ (0, −${I("g")})。加速度はいつも鉛直下向きで一定なので、始点をそろえた図の Δ${V("v")} はいつも真下を向きます。水平方向は等速直線運動、鉛直方向は等加速度直線運動です。</p>`
+    : `<p class="t">等速円運動（物理で学ぶ内容）　半径 3 m、1 s あたり 1 rad 回る</p>
+    <p>速さは 3 m/s で一定ですが、速度の向きが変わり続けるので、速度ベクトルは変化しています。Δ${V("v")} はいつも円の中心を向くので、加速度 ${V("a")} は中心向き（大きさ 3 m/s²）です。</p>
+    <p class="hint">${I("x")} ＝ 3 cos ${I("t")}、${I("y")} ＝ 3 sin ${I("t")} の微分は数学Ⅲで学びます。ここでは Δ${I("t")} を小さくして数値で確かめよう。</p>`;
+}
+
+/* ================= 3 力のつりあい ================= */
+const FS = { hang:{ name:"糸2本でつるす" }, slope:{ name:"なめらかでない斜面上の物体" } };
+const FC = { sc:"hang", W:10, th1:30, th2:60, T1:6, T2:8, th:30, N:8, f:4, ax:"xy" };
+const SL = {
+  hang:[["th1", "糸1の角度 θ₁（鉛直から）", 10, 80, 5, "°"], ["th2", "糸2の角度 θ₂（鉛直から）", 10, 80, 5, "°"], ["T1", "張力 T₁ の大きさ", 0, 20, 0.1, " N"], ["T2", "張力 T₂ の大きさ", 0, 20, 0.1, " N"]],
+  slope:[["th", "斜面の角度 θ", 0, 60, 5, "°"], ["N", "垂直抗力 N の大きさ", 0, 15, 0.1, " N"], ["f", "静止摩擦力 f の大きさ", 0, 15, 0.1, " N"]]
+};
+function buildFoSliders(){ $("fo-sliders").innerHTML = SL[FC.sc].map(([k, lab, mn, mx, st]) =>
+  `<div class="slider"><label for="fs-${k}">${lab.replace(/(θ|T|N|f)(₁|₂)?/g, (m0, a, b) => `<i class="qv">${a}</i>${b ? `<sub>${b === "₁" ? 1 : 2}</sub>` : ""}`)}</label><input type="range" id="fs-${k}" min="${mn}" max="${mx}" step="${st}" value="${FC[k]}"><output id="fo-${k}"></output></div>`).join("");
+  SL[FC.sc].forEach(([k]) => $("fs-" + k).addEventListener("input", e => { FC[k] = +e.target.value; drawFo(); }));
+  $("fo-ax").style.display = FC.sc === "slope" ? "" : "none"; }
+segBtns($("fo-seg"), FS, FC.sc, k => { FC.sc = k; buildFoSliders(); drawFo(); });
+chips($("fo-ax"), ["xy", "sl"], FC.ax, k => { FC.ax = k; drawFo(); }, k => k === "xy" ? "水平・鉛直" : "斜面に平行・垂直");
+buildFoSliders();
+$("fo-solve").addEventListener("click", () => {
+  if(FC.sc === "hang"){ const s = Math.sin((FC.th1 + FC.th2) * DEG); FC.T1 = FC.W * Math.sin(FC.th2 * DEG) / s; FC.T2 = FC.W * Math.sin(FC.th1 * DEG) / s; }
+  else { FC.N = FC.W * Math.cos(FC.th * DEG); FC.f = FC.W * Math.sin(FC.th * DEG); }
+  SL[FC.sc].forEach(([k]) => $("fs-" + k).value = FC[k]); drawFo(); });
+function forces(){
+  if(FC.sc === "hang") return [
+    { n:"W", sub:"", d:"重力", c:col.red, v:[0, -FC.W] },
+    { n:"T", sub:"1", d:"糸1の張力", c:col.pos, v:[-FC.T1 * Math.sin(FC.th1 * DEG), FC.T1 * Math.cos(FC.th1 * DEG)] },
+    { n:"T", sub:"2", d:"糸2の張力", c:col.acc, v:[FC.T2 * Math.sin(FC.th2 * DEG), FC.T2 * Math.cos(FC.th2 * DEG)] } ];
+  const t = FC.th * DEG; return [
+    { n:"W", sub:"", d:"重力", c:col.red, v:[0, -FC.W] },
+    { n:"N", sub:"", d:"垂直抗力", c:col.pos, v:[-FC.N * Math.sin(t), FC.N * Math.cos(t)] },
+    { n:"f", sub:"", d:"静止摩擦力", c:col.acc, v:[FC.f * Math.cos(t), FC.f * Math.sin(t)] } ];
+}
+function drawFo(){
+  SL[FC.sc].forEach(([k, , , , st, u]) => $("fo-" + k).textContent = num(FC[k], st < 1 ? 1 : 0) + u);
+  const fs = forces(), S = fs.reduce((s, f) => add(s, f.v), [0, 0]), sc = 0.19, eq = len(S) < 0.05;
+  const t = FC.th * DEG, axes = FC.sc === "slope" && FC.ax === "sl" ? [[Math.cos(t), Math.sin(t)], [-Math.sin(t), Math.cos(t)]] : [[1, 0], [0, 1]];
+  const axn = FC.sc === "slope" && FC.ax === "sl" ? ["斜面に平行（上向き正）", "斜面に垂直（上向き正）"] : ["水平（右向き正）", "鉛直（上向き正）"];
+  if(tab === "force" && SZ.fo){
+    const F = world("fo", [-3.4, 3.4], [-2.6, 3.4], {}), g = F.g;
+    if(FC.sc === "hang"){
+      g.save(); g.fillStyle = col.muted; g.globalAlpha = .25; g.fillRect(0, 0, F.w, F.Y(3.1)); g.restore(); line(F, [-4, 3.1], [4, 3.1], col.ink, 2);
+      [[FC.th1, -1], [FC.th2, 1]].forEach(([a, s]) => { const L = 3.1 / Math.cos(a * DEG); line(F, [0, 0], [s * L * Math.sin(a * DEG), 3.1], col.ink, 1.5); });
+      line(F, [0, 0], [0, 3.1], col.muted, 1, [3, 4]);
+      g.save(); g.fillStyle = col.muted; g.beginPath(); g.arc(F.X(0), F.Y(0), 0.32 * F.s, 0, 7); g.globalAlpha = .5; g.fill(); g.restore();
+    } else {
+      g.save(); g.translate(F.X(0), F.Y(0)); g.rotate(-t); g.fillStyle = col.muted; g.globalAlpha = .18; g.fillRect(-5 * F.s, 0.35 * F.s, 10 * F.s, 4 * F.s);
+      g.globalAlpha = 1; g.strokeStyle = col.ink; g.lineWidth = 2; g.beginPath(); g.moveTo(-5 * F.s, 0.35 * F.s); g.lineTo(5 * F.s, 0.35 * F.s); g.stroke();
+      g.globalAlpha = .45; g.fillStyle = col.muted; g.fillRect(-0.45 * F.s, -0.35 * F.s, 0.9 * F.s, 0.7 * F.s); g.restore();
+    }
+    fs.forEach(f => arrow(F, [0, 0], mul(sc, f.v), f.c, 3.5, { label:f.n, sub:f.sub, at:1.12, off:0 }));
+    if(!eq) arrow(F, [0, 0], mul(sc, S), col.tan, 3, { dash:[6, 4], label:"ΣF", at:1.2, off:0 });
+    if(FC.sc === "slope" && FC.ax === "sl"){ line(F, mul(-3, axes[0]), mul(3, axes[0]), col.tan, 1, [2, 4]); line(F, mul(-2, axes[1]), mul(2.6, axes[1]), col.tan, 1, [2, 4]); }
+    // 力の多角形
+    let pts = [[0, 0]]; fs.forEach(f => pts.push(add(pts[pts.length - 1], f.v)));
+    let lo = [0, 0], hi = [0, 0]; pts.forEach(p => { lo = [Math.min(lo[0], p[0]), Math.min(lo[1], p[1])]; hi = [Math.max(hi[0], p[0]), Math.max(hi[1], p[1])]; });
+    const m = Math.max(hi[0] - lo[0], hi[1] - lo[1], 6) * 0.62, cx = (lo[0] + hi[0]) / 2, cy = (lo[1] + hi[1]) / 2;
+    const P = world("fp", [cx - m, cx + m], [cy - m, cy + m], { step:2 });
+    fs.forEach((f, i) => arrow(P, pts[i], f.v, f.c, 3.5, { label:f.n, sub:f.sub, off:16 }));
+    if(eq){ txt(P, "閉じた → つりあっている", 8, 14, col.tan, "left"); }
+    else { arrow(P, [0, 0], S, col.tan, 3, { dash:[6, 4], label:"ΣF", off:-16 }); txt(P, "閉じない → 合力 ΣF が残る", 8, 14, col.tan, "left"); }
+    txt(P, "方眼1目盛り ＝ 2 N", P.w - 8, P.h - 12, col.muted, "right", 12);
+  }
+  const C = v => [dot(v, axes[0]), dot(v, axes[1])];
+  let tb = `<tr><th>力</th><th>${axn[0]}</th><th>${axn[1]}</th><th>大きさ</th></tr>`;
+  fs.forEach(f => { const c = C(f.v); tb += `<tr><td class="l" style="color:${f.c};font-weight:700">${f.d} ${V(f.n)}${f.sub ? `<sub>${f.sub}</sub>` : ""}</td><td>${num(c[0])}</td><td>${num(c[1])}</td><td>${num(len(f.v))}</td></tr>`; });
+  const cs = C(S); tb += `<tr class="${eq ? "" : "cur"}"><td class="l" style="color:var(--tan);font-weight:700">合力 Σ${V("F")}</td><td>${num(cs[0])}</td><td>${num(cs[1])}</td><td>${num(len(S))}</td></tr>`;
+  $("fo-tbl").innerHTML = tb;
+  const m = FC.W / G;
+  $("fo-read").innerHTML = eq ? `<p class="tn">合力 Σ${V("F")} ＝ ${V("0")}：力はつりあっています。物体は静止したまま（または等速直線運動のまま）。</p>`
+    : `<p><span class="tn">合力 Σ${V("F")} ＝ ${comp(S)} N</span>（大きさ ${num(len(S))} N）：つりあっていません。</p>
+       <p>重力 10 N より質量は ${num(m, 2)} kg。運動方程式 ${I("m")}${V("a")} ＝ Σ${V("F")} より、物体は合力の向きに大きさ ${num(len(S) / m, 2)} m/s² の加速度で動き出します。</p>`;
+  $("fo-eq").innerHTML = FC.sc === "hang" ? `<p class="t">成分ごとのつりあいの式（重力 ${I("W")} ＝ 10 N）</p>
+    <p>水平：−${I("T")}<sub>1</sub> sin ${I("θ")}<sub>1</sub> ＋ ${I("T")}<sub>2</sub> sin ${I("θ")}<sub>2</sub> ＝ 0</p>
+    <p>鉛直：${I("T")}<sub>1</sub> cos ${I("θ")}<sub>1</sub> ＋ ${I("T")}<sub>2</sub> cos ${I("θ")}<sub>2</sub> − ${I("W")} ＝ 0</p>
+    <p class="hint">ベクトルの式 ${V("W")} ＋ ${V("T")}<sub>1</sub> ＋ ${V("T")}<sub>2</sub> ＝ ${V("0")} は、成分に分けると2つの式（連立方程式）になります。2つの未知数 ${I("T")}<sub>1</sub>、${I("T")}<sub>2</sub> が決まるのはこのためです。</p>`
+    : `<p class="t">軸の選び方で式が変わる（重力 ${I("W")} ＝ ${I("mg")} ＝ 10 N）</p>
+    ${FC.ax === "sl" ? `<p>斜面に平行：${I("f")} − ${I("mg")} sin ${I("θ")} ＝ 0　→　${I("f")} ＝ ${I("mg")} sin ${I("θ")}</p><p>斜面に垂直：${I("N")} − ${I("mg")} cos ${I("θ")} ＝ 0　→　${I("N")} ＝ ${I("mg")} cos ${I("θ")}</p><p class="hint">斜面に平行・垂直に軸をとると、未知の力 ${I("N")}・${I("f")} がそれぞれ1つの軸だけに入り、1つの式で1つずつ求まります。分解するのは重力だけで済みます。</p>`
+      : `<p>水平：−${I("N")} sin ${I("θ")} ＋ ${I("f")} cos ${I("θ")} ＝ 0</p><p>鉛直：${I("N")} cos ${I("θ")} ＋ ${I("f")} sin ${I("θ")} − ${I("mg")} ＝ 0</p><p class="hint">水平・鉛直の軸でも正しい式ですが、${I("N")} と ${I("f")} の連立方程式になります。「斜面に平行・垂直」に切りかえて比べよう。どちらの軸でも合力が ${V("0")} かどうかは変わりません。</p>`}`;
+}
+
+/* ================= 4 仕事と内積 ================= */
+const W_ = { F:[4 * Math.cos(60 * DEG), 4 * Math.sin(60 * DEG)], s:[5, 0] };
+const WP = { a0:{ name:"同じ向き", a:0 }, a60:{ name:"60°", a:60 }, a90:{ name:"垂直", a:90 }, a120:{ name:"120°", a:120 }, a180:{ name:"逆向き", a:180 } };
+segBtns($("wk-seg"), WP, "a60", k => { const a = WP[k].a * DEG + Math.atan2(W_.s[1], W_.s[0]); W_.F = [4 * Math.cos(a), 4 * Math.sin(a)]; drawWk(); });
+draggable("wk", () => [{ p:W_.F, set:p => { W_.F = clampV(snap(p, 0.25), 4.25); $("wk-seg").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", "false")); drawWk(); } },
+  { p:W_.s, set:p => { const q = snap(p, 0.25); W_.s = [Math.max(-4.25, Math.min(7.25, q[0])), Math.max(-4.25, Math.min(4.25, q[1]))]; drawWk(); } }]);
+function drawWk(){
+  const Fv = W_.F, s = W_.s, Wd = dot(Fv, s), Fl = len(Fv), sl = len(s), th = Fl > 1e-9 && sl > 1e-9 ? Math.acos(Math.max(-1, Math.min(1, Wd / (Fl * sl)))) / DEG : 0;
+  const us = sl > 1e-9 ? mul(1 / sl, s) : [1, 0], Fpar = mul(dot(Fv, us), us), Fper = sub(Fv, Fpar), wc = Wd > 1e-9 ? col.pos : Wd < -1e-9 ? col.red : col.muted;
+  if(tab === "work" && SZ.wk){
+    const F = world("wk", [-4.5, 7.5], [-4.5, 4.5], { axes:false }), g = F.g;
+    g.save(); g.fillStyle = col.muted; g.globalAlpha = .4; g.fillRect(F.X(-0.4), F.Y(0.4), 0.8 * F.s, 0.8 * F.s); g.globalAlpha = .18; g.fillRect(F.X(s[0] - 0.4), F.Y(s[1] + 0.4), 0.8 * F.s, 0.8 * F.s); g.restore();
+    line(F, mul(-8, us), mul(9, us), col.muted, 1, [2, 5]);
+    arrow(F, [0, 0], s, col.pos, 3.5, { label:"s", off:-16 });
+    line(F, Fv, Fpar, col.muted, 1.2, [4, 4]);
+    arrow(F, [0, 0], Fpar, wc, 6, { alpha:.45 });
+    arrow(F, [0, 0], Fper, col.muted, 2, { alpha:.6, dash:[5, 4] });
+    arrow(F, [0, 0], Fv, col.red, 3.5, { label:"F", off:16 });
+    if(Fl > 0.3 && sl > 0.3){ const a0 = Math.atan2(s[1], s[0]), a1 = Math.atan2(Fv[1], Fv[0]); g.save(); g.strokeStyle = col.tan; g.lineWidth = 1.5; g.beginPath();
+      let d = a1 - a0; while(d > Math.PI) d -= 2 * Math.PI; while(d < -Math.PI) d += 2 * Math.PI; g.arc(F.X(0), F.Y(0), 26, -a0, -(a0 + d), d > 0); g.stroke(); g.restore();
+      txt(F, "θ", F.X(0) + 38 * Math.cos(a0 + d / 2), F.Y(0) - 38 * Math.sin(a0 + d / 2), col.tan, "center", 15); }
+    handle(F, Fv, col.red); handle(F, s, col.pos);
+    txt(F, "方眼1目盛り：力 1 N、変位 1 m", 8, 14, col.muted, "left", 12);
+  }
+  $("wk-read").innerHTML = `<p><span style="color:var(--red);font-weight:700">${V("F")} ＝ ${comp(Fv)} N</span>（|${V("F")}| ＝ ${num(Fl)} N）　<span class="cp">${V("s")} ＝ ${comp(s)} m</span>（|${V("s")}| ＝ ${num(sl)} m）　なす角 ${I("θ")} ＝ ${num(th, 0)}°</p>
+    <p>① 大きさと角：${I("W")} ＝ |${V("F")}||${V("s")}| cos ${I("θ")} ＝ ${num(Fl)} × ${num(sl)} × ${num(Math.cos(th * DEG), 3)} ＝ <b>${num(Wd)} J</b></p>
+    <p>② 成分：${I("W")} ＝ ${I("F")}<sub>x</sub>${I("s")}<sub>x</sub> ＋ ${I("F")}<sub>y</sub>${I("s")}<sub>y</sub> ＝ ${num(Fv[0])} × ${num(s[0])} ＋ ${num(Fv[1])} × ${num(s[1])} ＝ <b>${num(Wd)} J</b></p>
+    <p style="color:${wc};font-weight:700">${Wd > 1e-9 ? "正の仕事：力が物体の運動を助け、運動エネルギーを増やすはたらき" : Wd < -1e-9 ? "負の仕事：力が物体の運動を妨げ、運動エネルギーを減らすはたらき（摩擦力など）" : "仕事は 0：力が変位に垂直（垂直抗力や、水平に動くときの重力など）"}</p>`;
+  $("wk-eq").innerHTML = `<p class="t">数学C：内積　${V("a")}・${V("b")} ＝ |${V("a")}||${V("b")}| cos ${I("θ")} ＝ ${I("a")}<sub>1</sub>${I("b")}<sub>1</sub> ＋ ${I("a")}<sub>2</sub>${I("b")}<sub>2</sub></p>
+    <p>物理基礎の ${I("W")} ＝ ${I("Fx")} cos ${I("θ")} は、内積 ${V("F")}・${V("s")} のことです。${I("F")} cos ${I("θ")} は、力の「変位の向きの成分」（色をつけた太い矢印）で、変位に垂直な成分（灰色の破線）は仕事をしません。</p>
+    <p class="hint">内積の値は向きをもたないスカラーなので、仕事もエネルギーもスカラーです（単位 J ＝ N·m）。</p>`;
+}
+
+/* ---------- 見てみよう ---------- */
+function qs(id, list){ $(id).innerHTML = list.map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join(""); }
+qs("qs-ops", [
+  [`「速度」「和」で、${V("v")}<sub>A</sub> ＝ (3, 0)、${V("v")}<sub>B</sub> ＝ (0, 4) にしよう。合成速度の大きさはいくらか。速さ 3 m/s と 4 m/s の和 7 m/s にならないのはなぜか。`, `(3, 4) で大きさは √(3² ＋ 4²) ＝ 5 m/s。向きの違うベクトルの大きさは、そのまま足せません。足せるのは成分どうしです。`],
+  [`「速度」「差」で、${V("v")}<sub>A</sub> と ${V("v")}<sub>B</sub> を同じにすると、相対速度はどうなるか。`, `${V("0")} になります。同じ速度で並んで走る車どうしは、互いに止まって見えます。`],
+  [`「力」「成分に分ける」で、軸の傾き ${I("φ")} を変えよう。何が変わり、何が変わらないか。`, `成分の値は変わりますが、成分の2乗の和の平方根（力の大きさ）は変わりません。成分は「どの軸で見るか」で決まる数で、力そのものは軸によりません。`],
+  [`「実数倍」で ${I("k")} ＝ −1 にしよう。物理ではどんなときにこのベクトルを使うか。`, `大きさが同じで逆向きのベクトル −${V("a")}。たとえば、ある力とつりあう力、相対速度を求めるときに A の速度を引くこと（${V("v")}<sub>B</sub> ＋ (−${V("v")}<sub>A</sub>)）、作用・反作用の2力（はたらく物体は別）などです。`]
+]);
+qs("qs-motion", [
+  [`「斜方投射」で「Δ${I("t")} を 0 に近づける」を押そう。赤い矢印（平均の速度）はどうなるか。`, `橙の矢印（瞬間の速度）に近づいていきます。瞬間の速度の向きは、軌道の接線の向きです。`],
+  [`斜方投射で時刻 ${I("t")}<sub>1</sub> を動かそう。下の図の緑の矢印 Δ${V("v")} の向きはどうなっているか。`, `いつも真下（鉛直下向き）です。重力加速度 ${V("g")} が鉛直下向きで一定だからです。速度の ${I("x")} 成分は変わらず、${I("y")} 成分だけが減っていきます。`],
+  [`最高点（${I("t")} ≒ 0.82 s）で、速度ベクトルと加速度ベクトルはそれぞれどうなっているか。`, `速度は (4, 0) m/s で水平（0 ではない）、加速度は (0, −9.8) m/s²。最高点で 0 になるのは速度の ${I("y")} 成分だけです。`],
+  [`「等速円運動」では速さが一定なのに、加速度が 0 でないのはなぜか。`, `加速度は「速度ベクトルの変化」の割合だからです。速さが同じでも向きが変われば Δ${V("v")} は 0 ではありません。Δ${V("v")} はいつも円の中心を向きます。`]
+]);
+qs("qs-force", [
+  [`「糸2本でつるす」で ${I("θ")}<sub>1</sub> ＝ ${I("θ")}<sub>2</sub> ＝ 60° にして「つりあう大きさにする」を押そう。張力はいくらか。重力 10 N より大きいのはなぜか。`, `${I("T")}<sub>1</sub> ＝ ${I("T")}<sub>2</sub> ＝ 10 N。糸が開いていると、張力の大部分が水平方向を打ち消し合うことに使われ、鉛直成分 ${I("T")} cos 60° ＝ 5 N ずつで重力を支えるからです。角度を大きくするほど張力は大きくなります。`],
+  [`「斜面上の物体」で ${I("θ")} ＝ 30° にし、「つりあう大きさにする」を押そう。${I("N")} と ${I("f")} はいくらか。`, `${I("N")} ＝ 10 cos 30° ≒ 8.7 N、${I("f")} ＝ 10 sin 30° ＝ 5.0 N。`],
+  [`同じ場面で、成分の軸を「水平・鉛直」と「斜面に平行・垂直」で切りかえよう。表の何が変わり、何が変わらないか。`, `各力の成分の値は変わりますが、合力が 0 であること（合力の行の成分がどちらも 0）は変わりません。式が簡単になる軸を選ぶのがコツです。`],
+  [`つりあった状態から ${I("f")} だけを小さくすると、力の多角形はどうなるか。物体はどちら向きに動き出すか。`, `多角形が閉じなくなり、紫の合力 Σ${V("F")} が斜面に沿って下向きに残ります。運動方程式 ${I("m")}${V("a")} ＝ Σ${V("F")} から、物体は斜面に沿って下向きに加速します。`]
+]);
+qs("qs-work", [
+  [`「垂直」を押そう。力は大きいのに仕事が 0 なのはなぜか。物理基礎ではどんな力がこれに当たるか。`, `cos 90° ＝ 0 で、力に変位の向きの成分がないからです。床の上をすべる物体が受ける垂直抗力や重力、等速円運動の向心力などです。`],
+  [`「逆向き」の仕事は何 J か。どんな力がこれに当たるか。`, `4 × 5 × cos 180° ＝ −20 J。運動と逆向きにはたらく動摩擦力や空気抵抗がする仕事は負です。`],
+  [`${V("s")} の ● をドラッグして斜め上に動かそう。重力（下向きの力）がする仕事は、変位のどの成分だけで決まるか。`, `${V("F")} ＝ (0, −${I("mg")}) なら ${I("W")} ＝ 0 × ${I("s")}<sub>x</sub> ＋ (−${I("mg")}) × ${I("s")}<sub>y</sub> ＝ −${I("mgh")}（${I("h")} ＝ ${I("s")}<sub>y</sub>）。水平成分によらず、高さの変化だけで決まります。これが重力による位置エネルギーの考え方につながります。`]
+]);
+
+/* ---------- 描画 ---------- */
+function drawAll(){ readColors(); drawOps(); drawMo(); drawFo(); drawWk(); }
+function resize(){ Object.keys(CV).forEach(fit); drawAll(); }
+const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+if(mq && mq.addEventListener) mq.addEventListener("change", drawAll);
+new MutationObserver(drawAll).observe(document.documentElement, { attributes:true, attributeFilter:["data-theme"] });
+if(window.ResizeObserver){ const ro = new ResizeObserver(resize); Object.values(CV).forEach(c => ro.observe(c)); } else window.addEventListener("resize", resize);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(drawAll);
+showTab(location.hash.slice(1) || "ops");
+})();
+</script>
+</body>
+</html>

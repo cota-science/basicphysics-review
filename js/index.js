@@ -40,5 +40,10 @@ window.UNIT_LIST = [
   { group: "エネルギーとその利用", units: [
     { id: "anim-nuclear", title: "▶ 原子核と放射線のアニメーション", href: "anim/index.html#nuclear", note: "放射線の透過力と電離作用、崩壊と半減期（原子核を選べる）、核分裂の連鎖反応と制御棒、核融合" },
     { id: "energy-use", title: "エネルギーとその利用",       file: "units/energy-use.js" }
+  ]},
+  { group: "付録：数学とつなげる", units: [
+    { id: "anim-calculus", title: "▶ 微分・積分で見る運動",     href: "anim/calculus.html", note: "数学Ⅱの極限・微分・積分で運動を読む。平均変化率 → 瞬間の速度、x → v → a と増減表（折り返し）、短冊の和 → 定積分 ＝ 変位、等加速度の3式を導く" },
+    { id: "anim-vector", title: "▶ ベクトルで見る運動と力",     href: "anim/vector.html", note: "数学Cのベクトルで力学を読む。和・差・成分（合成速度・相対速度・合力）、位置・速度・加速度ベクトル、力のつりあいと軸のとり方、仕事 ＝ 内積" },
+    { id: "math-link",  title: "数学で読む力学（微分・積分・ベクトル）", file: "units/math-link.js" }
   ]}
 ];
