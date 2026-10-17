@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>音色と波形</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* 3つの場面（倍音を重ねる／声の波形を見る／母音を合成する）。どの場面も 数値の帯 → 波形 → スペクトル → 操作 → 解説 → 問い の順に縦に並べる。 */
+:root{
+  --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
+  --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
+  --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3; --shade:#EEF2F6; --green:#1F7A4D; --orange:#B85C00;
+  --body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --math:"Times New Roman",Times,"Noto Serif",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+    --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+    --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37; --green:#5FD39A; --orange:#FFB15C; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+  --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+  --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37; --green:#5FD39A; --orange:#FFB15C; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qv{font-family:var(--math);font-style:italic;font-size:1.08em}
+sub{font-size:.7em;line-height:0}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+@media (max-width:700px){.top{position:static}}
+.top-inner{max-width:760px;margin:0 auto;padding:10px 16px 0}
+.back{font-size:14px;color:var(--blue);text-decoration:none}
+h1{font-size:19px;margin:2px 0 0;line-height:1.4;text-wrap:balance}
+.nav{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin-top:2px}
+.nav a{color:var(--blue);text-decoration:none}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:700}
+.navtg{border:1px solid var(--line);background:var(--sheet);border-radius:999px;padding:2px 12px;font-size:13px;color:var(--blue);cursor:pointer;margin-top:4px}
+@media (max-width:700px){ .nav{display:none} .top.open .nav{display:flex} }
+@media (min-width:701px){ .navtg{display:none} }
+.tabs{display:flex;gap:4px;padding-top:6px}
+.tab{flex:1 1 0;min-width:0;line-height:1.35;text-align:center;border:0;background:none;padding:8px 4px 10px;font-size:14px;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer}
+.tab[aria-selected="true"]{color:var(--ink);font-weight:700;border-bottom-color:var(--blue)}
+main{max-width:760px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.scene[hidden]{display:none}
+.scene{display:grid;gap:16px}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px;min-width:0}
+h2{font-size:20px;margin:0 0 4px;line-height:1.4;text-wrap:balance}
+h3{font-size:17px;margin:0 0 8px}
+h4{font-size:15px;margin:14px 0 4px}
+.lead{margin:0 0 12px;color:var(--muted);font-size:15px}
+.readout{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-bottom:10px}
+.readout div{padding:8px 10px;border-left:1px solid var(--line);min-width:0}
+.readout div:first-child{border-left:0}
+.readout .k{font-size:12px;color:var(--muted);display:block;line-height:1.3}
+.readout .v{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.readout .calc{background:var(--blue-soft)}
+@media (max-width:520px){.readout{grid-template-columns:repeat(2,minmax(0,1fr))}.readout div:nth-child(3){border-left:0}.readout div:nth-child(n+3){border-top:1px solid var(--line)}}
+.cap{font-size:13px;font-weight:700;margin:10px 0 2px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.cap span{font-weight:400;color:var(--muted)}
+.stage{position:relative;width:100%;background:var(--sheet);border:1px solid var(--line);border-radius:4px}
+.stage.wave{aspect-ratio:2.4/1} .stage.spec{aspect-ratio:2.6/1} .stage.map{aspect-ratio:1.5/1;touch-action:none}
+@media (max-width:520px){.stage.wave{aspect-ratio:1.7/1}.stage.spec{aspect-ratio:1.8/1}.stage.map{aspect-ratio:1.25/1}}
+.stage.spec.edit{touch-action:none;cursor:ns-resize}
+canvas{display:block;width:100%;height:100%}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.btn{border:0;border-radius:8px;padding:9px 16px;min-height:44px;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.btn.ghost{background:none;color:var(--blue);border:1.5px solid var(--blue)}
+.btn.on{background:var(--red)}
+.btn:disabled{opacity:.45;cursor:default}
+.opts{display:grid;gap:12px;margin-top:14px}
+.seg{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.seg-label{font-size:14px;color:var(--muted);min-width:5.5em}
+.seg button{border:1.5px solid var(--line);background:var(--sheet);border-radius:999px;padding:6px 12px;min-height:40px;cursor:pointer;font-size:15px}
+.seg button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft);font-weight:700}
+.seg.big button{min-width:52px;font-size:18px}
+.slider{display:grid;grid-template-columns:8.5em minmax(0,1fr) 5.2em;align-items:center;gap:10px}
+.slider label{font-size:15px}
+.slider input{width:100%;accent-color:var(--blue);min-height:32px}
+.slider output{font-variant-numeric:tabular-nums;text-align:right;font-weight:700}
+@media (max-width:520px){.slider{grid-template-columns:6.8em minmax(0,1fr) 4.8em}}
+.checks{display:flex;flex-wrap:wrap;gap:6px 18px}
+.checks label{display:flex;align-items:center;gap:8px;font-size:15px;cursor:pointer;min-height:36px}
+.checks input{width:20px;height:20px;accent-color:var(--blue)}
+.hint{font-size:13px;color:var(--muted);margin:8px 0 0}
+.warn{font-size:13px;color:var(--red);margin:8px 0 0}
+.status{font-size:14px;margin:8px 0 0;padding:8px 12px;border-radius:6px;background:var(--shade)}
+.status.err{background:var(--red-soft);color:var(--red)}
+.formula{font-size:15px;margin:4px 0;font-variant-numeric:tabular-nums}
+.box{border-left:4px solid var(--blue);background:var(--blue-soft);border-radius:4px;padding:10px 14px;margin-top:12px}
+.box p{margin:6px 0}
+.box h4{margin:2px 0 4px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;font-size:14px;width:100%}
+th,td{border:1px solid var(--line);padding:4px 8px;text-align:left;vertical-align:top}
+th{background:var(--shade)}
+.qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
+.qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
+.ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+.meter{height:10px;border-radius:5px;background:var(--shade);overflow:hidden;margin-top:6px}
+.meter i{display:block;height:100%;width:0;background:var(--green);transition:width .08s}
+</style>
+</head>
+<body>
+<header class="top" id="top">
+  <div class="top-inner">
+    <a class="back" id="backLink" href="../index.html#/u/sound/0" hidden>‹ 音（Webテスト）へ</a>
+    <h1>音色と波形（倍音・声・母音）</h1>
+    <button type="button" class="navtg" id="navtg" hidden aria-expanded="false" aria-controls="nav">☰ メニュー</button>
+    <nav class="nav" id="nav" hidden aria-label="アニメーション">
+      <a href="index.html">≡ アニメーション集</a>
+      <a href="wave-speed.html">波の速さ</a>
+      <a href="wave-3d.html">波を3次元で見る</a>
+      <a href="transverse.html">横波（重ね合わせ・定在波（定常波）・反射）</a>
+      <a href="longitudinal.html">縦波（疎密波）</a>
+      <a href="string.html">弦の固有振動</a>
+      <a href="air-column.html">気柱の固有振動</a>
+      <a href="beats.html">うなり</a>
+      <a href="timbre.html" aria-current="page">音色と波形</a>
+      <a href="hearing.html">可聴域</a>
+    </nav>
+    <div class="tabs" role="tablist" aria-label="場面">
+      <button class="tab" role="tab" data-scene="add" aria-controls="sc-add">倍音を<br>重ねる</button>
+      <button class="tab" role="tab" data-scene="mic" aria-controls="sc-mic">声の波形<br>を見る</button>
+      <button class="tab" role="tab" data-scene="vowel" aria-controls="sc-vowel">母音を<br>合成する</button>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- ============ 倍音を重ねる ============ -->
+<div class="scene" id="sc-add" role="tabpanel">
+  <section class="sheet" aria-labelledby="h-add">
+    <h2 id="h-add">倍音の正弦波を重ねて、波形と音色をつくる</h2>
+    <p class="lead">振動数 <i class="qv">f</i> の正弦波（基音）に、2<i class="qv">f</i>、3<i class="qv">f</i>、… の正弦波（倍音）を重ねます。どの倍音をどれだけ重ねるかで波形が変わり、同じ高さでも違う音色に聞こえます。</p>
+    <div class="readout" aria-live="polite">
+      <div><span class="k">基音の振動数 <i class="qv">f</i>（高さ）</span><span class="v" id="aF"></span></div>
+      <div><span class="k">波形の周期 <i class="qv">T</i></span><span class="v" id="aT"></span></div>
+      <div class="calc"><span class="k">重ねた正弦波の数</span><span class="v" id="aN"></span></div>
+      <div class="calc"><span class="k">いちばん高い倍音</span><span class="v" id="aMax"></span></div>
+    </div>
+    <p class="formula" id="aFormula"></p>
+    <div class="cap">波形（2周期分）<span id="aWaveNote"></span></div>
+    <div class="stage wave"><canvas id="cvAW" role="img" aria-label="重ね合わせた波形。破線は目標の形。"></canvas></div>
+    <div class="cap">スペクトル（各倍音の振幅）<span id="aSpecNote">横軸：基音の何倍か</span></div>
+    <div class="stage spec" id="stAS"><canvas id="cvAS" role="img" aria-label="基音と倍音の振幅を表す棒グラフ。"></canvas></div>
+    <div class="controls">
+      <button type="button" class="btn" id="aPlay">♪ 音を出す</button>
+      <button type="button" class="btn ghost" id="aTour">聞き比べ（4つの波形を順に）</button>
+    </div>
+    <p class="warn">音量に注意してください（はじめは小さめに。イヤホンでは特に）。</p>
+    <div class="opts">
+      <div class="seg" role="group" aria-label="波形"><span class="seg-label">波形</span>
+        <button type="button" data-pre="sine">正弦波（基音だけ）</button><button type="button" data-pre="saw">のこぎり波</button><button type="button" data-pre="square">矩形波</button><button type="button" data-pre="tri">三角波</button><button type="button" data-pre="free">自由に（棒を動かす）</button>
+      </div>
+      <div class="slider"><label for="aSN">重ねる倍音（何倍まで）</label><input type="range" id="aSN" min="1" max="40" step="1" value="15"><output id="aON" for="aSN"></output></div>
+      <div class="slider"><label for="aSF">基音の振動数</label><input type="range" id="aSF" min="0" max="1000" step="1"><output id="aOF" for="aSF"></output></div>
+      <div class="slider"><label for="aSC">フィルター（高い倍音を削る）</label><input type="range" id="aSC" min="0" max="1000" step="1" value="1000"><output id="aOC" for="aSC"></output></div>
+      <div class="slider"><label for="aSV">音量</label><input type="range" id="aSV" min="0" max="1" step="0.05" value="0.3"><output id="aOV" for="aSV"></output></div>
+      <div class="checks">
+        <label><input type="checkbox" id="aParts">重ねる正弦波（成分）を表示</label>
+        <label><input type="checkbox" id="aIdeal" checked>目標の形（破線）</label>
+      </div>
+    </div>
+    <p class="hint" id="aHint"></p>
+  </section>
+
+  <section class="sheet" aria-labelledby="h-add2">
+    <h3 id="h-add2">3つの波形のつくり方</h3>
+    <div class="tbl"><table>
+      <colgroup><col style="width:5.2em"><col style="width:7.5em"><col style="width:5em"><col></colgroup>
+      <tr><th>波形</th><th>重ねる倍音</th><th>振幅</th><th>音色の印象</th></tr>
+      <tr><td>のこぎり波</td><td>すべての倍音（1, 2, 3, 4, …倍）</td><td>1/<i class="qv">n</i></td><td>明るく、ジーというにぎやかな音（バイオリン・金管楽器に近い）</td></tr>
+      <tr><td>矩形波</td><td>奇数倍だけ（1, 3, 5, …倍）</td><td>1/<i class="qv">n</i></td><td>うつろで、ブーという音（クラリネットに近い。ゲーム機の電子音）</td></tr>
+      <tr><td>三角波</td><td>奇数倍だけ（1, 3, 5, …倍）</td><td>1/<i class="qv">n</i><sup>2</sup>（符号が交互）</td><td>やわらかく、正弦波に近い音（フルート・口笛に近い）</td></tr>
+    </table></div>
+    <p class="hint"><i class="qv">n</i> は基音の何倍かを表す数。三角波は高い倍音がすぐ小さくなるので、正弦波に近い音色になります。クラリネットの音に奇数倍音が多いのは、閉管のように片方の端が閉じた管で鳴るからです。</p>
+    <div class="box">
+      <h4>シンセサイザーの原理</h4>
+      <p><b>加算合成</b>：この画面のように、基音と倍音の正弦波の大きさを決めて足し合わせ、音色をつくる方法です。電子オルガンの「ドローバー」は、各倍音の大きさを決めるつまみです。</p>
+      <p><b>減算合成</b>：多くのアナログシンセサイザーは、倍音を多く含むのこぎり波や矩形波を電気回路（発振器）でつくり、フィルターで高い倍音を削って音色を整えます。「フィルター」のスライダーで試せます。</p>
+      <p>どちらも「音色は、どの倍音がどれだけ含まれるか（波形）で決まる」という考え方に基づいています。どんな形の周期的な波も、基本振動数の整数倍の正弦波の和で表せます（フーリエ級数。大学の数学で学びます）。</p>
+    </div>
+  </section>
+
+  <section class="sheet"><h3>見てみよう・聞いてみよう</h3><ol class="qs" id="qsAdd"></ol></section>
+</div>
+
+<!-- ============ 声の波形を見る ============ -->
+<div class="scene" id="sc-mic" role="tabpanel" hidden>
+  <section class="sheet" aria-labelledby="h-mic">
+    <h2 id="h-mic">マイクで声や楽器の波形を見る</h2>
+    <p class="lead">マイクに向かって「あー」と、同じ高さで声を出し続けてみよう。くり返しの1回分が周期 <i class="qv">T</i>、その形が音色です。スペクトルには、基音と倍音が等間隔の山として並びます。</p>
+    <div class="controls">
+      <button type="button" class="btn" id="mStart">🎤 マイクを使う</button>
+      <button type="button" class="btn ghost" id="mFreeze" disabled>波形を止める</button>
+      <button type="button" class="btn ghost" id="mKeep" disabled>この波形を残して比べる</button>
+    </div>
+    <p class="status" id="mStatus">「マイクを使う」を押して、マイクの使用を許可してください。音声はこの端末の中だけで処理され、録音・送信はしません。</p>
+    <div class="meter" aria-hidden="true"><i id="mLevel"></i></div>
+    <div class="readout" aria-live="polite" style="margin-top:10px">
+      <div><span class="k">基本振動数（推定）</span><span class="v" id="mF">―</span></div>
+      <div><span class="k">周期 <i class="qv">T</i></span><span class="v" id="mT">―</span></div>
+      <div class="calc"><span class="k">近い音名</span><span class="v" id="mNote">―</span></div>
+      <div class="calc"><span class="k">残した波形</span><span class="v" id="mKept">なし</span></div>
+    </div>
+    <div class="cap">波形<span id="mWaveNote"></span></div>
+    <div class="stage wave"><canvas id="cvMW" role="img" aria-label="マイクから入力された音の波形。"></canvas></div>
+    <div class="cap">スペクトル（0〜4000 Hz）<span>縦の点線：基本振動数の整数倍</span></div>
+    <div class="stage spec"><canvas id="cvMS" role="img" aria-label="マイクから入力された音のスペクトル。"></canvas></div>
+    <div class="opts">
+      <div class="seg" role="group" aria-label="表示する時間"><span class="seg-label">表示する時間</span>
+        <button type="button" data-mw="3">3周期分</button><button type="button" data-mw="20">20 ms</button><button type="button" data-mw="60">60 ms</button>
+      </div>
+    </div>
+    <p class="hint">パソコンやスマートフォンの設定で、このページにマイクの使用を許可してください。うまく表示されないときは、マイクに近づいて声を出すか、イヤホンのマイクを使ってください。</p>
+  </section>
+  <section class="sheet"><h3>やってみよう</h3><ol class="qs" id="qsMic"></ol></section>
+</div>
+
+<!-- ============ 母音を合成する ============ -->
+<div class="scene" id="sc-vowel" role="tabpanel" hidden>
+  <section class="sheet" aria-labelledby="h-vow">
+    <h2 id="h-vow">声帯の音に「口の形の共鳴」をかけて母音をつくる</h2>
+    <p class="lead">声帯の振動は、基音と多くの倍音を含むブザーのような音です（音源）。これが口やのど（声道）を通るとき、舌やあごの位置で決まるいくつかの振動数の倍音が共鳴して強められます。この強められる振動数の山を<b>フォルマント</b>といい、低い方から <i class="qv">F</i><sub>1</sub>、<i class="qv">F</i><sub>2</sub> の位置で母音が決まります。</p>
+    <div class="readout" aria-live="polite">
+      <div><span class="k">声の高さ <i class="qv">f</i></span><span class="v" id="vF"></span></div>
+      <div><span class="k">周期 <i class="qv">T</i></span><span class="v" id="vT"></span></div>
+      <div class="calc"><span class="k">第1フォルマント <i class="qv">F</i><sub>1</sub></span><span class="v" id="vF1"></span></div>
+      <div class="calc"><span class="k">第2フォルマント <i class="qv">F</i><sub>2</sub></span><span class="v" id="vF2"></span></div>
+    </div>
+    <div class="cap">波形（3周期分）<span id="vWaveNote"></span></div>
+    <div class="stage wave"><canvas id="cvVW" role="img" aria-label="合成した母音の波形。"></canvas></div>
+    <div class="cap">スペクトル（0〜4000 Hz）<span>棒：各倍音　破線：声道の共鳴（フィルター）</span></div>
+    <div class="stage spec"><canvas id="cvVS" role="img" aria-label="合成した母音のスペクトル。倍音の棒と、フォルマントの山を表す破線。"></canvas></div>
+    <div class="controls">
+      <button type="button" class="btn" id="vPlay">♪ 音を出す</button>
+      <button type="button" class="btn ghost" id="vTour">あ・い・う・え・お を順に</button>
+    </div>
+    <p class="warn">音量に注意してください（はじめは小さめに）。</p>
+    <div class="opts">
+      <div class="seg big" role="group" aria-label="母音"><span class="seg-label">母音</span>
+        <button type="button" data-v="a">あ</button><button type="button" data-v="i">い</button><button type="button" data-v="u">う</button><button type="button" data-v="e">え</button><button type="button" data-v="o">お</button>
+      </div>
+      <div class="seg" role="group" aria-label="声の種類"><span class="seg-label">声の種類</span>
+        <button type="button" data-voice="m">低い声（成人男性）</button><button type="button" data-voice="f">高い声（成人女性）</button><button type="button" data-voice="c">子ども</button>
+      </div>
+      <div class="slider"><label for="vSF">声の高さ</label><input type="range" id="vSF" min="70" max="400" step="1"><output id="vOF" for="vSF"></output></div>
+      <div class="slider"><label for="vSV">音量</label><input type="range" id="vSV" min="0" max="1" step="0.05" value="0.3"><output id="vOV" for="vSV"></output></div>
+      <div class="checks">
+        <label><input type="checkbox" id="vFilter" checked>声道の共鳴（フィルター）をかける</label>
+        <label><input type="checkbox" id="vVib">ビブラート（高さのゆらぎ）</label>
+      </div>
+    </div>
+    <div class="cap"><b>母音の地図（<i class="qv">F</i><sub>1</sub> と <i class="qv">F</i><sub>2</sub>）</b><span>地図の上をドラッグすると、母音の間の音もつくれる</span></div>
+    <div class="stage map" id="stVM"><canvas id="cvVM" role="img" aria-label="横軸を第2フォルマント、縦軸を第1フォルマントにとった母音の地図。あ・い・う・え・おの位置と、いまの音の位置。"></canvas></div>
+    <p class="hint">フォルマントの値は日本語の母音の代表的な値です（人によって違います）。この画面の音は、各倍音の正弦波を重ねて（加算合成で）つくっています。</p>
+  </section>
+
+  <section class="sheet" aria-labelledby="h-vow2">
+    <h3 id="h-vow2">声のしくみと合成音声</h3>
+    <p><b>音源とフィルター</b>：声の高さは声帯の振動数（基音）で、母音（音色）は声道の共鳴（フォルマント）で決まります。高さを変えても母音が変わらないのは、フォルマントの位置がほぼ変わらないからです。この考え方を「ソース・フィルター理論」といいます。</p>
+    <div class="box">
+      <h4>合成音声のしくみ</h4>
+      <p><b>フォルマント合成</b>：この画面と同じように、ブザーのような音源に、母音ごとのフォルマントをもつフィルターをかけて声をつくる方法です。初期の音声合成で使われ、少ない計算で声をつくれますが、機械的な声になりやすい方法です。</p>
+      <p><b>ボーカロイド（VOCALOID）などの歌声合成</b>：実際の歌手の声を録音し、「か」「ka→a」のような短い音の断片（音声素片）を集めたデータベースをつくっておきます。歌詞と楽譜に合わせて断片をつなぎ、高さ（基本振動数）や長さを変えて歌わせます（素片連結方式）。最近は、AI（深層学習）で人の声の特徴を学習して合成する方式も広がっています。</p>
+      <p>どの方式でも、声の高さ（基本振動数）と音色（スペクトルの形）を別々に調整して、声らしく聞かせています。</p>
+    </div>
+  </section>
+  <section class="sheet"><h3>見てみよう・聞いてみよう</h3><ol class="qs" id="qsVowel"></ol></section>
+</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id), TAU = 2 * Math.PI;
+const I = s => `<i class="qv">${s}</i>`;
+const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+if(/\/anim\//.test(location.pathname)){ $("backLink").hidden = false; $("nav").hidden = false; $("navtg").hidden = false; }
+$("navtg").addEventListener("click", () => { const o = !$("top").classList.contains("open"); $("top").classList.toggle("open", o); $("navtg").setAttribute("aria-expanded", o); $("navtg").textContent = o ? "× 閉じる" : "☰ メニュー"; });
+const fmtHz = f => f >= 1000 ? `${Math.round(f).toLocaleString("en-US")} Hz` : `${Math.round(f)} Hz`;
+const fmtMs = s => s >= 0.01 ? `${(s * 1000).toFixed(1)} ms` : `${(s * 1000).toFixed(2)} ms`;
+
+/* ---------- 色・キャンバス ---------- */
+let col = {};
+function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","green","shade","sheet","orange","blue-soft"].forEach(k => col[k.replace("-","_")] = cs.getPropertyValue("--" + k).trim()); }
+readColors();
+const canvases = [];
+function canvas(id, draw){
+  const cv = $(id), ctx = cv.getContext("2d"), o = { cv, ctx, W:0, H:0, draw };
+  o.fit = () => { const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); if(r.width < 2) return; o.W = Math.round(r.width); o.H = Math.round(r.height); cv.width = Math.round(o.W * d); cv.height = Math.round(o.H * d); ctx.setTransform(d, 0, 0, d, 0, 0); o.draw(o); };
+  if(window.ResizeObserver) new ResizeObserver(o.fit).observe(cv); else addEventListener("resize", o.fit);
+  canvases.push(o); return o;
+}
+function redrawAll(){ readColors(); canvases.forEach(o => o.W && o.draw(o)); }
+const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+if(mq && mq.addEventListener) mq.addEventListener("change", redrawAll);
+function Ln(ctx, pts, color, w, dash, alpha){ ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []); if(alpha != null) ctx.globalAlpha = alpha; ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore(); }
+function Tx(ctx, s, x, y, color, size, align, bold, base){ ctx.save(); ctx.fillStyle = color; ctx.font = `${bold ? "700 " : ""}${size || 12}px BIZ UDPGothic,"Hiragino Sans","Yu Gothic UI",sans-serif`; ctx.textAlign = align || "left"; ctx.textBaseline = base || "middle"; ctx.fillText(s, x, y); ctx.restore(); }
+function TxI(ctx, s, sub, x, y, color, size, align){ // 斜体の記号＋添字
+  ctx.save(); ctx.fillStyle = color; ctx.textBaseline = "middle";
+  ctx.font = `italic ${size * 1.1}px "Times New Roman",Times,serif`; const w1 = ctx.measureText(s).width;
+  ctx.font = `${size * .75}px BIZ UDPGothic,sans-serif`; const w2 = sub ? ctx.measureText(sub).width : 0;
+  let x0 = align === "center" ? x - (w1 + w2) / 2 : align === "right" ? x - w1 - w2 : x;
+  ctx.font = `italic ${size * 1.1}px "Times New Roman",Times,serif`; ctx.fillText(s, x0, y);
+  if(sub){ ctx.font = `${size * .75}px BIZ UDPGothic,sans-serif`; ctx.fillText(sub, x0 + w1 + 1, y + size * .3); }
+  ctx.restore();
+}
+
+/* ---------- 音 ---------- */
+let AC = null;
+function ac(){ if(!AC){ AC = new (window.AudioContext || window.webkitAudioContext)(); } if(AC.state === "suspended") AC.resume(); return AC; }
+/* 倍音の振幅の配列（a[0] ＝ 基音）から、1つの周期波の発振器を鳴らす */
+function makeVoice(){
+  const v = { osc:null, gain:null, lfo:null, lfoGain:null, on:false };
+  v.start = (amps, f0, vol, vib) => {
+    const A = ac(), now = A.currentTime;
+    v.gain = A.createGain(); v.gain.gain.setValueAtTime(0.0001, now); v.gain.connect(A.destination);
+    v.osc = A.createOscillator(); v.osc.frequency.value = f0;
+    v.set(amps, f0, vol, vib, true);
+    v.osc.connect(v.gain); v.osc.start(now + 0.01); v.on = true;
+  };
+  v.set = (amps, f0, vol, vib, first) => {
+    if(!v.osc) return; const A = AC, now = A.currentTime;
+    const n = amps.length, real = new Float32Array(n + 1), imag = new Float32Array(n + 1); let p = 0;
+    for(let k = 0; k < n; k++){ imag[k + 1] = amps[k]; p += amps[k] * amps[k]; }
+    if(p < 1e-12){ imag[1] = 1e-6; p = 1; }
+    v.osc.setPeriodicWave(A.createPeriodicWave(real, imag, { disableNormalization:true }));
+    v.osc.frequency.setTargetAtTime(f0, now, 0.01);
+    const g = Math.max(0.0001, vol * 0.25 / Math.sqrt(p));   // 実効値をそろえる
+    if(first){ v.gain.gain.exponentialRampToValueAtTime(g, now + 0.08); } else v.gain.gain.setTargetAtTime(g, now, 0.03);
+    if(vib && !v.lfo){ v.lfo = A.createOscillator(); v.lfo.frequency.value = 5.5; v.lfoGain = A.createGain(); v.lfo.connect(v.lfoGain).connect(v.osc.frequency); v.lfo.start(); }
+    if(v.lfoGain) v.lfoGain.gain.setTargetAtTime(vib ? f0 * 0.012 : 0, now, 0.05);
+  };
+  v.stop = () => {
+    if(!v.on) return; const now = AC.currentTime, g = v.gain, o = v.osc, l = v.lfo;
+    g.gain.cancelScheduledValues(now); g.gain.setValueAtTime(Math.max(0.0001, g.gain.value), now); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+    o.stop(now + 0.1); if(l) l.stop(now + 0.1); v.osc = v.lfo = v.lfoGain = null; v.on = false;
+  };
+  return v;
+}
+
+/* ================= 倍音を重ねる ================= */
+const NMAX = 40, FMIN = 55, FMAX = 880;
+const A = { pre:"saw", N:15, f0:220, cut:Infinity, vol:0.3, parts:false, ideal:true, free:null, tour:null };
+const voiceA = makeVoice();
+function baseCoef(pre, n){
+  if(pre === "sine") return n === 1 ? 1 : 0;
+  if(pre === "saw") return 1 / n;
+  if(pre === "square") return n % 2 ? 1 / n : 0;
+  if(pre === "tri") return n % 2 ? (((n - 1) / 2) % 2 ? -1 : 1) / (n * n) : 0;
+  return A.free[n - 1];
+}
+const filt = f => isFinite(A.cut) ? 1 / Math.sqrt(1 + Math.pow(f / A.cut, 4)) : 1;    // 2次の低域フィルター（ゆるやか）
+function ampsA(){ const a = []; for(let n = 1; n <= NMAX; n++) a.push(n <= A.N ? baseCoef(A.pre, n) * filt(n * A.f0) : 0); return a; }
+const ideal = {
+  saw: x => { const m = ((x % TAU) + TAU) % TAU; return m < 1e-9 ? 0 : (Math.PI - m) / 2; },
+  square: x => Math.PI / 4 * Math.sign(Math.sin(x)),
+  tri: x => Math.PI / 4 * Math.asin(Math.sin(x)),
+  sine: x => Math.sin(x)
+};
+const NAME = { sine:"正弦波", saw:"のこぎり波", square:"矩形波", tri:"三角波", free:"自由につくった波形" };
+const cAW = canvas("cvAW", o => {
+  const { ctx, W, H } = o; if(!W) return; ctx.clearRect(0, 0, W, H);
+  const pl = 34, pr = 10, cy = H / 2, sc = (H / 2 - 12) / 2.0, X = th => pl + th / (2 * TAU) * (W - pl - pr), Y = v => cy - v * sc;
+  // 軸と周期の区切り
+  Ln(ctx, [[pl, cy], [W - pr, cy]], col.line, 1); Ln(ctx, [[pl, 6], [pl, H - 6]], col.line, 1);
+  Ln(ctx, [[X(TAU), 6], [X(TAU), H - 6]], col.muted, 1, [3, 4]);
+  Tx(ctx, "0", pl - 4, cy, col.muted, 11, "right");
+  Tx(ctx, "T", X(TAU) + 4, H - 10, col.muted, 11);
+  Tx(ctx, "2T", W - pr - 2, H - 10, col.muted, 11, "right");
+  const a = ampsA(), M = Math.max(600, Math.round((W - pl - pr) * 2));
+  if(A.parts){
+    let shown = 0;
+    for(let n = 1; n <= NMAX && shown < 6; n++){ const c = a[n - 1]; if(Math.abs(c) < 1e-6) continue; shown++;
+      const pts = []; for(let i = 0; i <= M; i++){ const th = 2 * TAU * i / M; pts.push([X(th), Y(c * Math.sin(n * th))]); }
+      Ln(ctx, pts, n === 1 ? col.blue : col.orange, 1.2, null, n === 1 ? .55 : .5); }
+  }
+  if(A.ideal && ideal[A.pre]){ const pts = []; for(let i = 0; i <= M; i++){ const th = 2 * TAU * i / M; pts.push([X(th), Y(ideal[A.pre](th) * (A.pre === "sine" ? 1 : 1))]); } Ln(ctx, pts, col.muted, 1.4, [5, 4]); }
+  const pts = []; for(let i = 0; i <= M; i++){ const th = 2 * TAU * i / M; let s = 0; for(let n = 1; n <= NMAX; n++){ const c = a[n - 1]; if(c) s += c * Math.sin(n * th); } pts.push([X(th), Y(s)]); }
+  Ln(ctx, pts, col.red, 2.6);
+  Tx(ctx, "1周期", (pl + X(TAU)) / 2, 12, col.muted, 11, "center");
+});
+const cAS = canvas("cvAS", o => {
+  const { ctx, W, H } = o; if(!W) return; ctx.clearRect(0, 0, W, H);
+  const pl = 34, pr = 10, pt = 14, pb = 34, n0 = Math.min(NMAX, Math.max(12, A.N)), bw = (W - pl - pr) / n0;
+  const Y = v => H - pb - v * (H - pt - pb), a = ampsA();
+  o.geo = { pl, pr, pt, pb, n0, bw, H, W };
+  Ln(ctx, [[pl, H - pb], [W - pr, H - pb]], col.line, 1);
+  [0.5, 1].forEach(v => { Ln(ctx, [[pl, Y(v)], [W - pr, Y(v)]], col.line, 1, [2, 4]); Tx(ctx, v === 1 ? "1" : "0.5", pl - 4, Y(v), col.muted, 10, "right"); });
+  Tx(ctx, "0", pl - 4, Y(0), col.muted, 10, "right");
+  for(let n = 1; n <= n0; n++){
+    const c = n <= A.N ? baseCoef(A.pre, n) : 0, cf = a[n - 1], x = pl + (n - 1) * bw, w = Math.max(2, bw * 0.62);
+    if(A.pre === "free" || n > A.N){ ctx.save(); ctx.strokeStyle = col.line; ctx.setLineDash([2, 3]); ctx.strokeRect(x + (bw - w) / 2, Y(n <= A.N ? 1 : 0), w, 0.0001); ctx.restore(); }
+    if(Math.abs(c * filt(n * A.f0) - c) > 1e-4 && Math.abs(c) > 1e-6){ ctx.save(); ctx.strokeStyle = col.muted; ctx.setLineDash([2, 2]); ctx.strokeRect(x + (bw - w) / 2, Y(Math.abs(c)), w, Y(0) - Y(Math.abs(c))); ctx.restore(); }
+    ctx.fillStyle = cf < 0 ? col.orange : (n === 1 ? col.blue : col.red);
+    ctx.globalAlpha = n <= A.N ? 1 : .25;
+    ctx.fillRect(x + (bw - w) / 2, Y(Math.abs(cf)), w, Y(0) - Y(Math.abs(cf)));
+    ctx.globalAlpha = 1;
+    if(cf < -1e-4 && bw > 9) Tx(ctx, "−", x + bw / 2, Y(Math.abs(cf)) - 7, col.orange, 12, "center", true);
+    if(n0 <= 20 || n % 5 === 0 || n === 1) Tx(ctx, String(n), x + bw / 2, H - pb + 10, col.muted, 10, "center");
+  }
+  Tx(ctx, "基音の何倍か（n）", W - pr, H - 8, col.muted, 11, "right");
+  Tx(ctx, `n×${Math.round(A.f0)} Hz`, pl, H - 8, col.muted, 11, "left");
+});
+/* 自由モード：棒を上下にドラッグ */
+(function(){
+  const st = $("stAS"); let drag = false;
+  function pick(e){
+    if(A.pre !== "free" || !cAS.geo) return; const r = $("cvAS").getBoundingClientRect(), g = cAS.geo;
+    const x = e.clientX - r.left, y = e.clientY - r.top, n = Math.floor((x - g.pl) / g.bw) + 1;
+    if(n < 1 || n > Math.min(A.N, g.n0)) return;
+    A.free[n - 1] = Math.max(0, Math.min(1, (g.H - g.pb - y) / (g.H - g.pt - g.pb))); if(A.free[n - 1] < 0.03) A.free[n - 1] = 0;
+    syncA();
+  }
+  st.addEventListener("pointerdown", e => { if(A.pre !== "free") return; drag = true; st.setPointerCapture(e.pointerId); pick(e); });
+  st.addEventListener("pointermove", e => { if(drag) pick(e); });
+  st.addEventListener("pointerup", () => drag = false); st.addEventListener("pointercancel", () => drag = false);
+})();
+const toS = f => Math.round(1000 * Math.log(f / FMIN) / Math.log(FMAX / FMIN)), fromS = v => FMIN * Math.pow(FMAX / FMIN, v / 1000);
+const cutFromS = v => v >= 1000 ? Infinity : 200 * Math.pow(10000 / 200, v / 1000);
+function syncA(){
+  const a = ampsA(); let cnt = 0, top = 0; a.forEach((c, k) => { if(Math.abs(c) > 1e-6){ cnt++; top = k + 1; } });
+  $("aF").textContent = fmtHz(A.f0); $("aT").textContent = fmtMs(1 / A.f0);
+  $("aN").textContent = `${cnt} 個`; $("aMax").textContent = top ? `${top}倍 ${fmtHz(top * A.f0)}` : "―";
+  $("aON").textContent = `${A.N} 倍`; $("aOF").textContent = fmtHz(A.f0); $("aOC").textContent = isFinite(A.cut) ? fmtHz(A.cut) : "なし"; $("aOV").textContent = `${Math.round(A.vol * 100)}%`;
+  document.querySelectorAll("[data-pre]").forEach(b => b.setAttribute("aria-pressed", b.dataset.pre === A.pre));
+  const F = { sine:`${I("y")} ＝ sin ${I("ωt")}（倍音を重ねない）`,
+    saw:`${I("y")} ＝ sin ${I("ωt")} ＋ <sup>1</sup>⁄<sub>2</sub> sin 2${I("ωt")} ＋ <sup>1</sup>⁄<sub>3</sub> sin 3${I("ωt")} ＋ <sup>1</sup>⁄<sub>4</sub> sin 4${I("ωt")} ＋ …`,
+    square:`${I("y")} ＝ sin ${I("ωt")} ＋ <sup>1</sup>⁄<sub>3</sub> sin 3${I("ωt")} ＋ <sup>1</sup>⁄<sub>5</sub> sin 5${I("ωt")} ＋ …（奇数倍だけ）`,
+    tri:`${I("y")} ＝ sin ${I("ωt")} − <sup>1</sup>⁄<sub>9</sub> sin 3${I("ωt")} ＋ <sup>1</sup>⁄<sub>25</sub> sin 5${I("ωt")} − …（奇数倍、1/${I("n")}<sup>2</sup>）`,
+    free:"スペクトルの棒を上下にドラッグして、各倍音の振幅を決めよう（0〜1）。" };
+  $("aFormula").innerHTML = F[A.pre] + (A.pre !== "free" ? `　${I("ω")} ＝ 2π${I("f")}` : "");
+  $("aWaveNote").textContent = A.ideal && ideal[A.pre] && A.pre !== "sine" ? "赤：重ねた波形　破線：目標の形" : "赤：重ねた波形";
+  $("stAS").classList.toggle("edit", A.pre === "free");
+  $("aSpecNote").textContent = A.pre === "free" ? "棒を上下にドラッグ" : "青：基音　赤：倍音" + (A.pre === "tri" ? "　橙：符号が負" : "");
+  let h = "";
+  if(A.pre === "free") h = "棒の高さが各倍音の振幅です。たとえば2倍と3倍だけを大きくすると、どんな音になるか試そう。";
+  else if(A.pre !== "sine") h = A.N < 6 ? "重ねる倍音を増やすと、目標の形に近づきます。" : "角のところに小さな「つの」が残ります（ギブズ現象）。倍音をいくら増やしても完全には消えませんが、耳では違いがほとんど分かりません。";
+  if(isFinite(A.cut)) h += "　フィルターで高い倍音が小さくなる（点線の棒が元の大きさ）と、角が丸くなり、こもった音になります。";
+  $("aHint").textContent = h;
+  cAW.draw(cAW); cAS.draw(cAS);
+  if(voiceA.on) voiceA.set(a, A.f0, A.vol, false);
+}
+function setPre(p){
+  if(p === "free" && !A.free) A.free = [];
+  if(p === "free"){ const src = A.pre === "free" ? null : A.pre; for(let n = 1; n <= NMAX; n++) A.free[n - 1] = src ? Math.min(1, Math.abs(baseCoef(src, n))) : (A.free[n - 1] || 0); }
+  A.pre = p; syncA();
+}
+document.querySelectorAll("[data-pre]").forEach(b => b.addEventListener("click", () => { stopTour(); setPre(b.dataset.pre); }));
+$("aSN").addEventListener("input", e => { A.N = +e.target.value; syncA(); });
+$("aSF").addEventListener("input", e => { A.f0 = fromS(+e.target.value); syncA(); });
+$("aSC").addEventListener("input", e => { A.cut = cutFromS(+e.target.value); syncA(); });
+$("aSV").addEventListener("input", e => { A.vol = +e.target.value; syncA(); });
+$("aParts").addEventListener("change", e => { A.parts = e.target.checked; syncA(); });
+$("aIdeal").addEventListener("change", e => { A.ideal = e.target.checked; syncA(); });
+function syncPlayA(){ const b = $("aPlay"); b.textContent = voiceA.on ? "■ 音を止める" : "♪ 音を出す"; b.classList.toggle("on", voiceA.on); $("aTour").textContent = A.tour ? "■ 聞き比べをやめる" : "聞き比べ（4つの波形を順に）"; }
+$("aPlay").addEventListener("click", () => { stopTour(); try{ voiceA.on ? voiceA.stop() : voiceA.start(ampsA(), A.f0, A.vol, false); }catch(e){} syncPlayA(); });
+function stopTour(){ if(A.tour){ clearTimeout(A.tour); A.tour = null; } syncPlayA(); }
+$("aTour").addEventListener("click", () => {
+  if(A.tour){ stopTour(); voiceA.stop(); syncPlayA(); return; }
+  const seq = ["sine", "saw", "square", "tri"]; let i = 0;
+  try{ if(!voiceA.on) voiceA.start(ampsA(), A.f0, A.vol, false); }catch(e){ return; }
+  const step = () => { setPre(seq[i]); i++; if(i <= seq.length){ A.tour = setTimeout(i < seq.length ? step : () => { A.tour = null; voiceA.stop(); syncPlayA(); }, 1600); } syncPlayA(); };
+  step();
+});
+$("aSF").value = toS(A.f0);
+
+/* ================= マイク ================= */
+const M = { stream:null, an:null, buf:null, fbuf:null, frozen:false, kept:null, win:"3", f0:null, run:false, level:0 };
+const NOTES = ["ド","ド♯","レ","レ♯","ミ","ファ","ファ♯","ソ","ソ♯","ラ","ラ♯","シ"];
+function noteName(f){ const m = Math.round(69 + 12 * Math.log2(f / 440)); const oct = Math.floor(m / 12) - 1; return `${NOTES[((m % 12) + 12) % 12]}（${["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"][((m % 12) + 12) % 12]}${oct}）`; }
+function pitch(b, sr){ // 自己相関で基本振動数を推定（70〜1000 Hz）
+  const n = b.length; let rms = 0; for(let i = 0; i < n; i++) rms += b[i] * b[i]; rms = Math.sqrt(rms / n); if(rms < 0.01) return null;
+  const lo = Math.floor(sr / 1000), hi = Math.min(Math.floor(sr / 70), n >> 1); const c = new Float32Array(hi + 2);
+  for(let l = lo; l <= hi + 1; l++){ let s = 0; for(let i = 0; i < n - l; i++) s += b[i] * b[i + l]; c[l] = s / (n - l); }
+  let c0 = 0; for(let i = 0; i < n; i++) c0 += b[i] * b[i]; c0 /= n;
+  let best = -1, bl = -1; for(let l = lo + 1; l <= hi; l++){ if(c[l] > c[l - 1] && c[l] >= c[l + 1] && c[l] > best){ best = c[l]; bl = l; } }
+  if(bl < 0 || best < 0.45 * c0) return null;
+  // 最初に十分高い山（倍の周期を拾わないように）
+  for(let l = lo + 1; l <= hi; l++){ if(c[l] > c[l - 1] && c[l] >= c[l + 1] && c[l] > 0.9 * best){ bl = l; break; } }
+  const a = c[bl - 1], b2 = c[bl], d = c[bl + 1], sh = (a - d) / (2 * (a - 2 * b2 + d)) || 0;
+  return sr / (bl + sh);
+}
+async function micStart(){
+  const s = $("mStatus");
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ s.textContent = "このブラウザ（またはこの開き方）ではマイクを使えません。https のページを、Chrome・Safari・Edge などの新しいブラウザで開いてください。"; s.classList.add("err"); return; }
+  try{
+    M.stream = await navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:false } });
+    const A2 = ac(), src = A2.createMediaStreamSource(M.stream);
+    M.an = A2.createAnalyser(); M.an.fftSize = 8192; M.an.smoothingTimeConstant = 0.5; src.connect(M.an);
+    M.buf = new Float32Array(M.an.fftSize); M.fbuf = new Float32Array(M.an.frequencyBinCount); M.run = true;
+    s.textContent = "マイクを使っています。「あー」と、同じ高さで声を出し続けてみよう。（音声は録音・送信していません）"; s.classList.remove("err");
+    $("mStart").textContent = "■ マイクを止める"; $("mStart").classList.add("on"); $("mFreeze").disabled = false; $("mKeep").disabled = false;
+    loopMic();
+  }catch(e){ s.textContent = "マイクを使えませんでした。ブラウザの設定で、このページのマイクの使用を許可してから、もう一度押してください。"; s.classList.add("err"); }
+}
+function micStop(){ if(M.stream) M.stream.getTracks().forEach(t => t.stop()); M.stream = null; M.run = false; $("mStart").textContent = "🎤 マイクを使う"; $("mStart").classList.remove("on"); $("mFreeze").disabled = true; $("mStatus").textContent = "マイクを止めました。"; $("mLevel").style.width = "0"; }
+$("mStart").addEventListener("click", () => M.run ? micStop() : micStart());
+$("mFreeze").addEventListener("click", () => { M.frozen = !M.frozen; $("mFreeze").textContent = M.frozen ? "波形を動かす" : "波形を止める"; });
+$("mKeep").addEventListener("click", () => { if(!M.view) return; M.kept = { w:M.view.slice(), spec:M.spec ? M.spec.slice() : null, f0:M.f0 }; $("mKept").textContent = M.f0 ? fmtHz(M.f0) : "あり"; drawMic(); });
+document.querySelectorAll("[data-mw]").forEach(b => b.addEventListener("click", () => { M.win = b.dataset.mw; syncMwin(); drawMic(); }));
+function syncMwin(){ document.querySelectorAll("[data-mw]").forEach(b => b.setAttribute("aria-pressed", b.dataset.mw === M.win)); }
+function micFrame(){
+  const sr = AC.sampleRate; M.an.getFloatTimeDomainData(M.buf); M.an.getFloatFrequencyData(M.fbuf);
+  let rms = 0; for(let i = 0; i < M.buf.length; i++) rms += M.buf[i] * M.buf[i]; rms = Math.sqrt(rms / M.buf.length);
+  $("mLevel").style.width = `${Math.min(100, Math.max(0, (20 * Math.log10(rms + 1e-9) + 60) / 50 * 100))}%`;
+  const seg = M.buf.subarray(M.buf.length - 2048), f = pitch(seg, sr);
+  M.f0 = f ? (M.f0 ? M.f0 * 0.5 + f * 0.5 : f) : null; if(f && M.f0 && Math.abs(f - M.f0) / f > 0.1) M.f0 = f;
+  // 表示する区間（立ち上がりのゼロ交差でそろえる）
+  const winS = M.win === "3" ? (M.f0 ? 3 / M.f0 : 0.02) : +M.win / 1000, len = Math.min(M.buf.length - 10, Math.round(winS * sr));
+  let start = M.buf.length - len - 1;
+  const look = M.f0 ? Math.round(sr / M.f0) : Math.round(sr * 0.012);
+  let peak = 0; for(let i = start - look; i < start; i++) peak = Math.max(peak, Math.abs(M.buf[i]));
+  for(let i = start - 1; i > start - look && i > 1; i--){ if(M.buf[i - 1] < 0 && M.buf[i] >= 0){ start = i; break; } }
+  M.view = Array.from(M.buf.subarray(start, start + len)); M.viewS = winS;
+  M.spec = Array.from(M.fbuf); M.binHz = sr / M.an.fftSize;
+  $("mF").textContent = M.f0 ? fmtHz(M.f0) : "―"; $("mT").textContent = M.f0 ? fmtMs(1 / M.f0) : "―"; $("mNote").textContent = M.f0 ? noteName(M.f0) : "―";
+}
+function loopMic(){ if(!M.run) return; if(!M.frozen && !$("sc-mic").hidden){ micFrame(); drawMic(); } requestAnimationFrame(loopMic); }
+const cMW = canvas("cvMW", o => {
+  const { ctx, W, H } = o; if(!W) return; ctx.clearRect(0, 0, W, H);
+  const pl = 10, pr = 10, cy = H / 2; Ln(ctx, [[pl, cy], [W - pr, cy]], col.line, 1);
+  const plot = (w, color, lw, dash) => { if(!w || !w.length) return; let mx = 0.02; w.forEach(v => mx = Math.max(mx, Math.abs(v))); const sc = (H / 2 - 10) / mx; const pts = w.map((v, i) => [pl + i / (w.length - 1) * (W - pl - pr), cy - v * sc]); Ln(ctx, pts, color, lw, dash); };
+  if(M.kept) plot(M.kept.w, col.muted, 1.5, [4, 3]);
+  plot(M.view, col.red, 2.2);
+  if(!M.view) Tx(ctx, "マイクを使うと、ここに波形が表示されます", W / 2, cy - 16, col.muted, 13, "center");
+  $("mWaveNote").textContent = M.view ? `表示している時間：${fmtMs(M.viewS)}（縦は見やすく拡大）${M.kept ? "　破線：残した波形" : ""}` : "";
+});
+const cMS = canvas("cvMS", o => {
+  const { ctx, W, H } = o; if(!W) return; ctx.clearRect(0, 0, W, H);
+  const pl = 10, pr = 10, pt = 8, pb = 24, FM = 4000, X = f => pl + f / FM * (W - pl - pr), Y = db => pt + (1 - (Math.max(-100, Math.min(-20, db)) + 100) / 80) * (H - pt - pb);
+  Ln(ctx, [[pl, H - pb], [W - pr, H - pb]], col.line, 1);
+  for(let f = 0; f <= FM; f += 1000){ Ln(ctx, [[X(f), H - pb], [X(f), H - pb + 4]], col.muted, 1); Tx(ctx, f === FM ? `${f} Hz` : f ? `${f}` : "0", X(f), H - pb + 13, col.muted, 10, f === FM ? "right" : f ? "center" : "left"); }
+  if(M.f0) for(let k = 1; k * M.f0 < FM; k++) Ln(ctx, [[X(k * M.f0), pt], [X(k * M.f0), H - pb]], col.blue, 1, [2, 4], .5);
+  const plot = (s, color, fill, dash) => { if(!s) return; const nb = Math.floor(FM / M.binHz); const pts = []; for(let i = 1; i <= nb; i++) pts.push([X(i * M.binHz), Y(s[i])]);
+    if(fill){ ctx.save(); ctx.fillStyle = color; ctx.globalAlpha = .18; ctx.beginPath(); ctx.moveTo(X(0), H - pb); pts.forEach(p => ctx.lineTo(p[0], p[1])); ctx.lineTo(X(FM), H - pb); ctx.closePath(); ctx.fill(); ctx.restore(); }
+    Ln(ctx, pts, color, 1.4, dash); };
+  if(M.kept && M.kept.spec) plot(M.kept.spec, col.muted, false, [4, 3]);
+  plot(M.spec, col.red, true);
+});
+function drawMic(){ cMW.draw(cMW); cMS.draw(cMS); }
+
+/* ================= 母音 ================= */
+const FORM = { a:[800,1200,2500], i:[300,2300,3000], u:[350,1350,2300], e:[500,1900,2500], o:[500,850,2500] };
+const VNAME = { a:"あ", i:"い", u:"う", e:"え", o:"お" };
+const VOICE = { m:{ f0:120, k:1 }, f:{ f0:220, k:1.17 }, c:{ f0:300, k:1.3 } };
+const BW = [90, 110, 160], FTOP = 5000;
+const V = { v:"a", voice:"m", f0:120, F:[800,1200,2500], vol:0.3, filter:true, vib:false, tour:null, free:false };
+const voiceV = makeVoice();
+const res = (f, F, B) => F * F / Math.sqrt(Math.pow(F * F - f * f, 2) + Math.pow(B * f, 2));
+const H3 = f => res(f, V.F[0], BW[0]) * res(f, V.F[1], BW[1]) * res(f, V.F[2], BW[2]);
+function ampsV(){ const a = [], nmax = Math.floor(FTOP / V.f0); for(let n = 1; n <= nmax; n++) a.push((1 / n) * (V.filter ? H3(n * V.f0) : 1)); const m = Math.max(...a); return a.map(x => x / m); }
+function setVowel(v){ V.v = v; V.free = false; const k = VOICE[V.voice].k; V.F = FORM[v].map(x => x * k); syncV(); }
+const cVW = canvas("cvVW", o => {
+  const { ctx, W, H } = o; if(!W) return; ctx.clearRect(0, 0, W, H);
+  const pl = 10, pr = 10, cy = H / 2, a = ampsV(), M2 = Math.max(600, Math.round((W - pl - pr) * 2)), ys = [];
+  for(let i = 0; i <= M2; i++){ const th = 3 * TAU * i / M2; let s = 0; for(let n = 1; n <= a.length; n++) s += a[n - 1] * Math.sin(n * th); ys.push(s); }
+  const mx = Math.max(...ys.map(Math.abs)) || 1, sc = (H / 2 - 10) / mx;
+  Ln(ctx, [[pl, cy], [W - pr, cy]], col.line, 1);
+  [1, 2].forEach(k => Ln(ctx, [[pl + k / 3 * (W - pl - pr), 6], [pl + k / 3 * (W - pl - pr), H - 6]], col.muted, 1, [3, 4]));
+  Ln(ctx, ys.map((y, i) => [pl + i / M2 * (W - pl - pr), cy - y * sc]), col.red, 2.2);
+  $("vWaveNote").textContent = `1周期 ＝ ${fmtMs(1 / V.f0)}（点線で区切る）`;
+});
+const cVS = canvas("cvVS", o => {
+  const { ctx, W, H } = o; if(!W) return; ctx.clearRect(0, 0, W, H);
+  const pl = 10, pr = 10, pt = 18, pb = 24, FM = 4000, X = f => pl + f / FM * (W - pl - pr), a = ampsV();
+  const dB = v => Math.max(0, 1 + 20 * Math.log10(Math.max(v, 1e-5)) / 50), Y = v => H - pb - dB(v) * (H - pt - pb);
+  Ln(ctx, [[pl, H - pb], [W - pr, H - pb]], col.line, 1);
+  for(let f = 0; f <= FM; f += 1000){ Ln(ctx, [[X(f), H - pb], [X(f), H - pb + 4]], col.muted, 1); Tx(ctx, f === FM ? `${f} Hz` : f ? `${f}` : "0", X(f), H - pb + 13, col.muted, 10, f === FM ? "right" : f ? "center" : "left"); }
+  if(V.filter){ // 声道の共鳴（フィルター）の形
+    const pts = []; let mx = 0; for(let f = 10; f <= FM; f += 10) mx = Math.max(mx, H3(f));
+    for(let f = 10; f <= FM; f += 10) pts.push([X(f), Y(H3(f) / mx)]); Ln(ctx, pts, col.green, 1.6, [5, 4]);
+    V.F.forEach((F, k) => { if(F < FM){ TxI(ctx, "F", String(k + 1), X(F), pt - 8, col.green, 12, "center"); } });
+  }
+  a.forEach((v, k) => { const f = (k + 1) * V.f0; if(f > FM) return; const x = X(f); ctx.fillStyle = k ? col.red : col.blue; ctx.fillRect(x - 1.5, Y(v), 3, H - pb - Y(v)); });
+});
+/* 母音の地図：横 F2（3000 → 600、左が大きい）、縦 F1（200 上 → 1000 下） */
+const MAP = { f2a:600, f2b:3000, f1a:200, f1b:1000 };
+const cVM = canvas("cvVM", o => {
+  const { ctx, W, H } = o; if(!W) return; ctx.clearRect(0, 0, W, H);
+  const pl = 44, pr = 12, pt = 14, pb = 30, k = VOICE[V.voice].k;
+  const X = f2 => pl + (MAP.f2b * k - f2) / ((MAP.f2b - MAP.f2a) * k) * (W - pl - pr), Y = f1 => pt + (f1 - MAP.f1a * k) / ((MAP.f1b - MAP.f1a) * k) * (H - pt - pb);
+  o.geo = { pl, pr, pt, pb, W, H, k };
+  ctx.strokeStyle = col.line; ctx.strokeRect(pl, pt, W - pl - pr, H - pt - pb);
+  [1000, 1500, 2000, 2500].forEach(f => { const x = X(f * k); Ln(ctx, [[x, pt], [x, H - pb]], col.line, 1, [2, 4]); Tx(ctx, `${Math.round(f * k)}`, x, H - pb + 11, col.muted, 10, "center"); });
+  [400, 600, 800].forEach(f => { const y = Y(f * k); Ln(ctx, [[pl, y], [W - pr, y]], col.line, 1, [2, 4]); Tx(ctx, `${Math.round(f * k)}`, pl - 4, y, col.muted, 10, "right"); });
+  TxI(ctx, "F", "2", pl, H - 7, col.muted, 11, "left"); Tx(ctx, "〔Hz〕（左ほど大きい）", pl + 16, H - 7, col.muted, 10, "left");
+  TxI(ctx, "F", "1", 4, pt + 6, col.muted, 11, "left");
+  // 母音の三角形（い・え・あ・お・う）
+  const ord = ["i", "e", "a", "o", "u"]; Ln(ctx, ord.concat("i").map(v => [X(FORM[v][1] * k), Y(FORM[v][0] * k)]), col.line, 1.4);
+  ord.forEach(v => { const x = X(FORM[v][1] * k), y = Y(FORM[v][0] * k), on = !V.free && V.v === v;
+    ctx.beginPath(); ctx.arc(x, y, 15, 0, TAU); ctx.fillStyle = on ? col.blue_soft : col.sheet; ctx.fill(); ctx.strokeStyle = on ? col.blue : col.muted; ctx.lineWidth = on ? 2 : 1; ctx.stroke();
+    Tx(ctx, VNAME[v], x, y + 1, on ? col.blue : col.ink, 15, "center", true); });
+  if(V.free){ const x = X(V.F[1]), y = Y(V.F[0]); ctx.beginPath(); ctx.arc(x, y, 7, 0, TAU); ctx.fillStyle = col.red; ctx.fill();
+    const rt = x > W - 90; Tx(ctx, "いまの音", x + (rt ? -10 : 10), y - 12, col.red, 11, rt ? "right" : "left", true); }
+});
+(function(){
+  const st = $("stVM"); let drag = false;
+  function pick(e){
+    const g = cVM.geo; if(!g) return; const r = $("cvVM").getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, k = g.k;
+    const f2 = MAP.f2b * k - (x - g.pl) / (g.W - g.pl - g.pr) * (MAP.f2b - MAP.f2a) * k, f1 = MAP.f1a * k + (y - g.pt) / (g.H - g.pt - g.pb) * (MAP.f1b - MAP.f1a) * k;
+    V.F[0] = Math.max(MAP.f1a * k, Math.min(MAP.f1b * k, f1)); V.F[1] = Math.max(MAP.f2a * k, Math.min(MAP.f2b * k, f2));
+    // F3 は近い母音の値を距離で重みづけ
+    let ws = 0, f3 = 0; Object.keys(FORM).forEach(v => { const d = Math.hypot((FORM[v][0] * k - V.F[0]) / 300, (FORM[v][1] * k - V.F[1]) / 800) + 0.05, w = 1 / (d * d); ws += w; f3 += w * FORM[v][2] * k; }); V.F[2] = f3 / ws;
+    // 母音の点に近ければその母音にそろえる
+    let near = null; Object.keys(FORM).forEach(v => { if(Math.hypot((FORM[v][0] * k - V.F[0]) / 60, (FORM[v][1] * k - V.F[1]) / 160) < 1) near = v; });
+    if(near){ V.v = near; V.free = false; V.F = FORM[near].map(z => z * k); } else V.free = true;
+    syncV();
+  }
+  st.addEventListener("pointerdown", e => { drag = true; st.setPointerCapture(e.pointerId); stopVTour(); pick(e); });
+  st.addEventListener("pointermove", e => { if(drag) pick(e); });
+  st.addEventListener("pointerup", () => drag = false); st.addEventListener("pointercancel", () => drag = false);
+})();
+function syncV(){
+  $("vF").textContent = fmtHz(V.f0); $("vT").textContent = fmtMs(1 / V.f0);
+  $("vF1").textContent = V.filter ? fmtHz(V.F[0]) : "―"; $("vF2").textContent = V.filter ? fmtHz(V.F[1]) : "―";
+  $("vOF").textContent = fmtHz(V.f0); $("vOV").textContent = `${Math.round(V.vol * 100)}%`; $("vSF").value = V.f0;
+  document.querySelectorAll("[data-v]").forEach(b => b.setAttribute("aria-pressed", !V.free && b.dataset.v === V.v));
+  document.querySelectorAll("[data-voice]").forEach(b => b.setAttribute("aria-pressed", b.dataset.voice === V.voice));
+  cVW.draw(cVW); cVS.draw(cVS); cVM.draw(cVM);
+  if(voiceV.on) voiceV.set(ampsV(), V.f0, V.vol, V.vib);
+}
+document.querySelectorAll("[data-v]").forEach(b => b.addEventListener("click", () => { stopVTour(); setVowel(b.dataset.v); }));
+document.querySelectorAll("[data-voice]").forEach(b => b.addEventListener("click", () => { V.voice = b.dataset.voice; V.f0 = VOICE[V.voice].f0; if(V.free){ V.v = "a"; } setVowel(V.v); }));
+$("vSF").addEventListener("input", e => { V.f0 = +e.target.value; syncV(); });
+$("vSV").addEventListener("input", e => { V.vol = +e.target.value; syncV(); });
+$("vFilter").addEventListener("change", e => { V.filter = e.target.checked; syncV(); });
+$("vVib").addEventListener("change", e => { V.vib = e.target.checked; syncV(); });
+function syncPlayV(){ const b = $("vPlay"); b.textContent = voiceV.on ? "■ 音を止める" : "♪ 音を出す"; b.classList.toggle("on", voiceV.on); $("vTour").textContent = V.tour ? "■ やめる" : "あ・い・う・え・お を順に"; }
+$("vPlay").addEventListener("click", () => { stopVTour(); try{ voiceV.on ? voiceV.stop() : voiceV.start(ampsV(), V.f0, V.vol, V.vib); }catch(e){} syncPlayV(); });
+function stopVTour(){ if(V.tour){ clearTimeout(V.tour); V.tour = null; } syncPlayV(); }
+$("vTour").addEventListener("click", () => {
+  if(V.tour){ stopVTour(); voiceV.stop(); syncPlayV(); return; }
+  const seq = ["a", "i", "u", "e", "o"]; let i = 0;
+  try{ if(!voiceV.on) voiceV.start(ampsV(), V.f0, V.vol, V.vib); }catch(e){ return; }
+  const step = () => { setVowel(seq[i]); i++; V.tour = setTimeout(i < seq.length ? step : () => { V.tour = null; voiceV.stop(); syncPlayV(); }, 900); syncPlayV(); };
+  step();
+});
+
+/* ---------- 場面の切り替え ---------- */
+const SCENES = ["add", "mic", "vowel"];
+function setScene(s, push){
+  if(!SCENES.includes(s)) s = "add";
+  SCENES.forEach(k => { $("sc-" + k).hidden = k !== s; });
+  document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.scene === s));
+  if(s !== "add"){ stopTour(); voiceA.stop(); syncPlayA(); }
+  if(s !== "vowel"){ stopVTour(); voiceV.stop(); syncPlayV(); }
+  if(s !== "mic" && M.run) micStop();
+  if(push) history.replaceState(null, "", "#" + s);
+  requestAnimationFrame(() => canvases.forEach(o => o.fit()));
+}
+document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => setScene(b.dataset.scene, true)));
+addEventListener("hashchange", () => setScene(location.hash.slice(1)));
+document.addEventListener("visibilitychange", () => { if(document.hidden){ stopTour(); stopVTour(); voiceA.stop(); voiceV.stop(); syncPlayA(); syncPlayV(); } });
+
+/* ---------- 問い ---------- */
+const QS = (id, list) => { $(id).innerHTML = list.map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join(""); };
+QS("qsAdd", [
+  ["「正弦波」と「のこぎり波」を、同じ基音の振動数で聞き比べよう。音の高さは同じか。波形の周期は同じか。", "高さも周期も同じです。倍音の振動数はどれも基音の整数倍なので、重ねた波形も基音と同じ周期 <i class='qv'>T</i> ＝ 1/<i class='qv'>f</i> でくり返します。違うのは波形（音色）だけです。"],
+  ["「矩形波」で、重ねる倍音を 1 倍から少しずつ増やそう。波形はどう変わるか。", "3倍、5倍、… の正弦波が加わるたびに、角ばった矩形に近づきます。偶数倍の倍音は 0 なので、4倍にしても波形は変わりません。"],
+  ["「成分を表示」をオンにして、のこぎり波の基音（青）と2倍音（橙）を比べよう。2倍音は1周期の間に何回振動しているか。", "2回です。<i class='qv'>n</i> 倍音は、基音の1周期の間にちょうど <i class='qv'>n</i> 回振動します。だから重ねた波も基音と同じ周期でくり返します。"],
+  ["三角波と正弦波は、聞くと似ている。スペクトルから理由を考えよう。", "三角波の倍音は 1/<i class='qv'>n</i><sup>2</sup> で急に小さくなり（3倍音は 1/9、5倍音は 1/25）、ほとんど基音だけだからです。"],
+  ["のこぎり波を鳴らしながら、「フィルター」を左へ動かそう。波形と音はどう変わるか。", "高い倍音が削られて、波形の角が丸くなり、こもったやわらかい音になります。これがアナログシンセサイザーの「減算合成」です。"],
+  ["「自由に」で、基音を 0 にして2倍音と3倍音だけを残そう。何 Hz の高さに聞こえるか。", "基音がなくても、もとの基音の高さ（いまの基本振動数）に聞こえることが多いです。耳と脳は倍音の間隔から高さを感じとるからです（ミッシング・ファンダメンタル）。小さなスピーカーで低い音が聞こえるのもこのためです。"]
+]);
+QS("qsMic", [
+  ["「あー」と同じ高さで声を出し続けよう。波形は同じ形のくり返しになっているか。くり返しの時間（周期）と基本振動数の関係を確かめよう。", "同じ形がくり返されます（周期的な波）。周期 <i class='qv'>T</i> と基本振動数 <i class='qv'>f</i> は <i class='qv'>f</i> ＝ 1/<i class='qv'>T</i> の関係です。正弦波ではありませんが、くり返しの間隔が音の高さを決めています。"],
+  ["同じ高さで「あ」「い」「う」「え」「お」と変えよう。「この波形を残して比べる」を使うと比べやすい。何が変わり、何が変わらないか。", "周期（高さ）は同じで、波形の形とスペクトルの山の位置（フォルマント）が変わります。音色の違いは波形の違い＝含まれる倍音の大きさの違いです。"],
+  ["同じ「あ」で、低い声と高い声を出そう。スペクトルの縦の点線（倍音）の間隔はどう変わるか。", "高い声ほど基本振動数が大きいので、倍音の間隔が広がります。一方、「あ」らしさを決める山の位置（フォルマント）はあまり変わりません。"],
+  ["口笛を吹こう。波形とスペクトルはどうなるか。", "正弦波に近い、なめらかな波形になります。スペクトルには基音の山がほぼ1本だけ見えます。"],
+  ["「スー」「シー」と息だけで音を出そう。周期のある波形になるか。", "くり返しのない、ぎざぎざの波形（雑音）になり、基本振動数は表示されません。声帯が振動しない子音（無声音）だからです。"],
+  ["楽器（リコーダー、ギター、ピアノのアプリなど）の音を同じ高さで比べよう。", "同じ高さなら周期は同じですが、波形とスペクトルの形が違います。これが楽器ごとの音色の違いです。"]
+]);
+QS("qsVowel", [
+  ["「声道の共鳴をかける」をオフにすると、どんな音になるか。スペクトルはどうなるか。", "声帯だけの音（ブザーのような「ビー」という音）になり、母音らしさがなくなります。倍音の棒は高くなるほどなだらかに小さくなり、母音ごとの山がなくなります。"],
+  ["「あ」のまま声の高さを変えよう。スペクトルで変わるもの、変わらないものは何か。", "倍音の棒の間隔（基本振動数）は変わりますが、破線の山の位置（フォルマント）は変わりません。だから高さを変えても「あ」に聞こえます。"],
+  ["同じ高さで「あ」と「い」を比べよう。<i class='qv'>F</i><sub>1</sub>・<i class='qv'>F</i><sub>2</sub> はどう違うか。口の形と結びつけよう。", "「あ」は <i class='qv'>F</i><sub>1</sub> が高く（口を大きく開ける・あごが下がる）、「い」は <i class='qv'>F</i><sub>1</sub> が低く <i class='qv'>F</i><sub>2</sub> が高い（舌が前に出る）。<i class='qv'>F</i><sub>1</sub> は口の開き、<i class='qv'>F</i><sub>2</sub> は舌の前後の位置とおよそ対応します。"],
+  ["母音の地図で、赤い点を「あ」から「い」へゆっくりドラッグしよう。どう聞こえるか。", "「あ」→「え」→「い」のように、間の母音を通って変わります。フォルマントの位置を連続的に変えると、母音も連続的に変わります。"],
+  ["「高い声（成人女性）」や「子ども」にすると、母音の地図の目盛りが変わる。なぜか。", "声道（のどから唇まで）が短いほど、共鳴する振動数（フォルマント）は高くなるからです。管が短いほど固有振動数が大きいのと同じしくみです。"],
+  ["「ビブラート」をオンにすると、どう聞こえるか。", "高さがわずかにゆれて、より人の声らしく聞こえます。人の声や楽器の音は、高さや大きさが少しずつ変化しています。"]
+]);
+
+/* ---------- 初期化 ---------- */
+syncMwin(); syncA(); setVowel("a"); syncPlayA(); syncPlayV();
+setScene(location.hash.slice(1) || "add");
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(redrawAll);
+})();
+</script>
+</body>
+</html>

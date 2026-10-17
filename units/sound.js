@@ -77,7 +77,7 @@ const LAM = ["2<i class='qv'>L</i>","4<i class='qv'>L</i>","<i class='qv'>L</i>"
 const ANIM = (href, label) => `<a href='${href}' style='display:inline-block;margin:8px 6px 0 0;padding:6px 12px;border:1.5px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:700;text-decoration:none;line-height:1.5'>▶ ${label}</a>`;
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:`音は空気を伝わる縦波です。「高い・大きい・音色」がそれぞれどの量に対応するかを正確に覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/longitudinal.html","縦波（疎密波）")}${ANIM("anim/string.html","弦の固有振動")}${ANIM("anim/air-column.html","気柱の固有振動")}${ANIM("anim/beats.html","うなり")}`,
+  intro:`音は空気を伝わる縦波です。「高い・大きい・音色」がそれぞれどの量に対応するかを正確に覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/longitudinal.html","縦波（疎密波）")}${ANIM("anim/string.html","弦の固有振動")}${ANIM("anim/air-column.html","気柱の固有振動")}${ANIM("anim/beats.html","うなり")}${ANIM("anim/timbre.html#add","音色と波形（倍音を重ねる）")}${ANIM("anim/timbre.html#mic","声の波形を見る（マイク）")}${ANIM("anim/timbre.html#vowel","母音を合成する")}${ANIM("anim/hearing.html","可聴域を調べる")}`,
   advice:"音の3要素の対応と、弦・閉管・開管の端の条件（節か腹か）を覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[
@@ -104,7 +104,7 @@ const SECTIONS = [
   intro:"日常の言葉で表される音の性質を、物理量に置き換えます。気柱の図で、長さと波長の関係を読みます。",
   advice:"「高い・大きい・音色」を物理量に直すこと、端が節か腹かを図で確かめることを練習しよう。",
   groups:[
-  { title:"A. 日常の言葉を物理量にする", qs:[
+  { title:"A. 日常の言葉を物理量にする", lead:`答えたら確かめよう：${ANIM("anim/timbre.html#add","倍音を重ねて音色をつくる")}${ANIM("anim/hearing.html","可聴域を調べる")}`, qs:[
     {id:"ra1",type:"choice",prompt:"「音が高い」とは、どの量が大きいことか。",options:["振動数","振幅","速さ"],answer:0,explain:"高さは振動数で決まります。"},
     {id:"ra2",type:"choice",prompt:"「音が大きい」とは、どの量が大きいことか。",options:["振動数","振幅","波長"],answer:1,explain:"大きさは振幅で決まります。"},
     {id:"ra3",type:"choice",prompt:"ピアノとギターで同じ高さの音を出しても聞き分けられるのは、何が違うからか。",options:["波形","振動数","速さ"],answer:0,
@@ -126,7 +126,12 @@ const SECTIONS = [
     {id:"rc2",type:"choice",prompt:"開管の基本振動で、管の長さ <i class='qv'>L</i> は波長の何倍か。",options:["1/4 倍","1/2 倍","1 倍"],answer:1,
      explain:"腹から腹までの間隔（節を1つ挟む）は <i class='qv'>λ</i>/2 です。"},
     {id:"rc3",type:"choice",prompt:"同じ長さの閉管と開管では、基本振動の音はどちらが高いか。",options:["開管","閉管","同じ"],answer:0,
-     explain:"開管は波長が短い（2<i class='qv'>L</i>）ので振動数が大きく、音が高くなります。"}
+     explain:"開管は波長が短い（2<i class='qv'>L</i>）ので振動数が大きく、音が高くなります。"},
+    {id:"rc4",type:"choice",prompt:"実際の気柱では、開いた端の腹は管口より少し外側にできる（開口端補正）。これを考えると、閉管の基本振動数は、補正を無視して計算した値と比べてどうなるか。",
+     options:["少し低くなる","少し高くなる","変わらない"],answer:0,
+     explain:"腹が外にはみ出す分だけ、定在波（定常波）にとっての管の長さが長くなります（<i class='qv'>L</i> ＋ Δ<i class='qv'>L</i>）。波長 4(<i class='qv'>L</i> ＋ Δ<i class='qv'>L</i>) が長くなるので、振動数は少し低くなります。"},
+    {id:"rc5",type:"self",prompt:"開いた端の腹が、管口ちょうどではなく、管口より少し外側にできるのはなぜか。管口のすぐ外の空気がどう動くかに注目して説明せよ。（ヒント：管口の外の空気は、まったく動かないだろうか。）",
+     model:"管の中の空気が振動すると、管口のすぐ外の空気も押し出されたり引き戻されたりして、いっしょに振動する。管の外の空気が自由に広がって、圧力がまわりの大気圧と等しくなる（空気が最も自由に動ける）のは、管口から少し外へ出た所である。そのため、変位の腹は管口より少し外側にでき、定在波（定常波）は管が少し長くなったかのようにふるまう。いっしょに動く外の空気は管が太いほど多いので、はみ出す長さ（開口端補正）は管の半径が大きいほど大きい（およそ半径の 0.6 倍）。"}
   ]},
   { title:"D. こだまを読む", lead:"崖に向かって音を出したら、2.0 s 後にこだまが聞こえた。音速を <i class='qv'>V</i> とする。", qs:[
     {id:"rd1",type:"choice",prompt:"崖までの距離を表す式はどれか。",options:[`${V} × 2.0 ÷ 2`,`${V} × 2.0`,`${V} ÷ 2.0`],answer:0,

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>可聴域を調べる</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* 1列のワークシート：数値の帯 → 振動数の地図（記録つき）→ 波形 → 操作 → 上限さがし → 解説 → 問い */
+:root{
+  --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
+  --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
+  --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3; --shade:#EEF2F6; --green:#1F7A4D; --orange:#B85C00;
+  --body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --math:"Times New Roman",Times,"Noto Serif",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+    --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+    --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37; --green:#5FD39A; --orange:#FFB15C; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+  --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+  --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37; --green:#5FD39A; --orange:#FFB15C; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qv{font-family:var(--math);font-style:italic;font-size:1.08em}
+sub{font-size:.7em;line-height:0}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+@media (max-width:700px){.top{position:static}}
+.top-inner{max-width:760px;margin:0 auto;padding:10px 16px 10px}
+.back{font-size:14px;color:var(--blue);text-decoration:none}
+h1{font-size:19px;margin:2px 0 0;line-height:1.4;text-wrap:balance}
+.nav{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin-top:2px}
+.nav a{color:var(--blue);text-decoration:none}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:700}
+.navtg{border:1px solid var(--line);background:var(--sheet);border-radius:999px;padding:2px 12px;font-size:13px;color:var(--blue);cursor:pointer;margin-top:4px}
+@media (max-width:700px){ .nav{display:none} .top.open .nav{display:flex} }
+@media (min-width:701px){ .navtg{display:none} }
+main{max-width:760px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px;min-width:0}
+h2{font-size:20px;margin:0 0 4px;line-height:1.4;text-wrap:balance}
+h3{font-size:17px;margin:0 0 8px}
+h4{font-size:15px;margin:2px 0 4px}
+.lead{margin:0 0 12px;color:var(--muted);font-size:15px}
+.readout{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-bottom:10px}
+.readout div{padding:8px 10px;border-left:1px solid var(--line);min-width:0}
+.readout div:first-child{border-left:0}
+.readout .k{font-size:12px;color:var(--muted);display:block;line-height:1.3}
+.readout .v{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.readout .calc{background:var(--blue-soft)}
+@media (max-width:520px){.readout{grid-template-columns:repeat(2,minmax(0,1fr))}.readout div:nth-child(3){border-left:0}.readout div:nth-child(n+3){border-top:1px solid var(--line)}}
+.big{display:flex;align-items:baseline;justify-content:center;gap:8px;margin:6px 0 2px}
+.big input{width:6.2em;font-size:34px;font-weight:700;text-align:right;border:1.5px solid var(--line);border-radius:8px;background:var(--sheet);padding:2px 8px;font-variant-numeric:tabular-nums}
+.big span{font-size:20px;font-weight:700}
+.cap{font-size:13px;font-weight:700;margin:10px 0 2px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.cap span{font-weight:400;color:var(--muted)}
+.stage{position:relative;width:100%;background:var(--sheet);border:1px solid var(--line);border-radius:4px}
+.stage.map{aspect-ratio:2.4/1;touch-action:none;cursor:pointer} .stage.wave{aspect-ratio:3.2/1}
+@media (max-width:520px){.stage.map{aspect-ratio:1.45/1}.stage.wave{aspect-ratio:2.4/1}}
+canvas{display:block;width:100%;height:100%}
+input[type=range]{width:100%;accent-color:var(--blue);min-height:36px}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.btn{border:0;border-radius:8px;padding:9px 16px;min-height:46px;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.btn.ghost{background:none;color:var(--blue);border:1.5px solid var(--blue)}
+.btn.on{background:var(--red)}
+.btn.yes{background:var(--green)} .btn.no{background:var(--muted)}
+.btn:disabled{opacity:.45;cursor:default}
+.steps{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.steps button{border:1.5px solid var(--line);background:var(--sheet);border-radius:8px;min-width:54px;min-height:40px;cursor:pointer;font-size:14px;font-variant-numeric:tabular-nums}
+.slider{display:grid;grid-template-columns:5.5em minmax(0,1fr) 4em;align-items:center;gap:10px;margin-top:10px}
+.slider output{font-variant-numeric:tabular-nums;text-align:right;font-weight:700}
+.hint{font-size:13px;color:var(--muted);margin:8px 0 0}
+.warn{font-size:13px;color:var(--red);margin:8px 0 0}
+.result{font-size:16px;margin:10px 0 0;padding:10px 12px;border-radius:6px;background:var(--blue-soft)}
+.box{border-left:4px solid var(--blue);background:var(--blue-soft);border-radius:4px;padding:10px 14px;margin-top:12px}
+.box p{margin:6px 0}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;font-size:14px;width:100%}
+th,td{border:1px solid var(--line);padding:4px 8px;text-align:left;vertical-align:top}
+th{background:var(--shade)}
+.qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
+.qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
+.ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+</style>
+</head>
+<body>
+<header class="top" id="top">
+  <div class="top-inner">
+    <a class="back" id="backLink" href="../index.html#/u/sound/0" hidden>‹ 音（Webテスト）へ</a>
+    <h1>可聴域を調べる（聞こえる音の振動数）</h1>
+    <button type="button" class="navtg" id="navtg" hidden aria-expanded="false" aria-controls="nav">☰ メニュー</button>
+    <nav class="nav" id="nav" hidden aria-label="アニメーション">
+      <a href="index.html">≡ アニメーション集</a>
+      <a href="wave-speed.html">波の速さ</a>
+      <a href="wave-3d.html">波を3次元で見る</a>
+      <a href="transverse.html">横波（重ね合わせ・定在波（定常波）・反射）</a>
+      <a href="longitudinal.html">縦波（疎密波）</a>
+      <a href="string.html">弦の固有振動</a>
+      <a href="air-column.html">気柱の固有振動</a>
+      <a href="beats.html">うなり</a>
+      <a href="timbre.html">音色と波形</a>
+      <a href="hearing.html" aria-current="page">可聴域</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="sheet" aria-labelledby="h1x">
+    <h2 id="h1x">振動数を選んで正弦波を鳴らし、聞こえるか試す</h2>
+    <p class="lead">人が聞くことのできる音の振動数の範囲（可聴域）は、およそ 20 Hz 〜 20000 Hz です。スライダーで振動数を選んで音を出し、「聞こえた」「聞こえない」を記録して、自分の可聴域を調べよう。</p>
+    <p class="warn"><b>はじめに音量を小さめにしてください。</b>聞こえないからといって、音量を大きくしすぎないこと。イヤホンでは特に注意。周りに人がいるときは、高い音が迷惑にならないようにしよう。</p>
+
+    <div class="big"><input type="text" id="fIn" inputmode="decimal" autocomplete="off" aria-label="振動数（Hz）"><span>Hz</span></div>
+    <input type="range" id="fS" min="0" max="1000" step="1" aria-label="振動数（20〜20000 Hz、対数目盛り）">
+    <div class="steps" id="pre"></div>
+    <div class="steps"><button type="button" data-mul="0.5">×½（1オクターブ下）</button><button type="button" data-mul="0.944">少し下げる</button><button type="button" data-mul="1.059">少し上げる</button><button type="button" data-mul="2">×2（1オクターブ上）</button></div>
+
+    <div class="controls">
+      <button type="button" class="btn" id="play">♪ 音を出す</button>
+      <button type="button" class="btn yes" id="yes">○ 聞こえた</button>
+      <button type="button" class="btn no" id="no">× 聞こえない</button>
+    </div>
+    <div class="slider"><label for="vol">音量</label><input type="range" id="vol" min="0" max="0.6" step="0.02" value="0.12"><output id="volO" for="vol"></output></div>
+
+    <div class="readout" aria-live="polite" style="margin-top:10px">
+      <div><span class="k">振動数 <i class="qv">f</i></span><span class="v" id="rF"></span></div>
+      <div><span class="k">周期 <i class="qv">T</i> ＝ 1/<i class="qv">f</i></span><span class="v" id="rT"></span></div>
+      <div class="calc"><span class="k">空気中の波長 <i class="qv">λ</i>（340 m/s）</span><span class="v" id="rL"></span></div>
+      <div class="calc"><span class="k">区分</span><span class="v" id="rK"></span></div>
+    </div>
+
+    <div class="cap">振動数の地図と記録<span>タップするとその振動数に移る</span></div>
+    <div class="stage map" id="stMap"><canvas id="cvMap" role="img" aria-label="20 Hz から 20000 Hz までの対数目盛りの振動数の地図。可聴域、超音波、身近な音の振動数と、聞こえた・聞こえないの記録。"></canvas></div>
+    <p class="result" id="result">まだ記録がありません。</p>
+    <div class="controls"><button type="button" class="btn ghost" id="clear">記録を消す</button></div>
+
+    <div class="cap">波形<span id="waveNote"></span></div>
+    <div class="stage wave"><canvas id="cvWave" role="img" aria-label="いま選んでいる振動数の正弦波の波形。"></canvas></div>
+  </section>
+
+  <section class="sheet" aria-labelledby="hUp">
+    <h3 id="hUp">高い音の上限をさがす（自動）</h3>
+    <p class="hint" style="margin-top:0">8000 Hz 〜 20000 Hz の間で、聞こえたかどうかの答えに合わせて振動数を半分ずつしぼりこみます（7回）。</p>
+    <div class="controls">
+      <button type="button" class="btn" id="upStart">上限さがしを始める</button>
+      <button type="button" class="btn yes" id="upYes" disabled>○ 聞こえた</button>
+      <button type="button" class="btn no" id="upNo" disabled>× 聞こえない</button>
+      <button type="button" class="btn ghost" id="upAgain" disabled>もう一度聞く</button>
+    </div>
+    <p class="result" id="upMsg">「上限さがしを始める」を押すと、音が 1.5 秒鳴ります。</p>
+  </section>
+
+  <section class="sheet" aria-labelledby="hEx">
+    <h3 id="hEx">可聴域・超音波・機器の限界</h3>
+    <div class="tbl"><table>
+      <colgroup><col style="width:7.5em"><col></colgroup>
+      <tr><th>区分</th><th>振動数と例</th></tr>
+      <tr><td>超低周波音</td><td>およそ 20 Hz より低い音。人には音としては聞こえにくい（体で振動を感じることがある）。地震や火山、大きな機械から出る</td></tr>
+      <tr><td>可聴域</td><td>およそ 20 Hz 〜 20000 Hz。人の耳がいちばん敏感なのは 2000 〜 5000 Hz あたり。年齢とともに高い音から聞こえにくくなる</td></tr>
+      <tr><td>超音波</td><td>およそ 20000 Hz より高い音。コウモリやイルカは超音波を出して、はね返りで周りのようすを知る。医療の超音波検査、魚群探知機、超音波洗浄機などに使われる</td></tr>
+    </table></div>
+    <div class="box">
+      <p><b>機器の限界にも注意</b>：スマートフォンやノートパソコンの小さなスピーカーは、低い音（およそ 200 Hz 以下）をほとんど出せません。低い音が聞こえないときは、イヤホンやヘッドホンで試そう。また、多くの機器は 20000 Hz 前後より高い音を出せません。</p>
+      <p><b>音量の感じ方</b>：同じ「音量」の設定でも、振動数によって大きさの感じ方が違います。2000 〜 5000 Hz の音は特に大きく感じるので、振動数を変えたら音量にも気をつけよう。</p>
+    </div>
+  </section>
+
+  <section class="sheet"><h3>やってみよう・考えよう</h3><ol class="qs" id="qs"></ol></section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id), TAU = 2 * Math.PI;
+if(/\/anim\//.test(location.pathname)){ $("backLink").hidden = false; $("nav").hidden = false; $("navtg").hidden = false; }
+$("navtg").addEventListener("click", () => { const o = !$("top").classList.contains("open"); $("top").classList.toggle("open", o); $("navtg").setAttribute("aria-expanded", o); $("navtg").textContent = o ? "× 閉じる" : "☰ メニュー"; });
+const FMIN = 20, FMAX = 20000;
+const st = { f:1000, vol:0.12, rec:[], up:null };
+const toS = f => Math.round(1000 * Math.log(f / FMIN) / Math.log(FMAX / FMIN)), fromS = v => FMIN * Math.pow(FMAX / FMIN, v / 1000);
+const roundF = f => f >= 1000 ? Math.round(f / 10) * 10 : f >= 100 ? Math.round(f) : Math.round(f * 10) / 10;
+const fmt = f => f >= 1000 ? Math.round(f).toLocaleString("en-US") : String(f);
+const fmtHz = f => `${fmt(roundF(f))} Hz`;
+const fmtT = s => s >= 0.001 ? `${(s * 1000).toPrecision(3)} ms` : `${(s * 1e6).toPrecision(3)} µs`;
+const fmtL = m => m >= 1 ? `${m.toPrecision(3)} m` : `${(m * 100).toPrecision(3)} cm`;
+
+/* ---------- 音 ---------- */
+let AC = null, osc = null, gain = null, stopT = null;
+function ac(){ if(!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if(AC.state === "suspended") AC.resume(); return AC; }
+function playing(){ return !!osc; }
+function start(dur){
+  try{
+    const A = ac(), now = A.currentTime; stop(true);
+    gain = A.createGain(); gain.gain.setValueAtTime(0.0001, now); gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, st.vol * 0.5), now + 0.06); gain.connect(A.destination);
+    osc = A.createOscillator(); osc.type = "sine"; osc.frequency.value = st.f; osc.connect(gain); osc.start(now);
+    if(dur){ stopT = setTimeout(() => { stop(); }, dur * 1000); }
+  }catch(e){ osc = null; }
+  syncBtn();
+}
+function stop(silent){
+  if(stopT){ clearTimeout(stopT); stopT = null; }
+  if(!osc){ if(!silent) syncBtn(); return; }
+  const now = AC.currentTime, g = gain, o = osc;
+  g.gain.cancelScheduledValues(now); g.gain.setValueAtTime(Math.max(0.0001, g.gain.value), now); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.06); o.stop(now + 0.08);
+  osc = gain = null; if(!silent) syncBtn();
+}
+function update(){ if(!osc) return; const now = AC.currentTime; osc.frequency.setTargetAtTime(st.f, now, 0.01); gain.gain.setTargetAtTime(Math.max(0.0001, st.vol * 0.5), now, 0.03); }
+function syncBtn(){ const b = $("play"); b.textContent = playing() ? "■ 音を止める" : "♪ 音を出す"; b.classList.toggle("on", playing()); }
+
+/* ---------- 描画 ---------- */
+let col = {};
+function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","green","shade","sheet","orange","blue-soft","red-soft"].forEach(k => col[k.replace("-","_")] = cs.getPropertyValue("--" + k).trim()); }
+const cvs = [];
+function canvas(id, draw){ const cv = $(id), ctx = cv.getContext("2d"), o = { cv, ctx, W:0, H:0, draw };
+  o.fit = () => { const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); if(r.width < 2) return; o.W = Math.round(r.width); o.H = Math.round(r.height); cv.width = Math.round(o.W * d); cv.height = Math.round(o.H * d); ctx.setTransform(d, 0, 0, d, 0, 0); readColors(); o.draw(o); };
+  if(window.ResizeObserver) new ResizeObserver(o.fit).observe(cv); else addEventListener("resize", o.fit); cvs.push(o); return o; }
+function Ln(ctx, pts, color, w, dash){ ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore(); }
+function Tx(ctx, s, x, y, color, size, align, bold){ ctx.save(); ctx.fillStyle = color; ctx.font = `${bold ? "700 " : ""}${size || 12}px BIZ UDPGothic,"Hiragino Sans","Yu Gothic UI",sans-serif`; ctx.textAlign = align || "left"; ctx.textBaseline = "middle"; ctx.fillText(s, x, y); ctx.restore(); }
+const LMIN = 10, LMAX = 40000;
+const EX = [[27.5,"ピアノの最低音"],[120,"男性の声"],[440,"ラ（時報）"],[4186,"ピアノの最高音"],[17000,"モスキート音"]];
+const cMap = canvas("cvMap", o => {
+  const { ctx, W, H } = o; if(!W) return; ctx.clearRect(0, 0, W, H);
+  const pl = 12, pr = 12, X = f => pl + Math.log(f / LMIN) / Math.log(LMAX / LMIN) * (W - pl - pr);
+  o.X = X; o.pl = pl; o.pr = pr;
+  const yA = 22, yB = H - 30;
+  // 区分の帯
+  ctx.fillStyle = col.shade; ctx.fillRect(X(LMIN), yA, X(20) - X(LMIN), yB - yA); ctx.fillRect(X(20000), yA, X(LMAX) - X(20000), yB - yA);
+  ctx.fillStyle = col.blue_soft; ctx.fillRect(X(20), yA, X(20000) - X(20), yB - yA);
+  Tx(ctx, "可聴域", (X(20) + X(20000)) / 2, yA - 10, col.blue, 12, "center", true);
+  Tx(ctx, "超音波", (X(20000) + X(LMAX)) / 2, yA - 10, col.muted, 11, "center");
+  Tx(ctx, "超低周波", (X(LMIN) + X(20)) / 2 + 4, yA - 10, col.muted, 10, "center");
+  [10, 100, 1000, 10000].forEach(f => { for(let k = 1; k < 10; k++){ const ff = f * k; if(ff < LMIN || ff > LMAX) continue; Ln(ctx, [[X(ff), yB], [X(ff), yB + (k === 1 ? 6 : 3)]], col.muted, 1); } });
+  [[20,"20"],[100,"100"],[1000,"1000"],[10000,"10000"],[20000,""]].forEach(([f, s]) => { Ln(ctx, [[X(f), yA], [X(f), yB]], col.line, 1, [2, 4]); if(s) Tx(ctx, s, X(f), yB + 14, col.muted, 10, "center"); });
+  Tx(ctx, "Hz", W - pr, yB + 14, col.muted, 10, "right");
+  // 身近な音
+  const narrow = W < 500;
+  EX.forEach(([f, s], i) => { const x = X(f), y = yA + 14 + (i % 2) * 16; ctx.fillStyle = col.muted; ctx.fillRect(x - 1, y - 4, 2, 8); if(!narrow || i % 2 === 0 || true) Tx(ctx, s, x + (f > 3000 ? -4 : 4), y, col.muted, 10, f > 3000 ? "right" : "left"); });
+  // 記録
+  const rows = {}; st.rec.forEach(r => { const x = X(r.f), key = Math.round(x / 12); rows[key] = (rows[key] || 0) + 1; const y = yB - 12 - (rows[key] - 1) * 16;
+    if(r.ok){ ctx.beginPath(); ctx.arc(x, y, 6, 0, TAU); ctx.strokeStyle = col.green; ctx.lineWidth = 2.4; ctx.stroke(); }
+    else { Ln(ctx, [[x - 6, y - 6], [x + 6, y + 6]], col.red, 2.4); Ln(ctx, [[x - 6, y + 6], [x + 6, y - 6]], col.red, 2.4); } });
+  // いまの振動数
+  const x = X(st.f); Ln(ctx, [[x, yA - 2], [x, yB + 2]], col.red, 2.4);
+  ctx.beginPath(); ctx.moveTo(x - 6, yB + 4); ctx.lineTo(x + 6, yB + 4); ctx.lineTo(x, yB - 4); ctx.closePath(); ctx.fillStyle = col.red; ctx.fill();
+});
+$("stMap").addEventListener("pointerdown", e => { const o = cMap; if(!o.X) return; const r = $("cvMap").getBoundingClientRect(), x = e.clientX - r.left; const f = LMIN * Math.pow(LMAX / LMIN, (x - o.pl) / (o.W - o.pl - o.pr)); setF(f); });
+const cWave = canvas("cvWave", o => {
+  const { ctx, W, H } = o; if(!W) return; ctx.clearRect(0, 0, W, H);
+  const pl = 10, pr = 10, cy = H / 2, win = 0.01, n = st.f * win, A = H / 2 - 10;   // 10 ms 間
+  Ln(ctx, [[pl, cy], [W - pr, cy]], col.line, 1);
+  const dense = n / (W - pl - pr) > 0.25;
+  if(dense){ ctx.fillStyle = col.red; ctx.globalAlpha = .35; ctx.fillRect(pl, cy - A, W - pl - pr, 2 * A); ctx.globalAlpha = 1; Tx(ctx, `10 ms の間に ${Math.round(n).toLocaleString("en-US")} 回振動（細かすぎて帯に見える）`, W / 2, cy, col.ink, 12, "center", true); }
+  else { const M = Math.max(400, Math.round((W - pl - pr) * 3)), pts = []; for(let i = 0; i <= M; i++){ const t = win * i / M; pts.push([pl + i / M * (W - pl - pr), cy - A * Math.sin(TAU * st.f * t)]); } Ln(ctx, pts, col.red, 2); }
+  $("waveNote").textContent = dense ? "表示している時間：10 ms" : `表示している時間：10 ms（${n < 10 ? n.toFixed(1) : Math.round(n)} 回振動）`;
+});
+
+/* ---------- 状態の更新 ---------- */
+function setF(f, from){
+  st.f = roundF(Math.min(FMAX, Math.max(FMIN, f)));
+  if(from !== "in") $("fIn").value = fmt(st.f);
+  if(from !== "s") $("fS").value = toS(st.f);
+  sync(); update();
+}
+function sync(){
+  $("rF").textContent = fmtHz(st.f); $("rT").textContent = fmtT(1 / st.f); $("rL").textContent = fmtL(340 / st.f);
+  $("rK").textContent = st.f < 20 ? "超低周波音" : st.f > 20000 ? "超音波" : st.f >= 16000 ? "可聴域（上限近く）" : "可聴域";
+  $("volO").textContent = `${Math.round(st.vol / 0.6 * 100)}%`;
+  const ok = st.rec.filter(r => r.ok).map(r => r.f), ng = st.rec.filter(r => !r.ok).map(r => r.f);
+  let msg = "まだ記録がありません。音を出して、「聞こえた」「聞こえない」を押そう。";
+  if(st.rec.length){
+    msg = ok.length ? `聞こえた範囲：<b>${fmtHz(Math.min(...ok))} 〜 ${fmtHz(Math.max(...ok))}</b>` : "聞こえた記録はまだありません。";
+    const hiNg = ng.filter(f => !ok.length || f > Math.max(...ok)), loNg = ng.filter(f => ok.length && f < Math.min(...ok));
+    if(hiNg.length) msg += `　／　高い側で聞こえなかった最も低い振動数：${fmtHz(Math.min(...hiNg))}`;
+    if(loNg.length) msg += `　／　低い側で聞こえなかった最も高い振動数：${fmtHz(Math.max(...loNg))}`;
+  }
+  $("result").innerHTML = msg;
+  cvs.forEach(o => o.W && o.draw(o));
+}
+function record(ok){ st.rec.push({ f:st.f, ok }); sync(); }
+$("fS").addEventListener("input", e => setF(fromS(+e.target.value), "s"));
+$("fIn").addEventListener("change", e => { const v = parseFloat(String(e.target.value).replace(/[０-９．]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/[^\d.]/g, "")); setF(isFinite(v) ? v : st.f); });
+$("pre").innerHTML = [50, 100, 440, 1000, 4000, 8000, 12000, 15000, 16000, 17000, 18000, 19000, 20000].map(f => `<button type="button" data-f="${f}">${fmt(f)}</button>`).join("");
+document.querySelectorAll("[data-f]").forEach(b => b.addEventListener("click", () => setF(+b.dataset.f)));
+document.querySelectorAll("[data-mul]").forEach(b => b.addEventListener("click", () => setF(st.f * +b.dataset.mul)));
+$("play").addEventListener("click", () => playing() ? stop() : start());
+$("yes").addEventListener("click", () => record(true));
+$("no").addEventListener("click", () => record(false));
+$("clear").addEventListener("click", () => { st.rec = []; sync(); });
+$("vol").addEventListener("input", e => { st.vol = +e.target.value; sync(); update(); });
+
+/* ---------- 上限さがし（二分法） ---------- */
+function upPlay(){ setF(st.up.mid); start(1.5); $("upMsg").innerHTML = `<b>${st.up.step + 1} 回目</b>：${fmtHz(st.up.mid)} を鳴らしています。聞こえたか答えよう。`; }
+function upNext(ok){
+  const u = st.up; if(!u) return; record(ok);
+  if(ok) u.lo = u.mid; else u.hi = u.mid; u.step++;
+  if(u.step >= 7){ stop(); $("upMsg").innerHTML = `あなたが聞こえる高い音の上限は、およそ <b>${fmtHz(u.lo)}</b>（${fmtHz(u.lo)} は聞こえて、${fmtHz(u.hi)} は聞こえなかった）。機器が高い音を出せない場合もあります。`; endUp(); return; }
+  u.mid = Math.round(Math.sqrt(u.lo * u.hi) / 10) * 10; upPlay();
+}
+function endUp(){ st.up = null; $("upYes").disabled = $("upNo").disabled = $("upAgain").disabled = true; $("upStart").textContent = "上限さがしを始める"; }
+$("upStart").addEventListener("click", () => {
+  if(st.up){ stop(); endUp(); $("upMsg").textContent = "やめました。"; return; }
+  st.up = { lo:8000, hi:20000, mid:12650, step:0 }; $("upYes").disabled = $("upNo").disabled = $("upAgain").disabled = false; $("upStart").textContent = "やめる"; upPlay();
+});
+$("upYes").addEventListener("click", () => upNext(true));
+$("upNo").addEventListener("click", () => upNext(false));
+$("upAgain").addEventListener("click", () => { if(st.up) start(1.5); });
+
+document.addEventListener("visibilitychange", () => { if(document.hidden) stop(); });
+const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+if(mq && mq.addEventListener) mq.addEventListener("change", () => { readColors(); cvs.forEach(o => o.draw(o)); });
+
+$("qs").innerHTML = [
+  ["1000 Hz から高くしていき、聞こえなくなる振動数を調べよう。周りの人（家族など）と比べるとどうか。", "人によって違いますが、年齢が上がるほど高い音が聞こえにくくなる傾向があります。若い人には 17000 Hz 前後の音（モスキート音）が聞こえても、大人には聞こえないことがよくあります。"],
+  ["スピーカーで 50 Hz や 100 Hz の音を出そう。イヤホンでも試して比べよう。", "スマートフォンなどの小さなスピーカーでは、低い音はほとんど聞こえません。耳ではなく、スピーカーが低い音を出せないためです。イヤホンやヘッドホンなら聞こえることが多いです。"],
+  ["音量を変えずに、500 Hz、3000 Hz、12000 Hz を聞き比べよう。大きさの感じ方は同じか。", "同じではありません。人の耳は 2000〜5000 Hz あたりの音に最も敏感で、その近くの音は大きく感じます。音の「大きさ」の感じ方は、振幅だけでなく振動数にもよります。"],
+  ["20 Hz と 20000 Hz の音の、空気中の波長を求めよう（音速 340 m/s）。", "<i class='qv'>λ</i> ＝ <i class='qv'>V</i>/<i class='qv'>f</i> より、20 Hz では 17 m、20000 Hz では 1.7 cm。人に聞こえる音の波長は、およそ 1.7 cm 〜 17 m の範囲です。"],
+  ["コウモリが超音波を使うと、小さな虫を見つけやすいのはなぜか。波長に注目して考えよう。", "振動数が大きいほど波長が短く（50000 Hz なら約 7 mm）、小さな物体でもはね返りやすいからです。波長より大きな物体でないと、音はうまく反射しません。"],
+  ["「可聴域」は物理の性質か、人の性質か。", "人（生き物）の耳の性質です。20000 Hz より高い音も、空気中を伝わる音（縦波）であることは同じです。犬はおよそ 40000 Hz、コウモリやイルカは 100000 Hz 以上まで聞こえます。"]
+].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
+
+readColors(); setF(st.f); syncBtn();
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => cvs.forEach(o => o.draw(o)));
+})();
+</script>
+</body>
+</html>
