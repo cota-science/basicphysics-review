@@ -18,8 +18,11 @@ window.UNIT_LIST = [
     { id: "anim-motion", title: "▶ 運動のシミュレーター",     href: "anim/index.html#motion", note: "運動と x-t・v-t・a-t 図を連動させて、傾き・面積・式の意味を確かめよう。合成速度と相対速度・投射運動・モンキーハンティングも（月や惑星でも）" },
     { id: "kinematics", title: "速度・加速度（運動の表し方）", file: "units/kinematics.js" },
     { id: "free-fall",  title: "落体の運動",                 file: "units/free-fall.js" },
+    { id: "plane-motion", title: "合成速度・相対速度・放物運動", file: "units/plane-motion.js" },
+    { id: "anim-force", title: "▶ 力のシミュレーター（力学ラボ）", href: "anim/index.html#force", note: "力の作図・合成・分解、フックの法則、力のつりあい、摩擦力、運動の三法則、空気抵抗と終端速度、水圧・浮力・パスカルの原理" },
     { id: "force",      title: "力とつり合い",               file: "units/force.js" },
     { id: "newton",     title: "運動の法則",                 file: "units/newton.js" },
+    { id: "fluid-drag", title: "圧力・浮力・空気抵抗",         file: "units/fluid-drag.js" },
     { id: "anim-energy", title: "▶ 仕事とエネルギーのシミュレーター", href: "anim/index.html#energy", note: "仕事と F-x グラフ・仕事率・仕事の原理、運動エネルギーの思考実験、位置エネルギー、力学的エネルギー保存を、エネルギー図と連動させて確かめよう" },
     { id: "energy",     title: "仕事と力学的エネルギー",     file: "units/energy.js" }
   ]},
