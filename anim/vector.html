@@ -172,12 +172,13 @@ svg.fig{display:block;width:100%;max-width:420px;height:auto;margin:8px auto 0}
 <div class="panel" id="p-motion" hidden>
   <section class="sheet">
     <h2>位置・速度・加速度はベクトル</h2>
-    <p class="lead">原点 O から物体へ引いた位置ベクトル <span class="vec">r</span> の変化が変位 Δ<span class="vec">r</span> です。Δ<span class="vec">r</span>/Δ<i class="qv">t</i>（平均の速度、赤）は、Δ<i class="qv">t</i> を 0 に近づけると軌道の接線の向きの速度 <span class="vec">v</span>（橙）になります。</p>
+    <p class="lead">原点 O から物体へ引いた位置ベクトル <span class="vec">r</span> の変化が変位 Δ<span class="vec">r</span> です。Δ<span class="vec">r</span>/Δ<i class="qv">t</i>（平均の速度、赤）は、Δ<i class="qv">t</i> を 0 に近づけると軌道の接線の向きの速度 <span class="vec">v</span>（橙）になります。同じように、速度の変化 Δ<span class="vec">v</span> から加速度 <span class="vec">a</span>（緑）が決まります。</p>
     <div class="seg" role="group" aria-label="運動" id="mo-seg"><span class="seg-label">運動</span></div>
-    <div class="stage wide"><canvas id="cv-mo" role="img" aria-label="軌道、位置ベクトル r1 と r2、変位 Δr、平均の速度と瞬間の速度"></canvas></div>
+    <div class="stage wide"><canvas id="cv-mo" role="img" aria-label="軌道、位置ベクトル r1 と r2、変位 Δr、平均の速度と瞬間の速度、加速度"></canvas></div>
     <div class="chips" role="group" aria-label="時間の幅" id="mo-dt"><span class="lab">Δ<i class="qv">t</i></span></div>
     <div class="slider"><label for="mo-t">時刻 <i class="qv">t</i><sub>1</sub></label><input type="range" id="mo-t" min="0" max="1" step="0.01" value="0.3"><output id="mo-to"></output></div>
     <div class="controls"><button type="button" class="btn" id="mo-go">Δ<i class="qv">t</i> を 0 に近づける</button></div>
+    <div class="checks" style="display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:8px"><label class="check"><input type="checkbox" id="mo-acc" checked>加速度 <span class="vec">a</span> を表示（緑）</label><label class="check"><input type="checkbox" id="mo-aavg">平均の加速度 Δ<span class="vec">v</span>/Δ<i class="qv">t</i> も表示（緑の破線）</label></div>
     <p class="hint" id="mo-scale"></p>
     <div class="cap">速度ベクトルの始点をそろえる：速度の変化 Δ<span class="vec">v</span>（緑）の向き ＝ 加速度の向き</div>
     <div class="stage half"><canvas id="cv-ho" role="img" aria-label="始点をそろえた2つの速度ベクトルと、その差 Δv"></canvas></div>
@@ -389,14 +390,16 @@ function drawOps(){
 /* ================= 2 平面の運動 ================= */
 const G = 9.8;
 const MOT = {
-  proj:{ name:"斜方投射", T:2 * 8 / G, pos:t => [4 * t, 8 * t - G / 2 * t * t], vel:t => [4, 8 - G * t], acc:() => [0, -G], k:0.25, xr:[-0.5, 7.2], yr:[-0.6, 4], dts:[0.8, 0.4, 0.2, 0.1, 0.01], t1:0.3 },
-  circ:{ name:"等速円運動（発展）", T:2 * Math.PI, pos:t => [3 * Math.cos(t), 3 * Math.sin(t)], vel:t => [-3 * Math.sin(t), 3 * Math.cos(t)], acc:t => [-3 * Math.cos(t), -3 * Math.sin(t)], k:0.5, xr:[-4.6, 4.6], yr:[-4.2, 4.2], dts:[2, 1, 0.5, 0.1, 0.01], t1:0.5 }
+  proj:{ name:"斜方投射", T:2 * 8 / G, pos:t => [4 * t, 8 * t - G / 2 * t * t], vel:t => [4, 8 - G * t], acc:() => [0, -G], k:0.25, ka:0.15, xr:[-0.5, 7.2], yr:[-0.6, 4], dts:[0.8, 0.4, 0.2, 0.1, 0.01], t1:0.3 },
+  circ:{ name:"等速円運動（発展）", T:2 * Math.PI, pos:t => [3 * Math.cos(t), 3 * Math.sin(t)], vel:t => [-3 * Math.sin(t), 3 * Math.cos(t)], acc:t => [-3 * Math.cos(t), -3 * Math.sin(t)], k:0.5, ka:0.5, xr:[-4.6, 4.6], yr:[-4.2, 4.2], dts:[2, 1, 0.5, 0.1, 0.01], t1:0.5 }
 };
-const M = { p:"proj", dt:0.4, t1:0.3, anim:null };
+const M = { p:"proj", dt:0.4, t1:0.3, anim:null, acc:true, aavg:false };
 function buildMoChips(){ const c = MOT[M.p]; chips($("mo-dt"), c.dts, M.dt, v => { stopMo(); M.dt = v; drawMo(); }, v => num(v, 2) + " s"); }
 segBtns($("mo-seg"), MOT, M.p, k => { stopMo(); M.p = k; const c = MOT[k]; M.dt = c.dts[1]; M.t1 = c.t1; $("mo-t").max = num(c.T, 2).replace("−", "-"); $("mo-t").value = M.t1; buildMoChips(); drawMo(); });
 buildMoChips(); $("mo-t").max = MOT.proj.T.toFixed(2);
 $("mo-t").addEventListener("input", e => { M.t1 = +e.target.value; drawMo(); });
+$("mo-acc").addEventListener("change", e => { M.acc = e.target.checked; drawMo(); });
+$("mo-aavg").addEventListener("change", e => { M.aavg = e.target.checked; drawMo(); });
 function stopMo(){ if(M.anim){ cancelAnimationFrame(M.anim); M.anim = null; } }
 $("mo-go").addEventListener("click", () => { stopMo(); const c = MOT[M.p], d0 = c.dts[0], t0 = performance.now(), dur = reduce ? 1 : 4000;
   const f = now => { const u = Math.min(1, (now - t0) / dur); M.dt = Math.pow(10, Math.log10(d0) + (Math.log10(0.01) - Math.log10(d0)) * u);
@@ -406,7 +409,7 @@ $("mo-go").addEventListener("click", () => { stopMo(); const c = MOT[M.p], d0 = 
 function drawMo(){
   const c = MOT[M.p], t1 = M.t1, dt = M.dt, t2 = t1 + dt, r1 = c.pos(t1), r2 = c.pos(t2), dr = sub(r2, r1), vb = mul(1 / dt, dr), v1 = c.vel(t1), v2 = c.vel(t2), dv = sub(v2, v1), ab = mul(1 / dt, dv), a1 = c.acc(t1);
   $("mo-to").textContent = num(t1, 2) + " s";
-  $("mo-scale").innerHTML = `速度の矢印は「速度 × ${c.k} s」の長さでかいています（${c.k} s の間にその速度で進む変位）。方眼1目盛り ＝ 1 m。`;
+  $("mo-scale").innerHTML = `速度の矢印は「速度 × ${c.k} s」の長さでかいています（${c.k} s の間にその速度で進む変位）。${M.acc || M.aavg ? `加速度の矢印は「加速度 × ${c.ka} s²」の長さです。` : ""}方眼1目盛り ＝ 1 m。`;
   if(tab === "motion" && SZ.mo){
     const F = world("mo", c.xr, c.yr, { axes:true }), g = F.g;
     if(M.p === "proj"){ g.save(); g.fillStyle = col.muted; g.globalAlpha = .12; g.fillRect(0, F.Y(0), F.w, F.h - F.Y(0)); g.restore(); }
@@ -417,6 +420,8 @@ function drawMo(){
     arrow(F, r1, dr, col.pos, 3.5, { label:"Δr", at:.5, off:-16 });
     arrow(F, r1, mul(c.k, vb), col.sec, 3, { alpha:.9 });
     arrow(F, r1, mul(c.k, v1), col.vel, 3.5, { label:"v", at:1.08, off:0 });
+    if(M.aavg) arrow(F, r1, mul(c.ka, ab), col.acc, 3, { dash:[7, 5], alpha:.85 });
+    if(M.acc) arrow(F, r1, mul(c.ka, a1), col.acc, 3.5, { label:"a", at:1.12, off:0 });
     const g2 = F.g; g2.save(); g2.fillStyle = col.ink; [r1, r2].forEach((p, i) => { g2.beginPath(); g2.arc(F.X(p[0]), F.Y(p[1]), 5, 0, 7); g2.fill(); }); g2.restore();
     txt(F, "P₁", F.X(r1[0]) - 12, F.Y(r1[1]) + 14, col.ink, "center"); txt(F, "P₂", F.X(r2[0]) + 12, F.Y(r2[1]) + 14, col.ink, "center");
     // 始点をそろえた速度
@@ -567,6 +572,8 @@ qs("qs-motion", [
   [`斜方投射で時刻 ${I("t")}<sub>1</sub> を動かそう。下の図の緑の矢印 Δ${V("v")} の向きはどうなっているか。`, `いつも真下（鉛直下向き）です。重力加速度 ${V("g")} が鉛直下向きで一定だからです。速度の ${I("x")} 成分は変わらず、${I("y")} 成分だけが減っていきます。`],
   [`最高点（${I("t")} ≒ 0.82 s）で、速度ベクトルと加速度ベクトルはそれぞれどうなっているか。`, `速度は (4, 0) m/s で水平（0 ではない）、加速度は (0, −9.8) m/s²。最高点で 0 になるのは速度の ${I("y")} 成分だけです。`],
   [`「等速円運動」では速さが一定なのに、加速度が 0 でないのはなぜか。`, `加速度は「速度ベクトルの変化」の割合だからです。速さが同じでも向きが変われば Δ${V("v")} は 0 ではありません。Δ${V("v")} はいつも円の中心を向きます。`]
+  [`斜方投射で「加速度 ${V("a")} を表示」をオンにし、時刻 ${I("t")}<sub>1</sub> を動かそう。緑の矢印 ${V("a")} と橙の矢印 ${V("v")} は、それぞれどう変わるか。`, `${V("a")} はどの時刻でも真下向きで、長さも変わりません（${V("a")} ＝ (0, −9.8) m/s²）。一方 ${V("v")} は向きも大きさも変わります。物体が上がっているときも、最高点でも、下がっているときも、加速度は同じです。`],
+  [`等速円運動で「平均の加速度も表示」をオンにして、Δ${I("t")} を小さくしよう。緑の破線（平均の加速度）と緑の実線（加速度）はどうなるか。`, `Δ${I("t")} を小さくすると、破線は実線に重なっていきます。速度のときと同じく、平均の加速度 Δ${V("v")}/Δ${I("t")} の極限が加速度 ${V("a")} です。${V("a")} は円の中心を向き、${V("v")} とつねに垂直です。`],
 ]);
 qs("qs-force", [
   [`「糸2本でつるす」で ${I("θ")}<sub>1</sub> ＝ ${I("θ")}<sub>2</sub> ＝ 60° にして「つりあう大きさにする」を押そう。張力はいくらか。重力 10 N より大きいのはなぜか。`, `${I("T")}<sub>1</sub> ＝ ${I("T")}<sub>2</sub> ＝ 10 N。糸が開いていると、張力の大部分が水平方向を打ち消し合うことに使われ、鉛直成分 ${I("T")} cos 60° ＝ 5 N ずつで重力を支えるからです。角度を大きくするほど張力は大きくなります。`],
