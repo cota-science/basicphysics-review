@@ -27,7 +27,18 @@ const DEF_TABLE = `<div class="tbl"><table>
 <tr><td>平均の加速度</td><td>速度の変化 ÷ かかった時間。<i class='qv'>v</i>-<i class='qv'>t</i> グラフの2点を結ぶ直線の傾き</td><td>m/s²</td><td>あり</td></tr>
 <tr><td>瞬間の加速度</td><td>Δ<i class='qv'>t</i> を限りなく小さくしたときの平均の加速度。<i class='qv'>v</i>-<i class='qv'>t</i> グラフの接線の傾き</td><td>m/s²</td><td>あり</td></tr>
 </table></div>
-<p class="formula">平均の速度 ＝ Δ<i class='qv'>x</i> ÷ Δ<i class='qv'>t</i>　　平均の加速度 <i class='qv'>a</i> ＝ Δ<i class='qv'>v</i> ÷ Δ<i class='qv'>t</i></p>${FORMULAS}`;
+<p class="formula">平均の速度 ＝ Δ<i class='qv'>x</i> ÷ Δ<i class='qv'>t</i>　　平均の加速度 <i class='qv'>a</i> ＝ Δ<i class='qv'>v</i> ÷ Δ<i class='qv'>t</i></p>${FORMULAS}
+<h3 style='font-size:15px;margin:14px 0 4px'>物理のみかた・考え方</h3>
+<div class="tbl"><table>
+<colgroup><col style='width:7.2em'><col></colgroup>
+<tr><th>段階</th><th>すること</th></tr>
+<tr><td>① 観察・観測</td><td>現象をよく観察し、測定して事実（データ）を集める。例：ストロボ写真から、時刻と位置を表にまとめる</td></tr>
+<tr><td>② 仮説</td><td>データの規則性から、「こういう運動ではないか」という考えを立てる。例：どの区間でも平均の速度がほぼ等しい → 速度一定の運動ではないか</td></tr>
+<tr><td>③ 数理モデル化</td><td>物理量どうしの関係の法則性を、グラフや式で数学的に表す。例：<i class='qv'>x</i>-<i class='qv'>t</i> グラフが原点を通る直線 → <i class='qv'>x</i> ＝ <i class='qv'>vt</i></td></tr>
+<tr><td>④ 説明・予測</td><td>モデルを使って現象を説明し、まだ測っていない時刻の位置などを予測する</td></tr>
+<tr><td>⑤ 検証・修正</td><td>予測を測定で確かめる。うまく説明できなければ、仮説やモデルを修正してやり直す</td></tr>
+</table></div>
+<p>グラフは、自分で決める量（独立変数：時刻 <i class='qv'>t</i>）を横軸に、それによって決まる量（従属変数：位置 <i class='qv'>x</i> や速度 <i class='qv'>v</i>）を縦軸にとる。変位・平均の速度は2つの時刻の「間」の量なので、時刻ごとではなく区間ごとにまとめる。</p>`;
 const DIM_TABLE = `<div class="tbl"><table>
 <tr><th>量</th><th>単位</th><th>次元</th></tr>
 <tr><td>変位 <i class='qv'>x</i></td><td>m</td><td>〔L〕</td></tr>
@@ -45,6 +56,23 @@ const VT_GRAPH = `<svg class="graph" viewBox="0 0 320 170" role="img" aria-label
 <text x="18" y="96" font-size="12" fill="currentColor">0</text>
 <text x="170" y="110" font-size="12" fill="currentColor">交点</text>
 </svg>`;
+/* ストロボ写真（0.20 s ごと）。x ＝ 1.25 t²（a ＝ 2.5 m/s²） */
+const STROBE = (() => {
+  const X = m => 24 + m * 200, xs = [0, 0.05, 0.20, 0.45, 0.80, 1.25];
+  let g = "";
+  for(let i = 0; i <= 14; i++){ const m = i / 10; g += `<line x1="${X(m)}" y1="70" x2="${X(m)}" y2="${i % 5 ? 76 : 80}" stroke="currentColor"/>`; if(i % 5 === 0) g += `<text x="${X(m)}" y="93" font-size="10" text-anchor="middle" fill="currentColor">${m.toFixed(1)}</text>`; }
+  xs.forEach((m, i) => { g += `<circle cx="${X(m)}" cy="52" r="7" fill="var(--blue)" opacity="${0.35 + 0.13 * i}"/><text x="${X(m)}" y="${i % 2 ? 26 : 36}" font-size="10" text-anchor="middle" fill="currentColor">${(0.2 * i).toFixed(1)} s</text>`; });
+  return `<svg class="graph" viewBox="0 0 320 104" role="img" aria-label="0.20 s ごとに光るストロボで撮った物体の位置。時刻 0, 0.2, 0.4, 0.6, 0.8, 1.0 s に、位置 0, 0.05, 0.20, 0.45, 0.80, 1.25 m にある。間隔がしだいに広がる。">
+<line x1="${X(0)}" y1="70" x2="${X(1.4)}" y2="70" stroke="currentColor" stroke-width="1.3"/>
+${g}
+<text x="${X(1.4)}" y="104" font-size="10" text-anchor="end" fill="currentColor">${'<tspan font-style="italic" font-family="Times New Roman,Times,serif">x</tspan>'}〔m〕</text>
+</svg>`;
+})();
+const STROBE_TBL = `<div class="tbl"><table>
+<tr><th>時刻 <i class='qv'>t</i>〔s〕</th><td>0</td><td>0.20</td><td>0.40</td><td>0.60</td><td>0.80</td><td>1.00</td></tr>
+<tr><th>位置 <i class='qv'>x</i>〔m〕</th><td>0</td><td>0.05</td><td>0.20</td><td>0.45</td><td>0.80</td><td>1.25</td></tr>
+</table></div>`;
+
 const ANIM = (href, label) => `<a href='${href}' style='display:inline-block;margin:8px 6px 0 0;padding:6px 12px;border:1.5px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:700;text-decoration:none;line-height:1.5'>▶ ${label}</a>`;
 const DIR = ["大きくなる","小さくなる"];
 const TF = ["正しい","誤り"];
@@ -54,7 +82,21 @@ const SECTIONS = [
 { id:"def", advice:"変位・速度・加速度の定義を、定義カードで言葉と単位ごと覚え直そう。", tab:"①定義", title:"① 定義カード", back:"① 定義カード",
   intro:`定義を正確に言えるかを確かめます。迷ったら定義カードを開いて確認してから答えましょう。<br>アニメーションで確かめよう：<br>${ANIM("anim/average.html#v","平均の速度と瞬間の速度")}${ANIM("anim/average.html#a","平均の加速度と瞬間の加速度")}${ANIM("anim/kinematics.html#uniform","等速直線運動")}${ANIM("anim/kinematics.html#slope","斜面を下る台車（等加速度直線運動）")}${ANIM("anim/kinematics.html#direct","加速度を自由に決める")}${ANIM("anim/relative.html#line-sum","合成速度と相対速度")}`,
   ref:{label:"定義カードを見る", html:DEF_TABLE},
-  groups:[{ title:"穴埋め", qs:[
+  groups:[{ title:"物理のみかた・考え方", lead:"定義カードの最後の表「物理のみかた・考え方」を見て答えよう。", qs:[
+    {id:"dm1",type:"choice",prompt:"物理で現象を調べるときの流れとして、正しい順に並べたものはどれか。",
+     options:["観察・観測 → 仮説 → 数理モデル化 → 説明・予測 → 検証・修正","仮説 → 数理モデル化 → 説明・予測 → 観察・観測","数理モデル化 → 観察・観測 → 仮説 → 説明・予測"],answer:0,
+     explain:"まず事実（データ）を集め、そこから仮説を立て、グラフや式で表し（数理モデル化）、そのモデルで説明・予測します。合わなければ仮説やモデルを修正します。"},
+    {id:"dm2",type:"blanks",text:"物理量どうしの関係の法則性を、グラフや式で数学的に表すことを{0}という。できたモデルを使うと、まだ測っていない時刻の位置を{1}できる。",
+     options:[["数理モデル化","観測","仮説"],["予測","観察","修正"]],answer:[0,0],
+     explain:"等速直線運動なら <i class='qv'>x</i> ＝ <i class='qv'>vt</i> がその数理モデルです。"},
+    {id:"dm3",type:"choice",prompt:"ストロボ写真の記録から <i class='qv'>x</i>-<i class='qv'>t</i> グラフをかく。横軸にとるのはどちらか。",
+     options:["時刻 <i class='qv'>t</i>（自分で決める量：独立変数）","位置 <i class='qv'>x</i>（それによって決まる量：従属変数）"],answer:0,
+     explain:"0.2 s ごとのように、時刻は測る側が決めます。位置はその時刻によって決まるので縦軸です。"},
+    {id:"dm4",type:"choice",prompt:"立てたモデルで予測した位置が、測定した位置と大きく違った。どうするのがよいか。",
+     options:["仮説やモデルを見直して修正し、もう一度確かめる","測定値をモデルに合うように書き直す","モデルは正しいので、測定値は無視する"],answer:0,
+     explain:"モデルは現象を説明するためのものです。事実（測定値）と合わなければ、モデルの方を修正します。"}
+  ]},
+  { title:"穴埋め", qs:[
     {id:"d1",type:"blanks",text:"変位とは、{0}の変化であり、後の位置 − {1}で求める。単位は{2}。",
      options:[["道のり","位置","速度"],["原点","前の位置","後の位置"],["m","m/s","m/s²"]],answer:[1,1,0],
      explain:"変位は「位置の変化」。後の位置から前の位置を引きます。道のりとは違い、往復すると 0 になります。"},
@@ -139,6 +181,29 @@ const SECTIONS = [
     {id:"re4",type:"choice",prompt:"直線が <i class='qv'>t</i> 軸と交わる時刻に、物体はどうなっているか。",
      options:["加速度が 0 になる","出発点に戻る","一瞬静止し、向きが変わる"],answer:2,
      explain:"<i class='qv'>v</i> ＝ 0 なので一瞬静止し、そこから向きが変わります。加速度（傾き）は変わっていません。"}
+  ]},
+  { title:"F. ストロボの記録を表にまとめ、モデルをつくる", lead:`なめらかな斜面を下る物体を、0.20 s ごとに光るストロボで撮影し、時刻と位置を表にまとめた（斜面に沿って下向きを正とする）。${STROBE_TBL}区間ごとに「経過時間 Δ<i class='qv'>t</i>・変位 Δ<i class='qv'>x</i>・平均の速度」を求めて、どんな運動かを考えよう。答えたら確かめよう：${ANIM("anim/average.html#v","平均の速度と瞬間の速度")}`, figure:STROBE, qs:[
+    {id:"rf1",type:"choice",prompt:"変位 Δ<i class='qv'>x</i> や平均の速度を、時刻ごとの表とは別に「区間ごと」にまとめるのはなぜか。",
+     options:["2つの時刻の「間」の量だから","時刻ごとにまとめると数が多すぎるから","区間ごとのほうが値が大きくなるから"],answer:0,
+     explain:"位置は「ある時刻」の量、変位や平均の速度は「ある時刻からある時刻まで」の量です。量の種類が違うので、表を分けます。"},
+    {id:"rf2",type:"num",prompt:"区間 0.40 〜 0.60 s の変位 Δ<i class='qv'>x</i> を求めよ。",answer:0.25,tol:0.002,unit:"m",
+     traps:{"0.45":"それは時刻 0.60 s の位置です。変位は 後の位置 − 前の位置 です。"},
+     explain:"Δ<i class='qv'>x</i> ＝ 0.45 − 0.20 ＝ 0.25 m。"},
+    {id:"rf3",type:"num",prompt:"区間 0.40 〜 0.60 s の平均の速度を求めよ。",answer:1.25,tol:0.01,unit:"m/s",
+     traps:{"0.25":"変位を経過時間 0.20 s で割ります。","0.05":"変位 × 時間ではなく、変位 ÷ 時間です。","0.75":"それは区間 0.40〜0.60 s の位置の変化ではなく、時刻 0.60 s の位置 ÷ 時刻です（0〜0.60 s の平均の速度）。"},
+     explain:"0.25 ÷ 0.20 ＝ 1.25 m/s。"},
+    {id:"rf4",type:"choice",prompt:"5つの区間の平均の速度は、順に 0.25、0.75、1.25、1.75、2.25 m/s になった。ここから立てられる仮説はどれか。",
+     options:["平均の速度が 0.20 s ごとに 0.50 m/s ずつ増えている → 加速度が一定の運動（等加速度直線運動）ではないか","どの区間も平均の速度が等しい → 速度一定の運動ではないか","平均の速度が不規則に変わる → 規則性はない"],answer:0,
+     explain:"速度の変化が一定の割合なので、加速度一定と考えられます。<i class='qv'>v</i>-<i class='qv'>t</i> グラフにすると直線に並びます。"},
+    {id:"rf5",type:"num",prompt:"この仮説にもとづいて、加速度の大きさを求めよ。",answer:2.5,tol:0.02,unit:"m/s²",
+     traps:{"0.5":"0.50 m/s は速度の変化です。経過時間 0.20 s で割ります。","0.1":"速度の変化 ÷ 時間です（× ではありません）。"},
+     explain:"<i class='qv'>a</i> ＝ Δ<i class='qv'>v</i> ÷ Δ<i class='qv'>t</i> ＝ 0.50 ÷ 0.20 ＝ 2.5 m/s²。"},
+    {id:"rf6",type:"choice",prompt:"<i class='qv'>v</i>-<i class='qv'>t</i> グラフに区間の平均の速度をかき込むとき、区間 0.40 〜 0.60 s の値（1.25 m/s）は、どの時刻の点としてかくのが適切か。",
+     options:["区間の真ん中の時刻 0.50 s","区間のはじめの時刻 0.40 s","区間の終わりの時刻 0.60 s"],answer:0,
+     explain:"等加速度直線運動では、区間の平均の速度は、区間の真ん中の時刻の瞬間の速度に等しくなります。真ん中の時刻にかくと、点が原点を通る直線に並びます。"},
+    {id:"rf7",type:"num",prompt:"数理モデル <i class='qv'>x</i> ＝ ½<i class='qv'>at</i>² を使って、まだ撮影していない時刻 1.20 s の位置を予測せよ。",answer:1.8,tol:0.02,unit:"m",
+     traps:{"3.6":"½ を掛け忘れていませんか。","1.5":"½ × 2.5 × 1.20 ではなく、時刻は2乗します。"},
+     explain:"<i class='qv'>x</i> ＝ ½ × 2.5 × 1.20² ＝ 1.8 m。表の値（例：1.00 s で 1.25 m）もこの式で説明できます。測って確かめれば、モデルの検証になります。"}
   ]}]
 },
 { id:"dim", advice:"式を書いたら、両辺の単位がそろっているか確かめる習慣をつけよう。", tab:"③次元", title:"③ 次元チェック", back:"③ 次元チェック",

@@ -20,10 +20,21 @@ const DEF_TABLE = `<div class="tbl"><table>
 <tr><td>慣性の法則</td><td>物体が外部から力を受けないか、あるいは外部から受ける力がつりあっている場合には、静止している物体は静止を続け、運動している物体は等速直線運動を続ける</td><td>―</td></tr>
 <tr><td>運動の法則</td><td>物体にいくつかの力がはたらくとき、物体にはそれらの合力の向きに加速度が生じる。その加速度の大きさは合力の大きさに比例し、物体の質量に反比例する。</td><td><i class='qv'>a</i> ＝ <i class='qv'>F</i> ÷ <i class='qv'>m</i></td></tr>
 <tr><td>運動方程式</td><td>着目物体について、質量 × 加速度 ＝ 受ける力の合力</td><td><i class='qv'>ma</i> ＝ <i class='qv'>F</i></td></tr>
-<tr><td>1 N</td><td>質量 1 kg の物体に 1 m/s² の加速度を生じさせる力の大きさ</td><td>1 N ＝ 1 kg·m/s²</td></tr>
+<tr><td>1 N</td><td>質量 1 kg の物体に 1 m/s² の加速度を生じさせる力の大きさ。運動の法則 <i class='qv'>a</i> ＝ <i class='qv'>k</i>Σ<i class='qv'>F</i>/<i class='qv'>m</i> の比例定数 <i class='qv'>k</i> が 1 になるように、力の単位を決めた</td><td>1 N ＝ 1 kg·m/s²</td></tr>
 <tr><td>静止摩擦力</td><td>静止している物体に対し動き出すのを妨げるようにはたらく摩擦力。外力に応じて変わる</td><td>力のつり合いの式で求める</td></tr>
 <tr><td>最大摩擦力</td><td>物体がすべりだす直前の静止摩擦力（静止摩擦力の最大値）</td><td><i class='qv'>F</i>₀ ＝ <i class='qv'>μN</i></td></tr>
 <tr><td>動摩擦力</td><td>あらい面上の物体の運動を妨げる向きにはたらく摩擦力。速さによらない</td><td><i class='qv'>F</i>′ ＝ <i class='qv'>μ</i>′<i class='qv'>N</i></td></tr>
+<tr><td>抗力</td><td>面が物体に及ぼす力全体。垂直抗力と摩擦力の合力</td><td>―</td></tr>
+<tr><td>摩擦角</td><td>あらい板を傾けていき、物体がすべりだす直前の傾きの角 <i class='qv'>θ</i><sub>0</sub>。静止摩擦係数と <i class='qv'>μ</i> ＝ tan <i class='qv'>θ</i><sub>0</sub> の関係がある</td><td><i class='qv'>μ</i> ＝ tan <i class='qv'>θ</i><sub>0</sub></td></tr>
+</table></div>
+<p>摩擦係数 <i class='qv'>μ</i>, <i class='qv'>μ</i>′ は、接している面の材質や状態で決まり、接している面積にはよらない。</p>
+<h3 style='font-size:15px;margin:14px 0 4px'>等号の3つの読み方</h3>
+<div class="tbl"><table>
+<colgroup><col style='width:7.5em'><col><col style='width:9em'></colgroup>
+<tr><th>種類</th><th>読み方</th><th>例</th></tr>
+<tr><td>① 定義式</td><td>左辺の量を、右辺で定義する（こう決めた）</td><td><i class='qv'>v</i> ＝ Δ<i class='qv'>x</i>/Δ<i class='qv'>t</i>、<i class='qv'>a</i> ＝ Δ<i class='qv'>v</i>/Δ<i class='qv'>t</i></td></tr>
+<tr><td>② 関係式（導いた式）</td><td>定義や法則から、計算で導いた式</td><td><i class='qv'>v</i> ＝ <i class='qv'>v</i><sub>0</sub> ＋ <i class='qv'>at</i>、<i class='qv'>v</i>² − <i class='qv'>v</i><sub>0</sub>² ＝ 2<i class='qv'>ax</i></td></tr>
+<tr><td>③ 関係式（法則）</td><td>実験・観測から推理された因果関係。<b>左辺が結果、右辺が原因</b>（その関係が成り立つ理由は説明できるとは限らない）</td><td><i class='qv'>a</i> ＝ Σ<i class='qv'>F</i>/<i class='qv'>m</i>（右辺の力が原因で、左辺の加速度が生じる）</td></tr>
 </table></div><p><i class='qv'>ma</i> は力ではないので、力の図には描かない。<i class='qv'>μ</i>, <i class='qv'>μ</i>′ は単位のない数。</p>`;
 const DIM_TABLE = `<div class="tbl"><table>
 <tr><th>量</th><th>単位</th></tr>
@@ -57,7 +68,27 @@ const SECTIONS = [
   intro:`運動の法則は3つ、摩擦力は3種類。摩擦力は「どの面がどの物体に及ぼすか」まで言えるようにします。<br>力学ラボで確かめよう：<br>${ANIM("anim/newton.html#inertia","慣性の法則")}${ANIM("anim/newton.html#law2","運動の法則")}${ANIM("anim/newton.html#action","作用・反作用")}${ANIM("anim/friction.html#floor","摩擦力（水平面）")}${ANIM("anim/friction.html#slope","摩擦力（斜面）")}${ANIM("anim/newton.html#eom","摩擦を含む運動方程式")}`,
   advice:"運動方程式の <i class='qv'>F</i> は「着目物体が受ける力の合力」であること、静止摩擦力と動摩擦力の違いを覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
-  groups:[{ title:"穴埋め", qs:[
+  groups:[{ title:"等号の読み方と、1 N の決め方", lead:"定義カードの最後の表「等号の3つの読み方」を見て答えよう。", qs:[
+    {id:"dq1",type:"choice",prompt:"<i class='qv'>a</i> ＝ Δ<i class='qv'>v</i>/Δ<i class='qv'>t</i> の等号はどの種類か。",options:["① 定義式","② 導いた関係式","③ 法則（結果 ＝ 原因）"],answer:0,
+     explain:"「単位時間あたりの速度の変化を加速度とよぶ」と決めた式です。左辺の量を右辺で定義しています。"},
+    {id:"dq2",type:"choice",prompt:"<i class='qv'>v</i> ＝ <i class='qv'>v</i><sub>0</sub> ＋ <i class='qv'>at</i> の等号はどの種類か。",options:["① 定義式","② 導いた関係式","③ 法則（結果 ＝ 原因）"],answer:1,
+     explain:"加速度の定義と「加速度が一定」という条件から、計算で導いた式です。"},
+    {id:"dq3",type:"choice",prompt:"<i class='qv'>a</i> ＝ Σ<i class='qv'>F</i>/<i class='qv'>m</i>（運動の法則）の等号はどの種類か。",options:["① 定義式","② 導いた関係式","③ 法則（結果 ＝ 原因）"],answer:2,
+     explain:"実験・観測から見つけた因果関係です。なぜこうなるかは、ほかの式から導けません。"},
+    {id:"dq4",type:"blanks",prompt:"運動の法則 <i class='qv'>a</i> ＝ Σ<i class='qv'>F</i>/<i class='qv'>m</i> を「結果 ＝ 原因」として読む。",text:"結果は{0}で、原因は{1}である。",
+     options:[["加速度（運動の変化）","合力","質量"],["加速度（運動の変化）","合力（と質量）"]],answer:[0,1],
+     explain:"物体が力を受けたことが原因となって、加速度（速度の変化）という結果が生じます。「力がはたらいているから動いている」ではなく、「力がはたらいているから速度が変わる」と読みます。"},
+    {id:"dq5",type:"choice",prompt:"仕事と運動エネルギーの関係 ½<i class='qv'>mv</i>² − ½<i class='qv'>mv</i><sub>0</sub>² ＝ <i class='qv'>W</i> を「結果 ＝ 原因」として読むと、どうなるか。",
+     options:["物体が仕事をされたこと（原因）で、運動エネルギーが変化した（結果）","運動エネルギーが変化したこと（原因）で、仕事が生じた（結果）","左辺と右辺は同じ量なので、原因も結果もない"],answer:0,
+     explain:"右辺の「された仕事」が原因、左辺の「運動エネルギーの変化」が結果です。運動方程式と同じ読み方ができます。"},
+    {id:"dq6",type:"choice",prompt:"実験から、加速度は合力に比例し質量に反比例する（<i class='qv'>a</i> ＝ <i class='qv'>k</i>Σ<i class='qv'>F</i>/<i class='qv'>m</i>、<i class='qv'>k</i> は比例定数）ことがわかった。1 N はどのように決められたか。",
+     options:["比例定数 <i class='qv'>k</i> が 1 になるように、1 kg の物体に 1 m/s² の加速度を生じさせる力を 1 N とした","地球上で 1 kg の物体が受ける重力を 1 N とした","ばねを 1 m 伸ばす力を 1 N とした"],answer:0,
+     explain:"<i class='qv'>k</i> ＝ 1 となるように力の単位を決めたので、<i class='qv'>ma</i> ＝ Σ<i class='qv'>F</i> と書けます。地球上で 1 kg の物体が受ける重力は 9.8 N です。"},
+    {id:"dq7",type:"choice",prompt:"重力の大きさが <i class='qv'>W</i> ＝ <i class='qv'>mg</i> になるのはなぜか。",
+     options:["自由落下する物体は重力だけを受けて加速度 <i class='qv'>g</i> で運動するので、運動方程式 <i class='qv'>mg</i> ＝ <i class='qv'>W</i> が成り立つから","重力の大きさを <i class='qv'>mg</i> と定義したから","重さと質量は同じ量だから"],answer:0,
+     explain:"運動方程式 <i class='qv'>ma</i> ＝ <i class='qv'>F</i> に、自由落下の <i class='qv'>a</i> ＝ <i class='qv'>g</i>、<i class='qv'>F</i> ＝ <i class='qv'>W</i> を入れると <i class='qv'>W</i> ＝ <i class='qv'>mg</i> が導けます。"}
+  ]},
+  { title:"穴埋め", qs:[
     {id:"d1",type:"choice",prompt:"物体が受ける力の合力が 0 のとき、動いている物体はどうなるか。",
      options:["しだいに遅くなって止まる","等速直線運動を続ける","すぐに止まる"],answer:1,
      explain:"慣性の法則。動き続けるのに力は要りません。止まるのは、摩擦などの力を受けるからです。"},
@@ -133,6 +164,26 @@ const SECTIONS = [
     {id:"re3",type:"choice",prompt:"A と B をまとめて1つの物体とみて運動方程式を立てた。この方法で求められないものは？",
      options:["加速度","糸の張力"],answer:1,
      explain:"まとめると (<i class='qv'>m</i><sub>A</sub> ＋ <i class='qv'>m</i><sub>B</sub>)<i class='qv'>a</i> ＝ <i class='qv'>m</i><sub>B</sub> <i class='qv'>g</i> で加速度は求まりますが、張力は2物体の間の力なので式に現れません。張力を求めるには物体ごとの式が必要です。"}
+  ]},
+  { title:"F. 摩擦力をくわしく読む", lead:`答えたら確かめよう：${ANIM("anim/friction.html#floor","摩擦力（水平面）")}${ANIM("anim/friction.html#slope","摩擦力（斜面・摩擦角）")}`, qs:[
+    {id:"rf1",type:"blanks",text:"あらい面が物体に及ぼす力は、面に垂直な{0}と、面に平行な{1}に分けて考える。この2つの合力を{2}という。",
+     options:[["垂直抗力","摩擦力","重力"],["垂直抗力","摩擦力","張力"],["抗力","重力","弾性力"]],answer:[0,1,0],
+     explain:"面が物体に及ぼす力は本来1つ（抗力）で、それを面に垂直な成分（垂直抗力）と平行な成分（摩擦力）に分けています。"},
+    {id:"rf2",type:"choice",prompt:"あらい板の上に物体を置き、板をゆっくり傾けていくと、傾きの角が <i class='qv'>θ</i><sub>0</sub> をこえたときにすべりだした。静止摩擦係数 <i class='qv'>μ</i> はどれか。",
+     options:["tan <i class='qv'>θ</i><sub>0</sub>","sin <i class='qv'>θ</i><sub>0</sub>","cos <i class='qv'>θ</i><sub>0</sub>"],answer:0,
+     explain:"すべりだす直前、斜面に平行な方向で <i class='qv'>mg</i> sin <i class='qv'>θ</i><sub>0</sub> ＝ <i class='qv'>μN</i>、垂直な方向で <i class='qv'>N</i> ＝ <i class='qv'>mg</i> cos <i class='qv'>θ</i><sub>0</sub>。よって <i class='qv'>μ</i> ＝ tan <i class='qv'>θ</i><sub>0</sub>。質量によらないので、角度だけで <i class='qv'>μ</i> を測れます。"},
+    {id:"rf3",type:"num",prompt:"<i class='qv'>θ</i><sub>0</sub> ＝ 30° のとき、静止摩擦係数を求めよ（有効数字2桁、tan 30° ≒ 0.577）。",answer:0.58,tol:0.006,unit:"",
+     traps:{"0.5":"sin 30° ではなく tan 30° です。","0.87":"cos 30° ではなく tan 30° です。"},
+     explain:"<i class='qv'>μ</i> ＝ tan 30° ≒ 0.58。"},
+    {id:"rf4",type:"choice",prompt:"同じ直方体の物体を、面積の大きい面を下にして置いた場合と、面積の小さい面を下にして置いた場合では、最大摩擦力はどうなるか。",
+     options:["ほぼ同じ","面積の大きい面を下にしたほうが大きい","面積の小さい面を下にしたほうが大きい"],answer:0,
+     explain:"最大摩擦力 <i class='qv'>μN</i> は、垂直抗力と、面の材質・状態で決まる <i class='qv'>μ</i> だけで決まり、接している面積にはよりません。"},
+    {id:"rf5",type:"choice",prompt:"あらい水平面上で、物体に初速度を与えて手をはなした。物体がすべっている間の加速度の大きさは、物体の質量を2倍にするとどうなるか。",
+     options:["変わらない","2倍になる","½倍になる"],answer:0,
+     explain:"<i class='qv'>N</i> ＝ <i class='qv'>mg</i>、運動方程式 <i class='qv'>ma</i> ＝ <i class='qv'>μ</i>′<i class='qv'>mg</i> より <i class='qv'>a</i> ＝ <i class='qv'>μ</i>′<i class='qv'>g</i>。質量が消えるので、加速度は質量によりません。"},
+    {id:"rf6",type:"num",prompt:"前の問いの物体で、動摩擦係数が 0.20 のとき、すべっている間の加速度の大きさを求めよ（<i class='qv'>g</i> ＝ 9.8 m/s²、有効数字2桁）。",answer:1.96,tol:0.05,unit:"m/s²",
+     traps:{"0.2":"<i class='qv'>a</i> ＝ <i class='qv'>μ</i>′<i class='qv'>g</i> です。<i class='qv'>g</i> を掛けます。"},
+     explain:"<i class='qv'>a</i> ＝ 0.20 × 9.8 ≒ 2.0 m/s²（運動の向きと逆向き）。"}
   ]}]
 },
 { id:"dim", tab:"③次元", title:"③ 次元チェック",
