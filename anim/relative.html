@@ -166,7 +166,8 @@ sub .s, sub i{font-family:var(--f-sym)}
 .g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start;margin-top:14px}
 @media (max-width:900px){.g1,.g2{grid-template-columns:minmax(0,1fr)}}
 .stage canvas#scene{height:clamp(280px,38vw,440px)}
-body.lr3 .stage canvas#scene{height:clamp(480px,60vw,600px)}
+body.lr3 .stage canvas#scene{height:clamp(560px,56vw,620px)}
+@media (max-width:639px){body.lr3 .stage canvas#scene{height:720px}}
 body.lr3 #viewField{display:none}
 #vec{display:block;width:100%;height:240px}
 .colR{display:flex;flex-direction:column;gap:14px;min-width:0}
@@ -1206,66 +1207,124 @@ body.lr3 #viewField{display:none}
     }
   }
 
-  /* 一直線の相対速度：地面・A の運転手・B の運転手の3つの立場を、同じ時刻・同じ縮尺で上下に並べる */
+  /* 一直線の相対速度：上に地面から見た図（上から見た道路）、下に A・B それぞれの運転席から進行方向を見た図（遠近法）。すべて同じ時刻で連動する */
   function drawLineRel3(ctx, w, h, t) {
-    const C = K.css, ink = K.sceneInk(null), dark = K.isDark();
-    const vA = M.vA.x, vB = M.vB.x, T = M.tEnd;
-    const FR = [
-      { key: 'g', name: '地面から見る', col: ink.ink, s: 0 },
-      { key: 'A', name: '車 A の運転手から見る（A が止まって見える）', col: C('--ka'), s: vA },
-      { key: 'B', name: '車 B の運転手から見る（B が止まって見える）', col: C('--kb'), s: vB },
-    ];
-    // 立場 s（その立場の速度）で見た位置
-    const xA = (tt, fr) => posA(tt).x - fr.s * tt, xB = (tt, fr) => posB(tt).x - fr.s * tt;
-    // 3つの立場に共通の縮尺
-    let span = 1;
-    FR.forEach((fr) => { const xs = []; for (let i = 0; i <= 24; i++) { const tt = (T * i) / 24; xs.push(xA(tt, fr), xB(tt, fr)); } fr.mn = Math.min(...xs); fr.mx = Math.max(...xs); span = Math.max(span, fr.mx - fr.mn); });
-    const sc = (w - (w < 640 ? 100 : 150)) / Math.max(span, 1);
-    const bh = h / 3, vs = 52 / Math.max(1, Math.abs(vA), Math.abs(vB), Math.abs(vA - vB));
-    const dtS = strobeDt(), ts = K.strobeTimes(T, dtS).filter((q) => q <= t + 1e-9);
-    FR.forEach((fr, i) => {
-      const y0 = i * bh, mid = (fr.mn + fr.mx) / 2, X = (x) => w / 2 + (x - mid) * sc;
-      // 背景
-      ctx.fillStyle = i % 2 ? (dark ? '#18212c' : '#f4f7fa') : (dark ? '#141c26' : '#ffffff'); ctx.fillRect(0, y0, w, bh);
-      if (i) { ctx.fillStyle = ink.line; ctx.fillRect(0, y0, w, 1.5); }
-      const yA = y0 + bh * 0.56, yB = y0 + bh * 0.9, road0 = y0 + bh * 0.36;
-      // 道路
-      ctx.fillStyle = dark ? '#2a3440' : '#e3e8ee'; ctx.fillRect(0, road0, w, yB + 6 - road0);
-      ctx.fillStyle = ink.line; ctx.fillRect(0, (yA + yB) / 2 - 6, w, 1);
-      // 地面の目印（木）：地面に固定。立場が動くと逆向きに流れて見える
-      const st = K.niceStep(span + 8, Math.max(4, Math.floor(w / 90))), sh = fr.s * t;
-      for (let x = Math.floor((mid - (w / 2) / sc + sh) / st) * st; x <= mid + (w / 2) / sc + sh; x += st) {
-        const px = X(x - sh); if (px < -12 || px > w + 12) continue;
-        ctx.fillStyle = dark ? '#2f5a33' : '#6aa363'; ctx.beginPath(); ctx.arc(px, road0 - 13, 7, 0, 7); ctx.fill();
-        ctx.fillStyle = dark ? '#6b4b2e' : '#7a5533'; ctx.fillRect(px - 1.2, road0 - 7, 2.4, 7);
-      }
-      // ストロボ
-      ts.forEach((q) => { ctx.globalAlpha = 0.45; ctx.fillStyle = C('--ka'); ctx.beginPath(); ctx.arc(X(xA(q, fr)), yA + 9, 2.8, 0, 7); ctx.fill(); ctx.fillStyle = C('--kb'); ctx.beginPath(); ctx.arc(X(xB(q, fr)), yB + 9, 2.8, 0, 7); ctx.fill(); ctx.globalAlpha = 1; });
-      // 車
-      const pa = X(xA(t, fr)), pb = X(xB(t, fr));
-      drawCar(ctx, pa, yA, C('--ka'), 'A', vA); drawCar(ctx, pb, yB, C('--kb'), 'B', vB);
-      // 運転手の目印（その立場の車）
-      if (fr.key !== 'g') { const px = fr.key === 'A' ? pa : pb, py = fr.key === 'A' ? yA : yB; ctx.strokeStyle = fr.col; ctx.lineWidth = 2; ctx.setLineDash([3, 3]); ctx.strokeRect(px - 27, py - 29, 54, 36); ctx.setLineDash([]); }
-      // 見かけの速度の矢印
-      const va = vA - fr.s, vb = vB - fr.s;
-      const lab = (who, v) => fr.key === 'g' ? `*v*_${who} = ${f(v, 0)} m/s` : `*v*_{${fr.key}${who}} = ${f(v, 0)} m/s`;
-      const arr = (px, py, v, who, colKey) => {
-        if (Math.abs(v) < 1e-6) { K.tag(ctx, '止まって見える', px, py - 34, C(colKey), 11, 'center'); return; }
-        const x1 = px - v * vs / 2, x2 = px + v * vs / 2;   // 矢印は車の真上を中心にかく
-        K.arrow(ctx, x1, py - 32, x2, py - 32, C(fr.key === 'g' ? colKey : '--kr'), 2.6, 9);
-        const tx = lab(who, v), tw = K.rich(ctx, tx, 0, 0, 11, 'left', true) + 10, end = x2;
-        let lx = end + (v > 0 ? 6 : -6), al = v > 0 ? 'left' : 'right';
-        if (v > 0 && lx + tw > w) { lx = x1 - 6; al = 'right'; } else if (v < 0 && lx - tw < 0) { lx = x1 + 6; al = 'left'; }
-        K.tag(ctx, tx, lx, py - 32, C(fr.key === 'g' ? colKey : '--kr'), 11, al);
-      };
-      if (fr.key !== 'A') arr(pa, yA, va, 'A', '--ka'); else K.tag(ctx, '止まって見える', pa, yA - 34, C('--ka'), 11, 'center');
-      if (fr.key !== 'B') arr(pb, yB, vb, 'B', '--kb'); else K.tag(ctx, '止まって見える', pb, yB - 34, C('--kb'), 11, 'center');
-      // 見出し
-      K.tag(ctx, fr.name, 10, y0 + 13, fr.col, 12, 'left');
-      if (fr.key !== 'g') { const nar = w < 640; K.tag(ctx, '木（地面）は ' + f(-fr.s, 0) + ' m/s で流れて見える', nar ? 10 : w - 10, nar ? y0 + 31 : y0 + 13, ink.ink2, 11, nar ? 'left' : 'right'); }
+    const wide = w >= 640, gh = Math.round(h * (wide ? 0.36 : 0.3));
+    drawGroundBand(ctx, 0, 0, w, gh, t);
+    if (wide) { const hw = Math.floor(w / 2); drawDriver(ctx, 0, gh, hw - 1, h - gh, 'A', t); drawDriver(ctx, hw + 1, gh, w - hw - 1, h - gh, 'B', t); }
+    else { const dh = Math.floor((h - gh) / 2); drawDriver(ctx, 0, gh, w, dh - 1, 'A', t); drawDriver(ctx, 0, gh + dh + 1, w, h - gh - dh - 1, 'B', t); }
+  }
+  // 地面から見た図（上から見た2車線）
+  function drawGroundBand(ctx, x0, y0, w, bh, t) {
+    const C = K.css, ink = K.sceneInk(null), dark = K.isDark(), vA = M.vA.x, vB = M.vB.x, T = M.tEnd;
+    const xs = []; for (let i = 0; i <= 24; i++) { const tt = (T * i) / 24; xs.push(posA(tt).x, posB(tt).x); }
+    const mn = Math.min(...xs), mx = Math.max(...xs), sc = (w - (w < 640 ? 100 : 150)) / Math.max(mx - mn, 1), mid = (mn + mx) / 2, X = (x) => x0 + w / 2 + (x - mid) * sc;
+    ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, w, bh); ctx.clip();
+    ctx.fillStyle = dark ? '#141c26' : '#ffffff'; ctx.fillRect(x0, y0, w, bh);
+    const road0 = y0 + 40, yA = road0 + (bh - 44) * 0.44, yB = road0 + (bh - 44) * 0.9;
+    ctx.fillStyle = dark ? '#2a3440' : '#e3e8ee'; ctx.fillRect(x0, road0, w, yB + 6 - road0);
+    ctx.fillStyle = ink.line; ctx.fillRect(x0, (yA + yB) / 2 - 4, w, 1);
+    const st = K.niceStep(mx - mn + 8, Math.max(4, Math.floor(w / 90)));
+    for (let x = Math.floor((mid - w / 2 / sc) / st) * st; x <= mid + w / 2 / sc; x += st) { const px = X(x); ctx.fillStyle = dark ? '#2f5a33' : '#6aa363'; ctx.beginPath(); ctx.arc(px, road0 - 8, 5.5, 0, 7); ctx.fill(); }
+    const ts = K.strobeTimes(T, strobeDt()).filter((q) => q <= t + 1e-9);
+    ts.forEach((q) => { ctx.globalAlpha = 0.45; ctx.fillStyle = C('--ka'); ctx.beginPath(); ctx.arc(X(posA(q).x), yA + 9, 2.6, 0, 7); ctx.fill(); ctx.fillStyle = C('--kb'); ctx.beginPath(); ctx.arc(X(posB(q).x), yB + 9, 2.6, 0, 7); ctx.fill(); ctx.globalAlpha = 1; });
+    const pa = X(posA(t).x), pb = X(posB(t).x), vs = 52 / Math.max(1, Math.abs(vA), Math.abs(vB));
+    drawCar(ctx, pa, yA, C('--ka'), 'A', vA); drawCar(ctx, pb, yB, C('--kb'), 'B', vB);
+    [[pa, yA, vA, '*v*_A', '--ka'], [pb, yB, vB, '*v*_B', '--kb']].forEach(([px, py, v, sym, ck]) => {
+      if (Math.abs(v) < 1e-6) { K.tag(ctx, '止まっている', px, py - 32, C(ck), 11, 'center'); return; }
+      const x1 = px - v * vs / 2, x2 = px + v * vs / 2; K.arrow(ctx, x1, py - 30, x2, py - 30, C(ck), 2.4, 9);
+      const tx = sym + ' = ' + f(v, 0) + ' m/s', tw = K.rich(ctx, tx, 0, 0, 11, 'left', true) + 10;
+      let lx = x2 + (v > 0 ? 6 : -6), al = v > 0 ? 'left' : 'right';
+      if (v > 0 && lx + tw > x0 + w) { lx = x1 - 6; al = 'right'; } else if (v < 0 && lx - tw < x0) { lx = x1 + 6; al = 'left'; }
+      K.tag(ctx, tx, lx, py - 30, C(ck), 11, al);
     });
-    // 時刻
-    K.tag(ctx, 't = ' + f(t, 1) + ' s', w - 10, h - 10, ink.ink2, 11, 'right');
+    K.tag(ctx, '地面から見る（上から見た道路）', x0 + 10, y0 + 12, ink.ink, 12, 'left');
+    K.tag(ctx, 't = ' + f(t, 1) + ' s', x0 + w - 10, y0 + 12, ink.ink2, 11, 'right');
+    ctx.restore();
+  }
+  // 運転席から進行方向を見た図（遠近法）。自分の車線の右に相手の車線がある
+  function drawDriver(ctx, x0, y0, vw, vh, who, t) {
+    const C = K.css, dark = K.isDark();
+    const me = who === 'A' ? { x: posA(t).x, v: M.vA.x, ck: '--ka' } : { x: posB(t).x, v: M.vB.x, ck: '--kb' };
+    const ot = who === 'A' ? { x: posB(t).x, v: M.vB.x, ck: '--kb', n: 'B' } : { x: posA(t).x, v: M.vA.x, ck: '--ka', n: 'A' };
+    const dir = me.v < 0 ? -1 : 1;                         // 進行方向（止まっているときは右向き）
+    const zf = (ot.x - me.x) * dir;                         // 相手までの前方の距離（車の中心どうし）
+    const vrel = (ot.v - me.v) * dir;                       // 進行方向にそった相手の見かけの速度
+    const LW = 3.5, HC = 1.2;                               // 車線の幅、目の高さ [m]
+    const dashH = Math.min(vh * 0.2, 46), hy = y0 + (vh - dashH) * 0.4, fl = vw * 0.85, cx = x0 + vw * 0.42;
+    const P = (xl, z, y = 0) => [cx + (fl * xl) / z, hy + (fl * (HC - y)) / z];
+    ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, vw, vh); ctx.clip();
+    // 空と地面
+    const sky = ctx.createLinearGradient(0, y0, 0, hy); sky.addColorStop(0, dark ? '#0f1b2b' : '#9cc9ef'); sky.addColorStop(1, dark ? '#24364c' : '#dcecf8');
+    ctx.fillStyle = sky; ctx.fillRect(x0, y0, vw, hy - y0);
+    ctx.fillStyle = dark ? '#22331f' : '#a9c98c'; ctx.fillRect(x0, hy, vw, y0 + vh - hy);
+    // 道路（自分の車線 −1.75〜1.75 m、相手の車線 1.75〜5.25 m）
+    const Z0 = 1.2, Z1 = 400, poly = (pts, fill) => { ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); };
+    poly([P(-LW / 2 - 0.6, Z0), P(LW * 1.5 + 0.6, Z0), P(LW * 1.5 + 0.6, Z1), P(-LW / 2 - 0.6, Z1)], dark ? '#323a44' : '#7c858f');
+    const line = (xl, col, wdt) => { const a = P(xl, Z0), b = P(xl, Z1); ctx.strokeStyle = col; ctx.lineWidth = wdt; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); };
+    line(-LW / 2, '#f4f4f4', 2.5); line(LW * 1.5, '#f4f4f4', 2.5);
+    // 地面に固定された目印：車線の破線（10 m ごと）と、道ばたの木（20 m ごと）。自分が進むと手前へ流れてくる
+    // 地面の座標 g にある目印の前方距離 z ＝ (g − 自分の位置) × 進行方向。z が増える向きに g を進める
+    const marks = (step, off, zmax, fn) => { let g = dir > 0 ? Math.floor((me.x - 5) / step) * step + off : Math.ceil((me.x + 5) / step) * step - off; for (let n = 0; n < 400; n++, g += step * dir) { const z = (g - me.x) * dir; if (z > zmax) break; fn(z); } };
+    const sorted = [];
+    marks(10, 0, 160, (z) => { if (z >= Z0) sorted.push({ z, kind: 'dash' }); });
+    marks(20, 10, 220, (z) => { if (z >= 2) sorted.push({ z, kind: 'tree', side: -1 }); if (z + 10 >= 2) sorted.push({ z: z + 10, kind: 'tree', side: 1 }); });
+    if (zf - 2.25 > Z0 && zf - 2.25 < 400) sorted.push({ z: zf - 2.25, kind: 'car' });
+    sorted.sort((a, b) => b.z - a.z);                       // 遠いものから描く
+    sorted.forEach((o) => {
+      if (o.kind === 'dash') {
+        const a = P(LW / 2, o.z), b = P(LW / 2, o.z + 4); ctx.strokeStyle = '#f4f4f4'; ctx.lineWidth = Math.max(1, 3 / Math.sqrt(o.z)); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+      } else if (o.kind === 'tree') {
+        const xl = o.side < 0 ? -LW / 2 - 3 : LW * 1.5 + 3, b = P(xl, o.z), top = P(xl, o.z, 5), r = (fl * 1.6) / o.z;
+        ctx.fillStyle = dark ? '#6b4b2e' : '#7a5533'; ctx.fillRect(b[0] - r * 0.12, top[1] + r * 0.6, r * 0.24, b[1] - top[1] - r * 0.6);
+        ctx.fillStyle = dark ? '#2f5a33' : '#5f9a58'; ctx.beginPath(); ctx.arc(top[0], top[1] + r * 0.4, r, 0, 7); ctx.fill();
+      } else drawFace(ctx, P, o.z, LW, ot, dir, false);
+    });
+    // 相手がすぐ横にいるとき：右の窓の外に車体の側面が見える
+    if (zf - 2.25 <= Z0 && zf + 2.25 >= -1) {
+      const sx = x0 + vw * 0.84, sw = x0 + vw - sx, top = hy - vh * 0.03, bot = y0 + vh - dashH * 0.6;
+      ctx.fillStyle = C(ot.ck); ctx.fillRect(sx, top, sw, bot - top);
+      ctx.fillStyle = 'rgba(20,30,40,.7)'; ctx.fillRect(sx + sw * 0.1, top + (bot - top) * 0.08, sw * 0.8, (bot - top) * 0.3);
+      ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(sx + sw * 0.5, bot, Math.min(sw * 0.3, 26), Math.PI, 0); ctx.fill();
+      if (sw > 30) { ctx.fillStyle = '#fff'; ctx.font = 'bold 14px ' + C('--f-ui'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(ot.n, sx + sw / 2, top + (bot - top) * 0.6); }
+    }
+    // 自分の車のボンネット・ダッシュボード・速度計
+    const by = y0 + vh - dashH;
+    ctx.fillStyle = C(me.ck); ctx.globalAlpha = 0.9; ctx.beginPath(); ctx.moveTo(x0, by); ctx.quadraticCurveTo(cx, by - dashH * 0.55, x0 + vw, by); ctx.lineTo(x0 + vw, y0 + vh); ctx.lineTo(x0, y0 + vh); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.fillStyle = dark ? '#0b0f14' : '#222a33'; ctx.fillRect(x0, by + dashH * 0.35, vw, dashH);
+    ctx.fillStyle = '#e8ecf2'; ctx.font = '12px ' + C('--f-ui'); ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    ctx.fillText('速度計 ' + f(Math.abs(me.v), 0) + ' m/s（' + f(Math.abs(me.v) * 3.6, 0) + ' km/h）', x0 + 10, by + dashH * 0.68);
+    // バックミラー（後ろが映る。右側の車線はミラーでも右側に映る）
+    const mw = Math.min(vw * 0.34, 170), mh = mw * 0.32, mx0 = cx - mw / 2, my0 = y0 + 22;
+    ctx.save(); ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(mx0, my0, mw, mh, 6); else ctx.rect(mx0, my0, mw, mh); ctx.fillStyle = dark ? '#1b2633' : '#cfe0ee'; ctx.fill(); ctx.clip();
+    const mf = mw * 0.55, mhy = my0 + mh * 0.42, mcx = mx0 + mw * 0.42, MP = (xl, z, y = 0) => [mcx + (mf * xl) / z, mhy + (mf * (HC - y)) / z];
+    ctx.fillStyle = dark ? '#323a44' : '#7c858f'; ctx.beginPath(); [MP(-LW / 2, 1.5), MP(LW * 1.5, 1.5), MP(LW * 1.5, 300), MP(-LW / 2, 300)].forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.closePath(); ctx.fill();
+    if (-zf - 2.25 > 1.5) drawFace(ctx, MP, -zf - 2.25, LW, ot, -dir, true);
+    ctx.restore();
+    ctx.strokeStyle = dark ? '#8a96a3' : '#333'; ctx.lineWidth = 2; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(mx0, my0, mw, mh, 6); else ctx.rect(mx0, my0, mw, mh); ctx.stroke();
+    K.tag(ctx, 'ミラー（後ろ）', mx0 + mw + 4, my0 + 8, dark ? '#c9d2dc' : '#333', 10, 'left');
+    // 見出しと、相手の見え方
+    K.tag(ctx, '車 ' + who + ' の運転席から（進行方向を見る）', x0 + 8, y0 + 11, C(me.ck), 11.5, 'left');
+    const where = Math.abs(zf) < 2.5 ? 'すぐ横' : zf > 0 ? '前方 ' + f(zf, 0) + ' m' : '後方 ' + f(-zf, 0) + ' m（ミラー）';
+    const how = Math.abs(vrel) < 1e-6 ? '止まって見える' : (zf >= 0 ? (vrel < 0 ? '近づいてくる' : '遠ざかる') : (vrel > 0 ? '近づいてくる' : '遠ざかる'));
+    const sym = '*v*_{' + who + ot.n + '}';
+    K.tag(ctx, ot.n + '：' + where + '、' + how, x0 + 8, y0 + vh - dashH - 26, C(ot.ck), 11.5, 'left');
+    K.tag(ctx, sym + ' = ' + f(ot.v - me.v, 0) + ' m/s', x0 + 8, y0 + vh - dashH - 8, C('--kr'), 11.5, 'left');
+    ctx.restore();
+  }
+  // 相手の車を、後ろ（テールランプ）か前（ヘッドライト）の面として描く
+  function drawFace(ctx, P, z, LW, ot, viewDir, mirror) {
+    const C = K.css, xl = LW, wdt = 1.8, ht = 1.45;
+    const sameDir = ot.v * viewDir > 0 || (Math.abs(ot.v) < 1e-6 && !mirror);   // 相手が同じ向きに進むなら、見えるのは後ろの面
+    const front = mirror ? ot.v * viewDir < 0 || Math.abs(ot.v) < 1e-6 ? false : true : !sameDir;
+    const a = P(xl - wdt / 2, z, 0), b = P(xl + wdt / 2, z, ht), w = b[0] - a[0], hgt = a[1] - b[1];
+    if (w < 1) return;
+    ctx.fillStyle = C(ot.ck); ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(a[0], b[1], w, hgt, Math.max(1, w * 0.08)); else ctx.rect(a[0], b[1], w, hgt); ctx.fill();
+    ctx.fillStyle = 'rgba(20,30,40,.75)'; ctx.fillRect(a[0] + w * 0.14, b[1] + hgt * 0.1, w * 0.72, hgt * 0.32);
+    const lc = front ? '#fff3b0' : '#ff3b30';
+    ctx.fillStyle = lc; ctx.fillRect(a[0] + w * 0.06, b[1] + hgt * 0.58, w * 0.18, hgt * 0.13); ctx.fillRect(a[0] + w * 0.76, b[1] + hgt * 0.58, w * 0.18, hgt * 0.13);
+    ctx.fillStyle = '#111'; ctx.fillRect(a[0] + w * 0.08, a[1] - hgt * 0.06, w * 0.16, hgt * 0.1); ctx.fillRect(a[0] + w * 0.76, a[1] - hgt * 0.06, w * 0.16, hgt * 0.1);
+    if (w > 16) { ctx.fillStyle = '#fff'; ctx.font = `bold ${Math.min(14, w * 0.25)}px ` + C('--f-ui'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(ot.n, a[0] + w / 2, b[1] + hgt * 0.62); }
   }
   function velArrows(ctx, X, gY, t, pa, pb) {
     const C = K.css, vs = 60 / Math.max(1, Math.abs(M.vA.x), Math.abs(M.vB.x), Math.abs(M.rel.x));
