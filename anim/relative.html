@@ -166,6 +166,8 @@ sub .s, sub i{font-family:var(--f-sym)}
 .g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start;margin-top:14px}
 @media (max-width:900px){.g1,.g2{grid-template-columns:minmax(0,1fr)}}
 .stage canvas#scene{height:clamp(280px,38vw,440px)}
+body.lr3 .stage canvas#scene{height:clamp(480px,60vw,600px)}
+body.lr3 #viewField{display:none}
 #vec{display:block;width:100%;height:240px}
 .colR{display:flex;flex-direction:column;gap:14px;min-width:0}
 .gcols{display:flex;flex-direction:column;gap:10px;min-width:0}
@@ -218,7 +220,7 @@ sub .s, sub i{font-family:var(--f-sym)}
         <h2>条件</h2>
         <div class="body" style="display:flex;flex-direction:column;gap:12px">
           <div class="modeNote" id="modeNote" style="font-size:12.5px;color:var(--ink2)"></div>
-          <div class="field"><div class="lab"><span>見る立場</span></div><div class="seg" id="viewSeg"></div></div>
+          <div class="field" id="viewField"><div class="lab"><span>見る立場</span></div><div class="seg" id="viewSeg"></div></div>
           <div class="prm" id="params"></div>
           <div class="row" id="extraBtns"></div>
           <div class="row">
@@ -955,6 +957,8 @@ sub .s, sub i{font-family:var(--f-sym)}
   function update() {
     M = compute(); sync();
     const one = M.dim === 1;
+    document.body.classList.toggle('lr3', S.mode === 'line-rel');
+    if (S.mode === 'line-rel') S.view = 'ground';
     $('#graphs').classList.toggle('hidden-g', !one);
     $('#table').classList.toggle('hidden-g', one);
     if (one) {
@@ -962,6 +966,7 @@ sub .s, sub i{font-family:var(--f-sym)}
       G1.fn = (t) => posB(t).x; G1.dfn = () => M.vB.x; G1.tEnd = M.tEnd; G1.tAxis = tA;
       G1.extras = [{ fn: (t) => posA(t).x, color: '--ka' }];
       G2.fn = (t) => posB(t).x - posA(t).x; G2.dfn = () => M.rel.x; G2.tEnd = M.tEnd; G2.tAxis = tA; G2.slope = true;
+      G2.extras = M.kind === 'sum' ? [] : [{ fn: (t) => posA(t).x - posB(t).x, color: '--ka' }];
       if (M.kind === 'sum') {
         $('#g1m').textContent = '地面から見た位置';
         $('#g1leg').innerHTML = '<span><i class="sw" style="--c:var(--kb)"></i>人</span><span><i class="sw" style="--c:var(--ka)"></i>電車（人がいた最初の場所）</span>';
@@ -970,8 +975,8 @@ sub .s, sub i{font-family:var(--f-sym)}
       } else {
         $('#g1m').textContent = '地面から見た位置';
         $('#g1leg').innerHTML = '<span><i class="sw" style="--c:var(--kb)"></i>車 B</span><span><i class="sw" style="--c:var(--ka)"></i>車 A</span>';
-        $('#g2t').innerHTML = 'A から見た B の位置-<i class="s">t</i> 図';
-        $('#g2m').innerHTML = '<i class="s">x</i><sub>B</sub> − <i class="s">x</i><sub>A</sub>（傾き ＝ <i class="s">v</i><sub>AB</sub>）';
+        $('#g2t').innerHTML = 'A から見た B・B から見た A の位置-<i class="s">t</i> 図';
+        $('#g2m').innerHTML = '紫：<i class="s">x</i><sub>B</sub> − <i class="s">x</i><sub>A</sub>（傾き ＝ <i class="s">v</i><sub>AB</sub>）　緑：<i class="s">x</i><sub>A</sub> − <i class="s">x</i><sub>B</sub>（傾き ＝ <i class="s">v</i><sub>BA</sub>）';
       }
     }
     player.setEnd(M.tEnd);
@@ -989,7 +994,8 @@ sub .s, sub i{font-family:var(--f-sym)}
         <div class="eq"><div class="tag">見方を変えると：電車に対する人の速度（相対速度）</div><div class="main">${T('R', I('u'), '--kr')}${op('=')}${T('B', I('v'), '--kb')}${op('−')}${T('A', I('V'), '--ka')}</div><div class="subst" data-s="2"></div></div>`;
     } else if (m === 'line-rel') {
       html = `<div class="eq"><div class="tag">相対速度：A から見た B の速度</div><div class="main">${T('R', I('v') + '<sub>AB</sub>', '--kr')}${op('=')}${T('B', I('v') + '<sub>B</sub>', '--kb')}${op('−')}${T('A', I('v') + '<sub>A</sub>', '--ka')}</div><div class="subst" data-s="1"></div></div>
-        <div class="eq"><div class="tag">移項すると合成速度の形</div><div class="main">${T('B', I('v') + '<sub>B</sub>', '--kb')}${op('=')}${T('A', I('v') + '<sub>A</sub>', '--ka')}${op('+')}${T('R', I('v') + '<sub>AB</sub>', '--kr')}</div><div class="subst" data-s="2"></div></div>`;
+        <div class="eq"><div class="tag">移項すると合成速度の形</div><div class="main">${T('B', I('v') + '<sub>B</sub>', '--kb')}${op('=')}${T('A', I('v') + '<sub>A</sub>', '--ka')}${op('+')}${T('R', I('v') + '<sub>AB</sub>', '--kr')}</div><div class="subst" data-s="2"></div></div>
+        <div class="eq"><div class="tag">B から見た A の速度（立場を入れかえる）</div><div class="main">${I('v')}<sub>BA</sub>${op('=')}${T('A', I('v') + '<sub>A</sub>', '--ka')}${op('−')}${T('B', I('v') + '<sub>B</sub>', '--kb')}${op('=')}${op('−')}${T('R', I('v') + '<sub>AB</sub>', '--kr')}</div><div class="subst" data-s="3"></div></div>`;
     } else if (m === 'plane-sum') {
       html = `<div class="eq"><div class="tag">合成速度（ベクトルの和）</div><div class="main">${T('B', vec('v'), '--kb')}${op('=')}${T('A', vec('V'), '--ka')}${op('+')}${T('R', vec('u'), '--kr')}</div><div class="subst" data-s="1"></div></div>
         <div class="eq"><div class="tag">成分に分ける</div><div class="main" style="font-size:18px">${I('v')}<sub>${I('x')}</sub>${op('=')}${I('V')}${op('−')}${I('u')} sin${I('θ')}，　${I('v')}<sub>${I('y')}</sub>${op('=')}${T('uy', I('u') + ' cos' + I('θ'), '--kr')}</div><div class="subst" data-s="2"></div></div>
@@ -1010,6 +1016,7 @@ sub .s, sub i{font-family:var(--f-sym)}
     } else if (m === 'line-rel') {
       el(1).textContent = `vAB = ${f(vB.x, 1)} − ${fs(vA.x, 1)} = ${f(r.x, 1)} m/s` + (Math.abs(r.x) < 1e-9 ? '（A から見ると B は止まって見える）' : r.x > 0 ? '（A から見ると B は右向きに進む）' : '（A から見ると B は左向きに進む）');
       el(2).textContent = `vB = ${f(vA.x, 1)} + ${fs(r.x, 1)} = ${f(vB.x, 1)} m/s`;
+      if (el(3)) el(3).textContent = `vBA = ${f(vA.x, 1)} − ${fs(vB.x, 1)} = ${f(-r.x, 1)} m/s（vAB と大きさが同じで、向きが逆）`;
     } else if (m === 'plane-sum') {
       const th = S.ps.th;
       el(1).textContent = `|v| = √(${f(vB.x, 2)}² + ${f(vB.y, 2)}²) = ${f(len(vB), 2)} m/s`;
@@ -1130,7 +1137,8 @@ sub .s, sub i{font-family:var(--f-sym)}
     const { ctx, w, h } = K.fit(cv);
     ctx.clearRect(0, 0, w, h);
     const m = S.mode;
-    if (m === 'line-sum' || m === 'line-rel') drawLine(ctx, w, h, t);
+    if (m === 'line-rel') { drawLineRel3(ctx, w, h, t); return; }
+    if (m === 'line-sum') drawLine(ctx, w, h, t);
     else if (m === 'plane-sum') drawRiver(ctx, w, h, t);
     else if (M.rain) drawRain(ctx, w, h, t);
     else drawCars(ctx, w, h, t);
@@ -1196,6 +1204,68 @@ sub .s, sub i{font-family:var(--f-sym)}
       else K.tag(ctx, '止まって見える', X(pb.x), yB - 22, C('--kr'), 11.5, 'center');
       K.tag(ctx, '距離 ' + f(Math.abs(posB(t).x - posA(t).x), 1) + ' m', (X(pa.x) + X(pb.x)) / 2, (yA + yB) / 2 + 4, ink.ink, 12, 'center');
     }
+  }
+
+  /* 一直線の相対速度：地面・A の運転手・B の運転手の3つの立場を、同じ時刻・同じ縮尺で上下に並べる */
+  function drawLineRel3(ctx, w, h, t) {
+    const C = K.css, ink = K.sceneInk(null), dark = K.isDark();
+    const vA = M.vA.x, vB = M.vB.x, T = M.tEnd;
+    const FR = [
+      { key: 'g', name: '地面から見る', col: ink.ink, s: 0 },
+      { key: 'A', name: '車 A の運転手から見る（A が止まって見える）', col: C('--ka'), s: vA },
+      { key: 'B', name: '車 B の運転手から見る（B が止まって見える）', col: C('--kb'), s: vB },
+    ];
+    // 立場 s（その立場の速度）で見た位置
+    const xA = (tt, fr) => posA(tt).x - fr.s * tt, xB = (tt, fr) => posB(tt).x - fr.s * tt;
+    // 3つの立場に共通の縮尺
+    let span = 1;
+    FR.forEach((fr) => { const xs = []; for (let i = 0; i <= 24; i++) { const tt = (T * i) / 24; xs.push(xA(tt, fr), xB(tt, fr)); } fr.mn = Math.min(...xs); fr.mx = Math.max(...xs); span = Math.max(span, fr.mx - fr.mn); });
+    const sc = (w - (w < 640 ? 100 : 150)) / Math.max(span, 1);
+    const bh = h / 3, vs = 52 / Math.max(1, Math.abs(vA), Math.abs(vB), Math.abs(vA - vB));
+    const dtS = strobeDt(), ts = K.strobeTimes(T, dtS).filter((q) => q <= t + 1e-9);
+    FR.forEach((fr, i) => {
+      const y0 = i * bh, mid = (fr.mn + fr.mx) / 2, X = (x) => w / 2 + (x - mid) * sc;
+      // 背景
+      ctx.fillStyle = i % 2 ? (dark ? '#18212c' : '#f4f7fa') : (dark ? '#141c26' : '#ffffff'); ctx.fillRect(0, y0, w, bh);
+      if (i) { ctx.fillStyle = ink.line; ctx.fillRect(0, y0, w, 1.5); }
+      const yA = y0 + bh * 0.56, yB = y0 + bh * 0.9, road0 = y0 + bh * 0.36;
+      // 道路
+      ctx.fillStyle = dark ? '#2a3440' : '#e3e8ee'; ctx.fillRect(0, road0, w, yB + 6 - road0);
+      ctx.fillStyle = ink.line; ctx.fillRect(0, (yA + yB) / 2 - 6, w, 1);
+      // 地面の目印（木）：地面に固定。立場が動くと逆向きに流れて見える
+      const st = K.niceStep(span + 8, Math.max(4, Math.floor(w / 90))), sh = fr.s * t;
+      for (let x = Math.floor((mid - (w / 2) / sc + sh) / st) * st; x <= mid + (w / 2) / sc + sh; x += st) {
+        const px = X(x - sh); if (px < -12 || px > w + 12) continue;
+        ctx.fillStyle = dark ? '#2f5a33' : '#6aa363'; ctx.beginPath(); ctx.arc(px, road0 - 13, 7, 0, 7); ctx.fill();
+        ctx.fillStyle = dark ? '#6b4b2e' : '#7a5533'; ctx.fillRect(px - 1.2, road0 - 7, 2.4, 7);
+      }
+      // ストロボ
+      ts.forEach((q) => { ctx.globalAlpha = 0.45; ctx.fillStyle = C('--ka'); ctx.beginPath(); ctx.arc(X(xA(q, fr)), yA + 9, 2.8, 0, 7); ctx.fill(); ctx.fillStyle = C('--kb'); ctx.beginPath(); ctx.arc(X(xB(q, fr)), yB + 9, 2.8, 0, 7); ctx.fill(); ctx.globalAlpha = 1; });
+      // 車
+      const pa = X(xA(t, fr)), pb = X(xB(t, fr));
+      drawCar(ctx, pa, yA, C('--ka'), 'A', vA); drawCar(ctx, pb, yB, C('--kb'), 'B', vB);
+      // 運転手の目印（その立場の車）
+      if (fr.key !== 'g') { const px = fr.key === 'A' ? pa : pb, py = fr.key === 'A' ? yA : yB; ctx.strokeStyle = fr.col; ctx.lineWidth = 2; ctx.setLineDash([3, 3]); ctx.strokeRect(px - 27, py - 29, 54, 36); ctx.setLineDash([]); }
+      // 見かけの速度の矢印
+      const va = vA - fr.s, vb = vB - fr.s;
+      const lab = (who, v) => fr.key === 'g' ? `*v*_${who} = ${f(v, 0)} m/s` : `*v*_{${fr.key}${who}} = ${f(v, 0)} m/s`;
+      const arr = (px, py, v, who, colKey) => {
+        if (Math.abs(v) < 1e-6) { K.tag(ctx, '止まって見える', px, py - 34, C(colKey), 11, 'center'); return; }
+        const x1 = px - v * vs / 2, x2 = px + v * vs / 2;   // 矢印は車の真上を中心にかく
+        K.arrow(ctx, x1, py - 32, x2, py - 32, C(fr.key === 'g' ? colKey : '--kr'), 2.6, 9);
+        const tx = lab(who, v), tw = K.rich(ctx, tx, 0, 0, 11, 'left', true) + 10, end = x2;
+        let lx = end + (v > 0 ? 6 : -6), al = v > 0 ? 'left' : 'right';
+        if (v > 0 && lx + tw > w) { lx = x1 - 6; al = 'right'; } else if (v < 0 && lx - tw < 0) { lx = x1 + 6; al = 'left'; }
+        K.tag(ctx, tx, lx, py - 32, C(fr.key === 'g' ? colKey : '--kr'), 11, al);
+      };
+      if (fr.key !== 'A') arr(pa, yA, va, 'A', '--ka'); else K.tag(ctx, '止まって見える', pa, yA - 34, C('--ka'), 11, 'center');
+      if (fr.key !== 'B') arr(pb, yB, vb, 'B', '--kb'); else K.tag(ctx, '止まって見える', pb, yB - 34, C('--kb'), 11, 'center');
+      // 見出し
+      K.tag(ctx, fr.name, 10, y0 + 13, fr.col, 12, 'left');
+      if (fr.key !== 'g') { const nar = w < 640; K.tag(ctx, '木（地面）は ' + f(-fr.s, 0) + ' m/s で流れて見える', nar ? 10 : w - 10, nar ? y0 + 31 : y0 + 13, ink.ink2, 11, nar ? 'left' : 'right'); }
+    });
+    // 時刻
+    K.tag(ctx, 't = ' + f(t, 1) + ' s', w - 10, h - 10, ink.ink2, 11, 'right');
   }
   function velArrows(ctx, X, gY, t, pa, pb) {
     const C = K.css, vs = 60 / Math.max(1, Math.abs(M.vA.x), Math.abs(M.vB.x), Math.abs(M.rel.x));
