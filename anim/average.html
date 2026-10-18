@@ -89,6 +89,33 @@ h3{font-size:17px;margin:0 0 8px}
 .qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
 .qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
 .ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+/* 配置：スマホは1列（運動 → 帯 → x-t → 読み → 操作 → 表 → v-t → 問い）。
+   PC（幅 1000px 以上）は左にグラフ（x-t の真下に v-t、時刻の目盛りをそろえる）を固定し、右に帯・操作・表・問いを並べる */
+.board{display:flex;flex-direction:column}
+.colG,.colC{display:contents}
+.o1{order:1}.o2{order:2}.o3{order:3}.o4{order:4}.o5{order:5}.o6{order:6}.o7{order:7}.o8{order:8}.o9{order:9}.o10{order:10}.o11{order:11}.o12{order:12}.o13{order:13}.o14{order:14}
+.head{order:0}
+.qbox{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+@media (min-width:1000px){
+  .top-inner,main{max-width:1360px}
+  .board{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(330px,1fr);column-gap:22px;align-items:start}
+  .head{grid-column:2;grid-row:1}
+  .colG,.colC{display:block}
+  .colG{grid-column:1;grid-row:1 / span 2}
+  .colC{grid-column:2;grid-row:2}
+  .head .lead{font-size:14px}
+  .top-inner{display:grid;grid-template-columns:auto 1fr;column-gap:24px;align-items:end;padding-top:6px}
+  .top-inner .back,.top-inner h1{grid-column:1}
+  .top-inner .nav{grid-column:1}
+  .top-inner .tabs{grid-column:2;grid-row:1 / span 3;align-self:end;max-width:620px;justify-self:end;width:100%}
+  .colG{position:sticky;top:calc(var(--hdr,140px) + 10px)}
+  .colG .cap:first-child{margin-top:0}
+  .colG .stage.g1{aspect-ratio:auto;height:max(240px,calc((100vh - var(--hdr,140px) - 120px) * .56))}
+  .colG .stage.g2{aspect-ratio:auto;height:max(190px,calc((100vh - var(--hdr,140px) - 120px) * .44))}
+  .colG .hint{font-size:12.5px;margin-top:4px}
+  .colC .stage.strip{aspect-ratio:3.2/1}
+  .colC .seg{margin-bottom:8px}
+}
 </style>
 </head>
 <body>
@@ -112,32 +139,33 @@ h3{font-size:17px;margin:0 0 8px}
 </header>
 
 <main>
-  <section class="sheet" aria-labelledby="t1">
-    <h2 id="t1"></h2>
-    <p class="lead" id="lead"></p>
-    <div class="seg" role="group" aria-label="運動" id="segP"><span class="seg-label">運動</span></div>
-    <div class="stage strip"><canvas id="cvS" role="img" aria-label="直線上を動く物体。時刻 t1 の位置 A と時刻 t2 の位置 B を示す。"></canvas></div>
-    <div class="cap" id="cap1"></div>
-    <div class="stage g1"><canvas id="cv1" role="img" aria-label="グラフ上の2点 A、B を結ぶ直線（傾き＝平均）と、A での接線（傾き＝瞬間）。"></canvas></div>
-    <div class="read" aria-live="polite"><p id="rAvg"></p><p id="rIns"></p></div>
-
-    <div class="dts" role="group" aria-label="時間の幅"><span class="lab">時間の幅 Δ<i class="qv">t</i></span></div>
-    <div class="slider"><label for="sT1">時刻 <i class="qv">t</i><sub>1</sub>（点A）</label><input type="range" id="sT1" min="0" max="4" step="0.05" value="1"><output id="oT1"></output></div>
-    <div class="controls">
-      <button type="button" class="btn" id="limBtn">Δ<i class="qv">t</i> を 0 に近づける</button>
-      <button type="button" class="btn ghost" id="playBtn">動きを見る</button>
+  <section class="sheet board" aria-labelledby="t1">
+    <div class="head"><h2 id="t1"></h2>
+    <p class="lead" id="lead"></p></div>
+    <div class="colG">
+      <div class="cap o3" id="cap1"></div>
+      <div class="stage g1 o4"><canvas id="cv1" role="img" aria-label="グラフ上の2点 A、B を結ぶ直線（傾き＝平均）と、A での接線（傾き＝瞬間）。"></canvas></div>
+      <div class="cap o11" id="cap2"></div>
+      <div class="stage g2 o12"><canvas id="cv2" role="img" aria-label="変化の割合のグラフ。t1 から t2 までの面積と、同じ面積になる長方形の高さ（平均）。"></canvas></div>
+      <p class="hint o13" id="note2"></p>
     </div>
-    <div class="tbl"><table id="tbl"></table></div>
-    <p class="hint" id="tblNote"></p>
-
-    <div class="cap" id="cap2"></div>
-    <div class="stage g2"><canvas id="cv2" role="img" aria-label="変化の割合のグラフ。t1 から t2 までの面積と、同じ面積になる長方形の高さ（平均）。"></canvas></div>
-    <p class="hint" id="note2"></p>
-  </section>
-
-  <section class="sheet" aria-labelledby="qsTitle">
-    <h3 id="qsTitle">見てみよう</h3>
-    <ol class="qs" id="qs"></ol>
+    <div class="colC">
+      <div class="seg o1" role="group" aria-label="運動" id="segP"><span class="seg-label">運動</span></div>
+      <div class="stage strip o2"><canvas id="cvS" role="img" aria-label="直線上を動く物体。時刻 t1 の位置 A と時刻 t2 の位置 B を示す。"></canvas></div>
+      <div class="read o5" aria-live="polite"><p id="rAvg"></p><p id="rIns"></p></div>
+      <div class="dts o6" role="group" aria-label="時間の幅"><span class="lab">時間の幅 Δ<i class="qv">t</i></span></div>
+      <div class="slider o7"><label for="sT1">時刻 <i class="qv">t</i><sub>1</sub>（点A）</label><input type="range" id="sT1" min="0" max="4" step="0.05" value="1"><output id="oT1"></output></div>
+      <div class="controls o8">
+        <button type="button" class="btn" id="limBtn">Δ<i class="qv">t</i> を 0 に近づける</button>
+        <button type="button" class="btn ghost" id="playBtn">動きを見る</button>
+      </div>
+      <div class="tbl o9"><table id="tbl"></table></div>
+      <p class="hint o10" id="tblNote"></p>
+      <div class="qbox o14" aria-labelledby="qsTitle">
+        <h3 id="qsTitle">見てみよう</h3>
+        <ol class="qs" id="qs"></ol>
+      </div>
+    </div>
   </section>
 </main>
 
@@ -302,7 +330,7 @@ function tick(ts){ if(last == null) last = ts; const dt = Math.min(0.05, (ts - l
   if(st.lim){ st.lim.t += dt; const u = Math.min(1, st.lim.t / 4); st.dt = Math.max(0.001, 2 * Math.pow(0.0005, u)); if(u >= 1){ st.dt = 0.001; st.lim = null; } sync(); }
   if(st.playing){ st.tp += dt; if(st.tp > TMAX){ stopAll(); } drawAll(); if(!st.playing) sync(); }
   requestAnimationFrame(tick); }
-function resize(){ Object.keys(CV).forEach(fit); drawAll(); }
+function resize(){ const tp = document.querySelector(".top"); if(tp) document.documentElement.style.setProperty("--hdr", tp.offsetHeight + "px"); Object.keys(CV).forEach(fit); drawAll(); }
 const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
 if(mq && mq.addEventListener) mq.addEventListener("change", drawAll);
 new MutationObserver(drawAll).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
