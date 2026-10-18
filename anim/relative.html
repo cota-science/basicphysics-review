@@ -1251,7 +1251,10 @@ body.lr3 #viewField{display:none}
     const zf = (ot.x - me.x) * dir;                         // 相手までの前方の距離（車の中心どうし）
     const vrel = (ot.v - me.v) * dir;                       // 進行方向にそった相手の見かけの速度
     const LW = 3.5, HC = 1.2;                               // 車線の幅、目の高さ [m]
-    const dashH = Math.min(vh * 0.2, 46), hy = y0 + (vh - dashH) * 0.4, fl = vw * 0.85, cx = x0 + vw * 0.42;
+    // 相手の車線は左右どちらか：上から見た図で A の車線が上、B の車線が下。右向き（+x）に進むと、下側が右手になる
+    const side = (who === 'A' ? 1 : -1) * dir;              // +1：相手の車線が右、−1：左
+    const oc = side * LW, eL = Math.min(-LW / 2, oc - LW / 2), eR = Math.max(LW / 2, oc + LW / 2);
+    const dashH = Math.min(vh * 0.2, 46), hy = y0 + (vh - dashH) * 0.4, fl = vw * 0.85, cx = x0 + vw * (0.5 - 0.08 * side);
     const P = (xl, z, y = 0) => [cx + (fl * xl) / z, hy + (fl * (HC - y)) / z];
     ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, vw, vh); ctx.clip();
     // 空と地面
@@ -1260,9 +1263,9 @@ body.lr3 #viewField{display:none}
     ctx.fillStyle = dark ? '#22331f' : '#a9c98c'; ctx.fillRect(x0, hy, vw, y0 + vh - hy);
     // 道路（自分の車線 −1.75〜1.75 m、相手の車線 1.75〜5.25 m）
     const Z0 = 1.2, Z1 = 400, poly = (pts, fill) => { ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); };
-    poly([P(-LW / 2 - 0.6, Z0), P(LW * 1.5 + 0.6, Z0), P(LW * 1.5 + 0.6, Z1), P(-LW / 2 - 0.6, Z1)], dark ? '#323a44' : '#7c858f');
+    poly([P(eL - 0.6, Z0), P(eR + 0.6, Z0), P(eR + 0.6, Z1), P(eL - 0.6, Z1)], dark ? '#323a44' : '#7c858f');
     const line = (xl, col, wdt) => { const a = P(xl, Z0), b = P(xl, Z1); ctx.strokeStyle = col; ctx.lineWidth = wdt; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); };
-    line(-LW / 2, '#f4f4f4', 2.5); line(LW * 1.5, '#f4f4f4', 2.5);
+    line(eL, '#f4f4f4', 2.5); line(eR, '#f4f4f4', 2.5);
     // 地面に固定された目印：車線の破線（10 m ごと）と、道ばたの木（20 m ごと）。自分が進むと手前へ流れてくる
     // 地面の座標 g にある目印の前方距離 z ＝ (g − 自分の位置) × 進行方向。z が増える向きに g を進める
     const marks = (step, off, zmax, fn) => { let g = dir > 0 ? Math.floor((me.x - 5) / step) * step + off : Math.ceil((me.x + 5) / step) * step - off; for (let n = 0; n < 400; n++, g += step * dir) { const z = (g - me.x) * dir; if (z > zmax) break; fn(z); } };
@@ -1273,16 +1276,16 @@ body.lr3 #viewField{display:none}
     sorted.sort((a, b) => b.z - a.z);                       // 遠いものから描く
     sorted.forEach((o) => {
       if (o.kind === 'dash') {
-        const a = P(LW / 2, o.z), b = P(LW / 2, o.z + 4); ctx.strokeStyle = '#f4f4f4'; ctx.lineWidth = Math.max(1, 3 / Math.sqrt(o.z)); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+        const a = P(side * LW / 2, o.z), b = P(side * LW / 2, o.z + 4); ctx.strokeStyle = '#f4f4f4'; ctx.lineWidth = Math.max(1, 3 / Math.sqrt(o.z)); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
       } else if (o.kind === 'tree') {
-        const xl = o.side < 0 ? -LW / 2 - 3 : LW * 1.5 + 3, b = P(xl, o.z), top = P(xl, o.z, 5), r = (fl * 1.6) / o.z;
+        const xl = o.side < 0 ? eL - 3 : eR + 3, b = P(xl, o.z), top = P(xl, o.z, 5), r = (fl * 1.6) / o.z;
         ctx.fillStyle = dark ? '#6b4b2e' : '#7a5533'; ctx.fillRect(b[0] - r * 0.12, top[1] + r * 0.6, r * 0.24, b[1] - top[1] - r * 0.6);
         ctx.fillStyle = dark ? '#2f5a33' : '#5f9a58'; ctx.beginPath(); ctx.arc(top[0], top[1] + r * 0.4, r, 0, 7); ctx.fill();
-      } else drawFace(ctx, P, o.z, LW, ot, dir, false);
+      } else drawFace(ctx, P, o.z, oc, ot, dir, false);
     });
-    // 相手がすぐ横にいるとき：右の窓の外に車体の側面が見える
+    // 相手がすぐ横にいるとき：相手の車線の側の窓の外に車体の側面が見える
     if (zf - 2.25 <= Z0 && zf + 2.25 >= -1) {
-      const sx = x0 + vw * 0.84, sw = x0 + vw - sx, top = hy - vh * 0.03, bot = y0 + vh - dashH * 0.6;
+      const sw = vw * 0.16, sx = side > 0 ? x0 + vw - sw : x0, top = hy - vh * 0.03, bot = y0 + vh - dashH * 0.6;
       ctx.fillStyle = C(ot.ck); ctx.fillRect(sx, top, sw, bot - top);
       ctx.fillStyle = 'rgba(20,30,40,.7)'; ctx.fillRect(sx + sw * 0.1, top + (bot - top) * 0.08, sw * 0.8, (bot - top) * 0.3);
       ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(sx + sw * 0.5, bot, Math.min(sw * 0.3, 26), Math.PI, 0); ctx.fill();
@@ -1297,9 +1300,9 @@ body.lr3 #viewField{display:none}
     // バックミラー（後ろが映る。右側の車線はミラーでも右側に映る）
     const mw = Math.min(vw * 0.34, 170), mh = mw * 0.32, mx0 = cx - mw / 2, my0 = y0 + 22;
     ctx.save(); ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(mx0, my0, mw, mh, 6); else ctx.rect(mx0, my0, mw, mh); ctx.fillStyle = dark ? '#1b2633' : '#cfe0ee'; ctx.fill(); ctx.clip();
-    const mf = mw * 0.55, mhy = my0 + mh * 0.42, mcx = mx0 + mw * 0.42, MP = (xl, z, y = 0) => [mcx + (mf * xl) / z, mhy + (mf * (HC - y)) / z];
-    ctx.fillStyle = dark ? '#323a44' : '#7c858f'; ctx.beginPath(); [MP(-LW / 2, 1.5), MP(LW * 1.5, 1.5), MP(LW * 1.5, 300), MP(-LW / 2, 300)].forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.closePath(); ctx.fill();
-    if (-zf - 2.25 > 1.5) drawFace(ctx, MP, -zf - 2.25, LW, ot, -dir, true);
+    const mf = mw * 0.55, mhy = my0 + mh * 0.42, mcx = mx0 + mw * (0.5 - 0.08 * side), MP = (xl, z, y = 0) => [mcx + (mf * xl) / z, mhy + (mf * (HC - y)) / z];
+    ctx.fillStyle = dark ? '#323a44' : '#7c858f'; ctx.beginPath(); [MP(eL, 1.5), MP(eR, 1.5), MP(eR, 300), MP(eL, 300)].forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.closePath(); ctx.fill();
+    if (-zf - 2.25 > 1.5) drawFace(ctx, MP, -zf - 2.25, oc, ot, -dir, true);
     ctx.restore();
     ctx.strokeStyle = dark ? '#8a96a3' : '#333'; ctx.lineWidth = 2; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(mx0, my0, mw, mh, 6); else ctx.rect(mx0, my0, mw, mh); ctx.stroke();
     K.tag(ctx, 'ミラー（後ろ）', mx0 + mw + 4, my0 + 8, dark ? '#c9d2dc' : '#333', 10, 'left');
@@ -1313,8 +1316,8 @@ body.lr3 #viewField{display:none}
     ctx.restore();
   }
   // 相手の車を、後ろ（テールランプ）か前（ヘッドライト）の面として描く
-  function drawFace(ctx, P, z, LW, ot, viewDir, mirror) {
-    const C = K.css, xl = LW, wdt = 1.8, ht = 1.45;
+  function drawFace(ctx, P, z, xl, ot, viewDir, mirror) {
+    const C = K.css, wdt = 1.8, ht = 1.45;
     const sameDir = ot.v * viewDir > 0 || (Math.abs(ot.v) < 1e-6 && !mirror);   // 相手が同じ向きに進むなら、見えるのは後ろの面
     const front = mirror ? ot.v * viewDir < 0 || Math.abs(ot.v) < 1e-6 ? false : true : !sameDir;
     const a = P(xl - wdt / 2, z, 0), b = P(xl + wdt / 2, z, ht), w = b[0] - a[0], hgt = a[1] - b[1];
