@@ -90,6 +90,19 @@ h3{font-size:17px;margin:0 0 8px}
 .qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
 .ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
 .note{font-family:var(--pen);color:var(--red);font-size:17px;margin:0 0 6px}
+/* 配置：スマホは1列。PC（幅 1000px 以上）は左に図と再生ボタン（固定）、右に説明・設定・見てみよう */
+.board{display:flex;flex-direction:column}
+.colG,.colC,.head{display:contents}
+.qbox{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+@media (min-width:1000px){
+  .top-inner,main{max-width:1360px}
+  .board{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr);column-gap:22px;align-items:start}
+  .head,.colC{display:block;grid-column:2}
+  .head{grid-row:1}.colC{grid-row:2}
+  .colG{display:block;grid-column:1;grid-row:1 / span 2;position:sticky;top:calc(var(--hdr,130px) + 10px)}
+  .colG .stage{aspect-ratio:auto;height:max(300px,calc(100vh - var(--hdr,130px) - 170px))}
+  .head .lead{font-size:14px}
+}
 </style>
 </head>
 <body>
@@ -118,10 +131,10 @@ h3{font-size:17px;margin:0 0 8px}
 </header>
 
 <main>
-  <section class="sheet" aria-labelledby="sceneTitle">
-    <h2 id="sceneTitle"></h2>
-    <p class="lead" id="sceneLead"></p>
-    <div class="stage">
+  <section class="sheet board" aria-labelledby="sceneTitle">
+    <div class="head"><h2 id="sceneTitle"></h2>
+    <p class="lead" id="sceneLead"></p></div>
+    <div class="colG"><div class="stage">
       <canvas id="cv" role="img" aria-label=""></canvas>
       <div class="clock" id="clock" aria-live="off"></div>
     </div>
@@ -137,14 +150,15 @@ h3{font-size:17px;margin:0 0 8px}
           <option value="1">はやい</option>
         </select>
       </label>
-    </div>
+    </div></div>
+    <div class="colC">
     <div class="opts" id="opts"></div>
     <p class="hint">図をタップすると、その位置の媒質の点を赤い点で追いかけます。点は上下に動くだけで、波と一緒に横へは進みません。</p>
-  </section>
-
-  <section class="sheet" aria-labelledby="qsTitle">
+    <div class="qbox" aria-labelledby="qsTitle">
     <h3 id="qsTitle">見てみよう</h3>
     <ol class="qs" id="qs"></ol>
+    </div>
+    </div>
   </section>
 </main>
 
@@ -255,7 +269,7 @@ function readColors(){
   const cs = getComputedStyle(document.documentElement);
   ["ink","muted","blue","red","line","sheet","grid","shade","blue-soft","red-soft"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim());
 }
-function resize(){
+function resize(){ const tp = document.querySelector(".top"); if(tp) document.documentElement.style.setProperty("--hdr", tp.offsetHeight + "px");
   const r = cv.getBoundingClientRect(); dpr = Math.min(window.devicePixelRatio || 1, 2.5);
   W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height));
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
