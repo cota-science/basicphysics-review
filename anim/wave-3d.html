@@ -81,6 +81,23 @@ h3{font-size:17px;margin:0 0 8px}
 .qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
 .qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
 .ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+/* 配置：スマホは1列（説明 → 3次元の図と時刻・位置 → 断面のグラフと設定 → 見てみよう）。
+   PC（幅 1100px 以上）は3列：左に3次元の図と時刻・位置のスライダー、中に y-x・y-t グラフと波の設定、右に説明と見てみよう */
+.slider[hidden]{display:none}
+.setbox{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+@media (min-width:1100px){
+  .top-inner,main.w3{max-width:1500px}
+  main.w3{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(300px,.78fr);align-items:start}
+  .pA{grid-column:1;grid-row:1 / span 2;position:sticky;top:calc(var(--hdr,120px) + 10px)}
+  .pB{grid-column:2;grid-row:1 / span 2}
+  .pH{grid-column:3;grid-row:1}
+  .pC{grid-column:3;grid-row:2}
+  .pH h2{font-size:18px}.pH .lead{font-size:14px;margin:0}
+  .pA .stage.s3{aspect-ratio:auto;height:max(250px,calc(100vh - var(--hdr,120px) - 385px))}
+  .pB .stage.s2{aspect-ratio:2.7/1}
+  .pB .shift{font-size:13px}
+  .pA .views button{font-size:13px}
+}
 </style>
 </head>
 <body>
@@ -103,11 +120,12 @@ h3{font-size:17px;margin:0 0 8px}
   </div>
 </header>
 
-<main>
-  <section class="sheet" aria-labelledby="t1">
+<main class="w3">
+  <section class="sheet pH" aria-labelledby="t1">
     <h2 id="t1">1つの波を、位置 <i class="qv">x</i> と時刻 <i class="qv">t</i> の2つの向きで切る</h2>
     <p class="lead">変位 <i class="qv">y</i> は位置 <i class="qv">x</i> と時刻 <i class="qv">t</i> の両方で決まるので、波は1枚の曲面で表せます。時刻を決めて切った断面が <i class="qv">y</i>-<i class="qv">x</i> グラフ（波形）、位置を決めて切った断面が <i class="qv">y</i>-<i class="qv">t</i> グラフ（その点の振動）です。</p>
-
+  </section>
+  <section class="sheet pA" aria-label="3次元の図">
     <div class="views" role="group" aria-label="視点">
       <button type="button" data-view="obl" aria-pressed="true">斜めから</button>
       <button type="button" data-view="yx" aria-pressed="false"><i class="qv">t</i> 軸の方向から<br>（<i class="qv">y</i>-<i class="qv">x</i>）</button>
@@ -126,16 +144,15 @@ h3{font-size:17px;margin:0 0 8px}
       <div class="slider"><label for="sX0">観測位置 <i class="qv">x</i><sub>A</sub></label><input type="range" id="sX0" min="0" max="4" step="0.05" value="1"><output id="oX0"></output></div>
       <div class="slider" id="rowB" hidden><label for="sXB">観測位置 <i class="qv">x</i><sub>B</sub></label><input type="range" id="sXB" min="0" max="4" step="0.05" value="1.5"><output id="oXB"></output></div>
     </div>
-
+  </section>
+  <section class="sheet pB" aria-label="断面のグラフと設定">
     <div class="cap"><span class="tag" style="background:var(--ink)"></span>時刻 <i class="qv">t</i><sub>0</sub> での断面：<i class="qv">y</i>-<i class="qv">x</i> グラフ（波形）</div>
     <div class="stage s2"><canvas id="cvx" role="img" aria-label="時刻 t0 の波形（y-xグラフ）。"></canvas></div>
     <p class="shift" id="shiftX"></p>
     <div class="cap"><span class="tag" style="background:var(--green)"></span>位置 <i class="qv">x</i><sub>A</sub> での断面：<i class="qv">y</i>-<i class="qv">t</i> グラフ（点Aの振動）<span id="capB"></span></div>
     <div class="stage s2"><canvas id="cvt" role="img" aria-label="位置 xA の点の振動（y-tグラフ）。"></canvas></div>
     <p class="shift" id="shiftT"></p>
-  </section>
-
-  <section class="sheet" aria-labelledby="t2">
+    <div class="setbox">
     <h3 id="t2">波と表示の設定</h3>
     <p class="readv" id="readV"></p>
     <div class="opts" style="margin-top:0">
@@ -153,9 +170,9 @@ h3{font-size:17px;margin:0 0 8px}
       </div>
     </div>
     <p class="hint">PC ではマウスで3次元の図をドラッグして、自由に回すこともできます。「波源が時刻 0 に振動を始める」を外すと、ずっと前から続いている波になります。</p>
+    </div>
   </section>
-
-  <section class="sheet" aria-labelledby="qsTitle">
+  <section class="sheet pC" aria-labelledby="qsTitle">
     <h3 id="qsTitle">見てみよう</h3>
     <ol class="qs" id="qs"></ol>
   </section>
@@ -355,7 +372,7 @@ function tick(ts){ if(last == null) last = ts; const dt = Math.min(0.05, (ts - l
   if(st.playing){ st.t0 += dt * 0.5; if(st.t0 > TM){ st.t0 = 0; } $("sT0").value = st.t0; $("oT0").textContent = `${fmt(st.t0)} s`; updateShift(); dirty = true; }
   if(dirty) drawAll();
   requestAnimationFrame(tick); }
-function resize(){ const r = c3.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W3 = Math.max(1, Math.round(r.width)); H3 = Math.max(1, Math.round(r.height)); c3.width = Math.round(W3 * d); c3.height = Math.round(H3 * d); g3.setTransform(d, 0, 0, d, 0, 0); fit2("x"); fit2("t"); drawAll(); }
+function resize(){ const tp = document.querySelector(".top"); if(tp) document.documentElement.style.setProperty("--hdr", tp.offsetHeight + "px"); const r = c3.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W3 = Math.max(1, Math.round(r.width)); H3 = Math.max(1, Math.round(r.height)); c3.width = Math.round(W3 * d); c3.height = Math.round(H3 * d); g3.setTransform(d, 0, 0, d, 0, 0); fit2("x"); fit2("t"); drawAll(); }
 const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
 if(mq && mq.addEventListener) mq.addEventListener("change", drawAll);
 new MutationObserver(drawAll).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
