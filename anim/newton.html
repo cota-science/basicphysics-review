@@ -155,8 +155,8 @@ function drawLaw2(){
   L.line(ctx, px, ty + 12, px, cy - ch / 2 - 4, C.ink3, 1, [2, 3]);
   ro && ro({ F: `${L.f(Fn, 1)} N`, a: `${L.f(a, 2)} m/s²`, v: `${L.f(s.v, 2)} m/s`, x: `${L.f(s.t, 2)} s` });
   badge('', '');
-  L.set('fx', eq(`$ma$${OP('=')}$F$ <span class="jp">（$F$：合力）</span>`, `${L.f(s.m,1)} × a ＝ ${L.f(s.F1,1)} − ${L.f(s.F2,1)}　→　a ＝ ${L.f(a,2)} m/s²`, '運動方程式。右向きを正として、合力を「＋と−」で求める', true)
-    + eq(`$a$${OP('=')}$F$ / $m$`, `合力を2倍 → a も2倍、質量を2倍 → a は半分`, '加速度は合力に比例し、質量に反比例（運動の第2法則）')
+  L.set('fx', eq(`$ma$${OP('=')}$F$ <span class="jp">（$F$：合力）</span>`, `${L.f(s.m,1)} × <i class="s">a</i> ＝ ${L.f(s.F1,1)} − ${L.f(s.F2,1)}　→　<i class="s">a</i> ＝ ${L.f(a,2)} m/s²`, '運動方程式。右向きを正として、合力を「＋と−」で求める', true)
+    + eq(`$a$${OP('=')}$F$ / $m$`, `合力を2倍 → <i class="s">a</i> も2倍、質量を2倍 → <i class="s">a</i> は半分`, '加速度は合力に比例し、質量に反比例（運動の第2法則）')
     + expl('加速度の向き＝合力の向き', '速度の向きではなく<b>合力の向き</b>に加速度が生じる。$F$_2 を $F$_1 より大きくすると、右に進んでいても左向きの加速度（だんだん遅くなる）。1 N は「1 kg の物体に 1 m/s² の加速度を生じさせる力」。'.replace(/\$[^$]+\$(_\d)?/g, m => L.h(m))));
 }
 function graphLaw2(){
@@ -178,7 +178,7 @@ function graphLaw2(){
   const Fn = s.F1 - s.F2; L.dot(gx, P.X(isF ? Fn : 1 / s.m), P.Y(Fn / s.m), 5, C.acc, true);
   P.unclip();
   L.set('gt', isF ? L.h('$a$-$F$ グラフ（質量一定）') : L.h('$a$-1/$m$ グラフ（合力一定）'));
-  L.set('gm', isF ? `原点を通る直線 → a は F に比例。傾き＝1/m（点線は m ＝ ${L.f(s.m,1)} kg）` : `原点を通る直線 → a は 1/m に比例（m に反比例）。点線は F ＝ ${L.f(Fn,1)} N`);
+  L.set('gm', isF ? `原点を通る直線 → <i class="s">a</i> は F に比例。傾き＝1/m（点線は m ＝ ${L.f(s.m,1)} kg）` : `原点を通る直線 → <i class="s">a</i> は 1/m に比例（m に反比例）。点線は <i class="s">F</i> ＝ ${L.f(Fn,1)} N`);
   L.set('gf', `<span>×：「測定を記録」した点（${s.rec.length} 個）　●：いまの条件</span>`);
 }
 
@@ -223,7 +223,7 @@ function drawAction(){
     ro && ro({ a: `${L.f(s.F,0)} N`, b: `${L.f(s.F / s.m1, 2)} m/s²`, c: `${L.f(s.F / s.m2, 2)} m/s²`, d: `${L.f(s.v1, 2)} / ${L.f(s.v2, 2)}` });
     badge('', '');
     L.set('fx', eq(`$F$_{AB}${OP('=')}−$F$_{BA}`, `大きさ：${s.F} N ＝ ${s.F} N（質量がちがっても等しい）`, '作用・反作用の法則（運動の第3法則）', true)
-      + eq(`$m$_A$a$_A${OP('=')}−$F$　，　$m$_B$a$_B${OP('=')}$F$`, `a_A ＝ −${L.f(s.F/s.m1,2)} m/s²，a_B ＝ ${L.f(s.F/s.m2,2)} m/s²（右向き正）`, '力は同じ大きさでも、質量の小さい方が大きく加速する')
+      + eq(`$m$_A$a$_A${OP('=')}−$F$　，　$m$_B$a$_B${OP('=')}$F$`, `<i class="s">a</i><sub>A</sub> ＝ −${L.f(s.F/s.m1,2)} m/s²，<i class="s">a</i><sub>B</sub> ＝ ${L.f(s.F/s.m2,2)} m/s²（右向き正）`, '力は同じ大きさでも、質量の小さい方が大きく加速する')
       + expl('押した人も、押された人と反対向きに動く', 'Aが押したのに、Aも後ろに動き出す。力は必ず2つの物体の間で<b>対</b>になってはたらく。片方だけに力がはたらくことはない。'));
     return;
   }
@@ -354,13 +354,13 @@ function eqEom(r){
   if (s.sub === 'floor'){
     h += eq(`$N$${OP('=')}$mg$`, `${L.f(r.N,2)} N`, '鉛直方向のつりあい');
     if (r.kind === 'static') h += eq(`$f$${OP('=')}$F$${OP('≦')}$μN$`, `${L.f(s.F,1)} N ≦ ${L.f(s.mu*r.N,2)} N`, '動き出さない（静止摩擦力とつりあう）', true);
-    else h += eq(`$ma$${OP('=')}$F$${OP('−')}$μ$'$mg$`, `${L.f(s.m,1)} × a ＝ ${L.f(s.F,1)} − ${s.mu2}×${L.f(r.N,2)}　→　a ＝ ${L.f(r.a,2)} m/s²`, '運動の向き（右）を正とした運動方程式', true);
+    else h += eq(`$ma$${OP('=')}$F$${OP('−')}$μ$'$mg$`, `${L.f(s.m,1)} × <i class="s">a</i> ＝ ${L.f(s.F,1)} − ${s.mu2}×${L.f(r.N,2)}　→　<i class="s">a</i> ＝ ${L.f(r.a,2)} m/s²`, '運動の向き（右）を正とした運動方程式', true);
     h += expl('ポイント', '①物体にはたらく力をすべて描く → ②運動の向きを正にとる → ③運動方向の合力を $ma$ に等しいとおく。動いている間の摩擦力は動摩擦力 $μ$\'$N$（一定）。$F$ ＝ 0 で初速度を与えると、$a$ ＝ −$μ$\'$g$ で減速する。'.replace(/\$[^$]+\$/g, m => L.h(m)));
   } else if (s.sub === 'slope'){
     h += eq(`$N$${OP('=')}$mg$ cos$θ$`, `${L.f(r.N,2)} N`, '斜面に垂直な方向のつりあい');
     if (r.kind === 'static') h += eq(`$mg$ sin$θ$${OP('≦')}$μN$`, `${L.f(r.Wp,2)} N ≦ ${L.f(s.mu*r.N,2)} N`, '止まったあと、すべり出さない', true);
-    else if (s.v > 0) h += eq(`$ma$${OP('=')}−$mg$ sin$θ$${OP('−')}$μ$'$mg$ cos$θ$`, `a ＝ −g(sinθ ＋ μ'cosθ) ＝ ${L.f(r.a,2)} m/s²`, 'すべり上がっている間（斜面上向きを正）：重力の分力も摩擦力も下向き', true);
-    else h += eq(`$ma$${OP('=')}−$mg$ sin$θ$${OP('+')}$μ$'$mg$ cos$θ$`, `a ＝ −g(sinθ − μ'cosθ) ＝ ${L.f(r.a,2)} m/s²`, 'すべり下りている間：摩擦力は上向きにかわる', true);
+    else if (s.v > 0) h += eq(`$ma$${OP('=')}−$mg$ sin$θ$${OP('−')}$μ$'$mg$ cos$θ$`, `<i class="s">a</i> ＝ −<i class="s">g</i>(sin<i class="s">θ</i> ＋ <i class="s">μ</i>'cos<i class="s">θ</i>) ＝ ${L.f(r.a,2)} m/s²`, 'すべり上がっている間（斜面上向きを正）：重力の分力も摩擦力も下向き', true);
+    else h += eq(`$ma$${OP('=')}−$mg$ sin$θ$${OP('+')}$μ$'$mg$ cos$θ$`, `<i class="s">a</i> ＝ −<i class="s">g</i>(sin<i class="s">θ</i> − <i class="s">μ</i>'cos<i class="s">θ</i>) ＝ ${L.f(r.a,2)} m/s²`, 'すべり下りている間：摩擦力は上向きにかわる', true);
     h += expl('摩擦力の向きは運動によって変わる', 'すべり上がるときと、すべり下りるときで動摩擦力の向きが逆になるので、加速度の大きさもちがう。$v$-$t$ グラフの傾きの変化で確かめよう。'.replace(/\$[^$]+\$/g, m => L.h(m)));
   } else {
     if (r.kind === 'static') h += eq(`$mg$${OP('≦')}$μMg$`, `${L.f(s.mh*g,2)} N ≦ ${L.f(s.mu*r.N,2)} N`, '動き出さない', true);
@@ -400,7 +400,7 @@ function drawGraph(){
     L.set('gt', L.h('$v$-$t$ グラフ')); L.set('gm', '水平な部分＝速度一定（合力 0）。傾いている部分＝力がはたらいている'); L.set('gf', '');
   } else if (mode === 'law2'){
     const s = S.law2;
-    L.set('gsel', `<span class="seg">${[['vt', 'v-t'], ['aF', 'a-F'], ['am', 'a-1/m']].map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${s.view === v}">${l}</button>`).join('')}</span>`);
+    L.set('gsel', `<span class="seg">${[['vt', '$v$-$t$'], ['aF', '$a$-$F$'], ['am', '$a$-1/$m$']].map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${s.view === v}">${L.h(l)}</button>`).join('')}</span>`);
     document.querySelectorAll('#gsel button').forEach(b => b.onclick = () => { s.view = b.dataset.v; drawGraph(); });
     graphLaw2();
   } else if (mode === 'action'){

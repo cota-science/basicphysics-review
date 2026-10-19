@@ -313,8 +313,8 @@ sub .s, sub i{font-family:var(--f-sym)}
       if (c === '*') { out += it ? '</i>' : '<i class="s">'; it = !it; continue; }
       if (c === '_' || c === '^') {
         let n = s[++i]; const tag = c === '_' ? 'sub' : 'sup';
-        if (n === '{') { const j = s.indexOf('}', i); n = s.slice(i + 1, j); i = j; out += '<' + tag + '>' + n + '</' + tag + '>'; continue; }
-        out += '<' + tag + '>' + (/[a-zA-Z]/.test(n) ? '<i class="s">' + n + '</i>' : n) + '</' + tag + '>';
+        if (n === '{') { const j = s.indexOf('}', i); n = s.slice(i + 1, j); i = j; out += '<' + tag + '>' + K.h(n) + '</' + tag + '>'; continue; }
+        out += '<' + tag + '>' + ((tag === 'sup' ? /[a-zA-Z]/ : /^[xyz]$/).test(n) ? '<i class="s">' + n + '</i>' : n) + '</' + tag + '>';
         continue;
       }
       out += c === '<' ? '&lt;' : c === '&' ? '&amp;' : c;
@@ -331,7 +331,7 @@ sub .s, sub i{font-family:var(--f-sym)}
       if (c === '_' || c === '^') {
         let n = s[++i]; const k = c === '_' ? 'sub' : 'sup';
         if (n === '{') { const j = s.indexOf('}', i); for (const ch of s.slice(i + 1, j)) r.push({ c: ch, k, it: false }); i = j; continue; }
-        r.push({ c: n, k, it: /[a-zA-Z]/.test(n) }); continue;
+        r.push({ c: n, k, it: (k === 'sub' ? /^[xyz]$/ : /[a-zA-Z]/).test(n) }); continue;
       }
       r.push({ c, k: 'n', it });
     }
@@ -747,7 +747,7 @@ sub .s, sub i{font-family:var(--f-sym)}
       <button class="btn" id="tp-back" type="button" title="ストロボ1コマ戻る">◀|</button>
       <button class="btn" id="tp-fwd" type="button" title="ストロボ1コマ進む">|▶</button>
       <input type="range" id="tp-t" min="0" max="1000" value="0" aria-label="時刻">
-      <span class="tread" id="tp-read">t = 0.00 s</span>
+      <span class="tread" id="tp-read"><i class="s">t</i> = 0.00 s</span>
       <select id="tp-speed" aria-label="再生速度"><option value="0.25">×0.25</option><option value="0.5">×0.5</option><option value="1" selected>×1</option><option value="2">×2</option></select>
     </div>`;
   K.bindTransport = (player, getStep) => {
@@ -766,7 +766,7 @@ sub .s, sub i{font-family:var(--f-sym)}
       if (e.code === 'ArrowRight') step(1);
       if (e.code === 'ArrowLeft') step(-1);
     });
-    return (t) => { sl.value = player.tEnd > 0 ? Math.round((t / player.tEnd) * 1000) : 0; rd.textContent = 't = ' + K.f(t, 2) + ' s'; };
+    return (t) => { sl.value = player.tEnd > 0 ? Math.round((t / player.tEnd) * 1000) : 0; rd.innerHTML = K.h('*t* = ' + K.f(t, 2) + ' s'); };
   };
 
   /* ---------- 式の項 ⇔ グラフ ---------- */
@@ -854,7 +854,7 @@ sub .s, sub i{font-family:var(--f-sym)}
     $$('#planets button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.p === S.planet));
     $('#gOut').textContent = f(S.g, 2) + ' m/s²'; $('#gIn').value = S.g;
     const pl = planet();
-    $('#gNote').textContent = pl ? (pl.noSurface ? pl.name + 'には固体の地面がありません（仮想的な地面で計算）。' : pl.name + '：g = ' + pl.g + ' m/s²（地球の ' + f(pl.g / 9.8, 2) + ' 倍）') : 'カスタム：g = ' + f(S.g, 2) + ' m/s²';
+    $('#gNote').innerHTML = K.h(pl ? (pl.noSurface ? pl.name + 'には固体の地面がありません（仮想的な地面で計算）。' : pl.name + '：*g* = ' + pl.g + ' m/s²（地球の ' + f(pl.g / 9.8, 2) + ' 倍）') : 'カスタム：*g* = ' + f(S.g, 2) + ' m/s²');
     $$('.tab').forEach((b) => { const p = PRE[b.dataset.pre]; b.setAttribute('aria-selected', p.th === S.th && p.y0 === S.y0 && p.v0 === S.v0 && p.x0 === S.x0); });
   }
   const PRE = { h: { v0: 10, th: 0, y0: 20, x0: 0 }, o: { v0: 20, th: 45, y0: 0, x0: 0 }, oc: { v0: 15, th: 30, y0: 20, x0: 0 }, v: { v0: 20, th: 90, y0: 0, x0: 0 } };
@@ -868,7 +868,7 @@ sub .s, sub i{font-family:var(--f-sym)}
   $('#optStrobe').onchange = (e) => { S.strobe = e.target.value; player.dirty = true; };
   $('#keep').onclick = () => {
     const pl = planet();
-    ghosts.push({ ...MOT, m: null, label: `${pl ? pl.name : 'g=' + f(S.g, 1)} v₀=${f(S.v0)} θ=${S.th}° y₀=${S.y0}` });
+    ghosts.push({ ...MOT, m: null, label: `${pl ? pl.name : '*g*=' + f(S.g, 1)} *v*₀=${f(S.v0)} *θ*=${S.th}° *y*₀=${S.y0}` });
     if (ghosts.length > 4) ghosts.shift();
     update();
   };
@@ -884,7 +884,7 @@ sub .s, sub i{font-family:var(--f-sym)}
     $('#res').innerHTML =
       `<div>最高点に達する時刻　<b>${MOT.vy > 0 ? f(MOT.t1, 2) + ' s' : '—'}</b></div><div>最高点の高さ　<b>${f(MOT.H, 2)} m</b></div>` +
       `<div>着地する時刻　<b>${f(MOT.tEnd, 2)} s</b></div><div>着地点の <i class="s">x</i>　<b>${f(MOT.R, 2)} m</b>（水平到達距離 ${f(MOT.R - S.x0, 2)} m）</div>`;
-    $('#ghostList').innerHTML = ghosts.length ? '<span class="note">比較中（点線）：</span>' + ghosts.map((g) => `<span class="g">${g.label}</span>`).join('') : '';
+    $('#ghostList').innerHTML = ghosts.length ? '<span class="note">比較中（点線）：</span>' + ghosts.map((g) => `<span class="g">${K.h(g.label)}</span>`).join('') : '';
     buildFormulas();
     player.dirty = true;
   }
@@ -909,10 +909,10 @@ sub .s, sub i{font-family:var(--f-sym)}
   function updateSubst(t) {
     const m = MOT, el = (k) => $(`#fx [data-s="${k}"]`), tt = f(t, 2), r = (S.th * Math.PI) / 180;
     if (!el('vx')) return;
-    el('vx').textContent = `vx = ${f(S.v0, 1)} × cos${S.th}° = ${f(S.v0, 1)} × ${f(Math.cos(r), 3)} = ${f(m.vx, 2)} m/s（一定）`;
-    el('x').textContent = `x = ${f(S.x0, 1)} + ${fs(m.vx, 2)} × ${tt} = ${f(m.X.p(t), 2)} m`;
-    el('vy').textContent = `vy = ${f(S.v0, 1)} × sin${S.th}° − ${f(S.g, 2)} × ${tt} = ${fs(m.vy, 2)} − ${f(S.g * t, 2)} = ${f(m.Y.v(t), 2)} m/s`;
-    el('y').textContent = `y = ${f(S.y0, 1)} + ${fs(m.vy, 2)} × ${tt} − ½ × ${f(S.g, 2)} × ${tt}² = ${f(S.y0, 1)} + ${fs(m.vy * t, 2)} − ${f(0.5 * S.g * t * t, 2)} = ${f(m.Y.p(t), 2)} m`;
+    el('vx').innerHTML = K.h(`*v*_x = ${f(S.v0, 1)} × cos${S.th}° = ${f(S.v0, 1)} × ${f(Math.cos(r), 3)} = ${f(m.vx, 2)} m/s（一定）`);
+    el('x').innerHTML = K.h(`*x* = ${f(S.x0, 1)} + ${fs(m.vx, 2)} × ${tt} = ${f(m.X.p(t), 2)} m`);
+    el('vy').innerHTML = K.h(`*v*_y = ${f(S.v0, 1)} × sin${S.th}° − ${f(S.g, 2)} × ${tt} = ${fs(m.vy, 2)} − ${f(S.g * t, 2)} = ${f(m.Y.v(t), 2)} m/s`);
+    el('y').innerHTML = K.h(`*y* = ${f(S.y0, 1)} + ${fs(m.vy, 2)} × ${tt} − ½ × ${f(S.g, 2)} × ${tt}² = ${f(S.y0, 1)} + ${fs(m.vy * t, 2)} − ${f(0.5 * S.g * t * t, 2)} = ${f(m.Y.p(t), 2)} m`);
     const L = m.Y.v(t) ** 2 - m.vy ** 2, R = -2 * S.g * (m.Y.p(t) - S.y0);
     el('e3').textContent = `左辺 = ${f(L, 2)}　右辺 = −2 × ${f(S.g, 2)} × ${fs(m.Y.p(t) - S.y0, 2)} = ${f(R, 2)}`;
   }
@@ -1013,7 +1013,7 @@ sub .s, sub i{font-family:var(--f-sym)}
     ctx.strokeStyle = ink.ink; ctx.lineWidth = 1.4;
     K.arrow(ctx, X(0), gY, w - 8, gY, ink.ink, 1.4, 8); K.arrow(ctx, X(0), gY, X(0), 6, ink.ink, 1.4, 8);
     ctx.fillStyle = ink.ink; K.rich(ctx, '*x* [m]', w - 10, gY + 24, 12, 'right'); K.rich(ctx, '*y* [m]', X(0) + 8, 14, 12, 'left');
-    if (pl) { ctx.fillStyle = ink.ink2; ctx.font = '12px ' + C('--f-ui'); ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.fillText(pl.name + '　g = ' + pl.g + ' m/s²', w - 12, 8); }
+    if (pl) { ctx.fillStyle = ink.ink2; K.rich(ctx, pl.name + '　*g* = ' + pl.g + ' m/s²', w - 12, 15, 12, 'right'); }
     // 台
     if (S.y0 > 0) {
       ctx.fillStyle = K.isDark() ? '#3d4955' : '#c3cbd2';

@@ -303,8 +303,8 @@ sub .s, sub i{font-family:var(--f-sym)}
       if (c === '*') { out += it ? '</i>' : '<i class="s">'; it = !it; continue; }
       if (c === '_' || c === '^') {
         let n = s[++i]; const tag = c === '_' ? 'sub' : 'sup';
-        if (n === '{') { const j = s.indexOf('}', i); n = s.slice(i + 1, j); i = j; out += '<' + tag + '>' + n + '</' + tag + '>'; continue; }
-        out += '<' + tag + '>' + (/[a-zA-Z]/.test(n) ? '<i class="s">' + n + '</i>' : n) + '</' + tag + '>';
+        if (n === '{') { const j = s.indexOf('}', i); n = s.slice(i + 1, j); i = j; out += '<' + tag + '>' + K.h(n) + '</' + tag + '>'; continue; }
+        out += '<' + tag + '>' + ((tag === 'sup' ? /[a-zA-Z]/ : /^[xyz]$/).test(n) ? '<i class="s">' + n + '</i>' : n) + '</' + tag + '>';
         continue;
       }
       out += c === '<' ? '&lt;' : c === '&' ? '&amp;' : c;
@@ -321,7 +321,7 @@ sub .s, sub i{font-family:var(--f-sym)}
       if (c === '_' || c === '^') {
         let n = s[++i]; const k = c === '_' ? 'sub' : 'sup';
         if (n === '{') { const j = s.indexOf('}', i); for (const ch of s.slice(i + 1, j)) r.push({ c: ch, k, it: false }); i = j; continue; }
-        r.push({ c: n, k, it: /[a-zA-Z]/.test(n) }); continue;
+        r.push({ c: n, k, it: (k === 'sub' ? /^[xyz]$/ : /[a-zA-Z]/).test(n) }); continue;
       }
       r.push({ c, k: 'n', it });
     }
@@ -737,7 +737,7 @@ sub .s, sub i{font-family:var(--f-sym)}
       <button class="btn" id="tp-back" type="button" title="ストロボ1コマ戻る">◀|</button>
       <button class="btn" id="tp-fwd" type="button" title="ストロボ1コマ進む">|▶</button>
       <input type="range" id="tp-t" min="0" max="1000" value="0" aria-label="時刻">
-      <span class="tread" id="tp-read">t = 0.00 s</span>
+      <span class="tread" id="tp-read"><i class="s">t</i> = 0.00 s</span>
       <select id="tp-speed" aria-label="再生速度"><option value="0.25">×0.25</option><option value="0.5">×0.5</option><option value="1" selected>×1</option><option value="2">×2</option></select>
     </div>`;
   K.bindTransport = (player, getStep) => {
@@ -756,7 +756,7 @@ sub .s, sub i{font-family:var(--f-sym)}
       if (e.code === 'ArrowRight') step(1);
       if (e.code === 'ArrowLeft') step(-1);
     });
-    return (t) => { sl.value = player.tEnd > 0 ? Math.round((t / player.tEnd) * 1000) : 0; rd.textContent = 't = ' + K.f(t, 2) + ' s'; };
+    return (t) => { sl.value = player.tEnd > 0 ? Math.round((t / player.tEnd) * 1000) : 0; rd.innerHTML = K.h('*t* = ' + K.f(t, 2) + ' s'); };
   };
 
   /* ---------- 式の項 ⇔ グラフ ---------- */
@@ -877,7 +877,7 @@ sub .s, sub i{font-family:var(--f-sym)}
         <div class="seg" id="presetSeg"><button type="button" data-pre="free">自由落下</button><button type="button" data-pre="down">鉛直投げ下ろし</button><button type="button" data-pre="up">鉛直投げ上げ</button></div></div>`;
       html += `<div class="field"><div class="lab"><span>座標軸（<i class="s">y</i> 軸）の正の向き</span></div>
         <div class="seg" id="axisSeg"><button type="button" data-ax="down">鉛直下向きが正</button><button type="button" data-ax="up">鉛直上向きが正</button></div></div>`;
-      html += field('f-v0', '初速度 ' + H('*v*_0'), -30, 30, 0.1, S.fl.v0, 'm/s', '符号は y 軸の向きで決まります');
+      html += field('f-v0', '初速度 ' + H('*v*_0'), -30, 30, 0.1, S.fl.v0, 'm/s', '符号は <i class="s">y</i> 軸の向きで決まります');
       html += field('f-h', '地面からの高さ ' + H('*h*'), 0, 100, 0.1, S.fl.h, 'm', '投げ出す位置の高さ');
       html += field('f-y0', '初期位置 ' + H('*y*_0'), -20, 20, 0.5, S.fl.y0, 'm', 'ふつうは投げ出す点を原点（0）にします');
     }
@@ -931,7 +931,7 @@ sub .s, sub i{font-family:var(--f-sym)}
     $('#gOut').textContent = f(S.g, 2) + ' m/s²';
     $('#gIn').value = S.g;
     const pl = planet();
-    $('#gNote').textContent = pl ? (pl.noSurface ? pl.name + 'には固体の地面がありません（仮想的な地面で計算）。' : pl.name + '：g = ' + pl.g + ' m/s²（地球の ' + f(pl.g / 9.8, 2) + ' 倍）') : 'カスタム：g = ' + f(S.g, 2) + ' m/s²';
+    $('#gNote').innerHTML = K.h(pl ? (pl.noSurface ? pl.name + 'には固体の地面がありません（仮想的な地面で計算）。' : pl.name + '：*g* = ' + pl.g + ' m/s²（地球の ' + f(pl.g / 9.8, 2) + ' 倍）') : 'カスタム：*g* = ' + f(S.g, 2) + ' m/s²');
   }
 
   /* ---------- 全体更新 ---------- */
@@ -985,16 +985,16 @@ sub .s, sub i{font-family:var(--f-sym)}
     const el = (k) => $(`#fx [data-s="${k}"]`);
     const tt = f(t, 2);
     if (S.mode === 'uniform') {
-      el(1).textContent = `${P} = ${f(m.p0)} + ${fs(m.v0, 1)} × ${tt} = ${f(p, 2)} m`;
-      el(2).textContent = `v = ${f(m.v0, 2)} m/s（x-t 図の傾き）`;
+      el(1).innerHTML = K.h(`${MOT.P} = ${f(m.p0)} + ${fs(m.v0, 1)} × ${tt} = ${f(p, 2)} m`);
+      el(2).innerHTML = K.h(`*v* = ${f(m.v0, 2)} m/s（*x*-*t* 図の傾き）`);
       return;
     }
     if (el(0)) {
-      if (S.mode === 'fall') el(0).textContent = `重力加速度は下向き。${S.fl.axis === 'down' ? '下向きが正なので' : '上向きが正なので'} a = ${f(a, 2)} m/s²`;
-      else el(0).textContent = `a = ${f(S.g, 2)} × sin${S.c.th}° = ${f(S.g, 2)} × ${f(Math.sin((S.c.th * Math.PI) / 180), 3)} = ${f(a, 2)} m/s²`;
+      if (S.mode === 'fall') el(0).innerHTML = K.h(`重力加速度は下向き。${S.fl.axis === 'down' ? '下向きが正なので' : '上向きが正なので'} *a* = ${f(a, 2)} m/s²`);
+      else el(0).innerHTML = K.h(`*a* = ${f(S.g, 2)} × sin${S.c.th}° = ${f(S.g, 2)} × ${f(Math.sin((S.c.th * Math.PI) / 180), 3)} = ${f(a, 2)} m/s²`);
     }
-    el(1).textContent = `v = ${f(m.v0, 2)} + ${fs(a, 2)} × ${tt} = ${f(v, 2)} m/s`;
-    el(2).textContent = `${P} = ${f(m.p0, 2)} + ${fs(m.v0, 2)} × ${tt} + ½ × ${fs(a, 2)} × ${tt}² = ${f(m.p0, 2)} + ${fs(m.v0 * t, 2)} + ${fs(0.5 * a * t * t, 2)} = ${f(p, 2)} m`;
+    el(1).innerHTML = K.h(`*v* = ${f(m.v0, 2)} + ${fs(a, 2)} × ${tt} = ${f(v, 2)} m/s`);
+    el(2).innerHTML = K.h(`${MOT.P} = ${f(m.p0, 2)} + ${fs(m.v0, 2)} × ${tt} + ½ × ${fs(a, 2)} × ${tt}^2 = ${f(m.p0, 2)} + ${fs(m.v0 * t, 2)} + ${fs(0.5 * a * t * t, 2)} = ${f(p, 2)} m`);
     const L = v * v - m.v0 * m.v0, R = 2 * a * (p - m.p0);
     el(3).textContent = `左辺 = ${fs(v, 2)}² − ${fs(m.v0, 2)}² = ${f(L, 2)}　右辺 = 2 × ${fs(a, 2)} × ${fs(p - m.p0, 2)} = ${f(R, 2)}`;
     const tb = $('#textbook');
@@ -1069,10 +1069,10 @@ sub .s, sub i{font-family:var(--f-sym)}
 
   /* ---------- 比較 ---------- */
   function ghostLabel() {
-    const pl = planet(), gname = pl ? pl.name : 'g=' + f(S.g, 1);
-    if (S.mode === 'uniform') return `x₀=${f(S.u.x0)} v=${f(S.u.v)}`;
-    if (S.mode === 'accel') return S.c.how === 'slope' ? `${gname} θ=${S.c.th}° v₀=${f(S.c.v0)}` : `a=${f(S.c.a)} v₀=${f(S.c.v0)}`;
-    return `${gname} ${S.fl.axis === 'down' ? '下向き正' : '上向き正'} v₀=${f(S.fl.v0)} h=${S.fl.h}`;
+    const pl = planet(), gname = pl ? pl.name : '*g*=' + f(S.g, 1);
+    if (S.mode === 'uniform') return `*x*₀=${f(S.u.x0)} *v*=${f(S.u.v)}`;
+    if (S.mode === 'accel') return S.c.how === 'slope' ? `${gname} *θ*=${S.c.th}° *v*₀=${f(S.c.v0)}` : `*a*=${f(S.c.a)} *v*₀=${f(S.c.v0)}`;
+    return `${gname} ${S.fl.axis === 'down' ? '下向き正' : '上向き正'} *v*₀=${f(S.fl.v0)} *h*=${S.fl.h}`;
   }
   $('#keep').onclick = () => {
     ghosts.push({ mode: S.mode, kind: MOT.kind, m: MOT.m, tEnd: MOT.tEnd, th: MOT.th, sg: MOT.sg, h: MOT.h, label: ghostLabel() });
@@ -1082,7 +1082,7 @@ sub .s, sub i{font-family:var(--f-sym)}
   $('#clear').onclick = () => { ghosts = []; update(); };
   function renderGhostList() {
     const gs = ghosts.filter((g) => g.mode === S.mode);
-    $('#ghostList').innerHTML = gs.length ? '<span class="note">比較中（点線）：</span>' + gs.map((g) => `<span class="g">${g.label}</span>`).join('') : '';
+    $('#ghostList').innerHTML = gs.length ? '<span class="note">比較中（点線）：</span>' + gs.map((g) => `<span class="g">${K.h(g.label)}</span>`).join('') : '';
   }
 
   /* ---------- 情景の描画 ---------- */
@@ -1247,7 +1247,7 @@ sub .s, sub i{font-family:var(--f-sym)}
       ctx.fillStyle = gc; K.tag(ctx, '*g* sin*θ*', p[0] + ux * par + 8, p[1] + uy * par + 10, gc, 12, 'left', 'rgba(0,0,0,0)');
       ctx.restore();
     }
-    if (pl) { ctx.fillStyle = ink.ink2; ctx.font = '12px ' + C('--f-ui'); ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(pl.name + '　g = ' + pl.g + ' m/s²', 12, 10); }
+    if (pl) { ctx.fillStyle = ink.ink2; K.rich(ctx, pl.name + '　*g* = ' + pl.g + ' m/s²', 12, 17, 12, 'left'); }
     pathInfo(ctx, t, 12, 36, ink);
   }
 
@@ -1272,7 +1272,7 @@ sub .s, sub i{font-family:var(--f-sym)}
       ctx.fillStyle = ink.ink; K.rich(ctx, '*h* = ' + f(MOT.h, MOT.h % 1 ? 1 : 0) + ' m', bx - 98, (gY + Ys(MOT.h)) / 2, 12.5, 'right');
     }
     ctx.fillStyle = ink.ink2; ctx.font = '11px ' + C('--f-ui'); ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText('地面', 10, gY + 6);
-    if (pl) ctx.fillText(pl.name + '　g = ' + pl.g + ' m/s²', 10, 8);
+    if (pl) K.rich(ctx, pl.name + '　*g* = ' + pl.g + ' m/s²', 10, 14, 11, 'left');
     // y 軸（座標）
     const rx = bx + 78, sg = MOT.sg, y0 = MOT.m.p0;
     const yOf = (H) => y0 + (H - MOT.h) / sg;

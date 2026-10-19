@@ -37,7 +37,8 @@ L.h = function(str){
     if ((ch === '_' || ch === '^') && i + 1 < str.length && str[i+1] !== ' '){
       let t; if (str[i+1] === '{'){ const j = str.indexOf('}', i + 2); t = str.slice(i + 2, j); i = j + 1; } else { t = str[i+1]; i += 2; }
       const tag = ch === '_' ? 'sub' : 'sup';
-      out += it ? `</i><${tag}>${t}</${tag}><i class="s">` : `<${tag}>${t}</${tag}>`; continue;
+      const tt = (tag === 'sub' ? /^[xyz]$/ : /^[a-zA-Z]$/).test(t) ? `<i class="s">${t}</i>` : t;
+      out += it ? `</i><${tag}>${tt}</${tag}><i class="s">` : `<${tag}>${tt}</${tag}>`; continue;
     }
     out += ch; i++;
   }
@@ -76,7 +77,7 @@ L.rich = function(ctx, str, x, y, o = {}){
     if (ch === '$'){ it = !it; i++; continue; }
     if ((ch === '_' || ch === '^') && i + 1 < str.length && str[i+1] !== ' '){
       let t; if (str[i+1] === '{'){ const j = str.indexOf('}', i + 2); t = str.slice(i + 2, j); i = j + 1; } else { t = str[i+1]; i += 2; }
-      segs.push({ t, it: false, sub: ch === '_' ? 1 : -1 }); continue;
+      segs.push({ t, it: ch === '_' ? /^[xyz]$/.test(t) : /^[a-zA-Z]$/.test(t), sub: ch === '_' ? 1 : -1 }); continue;
     }
     const last = segs[segs.length - 1];
     if (last && !last.sub && last.it === it) last.t += ch; else segs.push({ t: ch, it, sub: 0 });

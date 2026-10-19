@@ -222,7 +222,26 @@ function computeFit(){
 }
 const S3 = (x, y, t) => { const p = proj(x, y, t); return [fit.cx + p[0] * fit.s, fit.cy - p[1] * fit.s, p[2]]; };
 function line3(pts, color, w, dash, alpha){ g3.save(); g3.strokeStyle = color; g3.lineWidth = w; g3.setLineDash(dash || []); g3.globalAlpha = alpha == null ? 1 : alpha; g3.lineJoin = "round"; g3.beginPath(); pts.forEach((p, i) => i ? g3.lineTo(p[0], p[1]) : g3.moveTo(p[0], p[1])); g3.stroke(); g3.restore(); }
-function text3(s, p, color, size, align, italic){ g3.save(); g3.fillStyle = color; g3.font = `${italic ? "italic " : "700 "}${size || 13}px ${italic ? '"Times New Roman",Times,serif' : 'BIZ UDPGothic,"Hiragino Sans",sans-serif'}`; g3.textAlign = "left"; g3.textBaseline = "middle"; const w = g3.measureText(s).width; let x = align === "left" ? p[0] : align === "right" ? p[0] - w : p[0] - w / 2; x = Math.max(4, Math.min(W3 - w - 4, x)); g3.fillText(s, x, Math.max(10, Math.min(H3 - 10, p[1]))); g3.restore(); }
+/* 図の中の文字：*…* で囲んだ部分を物理量（斜体）で描く。_x・_{in} は下付き。単位・数字は立体のまま */
+function RT(c, s, x, y, color, size, align, bold, fam, base){
+  size = size || 12; s = String(s); const seg = []; let it = false;
+  for(let i = 0; i < s.length; i++){
+    const ch = s[i];
+    if(ch === "*"){ it = !it; continue; }
+    if((ch === "_" || ch === "^") && i + 1 < s.length){
+      let t = s[i + 1]; if(t === "{"){ const j = s.indexOf("}", i + 2); t = s.slice(i + 2, j); i = j; } else i++;
+      seg.push({ t, it: ch === "_" ? /^[xyz]$/.test(t) : /^[a-zA-Z]$/.test(t), k: ch === "_" ? 1 : -1 }); continue;
+    }
+    const L = seg[seg.length - 1]; if(L && !L.k && L.it === it) L.t += ch; else seg.push({ t: ch, it, k: 0 });
+  }
+  const ff = fam || 'BIZ UDPGothic,"Hiragino Sans","Yu Gothic UI",sans-serif';
+  const font = o => { const z = o.k ? size * .72 : o.it ? size * 1.12 : size; return o.it ? `italic ${bold ? "700 " : ""}${z.toFixed(1)}px "Times New Roman",Times,serif` : `${bold ? "700 " : ""}${z.toFixed(1)}px ${ff}`; };
+  c.save(); c.fillStyle = color; c.textBaseline = base || "middle"; let w = 0;
+  seg.forEach(o => { c.font = font(o); o.w = c.measureText(o.t).width + (o.it && !o.k ? size * .04 : 0); w += o.w; });
+  let x0 = align === "right" ? x - w : align === "center" ? x - w / 2 : x; c.textAlign = "left";
+  seg.forEach(o => { c.font = font(o); c.fillText(o.t, x0, y + (o.k === 1 ? size * .3 : o.k === -1 ? -size * .4 : 0)); x0 += o.w; }); c.restore(); return w;
+}
+function text3(s, p, color, size, align, italic){ if(String(s).includes("*")) return RT(g3, s, Math.max(4, p[0]), Math.max(10, Math.min(H3 - 10, p[1])), color, size || 13, align || "center", !italic); g3.save(); g3.fillStyle = color; g3.font = `${italic ? "italic " : "700 "}${size || 13}px ${italic ? '"Times New Roman",Times,serif' : 'BIZ UDPGothic,"Hiragino Sans",sans-serif'}`; g3.textAlign = "left"; g3.textBaseline = "middle"; const w = g3.measureText(s).width; let x = align === "left" ? p[0] : align === "right" ? p[0] - w : p[0] - w / 2; x = Math.max(4, Math.min(W3 - w - 4, x)); g3.fillText(s, x, Math.max(10, Math.min(H3 - 10, p[1]))); g3.restore(); }
 function axisFade(){ // 軸の方向から見ているほど 0 に近づく（重なった線を薄くする）
   const dyx = Math.hypot(st.yaw - 0, st.pitch - 0), dyt = Math.hypot(st.yaw - 90, st.pitch);
   return Math.min(1, Math.min(dyx, dyt) / 18);
@@ -252,8 +271,8 @@ function draw3(){
   if(lenX > 60) for(let k = 1; k <= XM; k++){ const p = S3(k, 0, 0); text3(`${k}`, [p[0], p[1] + 12], col.muted, 11); }
   if(lenT > 60) for(let k = 1; k <= TM; k++){ const p = S3(0, 0, k); text3(`${k}`, [p[0] - 10, p[1] + 8], col.muted, 11); }
   const ax = S3(XM + 0.55, 0, 0), at = S3(-0.3, 0, TM + 0.25), ay = S3(0, 1.55, 0);
-  if(Math.hypot(ax[0] - O[0], ax[1] - O[1]) > 30) text3("x〔m〕", ax, col.ink, 14, "center", true);
-  if(Math.hypot(at[0] - O[0], at[1] - O[1]) > 30) text3("t〔s〕", at, col.ink, 14, "center", true);
+  if(Math.hypot(ax[0] - O[0], ax[1] - O[1]) > 30) text3("*x*〔m〕", ax, col.ink, 14, "center", false);
+  if(Math.hypot(at[0] - O[0], at[1] - O[1]) > 30) text3("*t*〔s〕", at, col.ink, 14, "center", false);
   if(Math.hypot(ay[0] - O[0], ay[1] - O[1]) > 20) text3("y", ay, col.ink, 15, "center", true);
   // 山の線：Y が最大になる点 t ＝ s/v ＋ T/4 ＋ nT
   if(st.crest){ for(let n = -10; n < 20; n++){ const pts = []; for(let j = 0; j <= 80; j++){ const x = XM * j / 80, s = st.dir > 0 ? x : XM - x, t = s / v() + st.T / 4 + n * st.T; if(t < 0 || t > TM || (st.front && t < s / v())){ if(pts.length > 1){ line3(pts, col.blue, 1.8, [5, 3]); } pts.length = 0; continue; } pts.push(S3(x, 1, t)); } if(pts.length > 1) line3(pts, col.blue, 1.8, [5, 3]); } }
@@ -268,9 +287,9 @@ function draw3(){
   if(st.useB){ const cb = []; for(let i = 0; i <= 200; i++){ const t = TM * i / 200; cb.push(S3(st.xb, Y(st.xb, t), t)); } line3(cb, col.orange, 3); }
   // 交点
   const P = S3(st.xa, Y(st.xa, st.t0), st.t0); g3.save(); g3.fillStyle = col.red; g3.beginPath(); g3.arc(P[0], P[1], 5.5, 0, TAU); g3.fill(); g3.restore();
-  const lt = S3(XM, 1.32, st.t0); text3(`t＝${fmt(st.t0)}`, [lt[0] + 4, lt[1] - 8], col.ink, 12, "left", true);
-  const lx = S3(st.xa, 1.32, TM); text3(`A：x＝${fmt(st.xa)}`, [lx[0], lx[1] - 10], col.green, 12, "center", true);
-  if(st.useB){ const lb = S3(st.xb, 1.32, TM); text3(`B：x＝${fmt(st.xb)}`, [lb[0], lb[1] + (Math.abs(st.xb - st.xa) < 0.8 ? 14 : -10)], col.orange, 12, "center", true); }
+  const lt = S3(XM, 1.32, st.t0); text3(`*t*＝${fmt(st.t0)}`, [lt[0] + 4, lt[1] - 8], col.ink, 12, "left", false);
+  const lx = S3(st.xa, 1.32, TM); text3(`A：*x*＝${fmt(st.xa)}`, [lx[0], lx[1] - 10], col.green, 12, "center", false);
+  if(st.useB){ const lb = S3(st.xb, 1.32, TM); text3(`B：*x*＝${fmt(st.xb)}`, [lb[0], lb[1] + (Math.abs(st.xb - st.xa) < 0.8 ? 14 : -10)], col.orange, 12, "center", true); }
 }
 
 /* ---------- 2D 断面 ---------- */
@@ -296,7 +315,7 @@ function draw2(k){
     curve(t => Y(st.xa, t), col.green, 2.6);
     L([[X(st.t0), pt], [X(st.t0), h - pb]], col.ink, 1.2, [3, 3]);
     g.save(); g.fillStyle = col.red; g.beginPath(); g.arc(X(st.t0), Yp(Y(st.xa, st.t0)), 5, 0, TAU); g.fill(); g.restore();
-    T(`t₀`, X(st.t0) + 9, pt + 6, col.ink, 12, "left");
+    RT(g, `*t*₀`, X(st.t0) + 9, pt + 6, col.ink, 12, "left");
   }
 }
 
@@ -314,7 +333,7 @@ function updateShift(){
   } else $("shiftX").innerHTML = `観測時刻 ${I("t")}<sub>0</sub> を動かすと、波形がどれだけずれるかが表示されます。`;
   let tx = "";
   if(st.ghost && st.gx != null && !near(st.gx, st.xa)){ const dx = st.xa - st.gx, farther = (st.dir > 0) === (dx > 0);
-    tx = `破線は ${I("x")} ＝ ${fmt(st.gx)} m の点の振動。波源から${farther ? "遠い" : "近い"}側へ ${fmt(Math.abs(dx))} m 動かしたので、振動は <b>|${I("Δx")}|/${I("v")} ＝ ${fmt(Math.abs(dx))} ÷ ${fmt(V)} ＝ ${fmt(Math.abs(dx) / V)} s ${farther ? "遅れる" : "早まる"}</b>（グラフが${farther ? "右" : "左"}へずれる）。`;
+    tx = `破線は ${I("x")} ＝ ${fmt(st.gx)} m の点の振動。波源から${farther ? "遠い" : "近い"}側へ ${fmt(Math.abs(dx))} m 動かしたので、振動は <b>|Δ${I("x")}|/${I("v")} ＝ ${fmt(Math.abs(dx))} ÷ ${fmt(V)} ＝ ${fmt(Math.abs(dx) / V)} s ${farther ? "遅れる" : "早まる"}</b>（グラフが${farther ? "右" : "左"}へずれる）。`;
   } else tx = `観測位置 ${I("x")}<sub>A</sub> を動かすと、振動がどれだけ遅れる（早まる）かが表示されます。`;
   if(st.useB){ const dx = st.xb - st.xa; tx += `<br>A と B の距離 ${fmt(Math.abs(dx))} m ＝ ${phaseWord(dx)}。`; }
   if(st.front){ const s = st.dir > 0 ? st.xa : XM - st.xa; tx += `<br>点Aに波が届くのは ${I("t")} ＝ ${fmt(s)} ÷ ${fmt(V)} ＝ ${fmt(s / V)} s。`; }
@@ -322,9 +341,9 @@ function updateShift(){
 }
 const VIEW_NOTE = {
   obl:"斜めから見た曲面。黒い太線（時刻の板の断面）と緑の太線（位置の板の断面）が、下の2つのグラフです。",
-  yx:"時刻の軸の方向から見ると、時刻の板の断面がそのまま y-x グラフに見えます。緑の板は、観測点の位置を示す縦の線に見えます。",
-  yt:"位置の軸の方向から見ると、位置の板の断面がそのまま y-t グラフに見えます（横軸が時刻）。黒い板は、観測時刻を示す縦の線に見えます。",
-  top:"真上から見ると、山（青）と谷（赤）が斜めの縞に見えます。破線の山の線を横（x）に λ 進むと、縦（t）には T 進みます。この傾きが波の速さ v ＝ λ/T を表します。"
+  yx:"時刻の軸の方向から見ると、時刻の板の断面がそのまま <i class='qv'>y</i>-<i class='qv'>x</i> グラフに見えます。緑の板は、観測点の位置を示す縦の線に見えます。",
+  yt:"位置の軸の方向から見ると、位置の板の断面がそのまま <i class='qv'>y</i>-<i class='qv'>t</i> グラフに見えます（横軸が時刻）。黒い板は、観測時刻を示す縦の線に見えます。",
+  top:"真上から見ると、山（青）と谷（赤）が斜めの縞に見えます。破線の山の線を横（<i class='qv'>x</i>）に <i class='qv'>λ</i> 進むと、縦（<i class='qv'>t</i>）には T 進みます。この傾きが波の速さ <i class='qv'>v</i> ＝ <i class='qv'>λ</i>/<i class='qv'>T</i> を表します。"
 };
 
 /* ---------- UI ---------- */
@@ -382,9 +401,9 @@ if(document.fonts && document.fonts.ready) document.fonts.ready.then(drawAll);
 $("qs").innerHTML = [
   ["「真上から」を押そう。山の線（青の破線）はどんな線になっているか。", `斜めの直線です。山の線にそって横（${I("x")}）に ${I("λ")} 進むと、縦（${I("t")}）にはちょうど ${I("T")} 進みます。つまり山は時間 ${I("T")} の間に距離 ${I("λ")} 進むので、波の速さは ${I("v")} ＝ ${I("λ")}/${I("T")} です。`],
   [`観測時刻 ${I("t")}<sub>0</sub> を 0.25 s だけ大きくしよう。${I("y")}-${I("x")} グラフ（波形）はどう変わるか。`, `形は変わらず、波の進む向きに ${I("v")} × 0.25 s だけずれます（${I("v")} ＝ 1 m/s なら 0.25 m）。これが「波が進む」ということです。`],
-  [`観測位置 ${I("x")}<sub>A</sub> を波源から遠ざけよう。${I("y")}-${I("t")} グラフはどう変わるか。`, `形は変わらず、右（時間の遅い向き）へずれます。ずれは距離 ÷ 速さ（|${I("Δx")}|/${I("v")}）です。遠い点ほど、同じ振動が遅れてやってきます。`],
+  [`観測位置 ${I("x")}<sub>A</sub> を波源から遠ざけよう。${I("y")}-${I("t")} グラフはどう変わるか。`, `形は変わらず、右（時間の遅い向き）へずれます。ずれは距離 ÷ 速さ（|Δ${I("x")}|/${I("v")}）です。遠い点ほど、同じ振動が遅れてやってきます。`],
   ["「波源が時刻 0 に振動を始める」をオンにして、観測位置を遠くにしよう。点Aが振動を始めるのはいつか。", `波が届くまで（${I("t")} ＝ 距離 ÷ ${I("v")}）は ${I("y")}-${I("t")} グラフが平らです。曲面でも、波がまだ届いていない平らな部分として見えます。`],
-  ["「観測点 B を追加」して、B を A から 0.5 m（半波長）離そう。2つの y-t グラフを比べよう。1 m（1波長）離すとどうなるか。", "半波長離れた2点は、いつも上下が逆に振動します（逆位相）。1波長離れた2点は、まったく同じように振動します（同位相）。"],
+  ["「観測点 B を追加」して、B を A から 0.5 m（半波長）離そう。2つの <i class='qv'>y</i>-<i class='qv'>t</i> グラフを比べよう。1 m（1波長）離すとどうなるか。", "半波長離れた2点は、いつも上下が逆に振動します（逆位相）。1波長離れた2点は、まったく同じように振動します（同位相）。"],
   [`同じ波の ${I("y")}-${I("x")} グラフと ${I("y")}-${I("t")} グラフを比べると、形が左右反転したように見えることがある。なぜか。`, `波が ${I("x")} 軸の正の向きに進むとき、山の線は「${I("x")} が大きいほど ${I("t")} も大きい」向きに傾いています。そのため、位置を先へ進めることは、時刻を前に戻すことと同じ変化になり、2つのグラフの形が左右反転の関係になります。進む向きを負にすると、山の線の傾きも逆になります。`]
 ].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
 

@@ -439,8 +439,9 @@ sub .s, sub i{font-family:var(--f-sym)}
       const c = s[i];
       if (c === '*') { out += it ? '</i>' : '<i class="s">'; it = !it; continue; }
       if (c === '_' || c === '^') {
-        const n = s[++i]; const tag = c === '_' ? 'sub' : 'sup';
-        out += '<' + tag + '>' + (/[a-zA-Z]/.test(n) ? '<i class="s">' + n + '</i>' : n) + '</' + tag + '>';
+        let n = s[++i]; const tag = c === '_' ? 'sub' : 'sup';
+        if (n === '{') { const j = s.indexOf('}', i); n = s.slice(i + 1, j); i = j; out += '<' + tag + '>' + K.h(n) + '</' + tag + '>'; continue; }
+        out += '<' + tag + '>' + ((tag === 'sup' ? /[a-zA-Z]/ : /^[xyz]$/).test(n) ? '<i class="s">' + n + '</i>' : n) + '</' + tag + '>';
         continue;
       }
       out += c === '<' ? '&lt;' : c === '&' ? '&amp;' : c;
@@ -454,7 +455,7 @@ sub .s, sub i{font-family:var(--f-sym)}
     for (let i = 0; i < s.length; i++) {
       const c = s[i];
       if (c === '*') { it = !it; continue; }
-      if (c === '_' || c === '^') { const n = s[++i]; r.push({ c: n, k: c === '_' ? 'sub' : 'sup', it: /[a-zA-Z]/.test(n) }); continue; }
+      if (c === '_' || c === '^') { const n = s[++i]; r.push({ c: n, k: c === '_' ? 'sub' : 'sup', it: (c === '_' ? /^[xyz]$/ : /[a-zA-Z]/).test(n) }); continue; }
       r.push({ c, k: 'n', it });
     }
     return r;
@@ -570,7 +571,7 @@ sub .s, sub i{font-family:var(--f-sym)}
       <button class="btn" id="tp-back" type="button" title="ストロボ1コマ戻る">◀|</button>
       <button class="btn" id="tp-fwd" type="button" title="ストロボ1コマ進む">|▶</button>
       <input type="range" id="tp-t" min="0" max="1000" value="0" aria-label="時刻">
-      <span class="tread" id="tp-read">t = 0.00 s</span>
+      <span class="tread" id="tp-read"><i class="s">t</i> = 0.00 s</span>
       <select id="tp-speed" aria-label="再生速度"><option value="0.25">×0.25</option><option value="0.5">×0.5</option><option value="1" selected>×1</option><option value="2">×2</option></select>
     </div>`;
   K.bindTransport = (player, getStep) => {
@@ -589,7 +590,7 @@ sub .s, sub i{font-family:var(--f-sym)}
       if (e.code === 'ArrowRight') step(1);
       if (e.code === 'ArrowLeft') step(-1);
     });
-    return (t) => { sl.value = player.tEnd > 0 ? Math.round((t / player.tEnd) * 1000) : 0; rd.textContent = 't = ' + K.f(t, 2) + ' s'; };
+    return (t) => { sl.value = player.tEnd > 0 ? Math.round((t / player.tEnd) * 1000) : 0; rd.innerHTML = K.h('*t* = ' + K.f(t, 2) + ' s'); };
   };
 
   /* ---------- 式の項 ⇔ グラフ ---------- */
@@ -628,7 +629,7 @@ sub .s, sub i{font-family:var(--f-sym)}
         <button class="btn primary" data-a="play" type="button">▶ 再生</button>
         <button class="btn" data-a="reset" type="button" title="最初に戻す">⏮</button>
         <input type="range" data-a="t" min="0" max="1000" value="0" aria-label="時刻">
-        <span class="tread" data-a="read">t = 0.00 s</span>
+        <span class="tread" data-a="read"><i class="s">t</i> = 0.00 s</span>
         <select data-a="speed" aria-label="再生速度"><option value="0.25">×0.25</option><option value="0.5">×0.5</option><option value="1" selected>×1</option><option value="2">×2</option></select>
       </div>`;
     const q = (a) => host.querySelector('[data-a="' + a + '"]');
@@ -641,7 +642,7 @@ sub .s, sub i{font-family:var(--f-sym)}
     player.onState = () => { play.textContent = player.playing ? '⏸ 停止' : '▶ 再生'; };
     return (t) => {
       sl.value = player.tEnd > 0 ? Math.round((t / player.tEnd) * 1000) : 0;
-      rd.textContent = opt.label ? opt.label(t) : 't = ' + K.f(t, 2) + ' s';
+      rd.innerHTML = K.h(opt.label ? opt.label(t) : '*t* = ' + K.f(t, 2) + ' s');
     };
   };
   // スペースキーは「いま見えているペインの」プレーヤーへ
@@ -1424,7 +1425,7 @@ sub .s, sub i{font-family:var(--f-sym)}
       $('#l-ex').innerHTML = `<div class="ttl">力学的エネルギー保存則が成り立つ条件</div>物体に<b>保存力（重力・弾性力）だけが仕事をする</b>とき、または保存力以外の力がはたらいていても<b>仕事をしない</b>（垂直抗力・張力のように移動の向きと垂直）とき、力学的エネルギーは一定に保たれる。運動エネルギーと位置エネルギーが<b>入れかわるだけ</b>で、合計は変わらない。`;
     } else {
       $('#l-eq').innerHTML = `Δ${I('E')}<span class="op">＝</span>${I('E')} − ${I('E')}<sub>0</sub><span class="op">＝</span>${I('W')}<sub>非保存力</sub>`;
-      $('#l-sub').textContent = `${f(E, 2)} − ${f(R.E0, 2)} ＝ ${f(E - R.E0, 2)} J　／　W ＝ ${f(Wnc, 2)} J`;
+      $('#l-sub').innerHTML = K.h(`${f(E, 2)} − ${f(R.E0, 2)} ＝ ${f(E - R.E0, 2)} J　／　*W*_{nc} ＝ ${f(Wnc, 2)} J`);
       $('#l-ex').innerHTML = `<div class="ttl">力学的エネルギーが保存しない場合</div>仕事を「保存力の仕事 ${I('W')}<sub>c</sub>」と「保存力以外の力（非保存力）の仕事 ${I('W')}<sub>nc</sub>」に分けると、Δ${I('K')} ＝ ${I('W')}<sub>c</sub> ＋ ${I('W')}<sub>nc</sub>、${I('W')}<sub>c</sub> ＝ ${I('U')}<sub>0</sub> − ${I('U')} より<div class="mth">(${I('K')} ＋ ${I('U')}) − (${I('K')}<sub>0</sub> ＋ ${I('U')}<sub>0</sub>)<span class="op">＝</span>${I('W')}<sub>nc</sub></div>${Wnc < 0 || base !== 'lift' ? '摩擦力や空気抵抗は負の仕事をし、力学的エネルギーは減る。減った分は<b>熱など</b>（物体や面・空気の内部エネルギー）になり、エネルギー全体は保存されている。' : '人が加える力が正の仕事をすると、その分だけ力学的エネルギーが増える（人のエネルギーが物体に移る）。'}`;
     }
   }

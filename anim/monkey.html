@@ -342,8 +342,8 @@ sub .s, sub i{font-family:var(--f-sym)}
       if (c === '*') { out += it ? '</i>' : '<i class="s">'; it = !it; continue; }
       if (c === '_' || c === '^') {
         let n = s[++i]; const tag = c === '_' ? 'sub' : 'sup';
-        if (n === '{') { const j = s.indexOf('}', i); n = s.slice(i + 1, j); i = j; out += '<' + tag + '>' + n + '</' + tag + '>'; continue; }
-        out += '<' + tag + '>' + (/[a-zA-Z]/.test(n) ? '<i class="s">' + n + '</i>' : n) + '</' + tag + '>';
+        if (n === '{') { const j = s.indexOf('}', i); n = s.slice(i + 1, j); i = j; out += '<' + tag + '>' + K.h(n) + '</' + tag + '>'; continue; }
+        out += '<' + tag + '>' + ((tag === 'sup' ? /[a-zA-Z]/ : /^[xyz]$/).test(n) ? '<i class="s">' + n + '</i>' : n) + '</' + tag + '>';
         continue;
       }
       out += c === '<' ? '&lt;' : c === '&' ? '&amp;' : c;
@@ -360,7 +360,7 @@ sub .s, sub i{font-family:var(--f-sym)}
       if (c === '_' || c === '^') {
         let n = s[++i]; const k = c === '_' ? 'sub' : 'sup';
         if (n === '{') { const j = s.indexOf('}', i); for (const ch of s.slice(i + 1, j)) r.push({ c: ch, k, it: false }); i = j; continue; }
-        r.push({ c: n, k, it: /[a-zA-Z]/.test(n) }); continue;
+        r.push({ c: n, k, it: (k === 'sub' ? /^[xyz]$/ : /[a-zA-Z]/).test(n) }); continue;
       }
       r.push({ c, k: 'n', it });
     }
@@ -776,7 +776,7 @@ sub .s, sub i{font-family:var(--f-sym)}
       <button class="btn" id="tp-back" type="button" title="ストロボ1コマ戻る">◀|</button>
       <button class="btn" id="tp-fwd" type="button" title="ストロボ1コマ進む">|▶</button>
       <input type="range" id="tp-t" min="0" max="1000" value="0" aria-label="時刻">
-      <span class="tread" id="tp-read">t = 0.00 s</span>
+      <span class="tread" id="tp-read"><i class="s">t</i> = 0.00 s</span>
       <select id="tp-speed" aria-label="再生速度"><option value="0.25">×0.25</option><option value="0.5">×0.5</option><option value="1" selected>×1</option><option value="2">×2</option></select>
     </div>`;
   K.bindTransport = (player, getStep) => {
@@ -795,7 +795,7 @@ sub .s, sub i{font-family:var(--f-sym)}
       if (e.code === 'ArrowRight') step(1);
       if (e.code === 'ArrowLeft') step(-1);
     });
-    return (t) => { sl.value = player.tEnd > 0 ? Math.round((t / player.tEnd) * 1000) : 0; rd.textContent = 't = ' + K.f(t, 2) + ' s'; };
+    return (t) => { sl.value = player.tEnd > 0 ? Math.round((t / player.tEnd) * 1000) : 0; rd.innerHTML = K.h('*t* = ' + K.f(t, 2) + ' s'); };
   };
 
   /* ---------- 式の項 ⇔ グラフ ---------- */
@@ -915,7 +915,7 @@ sub .s, sub i{font-family:var(--f-sym)}
   $('#optDrop').onchange = (e) => { S.drop = e.target.checked; player.dirty = true; };
   $('#optVec').onchange = (e) => { S.vec = e.target.checked; player.dirty = true; };
   $('#optStrobe').onchange = (e) => { S.strobe = e.target.value; player.dirty = true; };
-  $('#keep').onclick = () => { ghosts.push({ ...M, label: `v₀=${f(S.v0)}${S.g === 0 ? ' 無重力' : planet() ? ' ' + planet().name : ' g=' + f(S.g, 1)}${S.rel !== 'same' ? (S.rel === 'never' ? ' 離さない' : ' 遅れ' + S.delay + 's') : ''}` }); if (ghosts.length > 5) ghosts.shift(); update(); };
+  $('#keep').onclick = () => { ghosts.push({ ...M, label: `*v*₀=${f(S.v0)}${S.g === 0 ? ' 無重力' : planet() ? ' ' + planet().name : ' *g*=' + f(S.g, 1)}${S.rel !== 'same' ? (S.rel === 'never' ? ' 離さない' : ' 遅れ' + S.delay + 's') : ''}` }); if (ghosts.length > 5) ghosts.shift(); update(); };
   $('#clear').onclick = () => { ghosts = []; update(); };
   $$('.tab').forEach((b) => (b.onclick = () => applyExp(b.dataset.exp, true)));
   function applyExp(k, fromUI) {
@@ -958,7 +958,7 @@ sub .s, sub i{font-family:var(--f-sym)}
     G3.fn = M.vyb; G3.tEnd = M.tEnd; G3.tAxis = tA;
     G3.extras = [{ fn: M.vym, color: '--monkey' }];
     player.setEnd(M.tEnd);
-    $('#ghostList').innerHTML = ghosts.length ? '<span class="note">残した軌道（点線）：</span>' + ghosts.map((g) => `<span class="g">${g.label}</span>`).join('') : '';
+    $('#ghostList').innerHTML = ghosts.length ? '<span class="note">残した軌道（点線）：</span>' + ghosts.map((g) => `<span class="g">${K.h(g.label)}</span>`).join('') : '';
     buildFormulas();
     player.dirty = true;
   }
@@ -981,10 +981,10 @@ sub .s, sub i{font-family:var(--f-sym)}
   function updateSubst(t) {
     const el = (k) => $(`#fx [data-s="${k}"]`); if (!el('b')) return;
     const d = 0.5 * M.g * t * t, tt = f(t, 2), deg = (M.th0 * 180) / Math.PI;
-    el('aim').textContent = `tanθ = (${f(M.H, 1)} − ${f(M.yg, 1)}) ÷ ${f(M.L, 1)} = ${f(Math.tan(M.th0), 3)}　→　θ = ${f(deg, 1)}°${S.aim ? `（ずらして ${f(deg + S.aim, 1)}°）` : ''}`;
-    el('b').textContent = `y = ${f(M.yg + M.vy * t, 2)} − ${f(d, 2)} = ${f(M.yb(t), 2)} m（t = ${tt} s）`;
-    el('m').textContent = S.rel === 'same' ? `y = ${f(M.H, 2)} − ${f(d, 2)} = ${f(M.ym(t), 2)} m` : `手を離す時刻がちがうので、この式は成り立たない（いまの y = ${f(M.ym(t), 2)} m）`;
-    el('t1').textContent = isFinite(M.t1) ? `t₁ = ${f(M.L, 1)} ÷ ${f(M.vx, 2)} = ${f(M.t1, 3)} s　このとき ½gt₁² = ${f(0.5 * M.g * M.t1 * M.t1, 2)} m` : '—';
+    el('aim').innerHTML = K.h(`tan *θ* = (${f(M.H, 1)} − ${f(M.yg, 1)}) ÷ ${f(M.L, 1)} = ${f(Math.tan(M.th0), 3)}　→　*θ* = ${f(deg, 1)}°${S.aim ? `（ずらして ${f(deg + S.aim, 1)}°）` : ''}`);
+    el('b').innerHTML = K.h(`*y* = ${f(M.yg + M.vy * t, 2)} − ${f(d, 2)} = ${f(M.yb(t), 2)} m（*t* = ${tt} s）`);
+    el('m').innerHTML = K.h(S.rel === 'same' ? `*y* = ${f(M.H, 2)} − ${f(d, 2)} = ${f(M.ym(t), 2)} m` : `手を離す時刻がちがうので、この式は成り立たない（いまの *y* = ${f(M.ym(t), 2)} m）`);
+    el('t1').innerHTML = isFinite(M.t1) ? K.h(`*t*_1 = ${f(M.L, 1)} ÷ ${f(M.vx, 2)} = ${f(M.t1, 3)} s　このとき ½*gt*_1^2 = ${f(0.5 * M.g * M.t1 * M.t1, 2)} m`) : '—';
   }
   function highlights(k, t) {
     const o = { 1: [], 2: [], 3: [] }; if (!k || !M) return o;
@@ -1154,8 +1154,8 @@ sub .s, sub i{font-family:var(--f-sym)}
       }
     }
     // 視点の説明
-    const pn = pl ? pl.name + '　g = ' + pl.g + ' m/s²' : S.g === 0 ? '無重力　g = 0' : 'g = ' + f(S.g, 2) + ' m/s²';
-    ctx.fillStyle = ink.ink2; ctx.font = '12px ' + C('--f-ui'); ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(pn, X(0) + 70, 4);
+    const pn = pl ? pl.name + '　*g* = ' + pl.g + ' m/s²' : S.g === 0 ? '無重力　*g* = 0' : '*g* = ' + f(S.g, 2) + ' m/s²';
+    ctx.fillStyle = ink.ink2; K.rich(ctx, pn, X(0) + 70, 11, 12, 'left');
     if (fall) K.tag(ctx, 'サルと一緒に自由落下する視点：小球はねらいの直線上をまっすぐ進んで見える', mL, 30, C('--ui'), 12, 'left');
   }
 
@@ -1177,7 +1177,7 @@ sub .s, sub i{font-family:var(--f-sym)}
     const R = M.res, done = t >= M.tEnd - 1e-6;
     let pill, msg;
     if (!done) { pill = '<span class="pill run">飛行中</span>'; msg = curExp ? NOTE[curExp] : '再生して結果を確かめよう。'; }
-    else if (R.kind === 'hit') { pill = '<span class="pill hit">命中</span>'; msg = `${f(R.t, 2)} s 後、高さ ${f(R.y, 2)} m で当たった。小球もサルも ½gt² = ${f(0.5 * M.g * R.t * R.t, 2)} m ずつ落ちている。`; }
+    else if (R.kind === 'hit') { pill = '<span class="pill hit">命中</span>'; msg = `${f(R.t, 2)} s 後、高さ ${f(R.y, 2)} m で当たった。小球もサルも ½<i class="s">gt</i>² = ${f(0.5 * M.g * R.t * R.t, 2)} m ずつ落ちている。`; }
     else if (R.kind === 'short') { pill = '<span class="pill miss">届かない</span>'; msg = `サルの真下に届く前に、小球が地面に落ちた（${f(R.t, 2)} s）。サルも同じだけ落ちるので、初速度が小さいと両方とも地面に着いてしまう。`; }
     else { pill = '<span class="pill miss">はずれ</span>'; msg = `小球はサルの ${f(Math.abs(R.gap), 2)} m ${R.gap > 0 ? '上' : '下'}を通過した（${f(R.t, 2)} s）。${S.rel === 'never' ? 'サルが離さないので、小球だけが ½gt² 落ちた分、下を通る。' : S.rel === 'late' ? 'サルが遅れて離したので、落ちた距離が小球より少ない。' : S.aim ? 'ねらいがずれていたので、その分だけずれた。' : ''}`; }
     $('#result').innerHTML = pill + `<span class="msg">${msg}</span>`;

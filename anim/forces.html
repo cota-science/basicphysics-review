@@ -272,7 +272,7 @@ function draw(){
     let fx = '';
     if (s.scene === 'floor') fx = eq('$N$ <span class="op">=</span> $W$ <span class="op">=</span> $mg$', `${L.f(Wa,1)} N ＝ ${L.f(s.m,1)} kg × 9.8 m/s²`, '上下の力がつりあう（静止している）');
     if (s.scene === 'hang') fx = eq('$T$ <span class="op">=</span> $W$ <span class="op">=</span> $mg$', `${L.f(Wa,1)} N`, '糸の張力と重力がつりあう');
-    if (s.scene === 'push') fx = eq('$f$ <span class="op">=</span> $F$ ， $N$ <span class="op">=</span> $mg$', `f ＝ ${L.f(Wa*.35,1)} N，N ＝ ${L.f(Wa,1)} N`, '横：押す力と静止摩擦力、縦：重力と垂直抗力がつりあう（くわしくは「摩擦力」ページ）');
+    if (s.scene === 'push') fx = eq('$f$ <span class="op">=</span> $F$ ， $N$ <span class="op">=</span> $mg$', `<i class="s">f</i> ＝ ${L.f(Wa*.35,1)} N，N ＝ ${L.f(Wa,1)} N`, '横：押す力と静止摩擦力、縦：重力と垂直抗力がつりあう（くわしくは「摩擦力」ページ）');
     if (s.scene === 'slope') fx = eq('$T$ <span class="op">=</span> $mg$ sin$θ$ ， $N$ <span class="op">=</span> $mg$ cos$θ$', `T ＝ ${L.f(Wa*Math.sin(s.theta*D),1)} N，N ＝ ${L.f(Wa*Math.cos(s.theta*D),1)} N`, '重力を斜面に平行・垂直に分解して考える（「力の分解」タブ）');
     if (s.scene === 'stack') fx = s.focus === 'A'
       ? eq('$N$_A <span class="op">=</span> $m$_A$g$', `${L.f(Wa,1)} N`, 'Aにはたらく力は2本だけ。「床」はAにふれていない')
@@ -292,7 +292,7 @@ function draw(){
       <p class="note" style="margin:8px 0 0">○の点をドラッグして力を変えられます（0.5 N きざみ）。</p>`);
     const x = ks.map(k => L.f(s[k].x, 1)).join(' ＋ '), y = ks.map(k => L.f(s[k].y, 1)).join(' ＋ ');
     L.set('fx', eq('$F$ <span class="op">=</span> ' + ks.map(k => '$F$_' + k[1]).join(' <span class="op">+</span> ') + ' <span class="jp">（ベクトルの和）</span>', `${L.f(Rm,2)} N（矢印の長さの単純な和 ${L.f(sum,2)} N とは一般に一致しない）`, '平行四辺形の対角線、または矢印を「つないで」始点から終点へ')
-      + eq('$F$_x <span class="op">=</span> ' + ks.map(k => '$F$_{' + k[1] + 'x}').join(' + ') + '，　$F$_y <span class="op">=</span> ' + ks.map(k => '$F$_{' + k[1] + 'y}').join(' + '), `Fx ＝ ${x} ＝ ${L.f(R.x,1)} N，Fy ＝ ${y} ＝ ${L.f(R.y,1)} N`, '成分どうしなら、ふつうの足し算でよい')
+      + eq('$F$_x <span class="op">=</span> ' + ks.map(k => '$F$_{' + k[1] + 'x}').join(' + ') + '，　$F$_y <span class="op">=</span> ' + ks.map(k => '$F$_{' + k[1] + 'y}').join(' + '), `<i class="s">Fx</i> ＝ ${x} ＝ ${L.f(R.x,1)} N，<i class="s">Fy</i> ＝ ${y} ＝ ${L.f(R.y,1)} N`, '成分どうしなら、ふつうの足し算でよい')
       + eq('$F$ <span class="op">=</span> √($F$_x² <span class="op">+</span> $F$_y²)', `√(${L.f(R.x,1)}² ＋ ${L.f(R.y,1)}²) ＝ ${L.f(Rm,2)} N`, '三平方の定理'));
   } else {
     const r = drawResolve(), s = S.resolve;
@@ -305,7 +305,7 @@ function draw(){
         <p class="note" style="margin:8px 0 0">分力は重力を「置きかえた」もの。重力と分力を同時に数えないこと。</p>`);
       L.set('fx', eq('$mg$ sin$θ$ <span class="op">=</span> ' + L.f(s.m,1) + '×9.8×sin' + s.theta + '°', `＝ ${L.f(r.a,2)} N`, '平行な分力')
         + eq('$mg$ cos$θ$ <span class="op">=</span> ' + L.f(s.m,1) + '×9.8×cos' + s.theta + '°', `＝ ${L.f(r.b,2)} N`, '垂直な分力')
-        + `<div class="explain"><div class="ttl">なぜ「θ」が重力と斜面の垂線の間に出てくる？</div>重力は水平面に垂直、斜面の垂線は斜面に垂直。2つの面のなす角が θ なので、それぞれに垂直な線どうしのなす角も θ になります（色をつけた直角三角形）。θ を 0° や 90° に近づけて、sin・cos のどちらが大きくなるか確かめよう。</div>`);
+        + `<div class="explain"><div class="ttl">なぜ「<i class="s">θ</i>」が重力と斜面の垂線の間に出てくる？</div>重力は水平面に垂直、斜面の垂線は斜面に垂直。2つの面のなす角が <i class="s">θ</i> なので、それぞれに垂直な線どうしのなす角も <i class="s">θ</i> になります（色をつけた直角三角形）。<i class="s">θ</i> を 0° や 90° に近づけて、sin・cos のどちらが大きくなるか確かめよう。</div>`);
     } else {
       ro && ro({ W: L.f(s.F, 1) + ' N', a: L.f(r.a, 1) + ' N', b: L.f(r.b, 1) + ' N', th: s.phi + '°' });
       L.set('side', `<ul class="fl">
@@ -314,7 +314,7 @@ function draw(){
         <li style="--c:${C.FN}"><span class="sw"></span><span>鉛直な分力 ${L.h('$F$ sin$θ$')}<br><span class="note">物体を持ち上げようとする（垂直抗力が減る）</span></span><span class="val">${L.f(r.b,1)} N</span></li></ul>`);
       L.set('fx', eq('$F$_x <span class="op">=</span> $F$ cos$θ$', `${L.f(s.F,1)}×cos${s.phi}° ＝ ${L.f(r.a,2)} N`, '水平成分')
         + eq('$F$_y <span class="op">=</span> $F$ sin$θ$', `${L.f(s.F,1)}×sin${s.phi}° ＝ ${L.f(r.b,2)} N`, '鉛直成分')
-        + `<div class="explain"><div class="ttl">角 θ に「となり合う」辺が cos</div>分解する向きと力のなす角が θ のとき、その向きの分力は <i class="s">F</i> cos<i class="s">θ</i>。もう一方は <i class="s">F</i> sin<i class="s">θ</i>。</div>`);
+        + `<div class="explain"><div class="ttl">角 <i class="s">θ</i> に「となり合う」辺が cos</div>分解する向きと力のなす角が <i class="s">θ</i> のとき、その向きの分力は <i class="s">F</i> cos<i class="s">θ</i>。もう一方は <i class="s">F</i> sin<i class="s">θ</i>。</div>`);
     }
   }
 }
@@ -364,7 +364,7 @@ function build(){
     ro = setRO([{ k: 'W', lab: S.resolve.sub === 'slope' ? '重力 $mg$' : '引く力 $F$', c: S.resolve.sub === 'slope' ? 'Fg' : 'FT' }, { k: 'a', lab: S.resolve.sub === 'slope' ? '平行な分力' : '水平な分力', c: 'Fx' }, { k: 'b', lab: S.resolve.sub === 'slope' ? '垂直な分力' : '鉛直な分力', c: 'FN' }, { k: 'th', lab: '角度 $θ$' }]);
     document.getElementById('listT').textContent = '分力';
     const defs = [{ t: 'seg', k: 'sub', lab: '分解する力', opts: [['slope', '斜面上の物体の重力'], ['pull', '斜め上に引く力']], wide: true }];
-    if (S.resolve.sub === 'slope') defs.push({ k: 'theta', lab: '斜面の角度 $θ$', min: 0, max: 80, step: 1, unit: '°', d: 0 }, { k: 'm', lab: '質量 $m$', min: .5, max: 5, step: .1, unit: 'kg' }, { t: 'check', k: 'tri', lab: '重力と分力の直角三角形・角 θ を表示' });
+    if (S.resolve.sub === 'slope') defs.push({ k: 'theta', lab: '斜面の角度 $θ$', min: 0, max: 80, step: 1, unit: '°', d: 0 }, { k: 'm', lab: '質量 $m$', min: .5, max: 5, step: .1, unit: 'kg' }, { t: 'check', k: 'tri', lab: '重力と分力の直角三角形・角 <i class="s">θ</i> を表示' });
     else defs.push({ k: 'phi', lab: '水平からの角度 $θ$', min: 0, max: 90, step: 1, unit: '°', d: 0 }, { k: 'F', lab: '引く力の大きさ $F$', min: 2, max: 40, step: 1, unit: 'N', d: 0 });
     L.params('prm', defs, S.resolve, k => { if (k === 'sub') build(); draw(); });
   }

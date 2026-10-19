@@ -131,7 +131,7 @@ const SECTIONS = [
      options:[["直列","並列"],["直列","並列"]],answer:[0,1],
      explain:"電流計には同じ電流を通し（直列）、電圧計は2点間の差を測る（並列）からです。"}
   ]},
-  { title:"B. 回路図を読む", lead:`電池（6.0 V）に、抵抗 <i class='qv'>R</i>₁（10 Ω）と <i class='qv'>R</i>₂（15 Ω）を並列につないだ回路。${ANIM("anim/ohm.html#parallel","並列回路のアニメーション（R₂ を 15 Ω にして確かめる）")}`, figure:PARA, qs:[
+  { title:"B. 回路図を読む", lead:`電池（6.0 V）に、抵抗 <i class='qv'>R</i>₁（10 Ω）と <i class='qv'>R</i>₂（15 Ω）を並列につないだ回路。${ANIM("anim/ohm.html#parallel","並列回路のアニメーション（<i class='qv'>R</i>₂ を 15 Ω にして確かめる）")}`, figure:PARA, qs:[
     {id:"rb1",type:"choice",prompt:`${R1} と ${R2} で等しい量はどれか。`,options:["かかる電圧","流れる電流","消費電力"],answer:0,
      explain:"並列では、どちらの抵抗の両端も電池の両端とつながっているので、電圧が等しくなります。"},
     {id:"rb2",type:"choice",prompt:"大きい電流が流れるのはどちらの抵抗か。",options:[R1,R2,"同じ"],answer:0,

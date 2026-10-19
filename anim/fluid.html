@@ -102,7 +102,7 @@ function drawPressure(){
   L.line(ctx, G.x0, G.top, G.x1, G.top, C.ui, 1.2);
   // depth scale
   for (let m = 0; m <= HT; m++){ const y = G.top + m * G.ppm; L.line(ctx, G.x0 - 8, y, G.x0, y, C.ink3, 1); if (m % 2 === 0) L.rich(ctx, m + ' m', G.x0 - 11, y, { size: 10.5, align: 'right', color: C.ink3, num: true }); }
-  L.rich(ctx, FL[S.fluid][0] + `（ρ ＝ ${r} kg/m³）`, G.x0 + 8, G.bot - 12, { size: 12, color: C.ink2 });
+  L.rich(ctx, FL[S.fluid][0] + `（$ρ$ ＝ ${r} kg/m³）`, G.x0 + 8, G.bot - 12, { size: 12, color: C.ink2 });
   const px = (G.x0 + G.x1) / 2 + 40, py = G.top + s.h * G.ppm, p = P0 + r * g * s.h;
   const pmax = P0 + r * g * HT, Lp = v => 12 + 44 * v / pmax;
   // column
@@ -157,7 +157,7 @@ function drawBuoy(){
   ctx.save(); ctx.fillStyle = S.fluid === 'hg' ? 'rgba(150,160,175,.55)' : S.fluid === 'oil' ? 'rgba(220,170,40,.30)' : C.water; ctx.fillRect(x0, surf, x1 - x0, TD * ppm); ctx.restore();
   L.line(ctx, x0, surf - 40, x0, surf + TD * ppm, C.ink2, 2); L.line(ctx, x1, surf - 40, x1, surf + TD * ppm, C.ink2, 2); L.line(ctx, x0, surf + TD * ppm, x1, surf + TD * ppm, C.ink2, 2);
   L.line(ctx, x0, surf, x1, surf, C.ui, 1.2);
-  L.rich(ctx, `${FL[S.fluid][0]}（ρ ＝ ${c.r} kg/m³）`, x0 + 8, surf + TD * ppm - 12, { size: 12, color: C.ink2 });
+  L.rich(ctx, `${FL[S.fluid][0]}（$ρ$ ＝ ${c.r} kg/m³）`, x0 + 8, surf + TD * ppm - 12, { size: 12, color: C.ink2 });
   // object
   const cx = (x0 + x1) / 2, bw = Math.sqrt(SA) * ppm, bh = b.Lh * ppm, yb = surf + b.d * ppm, yt = yb - bh;
   // spring scale
@@ -260,8 +260,8 @@ function drawPascal(){
   const diff = c.F2 - c.Wl;
   badge(Math.abs(diff) < c.Wl * .005 + .01 ? 'ok' : diff > 0 ? 'ok' : 'ng', Math.abs(diff) < c.Wl * .005 + .01 ? 'つりあっている' : diff > 0 ? 'おもりが持ち上がる' : '力が足りない（おもりが下がる）');
   ro && ro({ dp: `${sci(c.dp, 2)} Pa`, F2: `${sci(c.F2, 3)} N`, r: `${L.f(c.ratio, 0)} 倍`, need: `${sci(c.need, 3)} N` });
-  L.set('fx', eq(`$Δp$${OP('=')}$F$_1 / $S$_1`, `${s.F1} N ÷ ${L.f(s.S1 * 1e-4, 4)} m² ＝ ${sci(c.dp, 3)} Pa`, '小さいピストンで加えた圧力の増加', true)
-    + eq(`$F$_2${OP('=')}$Δp$$S$_2${OP('=')}$F$_1 × $S$_2 / $S$_1`, `${sci(c.dp, 3)} × ${L.f(s.S2 * 1e-4, 4)} ＝ ${sci(c.F2, 3)} N（${L.f(c.ratio,0)} 倍）`, 'パスカルの原理：圧力の増加は流体のどこにも同じだけ伝わる', true)
+  L.set('fx', eq(`Δ$p$${OP('=')}$F$_1 / $S$_1`, `${s.F1} N ÷ ${L.f(s.S1 * 1e-4, 4)} m² ＝ ${sci(c.dp, 3)} Pa`, '小さいピストンで加えた圧力の増加', true)
+    + eq(`$F$_2${OP('=')}Δ$p$$S$_2${OP('=')}$F$_1 × $S$_2 / $S$_1`, `${sci(c.dp, 3)} × ${L.f(s.S2 * 1e-4, 4)} ＝ ${sci(c.F2, 3)} N（${L.f(c.ratio,0)} 倍）`, 'パスカルの原理：圧力の増加は流体のどこにも同じだけ伝わる', true)
     + eq(`$F$_1$d$_1${OP('=')}$F$_2$d$_2`, `大きいピストンを ${L.f(s.z * 100, 1)} cm 上げるのに、小さいピストンを ${L.f(s.z * s.S2 / s.S1 * 100, 0)} cm 押し下げる`, '押しのける体積が等しい（$S$_1$d$_1 ＝ $S$_2$d$_2）→ 力は得をしても仕事は得をしない')
     + `<div class="explain"><div class="ttl">油圧ジャッキ・ブレーキのしくみ</div>小さな力で重い物を持ち上げられる。ただし、その分だけ長い距離を押す必要がある。</div>`);
 }
@@ -280,7 +280,7 @@ function drawGraph(){
     const h = S.pressure.h; L.dot(gx, P.X(h), P.Y((P0 + r * g * h) / 1e5), 5.5, C.Fb, true);
     P.unclip();
     L.set('gt', L.h('$p$-$h$ グラフ'));
-    L.set('gm', `直線の傾き＝ρg、切片＝大気圧 $p$_0`.replace(/\$p\$_0/, L.h('$p$_0')));
+    L.set('gm', L.h('直線の傾き＝$ρg$、切片＝大気圧 $p$_0'));
     L.set('gf', `<div class="legend"><span><i class="sw" style="--c:${C.Fb}"></i>${FL[S.fluid][0]}</span>${S.fluid !== 'water' ? `<span><i class="sw" style="--c:${C.ghost}"></i>水（比較）</span>` : ''}${P0 ? '<span>点線：大気圧</span>' : ''}</div>`);
   } else if (mode === 'buoy'){
     const b = S.buoy, r = rho(), Wt = rhoObj() * SA * b.Lh * g, Fmax = r * g * SA * b.Lh;
@@ -341,7 +341,7 @@ function build(){
   } else {
     tp.innerHTML = '<button class="btn" id="bRz" type="button">ピストンの位置をもどす</button>';
     document.getElementById('bRz').onclick = () => { loopP.stop(); S.pascal.z = 0; draw(); drawGraph(); };
-    ro = L.readout('ro', [{ k: 'dp', lab: '圧力の増加 $Δp$', c: 'Fb' }, { k: 'F2', lab: '大きいピストンが受ける力', c: 'FN' }, { k: 'r', lab: '$S$_2/$S$_1' }, { k: 'need', lab: '持ち上げに必要な $F$_1', c: 'FT' }]);
+    ro = L.readout('ro', [{ k: 'dp', lab: '圧力の増加 Δ$p$', c: 'Fb' }, { k: 'F2', lab: '大きいピストンが受ける力', c: 'FN' }, { k: 'r', lab: '$S$_2/$S$_1' }, { k: 'need', lab: '持ち上げに必要な $F$_1', c: 'FT' }]);
     defs = [{ k: 'F1', lab: '小さいピストンを押す力 $F$_1', min: 0, max: 200, step: 1, unit: 'N', d: 0 }, { k: 'M', lab: 'のせた物体の質量 $M$', min: 10, max: 2000, step: 10, unit: 'kg', d: 0 },
       { k: 'S1', lab: '小さいピストンの断面積 $S$_1', min: 1, max: 50, step: 1, unit: 'cm²', d: 0 }, { k: 'S2', lab: '大きいピストンの断面積 $S$_2', min: 50, max: 2000, step: 10, unit: 'cm²', d: 0 }];
     api = L.params('prm', defs, S.pascal, onCh);

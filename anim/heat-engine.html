@@ -173,7 +173,7 @@ tr.sum td{font-weight:700;border-top:2px solid var(--ink)}
     <div class="locked" id="locked">1サイクルを終える（段階 6 まで進む）と表示されます。</div>
     <div class="eff" id="eff" hidden>
       <div class="why">
-        <div><b>① 正味の仕事 ＝ p-V グラフが囲む面積</b><span id="w1"></span></div>
+        <div><b>① 正味の仕事 ＝ <i class="qv">p</i>-<i class="qv">V</i> グラフが囲む面積</b><span id="w1"></span></div>
         <div><b>② 1サイクルでは Δ<i class="qv">U</i> ＝ 0</b><span id="w2"></span></div>
       </div>
       <div class="flow">
@@ -269,7 +269,26 @@ const cv = $("cv"), ctx = cv.getContext("2d"); let W = 0, H = 0, col = {}, LY = 
 function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","shade","sheet","heat","cool","work","net","wout","paper"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
 function resize(){ const tp = document.querySelector(".top"); if(tp) document.documentElement.style.setProperty("--hdr", tp.offsetHeight + "px"); const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0); LY = layout(); draw(); }
 function L(pts, color, w, dash){ ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore(); }
-function T(s, x, y, color, size, align, bold, base){ ctx.save(); ctx.fillStyle = color; ctx.font = `${bold ? "700 " : ""}${size || 12}px "BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`; ctx.textAlign = align || "left"; ctx.textBaseline = base || "middle"; ctx.fillText(s, x, y); ctx.restore(); }
+/* 図の中の文字：*…* で囲んだ部分を物理量（斜体）で描く。_x・_{in} は下付き。単位・数字は立体のまま */
+function RT(c, s, x, y, color, size, align, bold, fam, base){
+  size = size || 12; s = String(s); const seg = []; let it = false;
+  for(let i = 0; i < s.length; i++){
+    const ch = s[i];
+    if(ch === "*"){ it = !it; continue; }
+    if((ch === "_" || ch === "^") && i + 1 < s.length){
+      let t = s[i + 1]; if(t === "{"){ const j = s.indexOf("}", i + 2); t = s.slice(i + 2, j); i = j; } else i++;
+      seg.push({ t, it: ch === "_" ? /^[xyz]$/.test(t) : /^[a-zA-Z]$/.test(t), k: ch === "_" ? 1 : -1 }); continue;
+    }
+    const L = seg[seg.length - 1]; if(L && !L.k && L.it === it) L.t += ch; else seg.push({ t: ch, it, k: 0 });
+  }
+  const ff = fam || 'BIZ UDPGothic,"Hiragino Sans","Yu Gothic UI",sans-serif';
+  const font = o => { const z = o.k ? size * .72 : o.it ? size * 1.12 : size; return o.it ? `italic ${bold ? "700 " : ""}${z.toFixed(1)}px "Times New Roman",Times,serif` : `${bold ? "700 " : ""}${z.toFixed(1)}px ${ff}`; };
+  c.save(); c.fillStyle = color; c.textBaseline = base || "middle"; let w = 0;
+  seg.forEach(o => { c.font = font(o); o.w = c.measureText(o.t).width + (o.it && !o.k ? size * .04 : 0); w += o.w; });
+  let x0 = align === "right" ? x - w : align === "center" ? x - w / 2 : x; c.textAlign = "left";
+  seg.forEach(o => { c.font = font(o); c.fillText(o.t, x0, y + (o.k === 1 ? size * .3 : o.k === -1 ? -size * .4 : 0)); x0 += o.w; }); c.restore(); return w;
+}
+function T(s, x, y, color, size, align, bold, base){ if(String(s).includes("*")) return RT(ctx, s, x, y, color, size, align || "left", bold, null, base); ctx.save(); ctx.fillStyle = color; ctx.font = `${bold ? "700 " : ""}${size || 12}px "BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`; ctx.textAlign = align || "left"; ctx.textBaseline = base || "middle"; ctx.fillText(s, x, y); ctx.restore(); }
 function TI(s, x, y, color, size, align){ ctx.save(); ctx.fillStyle = color; ctx.font = `italic ${size || 13}px "Times New Roman",Times,serif`; ctx.textAlign = align || "left"; ctx.textBaseline = "middle"; ctx.fillText(s, x, y); ctx.restore(); }
 function TB(s, x, y, color, size, align){ ctx.save(); ctx.font = `700 ${size || 12}px "BIZ UDPGothic","Hiragino Sans",sans-serif`; const w = ctx.measureText(s).width, h = (size || 12) + 5, x0 = align === "right" ? x - w : align === "center" ? x - w / 2 : x;
   ctx.fillStyle = col.sheet; ctx.globalAlpha = .9; ctx.fillRect(x0 - 3, y - h / 2, w + 6, h); ctx.restore(); T(s, x, y, color, size, align, true); }
@@ -340,8 +359,8 @@ function drawCyl(st){
   if(moving) arrow(cx + cw + 16, yp + (S.step === 2 ? 10 : -22), cx + cw + 16, yp + (S.step === 2 ? -22 : 10), col.work, 2.4);
   const label = S.step === 2 && moving ? "等速で上昇" : S.step === 5 && moving ? "等速で下降" : "";
   if(label) T(label, cx + cw + 8, yp - 32, col.work, 11, "left", true);
-  T(`p ＝ ${st.p.toFixed(2)}×10⁵ Pa`, c.x + c.w / 2, c.y + 8, col.ink, 12, "center", true);
-  T(`T ＝ ${Math.round(Tn)} K`, c.x + c.w / 2, c.y + 26, col.heat, 12, "center", true);
+  T(`*p* ＝ ${st.p.toFixed(2)}×10⁵ Pa`, c.x + c.w / 2, c.y + 8, col.ink, 12, "center", true);
+  T(`*T* ＝ ${Math.round(Tn)} K`, c.x + c.w / 2, c.y + 26, col.heat, 12, "center", true);
 }
 function graphFrame(g, xmax, ymax, xticks, yticks, xlab, ylab, yfmt){
   const X = v => g.x + v / xmax * g.w, Y = v => g.y + g.h - v / ymax * g.h;
@@ -356,7 +375,7 @@ const segColor = k => col[COLOR[k]];
 function pathPts(k, s, fn){ const out = []; const n = 20; for(let i = 0; i <= n; i++){ const st = stateAt(k, s * i / n); out.push(fn(st)); } return out; }
 function drawPV(st){
   const ax = axes(), g = LY.pv;
-  const { X, Y } = graphFrame(g, ax.Vmax, ax.Pmax, ax.Vmax > 3 ? [1, 2, 3] : [0.5, 1, 1.5, 2, 2.5].filter(v => v <= ax.Vmax), ax.Pmax > 3 ? [1, 2, 3] : [0.5, 1, 1.5, 2, 2.5], "体積 V〔L〕", "圧力 p〔×10⁵ Pa〕", v => v.toFixed(1));
+  const { X, Y } = graphFrame(g, ax.Vmax, ax.Pmax, ax.Vmax > 3 ? [1, 2, 3] : [0.5, 1, 1.5, 2, 2.5].filter(v => v <= ax.Vmax), ax.Pmax > 3 ? [1, 2, 3] : [0.5, 1, 1.5, 2, 2.5], "体積 *V*〔L〕", "圧力 *p*〔×10⁵ Pa〕", v => v.toFixed(1));
   const P = pts(), x1 = X(V1), x2 = X(S.V2), yp1 = Y(P1), yp2 = Y(S.p2), y0 = Y(0);
   // 面積（仕事）
   if(S.step >= 2){ const xe = S.step === 2 ? X(st.V) : x2; hatch(x1, yp2, xe, y0, col.wout, 1); }
@@ -384,10 +403,10 @@ function drawPV(st){
 function drawTV(st){   // V-T 図：横軸が温度 T、縦軸が体積 V
   const ax = axes(), g = LY.tv, tstep = ax.Tmax > 1800 ? 600 : 300;
   const ticks = []; for(let v = tstep; v <= ax.Tmax; v += tstep) ticks.push(v);
-  const { X, Y } = graphFrame(g, ax.Tmax, ax.Vmax, ticks, ax.Vmax > 3 ? [1, 2, 3] : [0.5, 1, 1.5, 2, 2.5].filter(v => v <= ax.Vmax), "温度 T〔K〕", "体積 V〔L〕");
+  const { X, Y } = graphFrame(g, ax.Tmax, ax.Vmax, ticks, ax.Vmax > 3 ? [1, 2, 3] : [0.5, 1, 1.5, 2, 2.5].filter(v => v <= ax.Vmax), "温度 *T*〔K〕", "体積 *V*〔L〕");
   // 定圧の直線（原点を通る）：V ＝ T/(300p)
-  [[P1, "p₁"], [S.p2, "p₂"]].forEach(([p, lab]) => { const Tend = Math.min(ax.Tmax, TofPV(p, ax.Vmax)), Vend = Tend / TofPV(p, 1); L([[X(0), Y(0)], [X(Tend), Y(Vend)]], col.line, 1.4, [6, 4]);
-    if(LY.wide) TI(`p ＝ ${lab} の直線`, X(Tend) - 4, Y(Vend) + 12, col.muted, 12, "right"); });
+  [[P1, "*p*₁"], [S.p2, "*p*₂"]].forEach(([p, lab]) => { const Tend = Math.min(ax.Tmax, TofPV(p, ax.Vmax)), Vend = Tend / TofPV(p, 1); L([[X(0), Y(0)], [X(Tend), Y(Vend)]], col.line, 1.4, [6, 4]);
+    if(LY.wide) T(`*p* ＝ ${lab} の直線`, X(Tend) - 4, Y(Vend) + 12, col.muted, 12, "right"); });
   for(let k = 1; k <= 5; k++){
     if(k === 3) continue;
     const f = s2 => [X(TofPV(s2.p, s2.V)), Y(s2.V)];
@@ -402,7 +421,7 @@ function drawTV(st){   // V-T 図：横軸が温度 T、縦軸が体積 V
 function drawInfo(st){
   const f = LY.info; let y = f.y;
   const e = cum();
-  [["体積 V", `${st.V.toFixed(2)} L`], ["内部エネルギー U", `${Math.round(U(st.p, st.V))} J`], ["吸収した熱 Qin", `${Math.round(e.qin)} J`], ["捨てた熱 Qout", `${Math.round(e.qout)} J`], ["正味のした仕事", `${Math.round(e.wout)} J`]].forEach(([k, v]) => {
+  [["体積 *V*", `${st.V.toFixed(2)} L`], ["内部エネルギー *U*", `${Math.round(U(st.p, st.V))} J`], ["吸収した熱 *Q*_{in}", `${Math.round(e.qin)} J`], ["捨てた熱 *Q*_{out}", `${Math.round(e.qout)} J`], ["正味のした仕事", `${Math.round(e.wout)} J`]].forEach(([k, v]) => {
     T(k, f.x, y, col.muted, 11, "left"); T(v, f.x, y + 15, col.ink, 13, "left", true); y += 36; });
 }
 // これまでの合計
@@ -419,9 +438,9 @@ function stepText(){
   return [
     { h: "初期状態 A", t: `ピストンは<b>下のストッパー</b>に乗っています。ピストンの上には<b>おもり</b>がのっていて、ピストンを押し上げるには、気体の圧力が ${sub("p", "2")} ＝ ${p2}×10⁵ Pa 以上になる必要があります。いまの気体は 圧力 ${sub("p", "1")} ＝ 1.0×10⁵ Pa、体積 ${sub("V", "1")} ＝ 1.0 L、温度 300 K です。`,
       eq: `状態 A：${I("p")} ＝ 1.0×10⁵ Pa、${I("V")} ＝ 1.0 L、${I("T")} ＝ 300 K、${I("U")} ＝ ${r(U(P1, V1))} J` },
-    { h: "A→B 加熱・定積変化", t: `下から加熱します。気体の圧力が ${sub("p", "2")} になるまでは、おもりのせいでピストンは動きません（体積一定）。体積が変わらないので仕事は 0。吸収した熱はすべて内部エネルギーの増加になり、温度が上がります。p-V グラフでは真上へ、V-T グラフでは右へ（水平に）進みます。`,
+    { h: "A→B 加熱・定積変化", t: `下から加熱します。気体の圧力が ${sub("p", "2")} になるまでは、おもりのせいでピストンは動きません（体積一定）。体積が変わらないので仕事は 0。吸収した熱はすべて内部エネルギーの増加になり、温度が上がります。<i class="qv">p</i>-<i class="qv">V</i> グラフでは真上へ、<i class="qv">V</i>-<i class="qv">T</i> グラフでは右へ（水平に）進みます。`,
       eq: `${I("W")} ＝ 0 より Δ${I("U")} ＝ ${I("Q")} ＝ ${sg(e1.Q)} J` },
-    { h: "B→C 加熱・定圧変化", t: `圧力が ${sub("p", "2")} に達すると、ピストンが<b>等速で上昇</b>し始めます。気体の圧力は ${sub("p", "2")} のまま（定圧）です。気体はピストンを押して外部に仕事をします。仕事は 力 × 距離 ＝ (${I("p")}${I("S")}) × Δ${I("x")} ＝ ${I("p")}Δ${I("V")} で、p-V グラフの BC の下の面積です。V-T グラフでは原点を通る直線の上を進みます（圧力一定なら ${I("V")} ∝ ${I("T")}）。`,
+    { h: "B→C 加熱・定圧変化", t: `圧力が ${sub("p", "2")} に達すると、ピストンが<b>等速で上昇</b>し始めます。気体の圧力は ${sub("p", "2")} のまま（定圧）です。気体はピストンを押して外部に仕事をします。仕事は 力 × 距離 ＝ (${I("p")}${I("S")}) × Δ${I("x")} ＝ ${I("p")}Δ${I("V")} で、<i class="qv">p</i>-<i class="qv">V</i> グラフの BC の下の面積です。<i class="qv">V</i>-<i class="qv">T</i> グラフでは原点を通る直線の上を進みます（圧力一定なら ${I("V")} ∝ ${I("T")}）。`,
       eq: `した仕事 ${I("W")}′ ＝ ${sub("p", "2")}(${sub("V", "2")} − ${sub("V", "1")}) ＝ ${r(-e2.W)} J、Δ${I("U")} ＝ ${sg(e2.dU)} J、${I("Q")} ＝ Δ${I("U")} ＋ ${I("W")}′ ＝ ${sg(e2.Q)} J` },
     { h: "C でピストンが静止（加熱をやめ、おもりを外す）", t: `ピストンが<b>上のストッパー</b>に達して止まりました（体積 ${sub("V", "2")} ＝ ${V2} L、温度は最高）。ここで加熱をやめ、<b>おもりを外します</b>。気体の圧力は ${sub("p", "2")} のままなので、ピストンは上のストッパーに押しつけられています。`,
       eq: `状態 C：${I("p")} ＝ ${p2}×10⁵ Pa、${I("V")} ＝ ${V2} L、${I("T")} ＝ ${r(TofPV(S.p2, S.V2))} K、${I("U")} ＝ ${r(U(S.p2, S.V2))} J` },
@@ -429,7 +448,7 @@ function stepText(){
       eq: `${I("W")} ＝ 0 より ${I("Q")} ＝ Δ${I("U")} ＝ ${sg(e4.Q)} J（${r(-e4.Q)} J を放出）` },
     { h: "D→A 冷却・定圧変化", t: `圧力が ${sub("p", "1")} になると、ピストンが<b>等速で下降</b>し始めます（圧力 ${sub("p", "1")} のまま）。今度は外部（大気とピストン）が気体を押し縮めるので、気体は仕事を<b>される</b>（${I("W")} ＞ 0）。その大きさは DA の下の面積です。BC の下の面積より小さいことに注目しよう。`,
       eq: `された仕事 ${I("W")} ＝ ${sub("p", "1")}(${sub("V", "2")} − ${sub("V", "1")}) ＝ ${r(e5.W)} J、Δ${I("U")} ＝ ${sg(e5.dU)} J、${I("Q")} ＝ Δ${I("U")} − ${I("W")} ＝ ${sg(e5.Q)} J` },
-    { h: "A に戻る（おもりを載せる）＝ 1サイクル", t: `ピストンが下のストッパーに達して止まりました。冷却をやめ、おもりを載せると初期状態 A に戻ります。1サイクルで、気体の状態（温度・内部エネルギー）はもとどおりです。p-V グラフで、した仕事（BC の下）からされた仕事（DA の下）を引いた残り、つまり<b>囲まれた長方形の面積</b>が、取り出せた正味の仕事です。下の「熱効率」を見よう。`,
+    { h: "A に戻る（おもりを載せる）＝ 1サイクル", t: `ピストンが下のストッパーに達して止まりました。冷却をやめ、おもりを載せると初期状態 A に戻ります。1サイクルで、気体の状態（温度・内部エネルギー）はもとどおりです。<i class="qv">p</i>-<i class="qv">V</i> グラフで、した仕事（BC の下）からされた仕事（DA の下）を引いた残り、つまり<b>囲まれた長方形の面積</b>が、取り出せた正味の仕事です。下の「熱効率」を見よう。`,
       eq: `正味の仕事 ${I("W")}′ ＝ ${r(-e2.W)} − ${r(e5.W)} ＝ ${r(-e2.W - e5.W)} J ＝ (${sub("p", "2")} − ${sub("p", "1")})(${sub("V", "2")} − ${sub("V", "1")})` }
   ];
 }
@@ -460,7 +479,7 @@ function eff(){
   const on = S.step >= 6; $("eff").hidden = !on; $("locked").hidden = on; if(!on) return;
   const e1 = energy(1, 1), e2 = energy(2, 1), e4 = energy(4, 1), e5 = energy(5, 1);
   const qin = e1.Q + e2.Q, qout = -(e4.Q + e5.Q), w = -(e2.W + e5.W), e = w / qin, r = Math.round;
-  $("w1").innerHTML = `気体がした仕事 ${r(-e2.W)} J（BC の下の面積）から、された仕事 ${r(e5.W)} J（DA の下の面積）を引いた ${r(w)} J が、外部に取り出せた正味の仕事 ${I("W")}′ です。これは p-V グラフで囲まれた長方形の面積 (${S.p2.toFixed(1)} − 1.0)×10⁵ Pa × (${S.V2.toFixed(1)} − 1.0)×10⁻³ m³ ＝ ${r(w)} J に等しくなります。`;
+  $("w1").innerHTML = `気体がした仕事 ${r(-e2.W)} J（BC の下の面積）から、された仕事 ${r(e5.W)} J（DA の下の面積）を引いた ${r(w)} J が、外部に取り出せた正味の仕事 ${I("W")}′ です。これは <i class="qv">p</i>-<i class="qv">V</i> グラフで囲まれた長方形の面積 (${S.p2.toFixed(1)} − 1.0)×10⁵ Pa × (${S.V2.toFixed(1)} − 1.0)×10⁻³ m³ ＝ ${r(w)} J に等しくなります。`;
   $("w2").innerHTML = `1サイクルでもとの状態に戻るので、内部エネルギーの変化は 0。熱力学第一法則から、吸収した熱量と放出した熱量の差がそのまま仕事になります：${I("W")}′ ＝ ${sub("Q", "in")} − ${sub("Q", "out")} ＝ ${r(qin)} − ${r(qout)} ＝ ${r(w)} J。`;
   $("fIn").textContent = `${r(qin)} J`;
   $("fW").style.width = `${w / qin * 100}%`; $("fW").textContent = `${r(w)} J`;
@@ -498,13 +517,13 @@ if(window.ResizeObserver) new ResizeObserver(resize).observe(cv); else window.ad
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
 
 $("qs").innerHTML = [
-  ["A→B と C→D で、ピストンが動かないのはなぜか。", "A→B では、気体の圧力がおもりを押し上げるのに必要な圧力 p₂ に達するまで、ピストンは下のストッパーに乗ったままだからです。C→D では、気体の圧力が p₁ に下がるまで、ピストンが上のストッパーに押しつけられているからです。どちらも体積が一定なので、仕事は 0 です。"],
-  ["B→C で吸収した熱量は、何に使われたか。", "一部は内部エネルギーの増加（温度上昇）に、残りは気体が外部にした仕事に使われました（Q ＝ ΔU ＋ W′）。だから、同じだけ温度を上げるのに、定積変化より多くの熱が必要です。"],
-  ["p-V グラフで、BC の下の面積と DA の下の面積を比べよう。正味の仕事が正になるのはなぜか。", "膨張（B→C）は高い圧力 p₂ で、圧縮（D→A）は低い圧力 p₁ で行うので、した仕事のほうがされた仕事より大きくなります。差は、グラフが囲む長方形の面積です。同じ圧力で膨張と圧縮をくり返すと、囲む面積は 0 で、仕事は取り出せません。"],
+  ["A→B と C→D で、ピストンが動かないのはなぜか。", "A→B では、気体の圧力がおもりを押し上げるのに必要な圧力 <i class='qv'>p</i>₂ に達するまで、ピストンは下のストッパーに乗ったままだからです。C→D では、気体の圧力が <i class='qv'>p</i>₁ に下がるまで、ピストンが上のストッパーに押しつけられているからです。どちらも体積が一定なので、仕事は 0 です。"],
+  ["B→C で吸収した熱量は、何に使われたか。", "一部は内部エネルギーの増加（温度上昇）に、残りは気体が外部にした仕事に使われました（<i class='qv'>Q</i> ＝ Δ<i class='qv'>U</i> ＋ <i class='qv'>W</i>′）。だから、同じだけ温度を上げるのに、定積変化より多くの熱が必要です。"],
+  ["<i class='qv'>p</i>-<i class='qv'>V</i> グラフで、BC の下の面積と DA の下の面積を比べよう。正味の仕事が正になるのはなぜか。", "膨張（B→C）は高い圧力 <i class='qv'>p</i>₂ で、圧縮（D→A）は低い圧力 <i class='qv'>p</i>₁ で行うので、した仕事のほうがされた仕事より大きくなります。差は、グラフが囲む長方形の面積です。同じ圧力で膨張と圧縮をくり返すと、囲む面積は 0 で、仕事は取り出せません。"],
   ["V-T グラフで、B→C と D→A はどんな線になっているか。", "原点を通る直線の一部です。圧力が一定のとき、体積は絶対温度に比例します（物理で学ぶシャルルの法則）。直線の傾きが大きいほど、圧力が小さいことを表します。"],
-  ["1サイクルの合計で、ΔU はいくらか。Q の合計と W′ の関係は？", "ΔU ＝ 0 です。もとの状態に戻ったからです。熱力学第一法則から、Q の合計（Qin − Qout）は、外部にした正味の仕事 W′ に等しくなります。"],
-  ["熱効率の分母を「Qin − Qout」にしてはいけないのはなぜか。", "1サイクルでは Qin − Qout ＝ W′ がいつも成り立つので、熱効率がどんな熱機関でも 1 になってしまいます。熱効率は「受け取った熱量（燃料などで加えた熱量）のうち、どれだけを仕事にできたか」を表すので、分母は受け取った熱量 Qin だけです。"],
-  ["p₂ や V₂ を変えて、熱効率を比べよう。どうすると熱効率が大きくなるか。", "このサイクルでは、p₂ を大きくしても（高い圧力で膨張させる）、V₂ を大きくしても（大きく膨張させる）熱効率は大きくなります。ただし、吸収する熱量も増えるので熱効率の伸びには限りがあり、どの場合も e ＜ 1 です。たとえば p₂ ＝ 2.0×10⁵ Pa、V₂ ＝ 2.0 L で約 15%、p₂ ＝ 3.0×10⁵ Pa にすると約 19% です。"]
+  ["1サイクルの合計で、Δ<i class='qv'>U</i> はいくらか。<i class='qv'>Q</i> の合計と <i class='qv'>W</i>′ の関係は？", "Δ<i class='qv'>U</i> ＝ 0 です。もとの状態に戻ったからです。熱力学第一法則から、<i class='qv'>Q</i> の合計（<i class='qv'>Q</i><sub>in</sub> − <i class='qv'>Q</i><sub>out</sub>）は、外部にした正味の仕事 <i class='qv'>W</i>′ に等しくなります。"],
+  ["熱効率の分母を「<i class='qv'>Q</i><sub>in</sub> − <i class='qv'>Q</i><sub>out</sub>」にしてはいけないのはなぜか。", "1サイクルでは <i class='qv'>Q</i><sub>in</sub> − <i class='qv'>Q</i><sub>out</sub> ＝ <i class='qv'>W</i>′ がいつも成り立つので、熱効率がどんな熱機関でも 1 になってしまいます。熱効率は「受け取った熱量（燃料などで加えた熱量）のうち、どれだけを仕事にできたか」を表すので、分母は受け取った熱量 <i class='qv'>Q</i><sub>in</sub> だけです。"],
+  ["<i class='qv'>p</i>₂ や <i class='qv'>V</i>₂ を変えて、熱効率を比べよう。どうすると熱効率が大きくなるか。", "このサイクルでは、<i class='qv'>p</i>₂ を大きくしても（高い圧力で膨張させる）、<i class='qv'>V</i>₂ を大きくしても（大きく膨張させる）熱効率は大きくなります。ただし、吸収する熱量も増えるので熱効率の伸びには限りがあり、どの場合も <i class='qv'>e</i> ＜ 1 です。たとえば <i class='qv'>p</i>₂ ＝ 2.0×10⁵ Pa、V₂ ＝ 2.0 L で約 15%、<i class='qv'>p</i>₂ ＝ 3.0×10⁵ Pa にすると約 19% です。"]
 ].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
 
 ui(); resize(); requestAnimationFrame(tick);

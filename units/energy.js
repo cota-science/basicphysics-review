@@ -49,7 +49,7 @@ const YN = ["使える","使えない"];
 
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:`仕事の定義には、必ず「どの力が」「どの物体に」を入れて覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/work.html#def","仕事の定義と正負")}${ANIM("anim/work.html#fx","F-x グラフと仕事")}${ANIM("anim/work.html#power","仕事率")}${ANIM("anim/work.html#principle","仕事の原理")}${ANIM("anim/energy.html#kinetic","運動エネルギー（思考実験）")}${ANIM("anim/energy.html#theorem","仕事と運動エネルギー")}${ANIM("anim/energy.html#gravity","重力による位置エネルギー")}${ANIM("anim/energy.html#spring","弾性力による位置エネルギー")}${ANIM("anim/mech.html#proof","力学的エネルギー保存の証明")}${ANIM("anim/mech.html#cond","保存する条件")}${ANIM("anim/mech.html#nc","保存しない場合")}`,
+  intro:`仕事の定義には、必ず「どの力が」「どの物体に」を入れて覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/work.html#def","仕事の定義と正負")}${ANIM("anim/work.html#fx","<i class='qv'>F</i>-<i class='qv'>x</i> グラフと仕事")}${ANIM("anim/work.html#power","仕事率")}${ANIM("anim/work.html#principle","仕事の原理")}${ANIM("anim/energy.html#kinetic","運動エネルギー（思考実験）")}${ANIM("anim/energy.html#theorem","仕事と運動エネルギー")}${ANIM("anim/energy.html#gravity","重力による位置エネルギー")}${ANIM("anim/energy.html#spring","弾性力による位置エネルギー")}${ANIM("anim/mech.html#proof","力学的エネルギー保存の証明")}${ANIM("anim/mech.html#cond","保存する条件")}${ANIM("anim/mech.html#nc","保存しない場合")}`,
   advice:"仕事の定義（<i class='qv'>θ</i> は力の向きと移動の向きがなす角）と、力学的エネルギー保存則が成り立つ条件を覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[

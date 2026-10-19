@@ -680,7 +680,7 @@ function fTexts(){
   massBars($("fMass"), [
     { lab: "反応前", w: 100, parts: [["²³⁵U", 235 / 236 * 100, "var(--u5)"], ["n", 1 / 236 * 100 + 1.2, "var(--nn)"]] },
     { lab: "反応後", w: 100 - red, parts: [[`${f.a[2]}`, f.a[0] / sum * 100, "var(--fa)"], [`${f.b[2]}`, f.b[0] / sum * 100, "var(--fb)"], ["n", f.n / sum * 100 + 2, "var(--nn)"]] },
-    { lab: "", w: 100, parts: [["", 100 - red, "transparent"], ["Δm", red, "var(--heat)"]] }
+    { lab: "", w: 100, parts: [["", 100 - red, "transparent"], ["Δ<i class=\"qv\">m</i>", red, "var(--heat)"]] }
   ]);
   $("fMass").lastElementChild.firstElementChild.innerHTML = `<span style="font-size:13px;color:var(--heat);font-weight:700">減少分</span>`;
   $("fMass").insertAdjacentHTML("beforeend", `<p class="note" style="margin:0">反応後の質量の和は、反応前よりわずかに小さい。この質量の減少 Δ<i class="qv">m</i> に相当するエネルギー <i class="qv">E</i> ＝ Δ<i class="qv">m</i><i class="qv">c</i>² が放出される。</p>`);

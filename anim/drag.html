@@ -137,7 +137,7 @@ function draw(){
 function drawGraph(){
   gv.clear();
   const T = tEnd(), V = vf();
-  L.set('gsel', `<span class="seg">${[['vt', 'v-t'], ['at', 'a-t']].map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${S.view === v}">${l}</button>`).join('')}</span>`);
+  L.set('gsel', `<span class="seg">${[['vt', '$v$-$t$'], ['at', '$a$-$t$']].map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${S.view === v}">${L.h(l)}</button>`).join('')}</span>`);
   document.querySelectorAll('#gsel button').forEach(b => b.onclick = () => { S.view = b.dataset.v; drawGraph(); });
   if (S.view === 'vt'){
     const ymax = Math.max(V, S.v0, ...S.ghosts.map(gh => Math.max(...gh.pts.map(p => p[1])))) * 1.25;
@@ -171,9 +171,9 @@ function drawGraph(){
 }
 function equations(){
   const lin = S.law === 'lin', k = lin ? S.k : S.k2, a = acc(S.v), r = R(S.v), V = vf();
-  let h = eq(`$ma$${OP('=')}$mg$${OP('−')}${lin ? '$kv$' : '$kv$^2'}`, `${L.f(S.m,2)} × ${L.f(a,2)} ＝ ${L.f(S.m*g,2)} − ${L.f(r,2)}　（いま v ＝ ${L.f(S.v,2)} m/s）`, '運動方程式（下向きを正）。速くなるほど右辺が小さくなる', true);
+  let h = eq(`$ma$${OP('=')}$mg$${OP('−')}${lin ? '$kv$' : '$kv$^2'}`, `${L.f(S.m,2)} × ${L.f(a,2)} ＝ ${L.f(S.m*g,2)} − ${L.f(r,2)}　（いま <i class="s">v</i> ＝ ${L.f(S.v,2)} m/s）`, '運動方程式（下向きを正）。速くなるほど右辺が小さくなる', true);
   h += eq(lin ? `0${OP('=')}$mg$${OP('−')}$kv$_f　→　$v$_f${OP('=')}$mg$ / $k$` : `0${OP('=')}$mg$${OP('−')}$kv$_f^2　→　$v$_f${OP('=')}√($mg$ / $k$)`,
-    lin ? `v_f ＝ ${L.f(S.m,2)} × 9.8 ÷ ${L.f(k,2)} ＝ ${L.f(V,2)} m/s` : `v_f ＝ √(${L.f(S.m,2)} × 9.8 ÷ ${L.f(k,3)}) ＝ ${L.f(V,2)} m/s`, '終端速度：重力と空気抵抗がつりあう（$a$ ＝ 0）');
+    lin ? `<i class="s">v</i><sub>f</sub> ＝ ${L.f(S.m,2)} × 9.8 ÷ ${L.f(k,2)} ＝ ${L.f(V,2)} m/s` : `<i class="s">v</i><sub>f</sub> ＝ √(${L.f(S.m,2)} × 9.8 ÷ ${L.f(k,3)}) ＝ ${L.f(V,2)} m/s`, '終端速度：重力と空気抵抗がつりあう（$a$ ＝ 0）');
   h += eq(`$t$${OP('=')}0 のとき　$a$${OP('=')}$g$${S.v0 ? OP('−') + (lin ? '$kv$_0' : '$kv$_0^2') + ' / $m$' : ''}`, `${L.f(acc(S.v0),2)} m/s²`, S.v0 ? '初速度があると、はじめから空気抵抗がはたらく' : 'はじめは速さ 0 なので空気抵抗 0 → 自由落下と同じ傾き');
   h += `<div class="explain"><div class="ttl">質量や抵抗の係数を変えると？</div>質量が大きいほど、また ${L.h('$k$')} が小さいほど終端速度は大きい（重い雨粒ほど速く落ちる）。終端速度より速い初速度で投げ下ろすと、空気抵抗が重力より大きくなり、減速しながら終端速度に近づく。</div>`;
   L.set('fx', h);

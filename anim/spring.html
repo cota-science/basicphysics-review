@@ -176,11 +176,11 @@ function equations(){
   let h = '';
   if (mode === 'hang'){
     const m = s.n * 0.05, xe = target();
-    h += eq('$F$ <span class="op">=</span> $kx$', s.hide ? `F ＝ k × ${L.f(s.x,3)} m` : `${L.f(s.k * s.x, 2)} N ＝ ${s.k} N/m × ${L.f(s.x, 3)} m`, 'フックの法則：弾性力の大きさは伸び（縮み）に比例');
+    h += eq('$F$ <span class="op">=</span> $kx$', s.hide ? `<i class="s">F</i> ＝ <i class="s">k</i> × ${L.f(s.x,3)} m` : `${L.f(s.k * s.x, 2)} N ＝ ${s.k} N/m × ${L.f(s.x, 3)} m`, 'フックの法則：弾性力の大きさは伸び（縮み）に比例');
     h += eq('$kx$ <span class="op">=</span> $mg$ <span class="jp">（つりあい）</span>', `${s.hide ? 'k' : s.k} × ${L.f(xe, 3)} ＝ ${L.f(m, 2)} × 9.8 ＝ ${L.f(m * g, 2)} N`, '静止したとき、弾性力と重力がつりあう');
     h += `<div class="explain"><div class="ttl">注意：$x$ は「ばねの長さ」ではなく「伸び」</div>伸び＝（そのときの長さ）−（自然の長さ）。おもりを2倍にすると伸びも2倍。ばね定数が大きい（かたい）ばねほど伸びにくい。単位 N/m は「1 m 伸ばすのに必要な力」。</div>`;
   } else {
-    h += eq('$F$ <span class="op">=</span> $kx$', `${L.f(s.F, 1)} N ＝ ${s.k} N/m × (${L.f(target(), 3)} m)`, '縮めるとき（F＜0）は x も負。弾性力はいつも「自然の長さにもどる向き」');
+    h += eq('$F$ <span class="op">=</span> $kx$', `${L.f(s.F, 1)} N ＝ ${s.k} N/m × (${L.f(target(), 3)} m)`, '縮めるとき（<i class="s">F</i>＜0）は <i class="s">x</i> も負。弾性力はいつも「自然の長さにもどる向き」');
     h += `<div class="explain"><div class="ttl">2つの力の関係</div>手がばねを引く力と、ばねが手を引く力（弾性力）は、向きが反対で大きさが等しい（作用・反作用）。弾性力はばねの両端で、ばねにふれている物体に「自然の長さにもどる向き」にはたらく。</div>`;
   }
   L.set('fx', h.replace(/\$x\$/g, '<i class="s">x</i>'));
@@ -200,7 +200,7 @@ function build(){
   const defs = [{ k: 'k', lab: 'ばね定数 $k$', min: 10, max: 80, step: 1, unit: 'N/m', d: 0, hint: '大きいほど「かたい」ばね' }];
   if (mode === 'hang'){
     defs.push({ k: 'n', lab: 'おもりの数（1個 50 g）', min: 0, max: 10, step: 1, unit: '個', d: 0 });
-    defs.push({ t: 'check', k: 'hide', lab: 'ばね定数をかくす（測定して求める）', hint: 'おもりを変えて「測定値を記録」→ グラフの傾きから k を求めよう' });
+    defs.push({ t: 'check', k: 'hide', lab: 'ばね定数をかくす（測定して求める）', hint: 'おもりを変えて「測定値を記録」→ グラフの傾きから <i class="s">k</i> を求めよう' });
   } else {
     defs.push({ k: 'F', lab: '手が加える力 $F$（右向き正）', min: -3, max: 6, step: .2, unit: 'N', hint: '負にすると押して縮める' });
   }

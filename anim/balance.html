@@ -109,7 +109,7 @@ function infoTwo(){
     <p class="note" style="margin:8px 0 0">「手をはなす」で、板がどう動くか確かめよう（糸を同じ向き・同じ大きさの力で引き続ける）。大きさや向きがちがうと板は動き出し、作用線がずれていると回転して作用線がそろうところに落ち着く。</p>`);
   const R = drawTwoR();
   L.set('fx', eq(`$F$_1${OP('+')}$F$_2${OP('=')}0 <span class="jp">（ベクトルの和）</span>`, `合力の大きさ ${L.f(R, 2)} N`, '2力がつりあう ⇔ 合力が 0')
-    + eq(`$F$_1${OP('=')}$F$_2 <span class="jp">（大きさ）</span>`, `${L.f(s.F1,1)} N ${c1 ? '＝' : '≠'} ${L.f(s.F2,1)} N`, '一直線上なら、向きを正負で表して F₁ − F₂ ＝ 0')
+    + eq(`$F$_1${OP('=')}$F$_2 <span class="jp">（大きさ）</span>`, `${L.f(s.F1,1)} N ${c1 ? '＝' : '≠'} ${L.f(s.F2,1)} N`, '一直線上なら、向きを正負で表して <i class="s">F</i>₁ − <i class="s">F</i>₂ ＝ 0')
     + `<div class="explain"><div class="ttl">「つりあい」と「作用・反作用」のちがい</div>つりあいの2力は<b>1つの物体（板）</b>にはたらく。作用・反作用の2力は<b>2つの物体の間</b>（例：手が糸を引く力と糸が手を引く力）で、別々の物体にはたらく。</div>`);
   ro && ro({ F1: L.f(s.F1, 1) + ' N', F2: L.f(s.F2, 1) + ' N', R: L.f(R, 2) + ' N', st: ok ? '静止したまま' : (c1 && c2 ? '回転する' : '動き出す') });
 }
@@ -243,7 +243,7 @@ function infoThree(r){
       <li style="--c:${C.FT}"><span class="sw"></span><span>${para ? '糸の張力 ' + L.h('$T$') : '水平に押す力 ' + L.h('$F$')}</span><span class="val">${L.f(T,1)} N</span></li></ul>`);
     L.set('fx', para
       ? eq(`$T$${OP('=')}$mg$ sin$θ$`, `${L.f(Wt,1)} × sin${s.theta}° ＝ ${L.f(T,2)} N`, '斜面に平行な方向のつりあい') + eq(`$N$${OP('=')}$mg$ cos$θ$`, `${L.f(Wt,1)} × cos${s.theta}° ＝ ${L.f(N,2)} N`, '斜面に垂直な方向のつりあい')
-      : eq(`$F$ cos$θ$${OP('=')}$mg$ sin$θ$`, `F ＝ mg tanθ ＝ ${L.f(T,2)} N`, '斜面に平行な方向のつりあい') + eq(`$N$${OP('=')}$mg$ cos$θ$${OP('+')}$F$ sin$θ$`, `N ＝ ${L.f(N,2)} N（＞ mg cosθ）`, '斜面に垂直な方向：押す力の分力の分だけ、垂直抗力が大きくなる'));
+      : eq(`$F$ cos$θ$${OP('=')}$mg$ sin$θ$`, `<i class="s">F</i> ＝ <i class="s">mg</i> tan<i class="s">θ</i> ＝ ${L.f(T,2)} N`, '斜面に平行な方向のつりあい') + eq(`$N$${OP('=')}$mg$ cos$θ$${OP('+')}$F$ sin$θ$`, `N ＝ ${L.f(N,2)} N（＞ <i class="s">mg</i> cos<i class="s">θ</i>）`, '斜面に垂直な方向：押す力の分力の分だけ、垂直抗力が大きくなる'));
     ro && ro({ a: L.f(T, 1) + ' N', b: L.f(N, 1) + ' N', c: L.f(Wt, 1) + ' N' });
   }
 }

@@ -82,7 +82,7 @@ const DIM_TABLE = `<div class="tbl"><table>
 <tr><td>電力 ${P}</td><td>W ＝ V·A</td></tr>
 <tr><td>周波数 ${f}</td><td>Hz ＝ 1/s</td></tr>
 <tr><td>巻数 ${I("N")}</td><td>単位なし（回）</td></tr>
-<tr><td>電磁波の速さ ${c}、波長 ${L}</td><td>m/s、m</td></tr></table></div>`;
+<tr><td>電磁波の速さ ${c}、波長 ${L}</td><td>m/s、<i class='qv'>m</i></td></tr></table></div>`;
 const STEPS = `<p>1 与えられた量（巻数・電圧・電力・抵抗）を整理する → 2 変圧器では「電圧の比 ＝ 巻数の比」 → 3 理想的なら1次側と2次側の電力が等しい → 4 電流 ＝ 電力 ÷ 電圧 → 5 送電線の損失 ＝ ${R}${It}² → 6 単位をそろえて代入 → 7 妥当性（電圧を上げると電流は下がるか）</p>`;
 const ANIM = (href, label) => `<a href='${href}' style='display:inline-block;margin:8px 6px 0 0;padding:6px 12px;border:1.5px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:700;text-decoration:none;line-height:1.5'>▶ ${label}</a>`;
 const TF = ["正しい","誤り"];

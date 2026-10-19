@@ -32,7 +32,7 @@ const DEF_TABLE = `<p style='margin:4px 0;font-size:14px;color:var(--muted)'>小
   ["パスカル（Pa）","圧力の単位。1 m² あたり 1 N の力で押すときの圧力","1 Pa ＝ 1 N/m²"],
   ["密度","物質の単位体積（1 m³）あたりの質量",`${rho} ＝ ${Q("m")}/${Q("V")}　単位 kg/m³（水は 1.0×10³ kg/m³）`],
   ["大気圧","大気（空気）による圧力。地上ではおよそ 1 気圧","1 気圧 ＝ 1.013×10⁵ Pa"],
-  ["水圧","水中の物体が水から受ける圧力。深さ h では、大気圧に、その上にある水の柱の重さによる圧力が加わる",`${Q("p")} ＝ ${p0} ＋ ${rho}${Q("g")}${Q("h")}`],
+  ["水圧","水中の物体が水から受ける圧力。深さ <i class='qv'>h</i> では、大気圧に、その上にある水の柱の重さによる圧力が加わる",`${Q("p")} ＝ ${p0} ＋ ${rho}${Q("g")}${Q("h")}`],
   ["圧力の向き","液体中の同じ深さの点では、圧力はあらゆる向きに同じ大きさで、面に垂直にはたらく。容器の形にもよらない"],
   ["パスカルの原理" + ADV,"密閉した液体の一部に加えた圧力の増加は、液体のどの部分にも同じ大きさで伝わる。油圧ジャッキ・ブレーキに利用",`${Q("F")}₁/${Q("S")}₁ ＝ ${Q("F")}₂/${Q("S")}₂`]
 ]},
@@ -75,19 +75,19 @@ const TF = ["正しい", "誤り"];
 const UNITQ = ["Pa（N/m²）", "N", "m/s", "kg/s"];
 
 const SECTIONS = [
-{ id:"def", advice:"圧力 ＝ 力 ÷ 面積、浮力の ρ は流体の密度、空気抵抗は速度と逆向き。定義カードで確かめよう。", tab:"①定義", title:"① 定義カード", back:"① 定義カード",
+{ id:"def", advice:"圧力 ＝ 力 ÷ 面積、浮力の <i class='qv'>ρ</i> は流体の密度、空気抵抗は速度と逆向き。定義カードで確かめよう。", tab:"①定義", title:"① 定義カード", back:"① 定義カード",
   intro:`目に見えない「流体（液体・気体）から受ける力」を、言葉と式で正確に言えるようにします。<br>アニメーションで確かめよう：<br>${ANIM("anim/fluid.html#pressure","水圧（液体の圧力）")}${ANIM("anim/fluid.html#buoy","浮力（アルキメデスの原理）")}${ANIM("anim/fluid.html#pascal","パスカルの原理（発展）")}${ANIM("anim/drag.html","空気抵抗と落下")}`,
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[
   { title:"A. 圧力と水圧", qs:[
     {id:"d1",type:"blanks",text:`圧力とは、面を{0}押す力の、{1}あたりの大きさであり、${Q("p")} ＝ {2} で表す。`,
-     options:[["垂直に","平行に","斜めに"],["単位面積（1 m²）","単位体積（1 m³）","単位時間（1 s）"],["F/S","FS","S/F"]],answer:[0,0,0],
+     options:[["垂直に","平行に","斜めに"],["単位面積（1 m²）","単位体積（1 m³）","単位時間（1 s）"],["<i class='qv'>F</i>/<i class='qv'>S</i>","<i class='qv'>FS</i>","<i class='qv'>S</i>/<i class='qv'>F</i>"]],answer:[0,0,0],
      explain:"圧力 ＝ 力 ÷ 面積。同じ力でも、面積が小さいほど圧力は大きくなります（くつより、とがったくぎの先のほうが刺さる）。"},
     {id:"d2",type:"blanks",text:"圧力の単位 1 Pa は{0}であり、1 気圧はおよそ{1}である。",
      options:[["1 N/m²","1 N·m²","1 N/m"],["1.013×10⁵ Pa","1.013×10³ Pa","1.013 Pa"]],answer:[0,0],
      explain:"1 Pa ＝ 1 N/m²。1 気圧 ＝ 1.013×10⁵ Pa ＝ 1013 hPa（天気予報のヘクトパスカル）。"},
     {id:"d3",type:"blanks",text:`大気圧 ${p0} の下で、密度 ${rho} の液体の深さ ${Q("h")} の点の圧力は ${Q("p")} ＝ {0} である。`,
-     options:[["p₀ ＋ ρgh","ρgh","p₀ − ρgh"]],answer:[0],
+     options:[["<i class='qv'>p</i>₀ ＋ <i class='qv'>ρgh</i>","ρgh","<i class='qv'>p</i>₀ − <i class='qv'>ρgh</i>"]],answer:[0],
      explain:`深さ ${Q("h")} の点より上には、空気（大気圧 ${p0}）と、高さ ${Q("h")} の液体の柱がのっています。液体の柱の重さによる圧力が ${rho}${Q("g")}${Q("h")} です。${ANIM("anim/fluid.html#pressure","液柱で考える")}`},
     {id:"d4",type:"choice",prompt:"液体中の同じ深さの点で、圧力の向きと大きさについて正しいものはどれか。",
      options:["あらゆる向きに同じ大きさではたらき、容器の形にもよらない","上から下向きにだけはたらく","容器が細いほど大きくなる"],answer:0,
@@ -106,11 +106,11 @@ const SECTIONS = [
      options:[["速度","加速度","重力"],["大きい","小さい"]],answer:[0,0],
      explain:"空気抵抗は運動を妨げる向きの力です。落下する物体なら上向き、投げ上げた物体の上昇中なら下向きです。"},
     {id:"d8",type:"blanks",text:"終端速度に達した物体では、重力と空気抵抗が{0}、加速度は{1}である。",
-     options:[["つりあい","打ち消されずに残り"],["0","g","g より大きい"]],answer:[0,0],
+     options:[["つりあい","打ち消されずに残り"],["0","<i class='qv'>g</i>","<i class='qv'>g</i> より大きい"]],answer:[0,0],
      explain:`${Q("mg")} − ${Q("k")}${vf} ＝ 0 なので加速度 0。物体は一定の速さで落ちていきます（力がはたらいていないのではありません）。${ANIM("anim/drag.html","空気抵抗と落下")}`}
   ]}]
 },
-{ id:"read", advice:"「どの面が・どの向きに押されるか」「浮力の ρ はだれの密度か」「力がつりあっているか」を図で確かめよう。", tab:"②読解", title:"② 読解ドリル", back:"② 読解ドリル",
+{ id:"read", advice:"「どの面が・どの向きに押されるか」「浮力の <i class='qv'>ρ</i> はだれの密度か」「力がつりあっているか」を図で確かめよう。", tab:"②読解", title:"② 読解ドリル", back:"② 読解ドリル",
   intro:"電卓はほとんど使いません。言葉やグラフから、圧力・浮力・空気抵抗がどうなるかを読み取ります。g ＝ 9.8 m/s²。",
   groups:[
   { title:"A. 圧力を読む", qs:[
@@ -120,7 +120,7 @@ const SECTIONS = [
      explain:`${rho}${Q("g")}${Q("h")} ＝ 1.0×10³ × 9.8 × 10 ≒ 1.0×10⁵ Pa で、ほぼ1気圧分。大気圧と合わせて約2気圧です。水は約 10 m ごとに1気圧ずつ増えます。`},
     {id:"ra3",type:"choice",prompt:"「水中の物体は、水から上から下向きにだけ押されている。」",options:TF,answer:1,
      explain:"誤り。圧力は面に垂直にはたらくので、物体の上面は下向き、下面は上向き、側面は横向きに押されます。"},
-    {id:"ra4",type:"choice",prompt:"同じ深さ 2.0 m の点の圧力を、水と水銀（密度 13.6×10³ kg/m³）で比べる。液体による分（ρgh）はどうなるか。",
+    {id:"ra4",type:"choice",prompt:"同じ深さ 2.0 m の点の圧力を、水と水銀（密度 13.6×10³ kg/m³）で比べる。液体による分（<i class='qv'>ρgh</i>）はどうなるか。",
      options:["水銀のほうが 13.6 倍大きい","水のほうが大きい","深さが同じなので等しい"],answer:0,
      explain:`${rho}${Q("g")}${Q("h")} は密度に比例します。深さが同じでも、密度の大きい液体ほど圧力の増え方が大きくなります。`},
     {id:"ra5",type:"num",prompt:`（発展：パスカルの原理）油圧ジャッキで、小さいピストン（断面積 5.0 cm²）を 40 N の力で押す。大きいピストン（断面積 500 cm²）が受ける力を求めよ。${ANIM("anim/fluid.html#pascal","油圧ジャッキ")}`,answer:4000,tol:10,unit:"N",
@@ -129,7 +129,7 @@ const SECTIONS = [
   ]},
   { title:"B. 浮力を読む", qs:[
     {id:"rb1",type:"choice",prompt:"同じ体積の鉄の球と木片を、どちらも水中に完全に沈めた。浮力が大きいのはどちらか。",options:["等しい","鉄の球","木片"],answer:0,
-     explain:"浮力 ρVg は、流体（水）の密度と、押しのけた体積で決まります。物体の密度（鉄か木か）にはよりません。鉄が沈むのは、重力が浮力より大きいからです。"},
+     explain:"浮力 <i class='qv'>ρVg</i> は、流体（水）の密度と、押しのけた体積で決まります。物体の密度（鉄か木か）にはよりません。鉄が沈むのは、重力が浮力より大きいからです。"},
     {id:"rb2",type:"choice",prompt:"完全に沈んだ物体を、さらに深いところまで沈めた。浮力はどうなるか。",options:["変わらない","大きくなる","小さくなる"],answer:0,
      explain:`深くなると上面・下面の圧力はどちらも同じだけ増えるので、差（浮力）は変わりません。全部沈むまでは、沈んだ体積が増えるので浮力も増えます。${ANIM("anim/fluid.html#buoy","浮力と深さのグラフ")}`},
     {id:"rb3",type:"choice",prompt:"水に浮かんで静止している木片で、浮力と重力の関係はどうなっているか。",options:["等しい（つりあっている）","浮力のほうが大きい","重力のほうが大きい"],answer:0,
@@ -141,8 +141,8 @@ const SECTIONS = [
      explain:`誤り。${rho} は流体（水など）の密度です。物体の密度を使うと、${rho}${Q("V")}${Q("g")} は物体の重さになってしまいます。`}
   ]},
   { title:"C. 空気抵抗を受ける落下のグラフを読む", lead:`空気抵抗（速さに比例）を受けて、静かに落下を始めた物体の ${Q("v")}-${Q("t")} グラフ。鉛直下向きを正とする。${ANIM("anim/drag.html","空気抵抗と落下")}`, figure:VT_DRAG, qs:[
-    {id:"rc1",type:"choice",prompt:"落とした瞬間（t ＝ 0）のグラフの傾き（加速度）はいくらか。",options:["g（9.8 m/s²）","0","g より大きい"],answer:0,
-     explain:"落とした瞬間は速さ 0 で空気抵抗も 0 なので、自由落下と同じ加速度 g です。グラフは「空気抵抗なし」の直線に接しています。"},
+    {id:"rc1",type:"choice",prompt:"落とした瞬間（<i class='qv'>t</i> ＝ 0）のグラフの傾き（加速度）はいくらか。",options:["<i class='qv'>g</i>（9.8 m/s²）","0","<i class='qv'>g</i> より大きい"],answer:0,
+     explain:"落とした瞬間は速さ 0 で空気抵抗も 0 なので、自由落下と同じ加速度 <i class='qv'>g</i> です。グラフは「空気抵抗なし」の直線に接しています。"},
     {id:"rc2",type:"choice",prompt:"時間がたつと、グラフの傾き（加速度）はどうなっていくか。",options:["しだいに小さくなり、0 に近づく","一定のまま","しだいに大きくなる"],answer:0,
      explain:`速くなるほど空気抵抗 ${Q("k")}${Q("v")} が大きくなり、合力 ${Q("mg")} − ${Q("k")}${Q("v")} が小さくなるからです。`},
     {id:"rc3",type:"choice",prompt:"終端速度に達したあと、物体が受ける力について正しいものはどれか。",
@@ -154,19 +154,19 @@ const SECTIONS = [
      explain:"誤り。同じように落ちるのは空気抵抗がないとき（真空中）です。空気抵抗があると、終端速度が質量によって変わります。"}
   ]}]
 },
-{ id:"dim", advice:"圧力の Pa ＝ N/m² と、空気抵抗の比例定数 k の単位 kg/s を確かめよう。", tab:"③次元", title:"③ 次元チェック", back:"③ 次元チェック",
+{ id:"dim", advice:"圧力の Pa ＝ N/m² と、空気抵抗の比例定数 <i class='qv'>k</i> の単位 kg/s を確かめよう。", tab:"③次元", title:"③ 次元チェック", back:"③ 次元チェック",
   intro:"1 Pa ＝ 1 N/m²、1 N ＝ 1 kg·m/s²。圧力や浮力の式は、基本単位（kg・m・s）に直すと確かめられます。",
   ref:{label:"単位の表を見る", html:DIM_TABLE},
   groups:[
   { title:"A. 計算せずに単位を予測する", lead:`${Q("F")}〔N〕、${Q("S")}〔m²〕、${rho}〔kg/m³〕、${Q("g")}〔m/s²〕、${Q("h")}〔m〕、${Q("V")}〔m³〕、${Q("m")}〔kg〕とする。`, qs:[
     {id:"da1",type:"choice",prompt:`${Q("F")} ÷ ${Q("S")}`,options:UNITQ,answer:0,explain:"N/m² ＝ Pa（圧力）。",two:true},
     {id:"da2",type:"choice",prompt:`${rho}${Q("g")}${Q("h")}`,options:UNITQ,answer:0,explain:"(kg/m³)(m/s²)(m) ＝ kg/(m·s²) ＝ (kg·m/s²)/m² ＝ N/m² ＝ Pa（圧力）。",two:true},
-    {id:"da3",type:"choice",prompt:`${rho}${Q("V")}${Q("g")}`,options:UNITQ,answer:1,explain:"(kg/m³)(m³)(m/s²) ＝ kg·m/s² ＝ N（浮力）。ρV は押しのけた流体の質量です。",two:true},
+    {id:"da3",type:"choice",prompt:`${rho}${Q("V")}${Q("g")}`,options:UNITQ,answer:1,explain:"(kg/m³)(m³)(m/s²) ＝ kg·m/s² ＝ N（浮力）。<i class='qv'>ρV</i> は押しのけた流体の質量です。",two:true},
     {id:"da4",type:"choice",prompt:`空気抵抗 ${Q("k")}${Q("v")} が力〔N〕になるときの ${Q("k")}`,options:UNITQ,answer:3,explain:"N ÷ (m/s) ＝ (kg·m/s²)·(s/m) ＝ kg/s。",two:true},
     {id:"da5",type:"choice",prompt:`${Q("mg")} ÷ ${Q("k")}`,options:UNITQ,answer:2,explain:"N ÷ (kg/s) ＝ (kg·m/s²)·(s/kg) ＝ m/s（終端速度）。",two:true}
   ]},
   { title:"B. 式の次元を判定する", qs:[
-    {id:"db1",type:"multi",prompt:"次の式のうち、次元が合わないものをすべて選べ（左辺：p は圧力、F は力、v_f は速度）。",
+    {id:"db1",type:"multi",prompt:"次の式のうち、次元が合わないものをすべて選べ（左辺：<i class='qv'>p</i> は圧力、<i class='qv'>F</i> は力、<i class='qv'>v</i><sub>f</sub> は速度）。",
      options:[`${Q("p")} ＝ ${rho}${Q("g")}${Q("h")}`,`${Q("F")} ＝ ${rho}${Q("g")}${Q("h")}`,`${Q("F")} ＝ ${rho}${Q("V")}${Q("g")}`,`${vf} ＝ ${Q("mg")}/${Q("k")}`,`${vf} ＝ ${Q("k")}/${Q("mg")}`],answer:[1,4],
      explain:`${rho}${Q("g")}${Q("h")} は圧力（Pa）で、力（N）ではありません（面積 ${Q("S")} を掛けると力）。${Q("k")}/${Q("mg")} は s/m で、速度の逆数の単位です。`}
   ]},
@@ -183,20 +183,20 @@ const SECTIONS = [
   ref:{label:"式を見る", html:FORMULAS},
   groups:[
   { title:"問題1（水圧・すべてのステップ）", lead:ANIM("anim/fluid.html#pressure","水圧（深さを 5.0 m にして確かめる）"),
-    quote:"大気圧を 1.0×10⁵ Pa とする。水面から深さ 5.0 m の点について、(1) 水による圧力 ρgh、(2) その点の圧力、(3) その深さに水平に置いた面積 0.020 m² の板の上面が水から受ける力を求めよ。", qs:[
+    quote:"大気圧を 1.0×10⁵ Pa とする。水面から深さ 5.0 m の点について、(1) 水による圧力 <i class='qv'>ρgh</i>、(2) その点の圧力、(3) その深さに水平に置いた面積 0.020 m² の板の上面が水から受ける力を求めよ。", qs:[
     {id:"s11",type:"choice",prompt:"ステップ3　その点の圧力を表す式とその理由。",
      options:[`${Q("p")} ＝ ${p0} ＋ ${rho}${Q("g")}${Q("h")}：上に大気と深さ ${Q("h")} の水の柱がのっているから`,`${Q("p")} ＝ ${rho}${Q("g")}${Q("h")}：水の中だけを考えればよいから`,`${Q("p")} ＝ ${p0} − ${rho}${Q("g")}${Q("h")}：深いほど圧力が小さくなるから`],answer:0,
-     explain:"深さ h の点の上には、空気（大気圧）と水の柱があり、その両方の重さで押されています。"},
+     explain:"深さ <i class='qv'>h</i> の点の上には、空気（大気圧）と水の柱があり、その両方の重さで押されています。"},
     {id:"s12",type:"choice",prompt:`ステップ5　${rho}${Q("g")}${Q("h")} の単位を確かめる。`,options:["kg/(m·s²) ＝ N/m² ＝ Pa","kg·m/s² ＝ N","kg/m³"],answer:0,
      explain:"(kg/m³)(m/s²)(m) ＝ kg/(m·s²)。N ＝ kg·m/s² なので、N/m² ＝ Pa になります。"},
-    {id:"s13",type:"num",prompt:"(1) 水による圧力 ρgh を、10⁴ Pa を単位として答えよ（例：3.0×10⁴ Pa なら 3.0）。",answer:4.9,tol:0.03,unit:"×10⁴ Pa",
+    {id:"s13",type:"num",prompt:"(1) 水による圧力 <i class='qv'>ρgh</i> を、10⁴ Pa を単位として答えよ（例：3.0×10⁴ Pa なら 3.0）。",answer:4.9,tol:0.03,unit:"×10⁴ Pa",
      traps:{"5":"g ＝ 9.8 m/s² を使っていますか。","49":"単位を 10⁴ Pa にそろえます。4.9×10⁴ Pa です。"},
      explain:"1.0×10³ × 9.8 × 5.0 ＝ 4.9×10⁴ Pa。"},
     {id:"s14",type:"num",prompt:"(2) その点の圧力を、10⁵ Pa を単位として答えよ（有効数字2桁）。",answer:1.5,tol:0.02,unit:"×10⁵ Pa",
      traps:{"0.49":"大気圧 1.0×10⁵ Pa を足し忘れていませんか。","5.9":"単位をそろえて足します。4.9×10⁴ Pa ＝ 0.49×10⁵ Pa です。"},
      explain:"1.0×10⁵ ＋ 0.49×10⁵ ＝ 1.49×10⁵ ≒ 1.5×10⁵ Pa。"},
     {id:"s15",type:"num",prompt:"(3) 板の上面が水から受ける力を、10³ N を単位として答えよ（有効数字2桁）。",answer:3,tol:0.05,unit:"×10³ N",
-     traps:{"0.98":"大気圧も含めた圧力 1.49×10⁵ Pa を使います（ρgh だけでは水の柱の分だけ）。","7.5":"F ＝ pS です（割るのではなく掛けます）。"},
+     traps:{"0.98":"大気圧も含めた圧力 1.49×10⁵ Pa を使います（<i class='qv'>ρgh</i> だけでは水の柱の分だけ）。","7.5":"<i class='qv'>F</i> ＝ <i class='qv'>pS</i> です（割るのではなく掛けます）。"},
      explain:`${Q("F")} ＝ ${Q("p")}${Q("S")} ＝ 1.49×10⁵ × 0.020 ≒ 3.0×10³ N。板の下面も同じ深さなら、ほぼ同じ大きさの力で上向きに押されます。`},
     {id:"s16",type:"choice",prompt:"ステップ7　(2) の答えは妥当か。",options:["水深 10 m で約1気圧増えるので、5 m で約 1.5 気圧は妥当","水中なので大気圧より小さくなるはず","深さに関係なく 1 気圧のはず"],answer:0,
      explain:"「約 10 m で1気圧分」という目安と比べると、答えの大きさを確かめられます。"}
@@ -205,45 +205,45 @@ const SECTIONS = [
     quote:"体積 2.0×10⁻⁴ m³、質量 0.54 kg のアルミニウムの物体をばねばかりにつるし、水中に完全に沈めて静止させた。(1) 物体が受ける浮力の大きさ、(2) ばねばかりの値を求めよ。", qs:[
     {id:"s21",type:"multi",prompt:"ステップ2　物体が受ける力をすべて選べ。",options:["重力（下向き）","浮力（上向き）","ばねばかりが引く力（上向き）","水圧による下向きの力（浮力とは別に）","物体が水を押す力"],answer:[0,1,2],
      explain:"水から受ける力は、上面・下面・側面の圧力による力をまとめて「浮力」として1つにかきます。「物体が水を押す力」は水が受ける力なので、物体にはかきません。"},
-    {id:"s22",type:"choice",prompt:"ステップ3　ばねばかりの力を T、浮力を F、重力を W として、つりあいの式はどれか。",options:["T ＋ F ＝ W","T ＝ W ＋ F","T ＋ W ＝ F"],answer:0,
+    {id:"s22",type:"choice",prompt:"ステップ3　ばねばかりの力を T、浮力を F、重力を W として、つりあいの式はどれか。",options:["<i class='qv'>T</i> ＋ <i class='qv'>F</i> ＝ <i class='qv'>W</i>","<i class='qv'>T</i> ＝ <i class='qv'>W</i> ＋ <i class='qv'>F</i>","<i class='qv'>T</i> ＋ <i class='qv'>W</i> ＝ <i class='qv'>F</i>"],answer:0,
      explain:"上向きの力（T と F）の和 ＝ 下向きの力（W）。"},
     {id:"s23",type:"num",prompt:"(1) 浮力の大きさ（有効数字2桁）",answer:1.96,tol:0.05,unit:"N",
-     traps:{"5.29":"それは重力（mg）です。浮力は ρVg で、ρ は水の密度です。","5.3":"それは重力（mg）です。","0.2":"g を掛け忘れていませんか。ρV は押しのけた水の質量です。","5.292":"それは重力です。"},
-     explain:"F ＝ ρVg ＝ 1.0×10³ × 2.0×10⁻⁴ × 9.8 ≒ 2.0 N。押しのけた水 0.20 kg の重さです。"},
+     traps:{"5.29":"それは重力（<i class='qv'>mg</i>）です。浮力は <i class='qv'>ρVg</i> で、<i class='qv'>ρ</i> は水の密度です。","5.3":"それは重力（mg）です。","0.2":"<i class='qv'>g</i> を掛け忘れていませんか。<i class='qv'>ρV</i> は押しのけた水の質量です。","5.292":"それは重力です。"},
+     explain:"<i class='qv'>F</i> ＝ <i class='qv'>ρVg</i> ＝ 1.0×10³ × 2.0×10⁻⁴ × 9.8 ≒ 2.0 N。押しのけた水 0.20 kg の重さです。"},
     {id:"s24",type:"num",prompt:"(2) ばねばかりの値（有効数字2桁）",answer:3.3,tol:0.06,unit:"N",
      traps:{"5.3":"浮力を考えていません。水中では浮力の分だけばねばかりの値が小さくなります。","7.3":"浮力は上向きなので、重力から引きます。","7.25":"浮力は上向きなので、重力から引きます。"},
-     explain:"W ＝ 0.54 × 9.8 ≒ 5.29 N。T ＝ W − F ＝ 5.29 − 1.96 ≒ 3.3 N。"}
+     explain:"<i class='qv'>W</i> ＝ 0.54 × 9.8 ≒ 5.29 N。<i class='qv'>T</i> ＝ <i class='qv'>W</i> − <i class='qv'>F</i> ＝ 5.29 − 1.96 ≒ 3.3 N。"}
   ]},
   { title:"問題3（空気抵抗と終端速度・答えだけ入力）", lead:`紙に7ステップを書いて解き、答えを入力せよ。鉛直下向きを正とする。解き終えたら確かめよう：${ANIM("anim/drag.html","空気抵抗と落下（質量と比例定数を問題の値にする）")}`,
-    quote:"質量 0.10 kg の物体を静かに落とした。物体は速さ v に比例する空気抵抗 kv（k ＝ 0.49 kg/s）を受ける。", qs:[
-    {id:"s31",type:"choice",prompt:"ステップ3　物体の運動方程式はどれか（a は加速度）。",options:["ma ＝ mg − kv","ma ＝ mg ＋ kv","ma ＝ kv − mg"],answer:0,
-     explain:"下向きを正とすると、重力 mg は ＋、空気抵抗は運動（下向き）と逆向きなので −kv です。"},
+    quote:"質量 0.10 kg の物体を静かに落とした。物体は速さ <i class='qv'>v</i> に比例する空気抵抗 <i class='qv'>kv</i>（<i class='qv'>k</i> ＝ 0.49 kg/s）を受ける。", qs:[
+    {id:"s31",type:"choice",prompt:"ステップ3　物体の運動方程式はどれか（<i class='qv'>a</i> は加速度）。",options:["<i class='qv'>ma</i> ＝ <i class='qv'>mg</i> − <i class='qv'>kv</i>","<i class='qv'>ma</i> ＝ <i class='qv'>mg</i> ＋ <i class='qv'>kv</i>","<i class='qv'>ma</i> ＝ <i class='qv'>kv</i> − <i class='qv'>mg</i>"],answer:0,
+     explain:"下向きを正とすると、重力 <i class='qv'>mg</i> は ＋、空気抵抗は運動（下向き）と逆向きなので −<i class='qv'>kv</i> です。"},
     {id:"s32",type:"num",prompt:"(1) 落とした直後の加速度の大きさ",answer:9.8,tol:0.05,unit:"m/s²",
      traps:{"0":"落とした直後は速さ 0 なので、空気抵抗も 0 です。"},
-     explain:"v ＝ 0 なので空気抵抗 0、a ＝ g ＝ 9.8 m/s²。"},
+     explain:"<i class='qv'>v</i> ＝ 0 なので空気抵抗 0、<i class='qv'>a</i> ＝ <i class='qv'>g</i> ＝ 9.8 m/s²。"},
     {id:"s33",type:"num",prompt:"(2) 速さが 1.0 m/s のときの加速度の大きさ",answer:4.9,tol:0.05,unit:"m/s²",
-     traps:{"9.31":"空気抵抗 kv（力）を質量で割っていません。a ＝ (mg − kv)/m です。","14.7":"空気抵抗は運動と逆向きなので引きます。"},
-     explain:"a ＝ (0.98 − 0.49 × 1.0)/0.10 ＝ 4.9 m/s²。"},
+     traps:{"9.31":"空気抵抗 <i class='qv'>kv</i>（力）を質量で割っていません。<i class='qv'>a</i> ＝ (<i class='qv'>mg</i> − <i class='qv'>kv</i>)/<i class='qv'>m</i> です。","14.7":"空気抵抗は運動と逆向きなので引きます。"},
+     explain:"<i class='qv'>a</i> ＝ (0.98 − 0.49 × 1.0)/0.10 ＝ 4.9 m/s²。"},
     {id:"s34",type:"num",prompt:"(3) 終端速度の大きさ",answer:2,tol:0.02,unit:"m/s",
-     traps:{"0.5":"k/(mg) になっていませんか。v_f ＝ mg/k です。","0.2":"mg を計算するとき g を掛けていますか。"},
-     explain:"a ＝ 0 とおいて 0 ＝ mg − kv_f、v_f ＝ mg/k ＝ 0.98 ÷ 0.49 ＝ 2.0 m/s。"},
+     traps:{"0.5":"<i class='qv'>k</i>/(<i class='qv'>mg</i>) になっていませんか。<i class='qv'>v</i><sub>f</sub> ＝ <i class='qv'>mg</i>/<i class='qv'>k</i> です。","0.2":"mg を計算するとき g を掛けていますか。"},
+     explain:"<i class='qv'>a</i> ＝ 0 とおいて 0 ＝ <i class='qv'>mg</i> − <i class='qv'>kv</i><sub>f</sub>、<i class='qv'>v</i><sub>f</sub> ＝ <i class='qv'>mg</i>/<i class='qv'>k</i> ＝ 0.98 ÷ 0.49 ＝ 2.0 m/s。"},
     {id:"s35",type:"checklist",prompt:"解き終えたら、自分の答案を点検しよう（採点には入りません）。",
-     items:["物体が受ける力をすべて図にかいた（浮力・空気抵抗を忘れていない）","浮力の ρ に流体の密度を使った","圧力に面積を掛けて力にした（または割って圧力にした）","cm² を m² に直した","空気抵抗の向きを速度と逆向きにした","終端速度は a ＝ 0 とおいて求めた"]}
+     items:["物体が受ける力をすべて図にかいた（浮力・空気抵抗を忘れていない）","浮力の <i class='qv'>ρ</i> に流体の密度を使った","圧力に面積を掛けて力にした（または割って圧力にした）","cm² を m² に直した","空気抵抗の向きを速度と逆向きにした","終端速度は <i class='qv'>a</i> ＝ 0 とおいて求めた"]}
   ]}]
 },
-{ id:"sum", advice:"圧力は「面積あたり」、浮力は「押しのけた流体の重さ」、終端速度は「a ＝ 0」。", tab:"まとめ", title:"単元のまとめ", back:"まとめ",
+{ id:"sum", advice:"圧力は「面積あたり」、浮力は「押しのけた流体の重さ」、終端速度は「<i class='qv'>a</i> ＝ 0」。", tab:"まとめ", title:"単元のまとめ", back:"まとめ",
   intro:"計算はしません。どの式・考え方を使うかを答えます。",
   ref:{label:"式を見る", html:FORMULAS},
   groups:[{ title:"式・考え方を選ぶ", qs:[
     {id:"m1",type:"choice",prompt:"雪の上で、スキー板をはくと沈みにくい理由を説明したい。",
-     options:["p ＝ F/S（面積が大きいと圧力が小さい）","p ＝ p₀ ＋ ρgh","F ＝ ρVg"],answer:0,explain:"同じ体重（力）でも、面積が大きいほど雪を押す圧力が小さくなります。"},
+     options:["<i class='qv'>p</i> ＝ <i class='qv'>F</i>/<i class='qv'>S</i>（面積が大きいと圧力が小さい）","<i class='qv'>p</i> ＝ <i class='qv'>p</i>₀ ＋ <i class='qv'>ρgh</i>","<i class='qv'>F</i> ＝ <i class='qv'>ρVg</i>"],answer:0,explain:"同じ体重（力）でも、面積が大きいほど雪を押す圧力が小さくなります。"},
     {id:"m2",type:"choice",prompt:"潜水すると耳が痛くなる理由を説明したい。",
-     options:["p ＝ p₀ ＋ ρgh（深いほど水圧が大きい）","F ＝ ρVg","ma ＝ mg − kv"],answer:0,explain:"深さに比例して水圧が大きくなるためです。"},
+     options:["<i class='qv'>p</i> ＝ <i class='qv'>p</i>₀ ＋ <i class='qv'>ρgh</i>（深いほど水圧が大きい）","<i class='qv'>F</i> ＝ <i class='qv'>ρVg</i>","<i class='qv'>ma</i> ＝ <i class='qv'>mg</i> − <i class='qv'>kv</i>"],answer:0,explain:"深さに比例して水圧が大きくなるためです。"},
     {id:"m3",type:"choice",prompt:"鉄でできた船が水に浮く理由を説明したい。",
-     options:["F ＝ ρVg（船体が大量の水を押しのけ、浮力が重力とつりあう）","p ＝ F/S","鉄の密度が水より小さいから"],answer:0,
-     explain:"船は中が空洞なので、水面下の体積 V が大きく、押しのけた水の重さ（浮力）が船の重さとつりあいます。"},
+     options:["<i class='qv'>F</i> ＝ <i class='qv'>ρVg</i>（船体が大量の水を押しのけ、浮力が重力とつりあう）","<i class='qv'>p</i> ＝ <i class='qv'>F</i>/<i class='qv'>S</i>","鉄の密度が水より小さいから"],answer:0,
+     explain:"船は中が空洞なので、水面下の体積 <i class='qv'>V</i> が大きく、押しのけた水の重さ（浮力）が船の重さとつりあいます。"},
     {id:"m4",type:"choice",prompt:"雨粒が地面に届くときの速さを考えたい。",
-     options:["ma ＝ mg − kv で a ＝ 0 とおく（終端速度）","自由落下の式 v² ＝ 2gh で計算する","F ＝ ρVg"],answer:0,
+     options:["<i class='qv'>ma</i> ＝ <i class='qv'>mg</i> − <i class='qv'>kv</i> で <i class='qv'>a</i> ＝ 0 とおく（終端速度）","自由落下の式 <i class='qv'>v</i>² ＝ 2<i class='qv'>gh</i> で計算する","<i class='qv'>F</i> ＝ <i class='qv'>ρVg</i>"],answer:0,
      explain:"雲の高さから自由落下すると速さは 100 m/s をこえますが、実際は空気抵抗で終端速度（数 m/s）になっています。"},
     {id:"m5",type:"self",prompt:"次の文を自分の言葉で完成させよ。「流体から受ける力の問題を解くとき、私が最初にすることは（　　）である。」",scored:false,
      model:"例：物体が受ける力をすべて図にかき、浮力・空気抵抗の向きを確かめること。圧力なら面積の単位を m² に直すこと。"}

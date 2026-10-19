@@ -269,7 +269,7 @@ sub .s, sub i{font-family:var(--f-sym)}
     </div>
     <div class="tabs" role="tablist" aria-label="話題">
       <button class="tab" role="tab" data-tab="def" type="button">仕事の定義と正負</button>
-      <button class="tab" role="tab" data-tab="fx" type="button">F-x グラフと仕事</button>
+      <button class="tab" role="tab" data-tab="fx" type="button"><i class="s">F</i>-<i class="s">x</i> グラフと仕事</button>
       <button class="tab" role="tab" data-tab="power" type="button">仕事率</button>
       <button class="tab" role="tab" data-tab="principle" type="button">仕事の原理</button>
     </div>
@@ -277,7 +277,7 @@ sub .s, sub i{font-family:var(--f-sym)}
 
   <!-- ============ 仕事の定義と正負 ============ -->
   <section class="pane" data-pane="def" hidden>
-    <p class="lead">仕事をするのは<b>「力」</b>。物体が移動したとき、その力の<b>移動の向きの成分 <i class="s">F</i> cos <i class="s">θ</i></b> と移動距離 <i class="s">x</i> の積が、その力が物体にした仕事 <i class="s">W</i> です（<i class="s">θ</i> は力の向きと移動の向きのなす角）。表の行をタップすると、その力の分解・F-x グラフ・式が切りかわります。</p>
+    <p class="lead">仕事をするのは<b>「力」</b>。物体が移動したとき、その力の<b>移動の向きの成分 <i class="s">F</i> cos <i class="s">θ</i></b> と移動距離 <i class="s">x</i> の積が、その力が物体にした仕事 <i class="s">W</i> です（<i class="s">θ</i> は力の向きと移動の向きのなす角）。表の行をタップすると、その力の分解・<i class="s">F</i>-<i class="s">x</i> グラフ・式が切りかわります。</p>
     <div class="grid">
       <div class="colL">
         <section class="panel stage">
@@ -296,7 +296,7 @@ sub .s, sub i{font-family:var(--f-sym)}
       </div>
       <div class="colR">
         <div class="gcard">
-          <div class="ghead"><span class="gt" id="d-fxt">F-x グラフ</span><span class="meaning">面積 ＝ その力がした仕事（<span class="hl-w">正</span>／<span class="hl-wn">負</span>）</span></div>
+          <div class="ghead"><span class="gt" id="d-fxt"><i class="s">F</i>-<i class="s">x</i> グラフ</span><span class="meaning">面積 ＝ その力がした仕事（<span class="hl-w">正</span>／<span class="hl-wn">負</span>）</span></div>
           <canvas class="gp" id="d-fx"></canvas>
           <div class="gfoot" id="d-fxf"></div>
         </div>
@@ -321,7 +321,7 @@ sub .s, sub i{font-family:var(--f-sym)}
 
   <!-- ============ F-x グラフと仕事 ============ -->
   <section class="pane" data-pane="fx" hidden>
-    <p class="lead">力の大きさが途中で変わるときは、<i class="s">W</i> ＝ <i class="s">Fx</i> がそのまま使えません。移動を細かく区切ると、各区間では力はほぼ一定なので、<b>短冊の面積 <i class="s">F</i>Δ<i class="s">x</i> の和</b>が仕事に近づき、区切りを細かくした極限が <b>F-x グラフの面積</b>になります。「自由に描く」では、グラフの点をドラッグして力の変わり方を作れます。</p>
+    <p class="lead">力の大きさが途中で変わるときは、<i class="s">W</i> ＝ <i class="s">Fx</i> がそのまま使えません。移動を細かく区切ると、各区間では力はほぼ一定なので、<b>短冊の面積 <i class="s">F</i>Δ<i class="s">x</i> の和</b>が仕事に近づき、区切りを細かくした極限が <b><i class="s">F</i>-<i class="s">x</i> グラフの面積</b>になります。「自由に描く」では、グラフの点をドラッグして力の変わり方を作れます。</p>
     <div class="grid">
       <div class="colL">
         <section class="panel stage">
@@ -339,12 +339,12 @@ sub .s, sub i{font-family:var(--f-sym)}
       </div>
       <div class="colR">
         <div class="gcard">
-          <div class="ghead"><span class="gt">F-x グラフ</span><span class="meaning">面積 ＝ 仕事。<i class="s">F</i>＜0（移動と逆向き）の部分は負の仕事</span></div>
+          <div class="ghead"><span class="gt"><i class="s">F</i>-<i class="s">x</i> グラフ</span><span class="meaning">面積 ＝ 仕事。<i class="s">F</i>＜0（移動と逆向き）の部分は負の仕事</span></div>
           <canvas class="gp tall" id="f-fx"></canvas>
           <div class="gfoot" id="f-fxf"></div>
         </div>
         <div class="gcard">
-          <div class="ghead"><span class="gt">W-x グラフ</span><span class="meaning">それまでにした仕事の合計。傾き ＝ そこでの力 <i class="s">F</i></span></div>
+          <div class="ghead"><span class="gt"><i class="s">W</i>-<i class="s">x</i> グラフ</span><span class="meaning">それまでにした仕事の合計。傾き ＝ そこでの力 <i class="s">F</i></span></div>
           <canvas class="gp" id="f-wx"></canvas>
           <div class="legend2"><span><i class="sw" style="--c:var(--wk)"></i>面積（正確な仕事）</span><span><i class="sw d" style="--c:var(--ink3)"></i>短冊の和</span></div>
         </div>
@@ -358,7 +358,7 @@ sub .s, sub i{font-family:var(--f-sym)}
 
   <!-- ============ 仕事率 ============ -->
   <section class="pane" data-pane="power" hidden>
-    <p class="lead">A と B が、同じ荷物を同じ高さまで一定の速さで持ち上げます。<b>仕事の量は同じ</b>（<i class="s">W</i> ＝ <i class="s">mgh</i>）でも、短い時間で終えるほど能率がよい。この能率を表すのが<b>仕事率 <i class="s">P</i> ＝ <i class="s">W</i> ÷ <i class="s">t</i></b>〔W ＝ J/s〕で、W-t グラフの傾き、P-t グラフでは高さです。</p>
+    <p class="lead">A と B が、同じ荷物を同じ高さまで一定の速さで持ち上げます。<b>仕事の量は同じ</b>（<i class="s">W</i> ＝ <i class="s">mgh</i>）でも、短い時間で終えるほど能率がよい。この能率を表すのが<b>仕事率 <i class="s">P</i> ＝ <i class="s">W</i> ÷ <i class="s">t</i></b>〔W ＝ J/s〕で、<i class="s">W</i>-<i class="s">t</i> グラフの傾き、<i class="s">P</i>-<i class="s">t</i> グラフでは高さです。</p>
     <div class="grid">
       <div class="colL">
         <section class="panel stage">
@@ -375,12 +375,12 @@ sub .s, sub i{font-family:var(--f-sym)}
       </div>
       <div class="colR">
         <div class="gcard">
-          <div class="ghead"><span class="gt">W-t グラフ</span><span class="meaning">傾き ＝ 仕事率 <i class="s">P</i></span></div>
+          <div class="ghead"><span class="gt"><i class="s">W</i>-<i class="s">t</i> グラフ</span><span class="meaning">傾き ＝ 仕事率 <i class="s">P</i></span></div>
           <canvas class="gp" id="p-wt"></canvas>
           <div class="gfoot" id="p-wtf"></div>
         </div>
         <div class="gcard">
-          <div class="ghead"><span class="gt">P-t グラフ</span><span class="meaning">面積 ＝ 仕事 <i class="s">W</i></span></div>
+          <div class="ghead"><span class="gt"><i class="s">P</i>-<i class="s">t</i> グラフ</span><span class="meaning">面積 ＝ 仕事 <i class="s">W</i></span></div>
           <canvas class="gp" id="p-pt"></canvas>
         </div>
         <div class="gcard">
@@ -408,7 +408,7 @@ sub .s, sub i{font-family:var(--f-sym)}
       </div>
       <div class="colR">
         <div class="gcard">
-          <div class="ghead"><span class="gt">F-s グラフ</span><span class="meaning">手が加える力 <i class="s">F</i> と、手が動かした距離 <i class="s">s</i>。面積 ＝ 仕事</span></div>
+          <div class="ghead"><span class="gt"><i class="s">F</i>-<i class="s">s</i> グラフ</span><span class="meaning">手が加える力 <i class="s">F</i> と、手が動かした距離 <i class="s">s</i>。面積 ＝ 仕事</span></div>
           <canvas class="gp tall" id="w-fs"></canvas>
           <div class="legend2"><span><i class="sw" style="--c:var(--m1)"></i>A そのまま</span><span><i class="sw" style="--c:var(--m2)"></i>B 斜面</span><span><i class="sw" style="--c:var(--m3)"></i>C 動滑車</span></div>
         </div>
@@ -477,8 +477,9 @@ sub .s, sub i{font-family:var(--f-sym)}
       const c = s[i];
       if (c === '*') { out += it ? '</i>' : '<i class="s">'; it = !it; continue; }
       if (c === '_' || c === '^') {
-        const n = s[++i]; const tag = c === '_' ? 'sub' : 'sup';
-        out += '<' + tag + '>' + (/[a-zA-Z]/.test(n) ? '<i class="s">' + n + '</i>' : n) + '</' + tag + '>';
+        let n = s[++i]; const tag = c === '_' ? 'sub' : 'sup';
+        if (n === '{') { const j = s.indexOf('}', i); n = s.slice(i + 1, j); i = j; out += '<' + tag + '>' + K.h(n) + '</' + tag + '>'; continue; }
+        out += '<' + tag + '>' + ((tag === 'sup' ? /[a-zA-Z]/ : /^[xyz]$/).test(n) ? '<i class="s">' + n + '</i>' : n) + '</' + tag + '>';
         continue;
       }
       out += c === '<' ? '&lt;' : c === '&' ? '&amp;' : c;
@@ -492,7 +493,7 @@ sub .s, sub i{font-family:var(--f-sym)}
     for (let i = 0; i < s.length; i++) {
       const c = s[i];
       if (c === '*') { it = !it; continue; }
-      if (c === '_' || c === '^') { const n = s[++i]; r.push({ c: n, k: c === '_' ? 'sub' : 'sup', it: /[a-zA-Z]/.test(n) }); continue; }
+      if (c === '_' || c === '^') { const n = s[++i]; r.push({ c: n, k: c === '_' ? 'sub' : 'sup', it: (c === '_' ? /^[xyz]$/ : /[a-zA-Z]/).test(n) }); continue; }
       r.push({ c, k: 'n', it });
     }
     return r;
@@ -608,7 +609,7 @@ sub .s, sub i{font-family:var(--f-sym)}
       <button class="btn" id="tp-back" type="button" title="ストロボ1コマ戻る">◀|</button>
       <button class="btn" id="tp-fwd" type="button" title="ストロボ1コマ進む">|▶</button>
       <input type="range" id="tp-t" min="0" max="1000" value="0" aria-label="時刻">
-      <span class="tread" id="tp-read">t = 0.00 s</span>
+      <span class="tread" id="tp-read"><i class="s">t</i> = 0.00 s</span>
       <select id="tp-speed" aria-label="再生速度"><option value="0.25">×0.25</option><option value="0.5">×0.5</option><option value="1" selected>×1</option><option value="2">×2</option></select>
     </div>`;
   K.bindTransport = (player, getStep) => {
@@ -627,7 +628,7 @@ sub .s, sub i{font-family:var(--f-sym)}
       if (e.code === 'ArrowRight') step(1);
       if (e.code === 'ArrowLeft') step(-1);
     });
-    return (t) => { sl.value = player.tEnd > 0 ? Math.round((t / player.tEnd) * 1000) : 0; rd.textContent = 't = ' + K.f(t, 2) + ' s'; };
+    return (t) => { sl.value = player.tEnd > 0 ? Math.round((t / player.tEnd) * 1000) : 0; rd.innerHTML = K.h('*t* = ' + K.f(t, 2) + ' s'); };
   };
 
   /* ---------- 式の項 ⇔ グラフ ---------- */
@@ -666,7 +667,7 @@ sub .s, sub i{font-family:var(--f-sym)}
         <button class="btn primary" data-a="play" type="button">▶ 再生</button>
         <button class="btn" data-a="reset" type="button" title="最初に戻す">⏮</button>
         <input type="range" data-a="t" min="0" max="1000" value="0" aria-label="時刻">
-        <span class="tread" data-a="read">t = 0.00 s</span>
+        <span class="tread" data-a="read"><i class="s">t</i> = 0.00 s</span>
         <select data-a="speed" aria-label="再生速度"><option value="0.25">×0.25</option><option value="0.5">×0.5</option><option value="1" selected>×1</option><option value="2">×2</option></select>
       </div>`;
     const q = (a) => host.querySelector('[data-a="' + a + '"]');
@@ -679,7 +680,7 @@ sub .s, sub i{font-family:var(--f-sym)}
     player.onState = () => { play.textContent = player.playing ? '⏸ 停止' : '▶ 再生'; };
     return (t) => {
       sl.value = player.tEnd > 0 ? Math.round((t / player.tEnd) * 1000) : 0;
-      rd.textContent = opt.label ? opt.label(t) : 't = ' + K.f(t, 2) + ' s';
+      rd.innerHTML = K.h(opt.label ? opt.label(t) : '*t* = ' + K.f(t, 2) + ' s');
     };
   };
   // スペースキーは「いま見えているペインの」プレーヤーへ
@@ -1193,7 +1194,7 @@ sub .s, sub i{font-family:var(--f-sym)}
     // ---- 式 ----
     if (sel) {
       $('#d-eq').innerHTML = `<i class="s">W</i><span class="op">＝</span><i class="s">F</i> <i class="s">x</i> cos <i class="s">θ</i>`;
-      $('#d-sub').textContent = `${sel.name}：W ＝ ${f(sel.mag, 2)} N × ${f(st.x, 2)} m × cos ${f(sel.ang, 0)}° ＝ ${f(Wsel, 2)} J`;
+      $('#d-sub').innerHTML = K.h(`${sel.name}：*W* ＝ ${f(sel.mag, 2)} N × ${f(st.x, 2)} m × cos ${f(sel.ang, 0)}° ＝ ${f(Wsel, 2)} J`);
       const a = sel.ang;
       let ex;
       if (S.still) ex = `<div class="ttl">移動していない → 仕事は 0</div><div>力がはたらいていても、物体が移動しなければ（<i class="s">x</i> ＝ 0）仕事は 0。「いくらがんばっても動かせなければ、その力は仕事をしていない」と判断します。</div>`;

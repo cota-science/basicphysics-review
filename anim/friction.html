@@ -247,7 +247,7 @@ function eqFloor(st){
   } else {
     h += eq(`$f$'${OP('=')}$μ$'$N$ <span class="jp">（動摩擦力）</span>`, `${s.mu2} × ${L.f(st.N,2)} ＝ ${L.f(st.fk,2)} N（速さによらず一定）`, '$μ$\' は動摩擦係数（ふつう $μ$\' ＜ $μ$）', true);
     const a = (st.Fh - st.fk) / s.m;
-    h += eq(`$ma$${OP('=')}$F$${phi ? ' cos$θ$' : ''}${OP('−')}$μ$'$N$`, `a ＝ (${L.f(st.Fh,2)} − ${L.f(st.fk,2)}) ÷ ${L.f(s.m,1)} ＝ ${L.f(a,2)} m/s²`, '運動方程式（くわしくは「運動の三法則」ページ）');
+    h += eq(`$ma$${OP('=')}$F$${phi ? ' cos$θ$' : ''}${OP('−')}$μ$'$N$`, `<i class="s">a</i> ＝ (${L.f(st.Fh,2)} − ${L.f(st.fk,2)}) ÷ ${L.f(s.m,1)} ＝ ${L.f(a,2)} m/s²`, '運動方程式（くわしくは「運動の三法則」ページ）');
   }
   L.set('fx', h);
 }
@@ -262,7 +262,7 @@ function eqSlope(st){
     const sg = s.end ? s.lastDir : Math.sign(s.v);
     h += eq(`$f$'${OP('=')}$μ$'$N$`, `${s.mu2} × ${L.f(st.N,2)} ＝ ${L.f(st.fk,2)} N（${sg < 0 ? '斜面上向き' : '斜面下向き'}）`, '動摩擦力は運動と逆向き', true);
     const a = (s.Fp - st.Wp + st.f) / s.m;
-    h += eq(`$ma$${OP('=')}${s.Fp ? '$F$' + OP('−') : '−'}$mg$ sin$θ$${OP(sg < 0 ? '+' : '−')}$μ$'$N$`, `a ＝ ${L.f(a,2)} m/s²（斜面上向きを正）`, '運動方程式');
+    h += eq(`$ma$${OP('=')}${s.Fp ? '$F$' + OP('−') : '−'}$mg$ sin$θ$${OP(sg < 0 ? '+' : '−')}$μ$'$N$`, `<i class="s">a</i> ＝ ${L.f(a,2)} m/s²（斜面上向きを正）`, '運動方程式');
   }
   L.set('fx', h);
 }

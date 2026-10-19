@@ -26,7 +26,7 @@ if(typeof document !== "undefined"){
 }
 
 const Q = s => `<i class='qv'>${s}</i>`;
-const V = s => `<span class='vec'>${s}</span>`;
+const V = s => `<span class='vec'${/^[0-9]/.test(s) ? " style='font-style:normal'" : ""}>${s}</span>`;
 const D = (a, b) => `d${Q(a)}/d${Q(b)}`;                 // dx/dt
 const INT = (f, a, b) => `∫${a !== undefined ? `<sub>${a}</sub><sup>${b}</sup>` : ""} ${f} d${Q("t")}`;
 const ANIM = (href, label) => `<a href='${href}' style='display:inline-block;margin:8px 6px 0 0;padding:6px 12px;border:1.5px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:700;text-decoration:none;line-height:1.5'>▶ ${label}</a>`;
@@ -50,7 +50,7 @@ const MAP_TABLE = `<div class="tbl"><table>
 <p class="formula">数学Ⅱ：(${Q("t")}<sup>${Q("n")}</sup>)′ ＝ ${Q("n")}${Q("t")}<sup>${Q("n")}−1</sup>　　∫${Q("t")}<sup>${Q("n")}</sup> d${Q("t")} ＝ ${Q("t")}<sup>${Q("n")}＋1</sup>/(${Q("n")}＋1) ＋ ${Q("C")}</p>`;
 const DIM_TABLE = `<div class="tbl"><table>
 <tr><th>操作</th><th>単位では</th><th>例</th></tr>
-<tr><td>${Q("t")} で微分する（d/d${Q("t")}）</td><td>÷ s</td><td>${Q("x")}〔m〕→ ${Q("v")}〔m/s〕→ ${Q("a")}〔m/s²〕</td></tr>
+<tr><td>${Q("t")} で微分する（<i class='qv'>d</i>/d${Q("t")}）</td><td>÷ s</td><td>${Q("x")}〔m〕→ ${Q("v")}〔m/s〕→ ${Q("a")}〔m/s²〕</td></tr>
 <tr><td>${Q("t")} で積分する（∫ … d${Q("t")}）</td><td>× s</td><td>${Q("a")}〔m/s²〕→ ${Q("v")}〔m/s〕→ ${Q("x")}〔m〕</td></tr>
 <tr><td>${Q("x")} で積分する（∫ … d${Q("x")}）</td><td>× m</td><td>${Q("F")}〔N〕→ 仕事〔N·m ＝ J〕</td></tr>
 <tr><td>ベクトルの成分・大きさ</td><td>もとの量と同じ</td><td>速度の成分〔m/s〕</td></tr>
@@ -58,11 +58,11 @@ const DIM_TABLE = `<div class="tbl"><table>
 
 const SECTIONS = [
 { id:"def", advice:"「数学の言葉 ↔ 物理の言葉」の対応表を開いて、傾き・面積・和・差・内積がそれぞれ何を表すかを確かめよう。", tab:"①定義", title:"① 定義カード（数学と物理の対応）", back:"① 定義カード",
-  intro:`物理基礎で学んだ「傾き」「面積」「矢印の足し算」は、数学Ⅱの微分・積分、数学Cのベクトルそのものです。対応表で確かめてから答えよう。<br>Web教材で確かめよう：<br>${ANIM("anim/calculus.html#lim","極限：平均変化率 → 瞬間の速度")}${ANIM("anim/calculus.html#diff","微分：x → v → a と増減表")}${ANIM("anim/calculus.html#int","積分：面積 ＝ 変位")}${ANIM("anim/calculus.html#derive","3式を微分・積分で導く")}${ANIM("anim/vector.html#ops","ベクトルの和・差・成分")}${ANIM("anim/vector.html#motion","位置・速度・加速度ベクトル")}${ANIM("anim/vector.html#force","力のつりあい")}${ANIM("anim/vector.html#work","仕事と内積")}`,
+  intro:`物理基礎で学んだ「傾き」「面積」「矢印の足し算」は、数学Ⅱの微分・積分、数学Cのベクトルそのものです。対応表で確かめてから答えよう。<br>Web教材で確かめよう：<br>${ANIM("anim/calculus.html#lim","極限：平均変化率 → 瞬間の速度")}${ANIM("anim/calculus.html#diff","微分：<i class='qv'>x</i> → <i class='qv'>v</i> → <i class='qv'>a</i> と増減表")}${ANIM("anim/calculus.html#int","積分：面積 ＝ 変位")}${ANIM("anim/calculus.html#derive","3式を微分・積分で導く")}${ANIM("anim/vector.html#ops","ベクトルの和・差・成分")}${ANIM("anim/vector.html#motion","位置・速度・加速度ベクトル")}${ANIM("anim/vector.html#force","力のつりあい")}${ANIM("anim/vector.html#work","仕事と内積")}`,
   ref:{label:"対応表を見る", html:MAP_TABLE},
   groups:[{ title:"A. 微分・積分", qs:[
     {id:"d1",type:"blanks",text:`平均の速度 Δ${Q("x")}/Δ${Q("t")} は、数学Ⅱでいう{0}にあたり、${Q("x")}-${Q("t")} 図では{1}を表す。`,
-     options:[["平均変化率","微分係数","定積分"],["2点を結ぶ直線の傾き","接線の傾き","グラフと t 軸の間の面積"]],answer:[0,0],
+     options:[["平均変化率","微分係数","定積分"],["2点を結ぶ直線の傾き","接線の傾き","グラフと <i class='qv'>t</i> 軸の間の面積"]],answer:[0,0],
      explain:`平均変化率 {${Q("f")}(${Q("a")}＋${Q("h")}) − ${Q("f")}(${Q("a")})}/${Q("h")} の ${Q("f")} を位置 ${Q("x")}、${Q("h")} を時間 Δ${Q("t")} と読みかえると、平均の速度になります。`},
     {id:"d2",type:"blanks",text:`瞬間の速度は、Δ${Q("t")} を{0}ときの平均の速度の極限で、${Q("v")} ＝ {1} と書く。${Q("x")}-${Q("t")} 図では{2}を表す。`,
      options:[["限りなく大きくした","限りなく 0 に近づけた","1 s にした"],["dx/dt","dv/dt","∫v dt"],["接線の傾き","2点を結ぶ直線の傾き","面積"]],answer:[1,0,0],
@@ -71,7 +71,7 @@ const SECTIONS = [
      options:[["dv/dt","dx/dt","∫v dt"],["1回","2回","3回"]],answer:[0,1],
      explain:`${Q("x")} を微分すると ${Q("v")}、${Q("v")} を微分すると ${Q("a")}。${Q("a")} は ${Q("x")} を2回微分したものです。`},
     {id:"d4",type:"blanks",text:`${Q("v")}-${Q("t")} 図のグラフと ${Q("t")} 軸の間の面積（${Q("t")} 軸より下は負）は{0}を表し、数学では{1}で計算する。`,
-     options:[["変位","道のり","加速度"],["定積分 ∫v dt","微分 dv/dt","v × t（どんな運動でも）"]],answer:[0,0],
+     options:[["変位","道のり","加速度"],["定積分 ∫<i class='qv'>v</i> d<i class='qv'>t</i>","微分 dv/dt","<i class='qv'>v</i> × <i class='qv'>t</i>（どんな運動でも）"]],answer:[0,0],
      explain:`変位 ＝ ${INT(Q("v"), Q("t") + "<sub>1</sub>", Q("t") + "<sub>2</sub>")}。「速度 × 時間」が使えるのは速度が一定のときだけで、一般には積分します。${ANIM("anim/calculus.html#int","短冊の和が定積分に近づくようす")}`},
     {id:"d5",type:"choice",prompt:`${Q("v")} ＝ ∫${Q("a")} d${Q("t")} ＝ ${Q("at")} ＋ ${Q("C")}（${Q("a")} は一定）の積分定数 ${Q("C")} は、物理では何を表すか。`,
      options:[`時刻 0 の速度（初速度 ${Q("v")}<sub>0</sub>）`,"加速度","時刻 0 の位置"],answer:0,
@@ -82,13 +82,13 @@ const SECTIONS = [
      options:["変位","速さ","速度","加速度","力","質量","仕事","時間"],answer:[0,2,3,4],
      explain:"変位・速度・加速度・力はベクトル。速さ・質量・仕事・時間は大きさだけの量（スカラー）です。仕事は力と変位の内積で、スカラーになります。"},
     {id:"d7",type:"blanks",text:`平面上の運動で、速度 ${V("v")} の ${Q("x")} 成分は ${Q("v")}<sub>x</sub> ＝ {0}、速さ（${V("v")} の大きさ）は {1} である。`,
-     options:[["dx/dt","dy/dt","x/t"],["√(vₓ² ＋ v_y²)","vₓ ＋ v_y","vₓ × v_y"]],answer:[0,0],
+     options:[["dx/dt","dy/dt","x/t"],["√(<i class='qv'>v</i>ₓ² ＋ <i class='qv'>v</i><sub>y</sub>²)","<i class='qv'>v</i>ₓ ＋ <i class='qv'>v</i><sub>y</sub>","<i class='qv'>v</i>ₓ × <i class='qv'>v</i><sub>y</sub>"]],answer:[0,0],
      explain:`位置 (${Q("x")}, ${Q("y")}) を成分ごとに微分すると速度 (${D("x","t")}, ${D("y","t")})。大きさは三平方の定理で求めます。${ANIM("anim/vector.html#motion","位置・速度・加速度ベクトル")}`},
     {id:"d8",type:"blanks",text:`A から見た B の相対速度は {0}、2力 ${V("F")}<sub>1</sub>、${V("F")}<sub>2</sub> の合力は {1}、物体が受ける力がつりあう条件は {2} である。`,
-     options:[["v_B − v_A","v_A − v_B","v_A ＋ v_B"],["F₁ ＋ F₂（ベクトルの和）","|F₁| ＋ |F₂|（大きさの和）","F₁ − F₂"],["力のベクトルの和が 0","力の大きさがすべて等しい","力がすべて同じ向き"]],answer:[0,0,0],
+     options:[["<i class='qv'>v</i><sub>B</sub> − <i class='qv'>v</i><sub>A</sub>","<i class='qv'>v</i><sub>A</sub> − <i class='qv'>v</i><sub>B</sub>","<i class='qv'>v</i><sub>A</sub> ＋ <i class='qv'>v</i><sub>B</sub>"],["<i class='qv'>F</i>₁ ＋ <i class='qv'>F</i>₂（ベクトルの和）","|F₁| ＋ |F₂|（大きさの和）","<i class='qv'>F</i>₁ − <i class='qv'>F</i>₂"],["力のベクトルの和が 0","力の大きさがすべて等しい","力がすべて同じ向き"]],answer:[0,0,0],
      explain:`相対速度はベクトルの差 ${V("v")}<sub>B</sub> − ${V("v")}<sub>A</sub>、合力はベクトルの和。つりあいは「合力 ＝ ${V("0")}」で、成分で書くと ${Q("x")} 成分の和も ${Q("y")} 成分の和も 0 です。`},
     {id:"d9",type:"blanks",text:`一定の力 ${V("F")} を受けて変位 ${V("s")} だけ動いたとき、力がする仕事は ${Q("W")} ＝ {0} ＝ ${Q("Fs")} cos ${Q("θ")} で、仕事は{1}である。`,
-     options:[["F・s（内積）","F ＋ s（和）","|F| ＋ |s|"],["スカラー","ベクトル"]],answer:[0,0],
+     options:[["<i class='qv'>F</i>・<i class='qv'>s</i>（内積）","<i class='qv'>F</i> ＋ <i class='qv'>s</i>（和）","|<i class='qv'>F</i>| ＋ |<i class='qv'>s</i>|"],["スカラー","ベクトル"]],answer:[0,0],
      explain:`数学Cの内積 ${V("a")}・${V("b")} ＝ |${V("a")}||${V("b")}| cos ${Q("θ")} です。内積は数なので、仕事もエネルギーも向きをもちません。${ANIM("anim/vector.html#work","仕事と内積")}`}
   ]}]
 },
@@ -107,18 +107,18 @@ const SECTIONS = [
     {id:"ra4",type:"choice",prompt:`「${D("v","t")} ＞ 0 かつ ${Q("v")} ＜ 0 である。」`,options:["速さが小さくなっている","速さが大きくなっている","正の向きに進んでいる"],answer:0,
      explain:`${Q("a")} ＞ 0、${Q("v")} ＜ 0 で符号が逆なので、負の向きに進みながら速さが小さくなっています。`},
     {id:"ra5",type:"choice",prompt:`（平面の運動）「速さが一定の運動では、加速度は ${V("0")} である。」`,options:TF,answer:1,
-     explain:`誤り。加速度は速度ベクトルの変化の割合です。等速円運動のように向きが変われば、速さが一定でも加速度は ${V("0")} ではありません。${ANIM("anim/vector.html#motion","等速円運動の Δv")}`}
+     explain:`誤り。加速度は速度ベクトルの変化の割合です。等速円運動のように向きが変われば、速さが一定でも加速度は ${V("0")} ではありません。${ANIM("anim/vector.html#motion","等速円運動の Δ<i class='qv'>v</i>")}`}
   ]},
   { title:"B. 増減表で運動を読む", lead:`直線上を動く物体の位置が ${Q("x")} ＝ ${Q("t")}³ − 9${Q("t")}² ＋ 24${Q("t")}〔m〕（${Q("t")} は時刻〔s〕、${Q("t")} ≧ 0）で表される。`, qs:[
     {id:"rb1",type:"blanks",text:`${Q("v")} ＝ ${D("x","t")} ＝ {0}、${Q("a")} ＝ ${D("v","t")} ＝ {1}`,
-     options:[["3t² − 18t ＋ 24","t² − 9t ＋ 24","3t² − 9t"],["6t − 18","3t − 9","6t"]],answer:[0,0],
+     options:[["3t² − 18t ＋ 24","<i class='qv'>t</i>² − 9<i class='qv'>t</i> ＋ 24","3t² − 9t"],["6t − 18","3t − 9","6t"]],answer:[0,0],
      explain:`(${Q("t")}³)′ ＝ 3${Q("t")}²、(${Q("t")}²)′ ＝ 2${Q("t")}、(${Q("t")})′ ＝ 1 を使います。${Q("v")} ＝ 3(${Q("t")} − 2)(${Q("t")} − 4) と因数分解できます。`},
     {id:"rb2",type:"multi",prompt:"物体が一瞬止まる時刻をすべて選べ。",options:["1 s","2 s","3 s","4 s","6 s"],answer:[1,3],
      explain:`${Q("v")} ＝ 3(${Q("t")} − 2)(${Q("t")} − 4) ＝ 0 より ${Q("t")} ＝ 2 s、4 s。どちらも ${Q("v")} の符号が変わるので、折り返しています。`},
     {id:"rb3",type:"choice",prompt:"2 s から 4 s の間、物体はどう動いているか。",options:["負の向きに進んでいる","正の向きに進んでいる","止まっている"],answer:0,
      explain:`この間 ${Q("v")} ＜ 0 で、増減表では ${Q("x")} が減少（↘）。${Q("t")} ＝ 2 s で極大（20 m）、4 s で極小（16 m）です。`},
     {id:"rb4",type:"num",prompt:`${Q("t")} ＝ 3 s の加速度を求めよ。`,answer:0,tol:0.01,unit:"m/s²",
-     traps:{"-3":"それは速度 v(3) の値です。加速度は a ＝ 6t − 18 に代入します。"},
+     traps:{"-3":"それは速度 <i class='qv'>v</i>(3) の値です。加速度は <i class='qv'>a</i> ＝ 6<i class='qv'>t</i> − 18 に代入します。"},
      explain:`${Q("a")} ＝ 6 × 3 − 18 ＝ 0 m/s²。このとき速度は −3 m/s で、負の向きの速さがいちばん大きい瞬間です。速度が 0 でなくても加速度は 0 になれます。`},
     {id:"rb5",type:"num",prompt:"0 s から 4 s までの道のりを求めよ。",answer:24,tol:0.1,unit:"m",
      traps:{"16":"16 m は変位（4 s の位置 − 0 s の位置）です。2 s で折り返しているので、区間に分けて考えよう。"},
@@ -135,7 +135,7 @@ const SECTIONS = [
      traps:{"6.4":"|F₁| ＋ |F₂| を計算していませんか。合力は成分どうしを足してから大きさを求めます。"},
      explain:`合力 ＝ (3.0 ＋ 1.0, 4.0 − 1.0) ＝ (4.0, 3.0) N、大きさ √(4.0² ＋ 3.0²) ＝ 5.0 N。`},
     {id:"rc4",type:"num",prompt:"このとき物体の加速度の大きさを求めよ。",answer:2.5,tol:0.03,unit:"m/s²",
-     traps:{"10":"掛けていませんか。a ＝ F/m です。"},
+     traps:{"10":"掛けていませんか。<i class='qv'>a</i> ＝ <i class='qv'>F</i>/<i class='qv'>m</i> です。"},
      explain:`運動方程式 ${Q("m")}${V("a")} ＝ Σ${V("F")} より ${V("a")} ＝ (2.0, 1.5) m/s²、大きさ 5.0/2.0 ＝ 2.5 m/s²。加速度の向きは合力の向きです。`}
   ]},
   { title:"D. 正しいか、誤りか", lead:"正誤を答え、解説で正しい言い方を確かめよう。", qs:[
@@ -151,7 +151,7 @@ const SECTIONS = [
      explain:`正しい。変わるのは「どの軸で見るか」による成分の値だけです。成分の2乗の和の平方根は、もとの大きさ ${Q("mg")} に等しくなります。${ANIM("anim/vector.html#force","軸を切りかえて比べる")}`}
   ]}]
 },
-{ id:"dim", advice:"微分は「÷ s」、積分は「× s」（∫ … dx なら × m）。式を書いたら単位で確かめよう。", tab:"③次元", title:"③ 次元チェック", back:"③ 次元チェック",
+{ id:"dim", advice:"微分は「÷ s」、積分は「× s」（∫ … d<i class='qv'>x</i> なら × m）。式を書いたら単位で確かめよう。", tab:"③次元", title:"③ 次元チェック", back:"③ 次元チェック",
   intro:`d${Q("x")}/d${Q("t")} は分数ではありませんが、単位は「${Q("x")} の単位 ÷ ${Q("t")} の単位」になります。積分は面積なので「縦 × 横」の単位です。`,
   ref:{label:"微分・積分と単位の表を見る", html:DIM_TABLE},
   groups:[
@@ -160,7 +160,7 @@ const SECTIONS = [
     {id:"da2",type:"choice",prompt:D("v","t"),options:UNITQ,answer:2,explain:"(m/s) ÷ s ＝ m/s²（加速度）。",two:true},
     {id:"da3",type:"choice",prompt:`∫${Q("a")} d${Q("t")}`,options:UNITQ,answer:1,explain:"(m/s²) × s ＝ m/s（速度の変化）。",two:true},
     {id:"da4",type:"choice",prompt:`∫${Q("v")} d${Q("t")}`,options:UNITQ,answer:0,explain:"(m/s) × s ＝ m（変位）。",two:true},
-    {id:"da5",type:"choice",prompt:`∫${Q("F")} d${Q("x")}`,options:UNITQ,answer:3,explain:"N × m ＝ J（仕事）。F-x 図の面積です。",two:true}
+    {id:"da5",type:"choice",prompt:`∫${Q("F")} d${Q("x")}`,options:UNITQ,answer:3,explain:"N × m ＝ J（仕事）。<i class='qv'>F</i>-<i class='qv'>x</i> 図の面積です。",two:true}
   ]},
   { title:"B. 係数の単位", lead:`位置が ${Q("x")} ＝ 2${Q("t")}³〔m〕（${Q("t")} は s）で表される運動。`, qs:[
     {id:"db1",type:"choice",prompt:"係数 2 の単位はどれか。",options:["m/s³","m","m/s²","s³/m"],answer:0,
@@ -182,15 +182,15 @@ const SECTIONS = [
   intro:"6つのステップで解きます。①何が何の関数か確かめる → ②使う数学を決める（微分・積分／和・差・内積）→ ③計算する → ④単位を確かめる → ⑤初期条件・向きを確かめる → ⑥結果を運動の言葉で言う。",
   ref:{label:"対応表を見る", html:MAP_TABLE},
   groups:[
-  { title:"問題1（微分）", lead:ANIM("anim/calculus.html#diff","「減速して戻る」で確かめる（x ＝ 6t − t²）"),
+  { title:"問題1（微分）", lead:ANIM("anim/calculus.html#diff","「減速して戻る」で確かめる（<i class='qv'>x</i> ＝ 6<i class='qv'>t</i> − <i class='qv'>t</i>²）"),
     quote:`${Q("x")} 軸上を動く物体の位置が、${Q("x")} ＝ 6${Q("t")} − ${Q("t")}²〔m〕（${Q("t")} は時刻〔s〕）で表される。`, qs:[
     {id:"s11",type:"blanks",prompt:"ステップ2・3　速度と加速度を求める。",text:`${Q("v")} ＝ {0}〔m/s〕、${Q("a")} ＝ {1}〔m/s²〕`,
-     options:[["6 − 2t","6t − 2","6 − t"],["−2","2","−2t"]],answer:[0,0],
+     options:[["6 − 2t","6t − 2","6 − <i class='qv'>t</i>"],["−2","2","−2t"]],answer:[0,0],
      explain:`位置の式を微分すると速度、速度の式を微分すると加速度。${Q("a")} が一定なので、これは等加速度直線運動（初速度 6 m/s、加速度 −2 m/s²）です。`},
     {id:"s12",type:"num",prompt:"(1) 物体が折り返す時刻を求めよ。",answer:3,tol:0.01,unit:"s",
      explain:`${Q("v")} ＝ 6 − 2${Q("t")} ＝ 0 より ${Q("t")} ＝ 3.0 s。${Q("v")} が ＋ から − に変わるので、ここで ${Q("x")} は極大です。`},
     {id:"s13",type:"num",prompt:"(2) 折り返す位置を求めよ。",answer:9,tol:0.05,unit:"m",
-     traps:{"18":"6t だけを計算していませんか。−t² の項も代入します。"},
+     traps:{"18":"6<i class='qv'>t</i> だけを計算していませんか。−<i class='qv'>t</i>² の項も代入します。"},
      explain:`${Q("x")}(3) ＝ 18 − 9 ＝ 9.0 m。`},
     {id:"s14",type:"num",prompt:"(3) 0 s から 5 s までの変位を求めよ。",answer:5,tol:0.05,unit:"m",
      traps:{"13":"13 m は道のりです。変位は「後の位置 − 前の位置」です。"},
@@ -213,13 +213,13 @@ const SECTIONS = [
     {id:"s23",type:"num",prompt:"(1) 0 s から 3 s までの変位を求めよ。",answer:0,tol:0.02,unit:"m",
      explain:`${Q("x")}(3) ＝ 9 − 18 ＋ 9 ＝ 0。3 s 後には原点に戻っています。${Q("v")}-${Q("t")} 図では、${Q("t")} 軸より上の面積と下の面積が等しくなっています。`},
     {id:"s24",type:"num",prompt:"(2) 0 s から 3 s までの道のりを求めよ（小数第2位まで）。",answer:2.67,tol:0.02,unit:"m",
-     traps:{"0":"0 m は変位です。v ＝ (t − 1)(t − 3) なので、1 s で折り返しています。","1.33":"0〜1 s の分だけです。1〜3 s に戻る距離も足します。"},
+     traps:{"0":"0 m は変位です。<i class='qv'>v</i> ＝ (<i class='qv'>t</i> − 1)(<i class='qv'>t</i> − 3) なので、1 s で折り返しています。","1.33":"0〜1 s の分だけです。1〜3 s に戻る距離も足します。"},
      explain:`${Q("v")} ＝ (${Q("t")} − 1)(${Q("t")} − 3) より 1 s で折り返す。${Q("x")}(1) ＝ 1/3 − 2 ＋ 3 ＝ 4/3 m。0〜1 s に 4/3 m 進み、1〜3 s に 4/3 m 戻るので、道のりは 8/3 ≒ 2.67 m。`},
     {id:"s25",type:"num",prompt:`(3) ${Q("t")} ＝ 3 s の加速度を求めよ。`,answer:2,tol:0.01,unit:"m/s²",
-     traps:{"0":"それは速度 v(3) の値です。加速度は速度を微分した a ＝ 2t − 4 に代入します。"},
+     traps:{"0":"それは速度 <i class='qv'>v</i>(3) の値です。加速度は速度を微分した <i class='qv'>a</i> ＝ 2<i class='qv'>t</i> − 4 に代入します。"},
      explain:`${Q("a")} ＝ ${D("v","t")} ＝ 2${Q("t")} − 4 ＝ 2 m/s²。加速度が時刻とともに変わるので、この運動に等加速度直線運動の3式は使えません。`}
   ]},
-  { title:"問題3（ベクトル：力のつりあい）", lead:ANIM("anim/vector.html#force","「糸2本でつるす」で θ₁ ＝ 60°、θ₂ ＝ 30° にして確かめる"),
+  { title:"問題3（ベクトル：力のつりあい）", lead:ANIM("anim/vector.html#force","「糸2本でつるす」で <i class='qv'>θ</i>₁ ＝ 60°、<i class='qv'>θ</i>₂ ＝ 30° にして確かめる"),
     quote:"重さ 20 N のおもりを2本の糸でつるした。糸1は鉛直から左へ 60°、糸2は鉛直から右へ 30° 傾いていて、おもりは静止している。糸1・糸2の張力の大きさを T₁、T₂ とする。", qs:[
     {id:"s31",type:"blanks",prompt:"ステップ2・3　水平・鉛直の成分ごとに、つりあいの式を立てる。",text:"水平：{0}<br>鉛直：{1}",
      options:[["T₁ sin 60° ＝ T₂ sin 30°","T₁ cos 60° ＝ T₂ cos 30°","T₁ ＝ T₂"],["T₁ cos 60° ＋ T₂ cos 30° ＝ 20","T₁ sin 60° ＋ T₂ sin 30° ＝ 20","T₁ ＋ T₂ ＝ 20"]],answer:[0,0],
@@ -234,17 +234,17 @@ const SECTIONS = [
   { title:"問題4（ベクトル：仕事と内積）", lead:ANIM("anim/vector.html#work","仕事と内積で確かめる"),
     quote:`なめらかな水平面上の物体に一定の力 ${V("F")} ＝ (3.0, 4.0) N（${Q("x")} 軸は水平、${Q("y")} 軸は鉛直上向き）を加え続け、物体を ${Q("x")} 軸の正の向きに 2.0 m 動かした。`, qs:[
     {id:"s41",type:"num",prompt:`(1) 力 ${V("F")} がした仕事を求めよ。`,answer:6,tol:0.05,unit:"J",
-     traps:{"10":"|F| × |s| ＝ 5.0 × 2.0 を計算していませんか。力の変位の向きの成分だけが仕事をします。","14":"y 成分まで掛けていませんか。s の y 成分は 0 です。"},
+     traps:{"10":"|F| × |s| ＝ 5.0 × 2.0 を計算していませんか。力の変位の向きの成分だけが仕事をします。","14":"<i class='qv'>y</i> 成分まで掛けていませんか。<i class='qv'>s</i> の <i class='qv'>y</i> 成分は 0 です。"},
      explain:`${V("s")} ＝ (2.0, 0) m なので、${Q("W")} ＝ ${V("F")}・${V("s")} ＝ 3.0 × 2.0 ＋ 4.0 × 0 ＝ 6.0 J。`},
     {id:"s42",type:"num",prompt:`(2) ${V("F")} と ${V("s")} のなす角を ${Q("θ")} とする。cos ${Q("θ")} を求めよ。`,answer:0.6,tol:0.01,unit:"",
      explain:`|${V("F")}| ＝ 5.0 N、|${V("s")}| ＝ 2.0 m。cos ${Q("θ")} ＝ 6.0/(5.0 × 2.0) ＝ 0.60。${Q("W")} ＝ ${Q("Fs")} cos ${Q("θ")} ＝ 5.0 × 2.0 × 0.60 ＝ 6.0 J と同じ結果になります。`},
     {id:"s43",type:"choice",prompt:"(3) この間に、重力と垂直抗力がした仕事は？",options:["どちらも 0（変位に垂直）","重力は負、垂直抗力は正","どちらも正"],answer:0,
      explain:"どちらの力も鉛直方向で、水平な変位に垂直なので、内積は 0 です。"},
     {id:"s44",type:"num",prompt:`(4) 同じ力のまま、変位が ${V("s")} ＝ (2.0, −1.0) m だったとする（斜面を下る場合など）。${V("F")} がした仕事を求めよ。`,answer:2,tol:0.05,unit:"J",
-     traps:{"10":"y 成分の積は 4.0 × (−1.0) ＝ −4.0 で、負になります。"},
+     traps:{"10":"<i class='qv'>y</i> 成分の積は 4.0 × (−1.0) ＝ −4.0 で、負になります。"},
      explain:`${Q("W")} ＝ 3.0 × 2.0 ＋ 4.0 × (−1.0) ＝ 6.0 − 4.0 ＝ 2.0 J。上向きの成分は、下向きの変位に対して負の仕事をします。`},
     {id:"s45",type:"checklist",prompt:"解き終えたら、自分の答案を点検しよう（採点には入りません）。",
-     items:["何が何の関数か（位置・速度・時刻）を最初に確かめた","微分・積分（和・差・内積）のどれを使うかを書いてから計算した","積分定数を初期条件で決めた","折り返しがあるか（v の符号が変わるか）を確かめた","成分の符号（向き）を確かめた","答えの単位を確かめた"]}
+     items:["何が何の関数か（位置・速度・時刻）を最初に確かめた","微分・積分（和・差・内積）のどれを使うかを書いてから計算した","積分定数を初期条件で決めた","折り返しがあるか（<i class='qv'>v</i> の符号が変わるか）を確かめた","成分の符号（向き）を確かめた","答えの単位を確かめた"]}
   ]}]
 },
 { id:"sum", advice:"「傾き → 微分」「面積 → 積分」「合成 → 和」「〜から見た → 差」「仕事 → 内積」をセットで覚えよう。", tab:"まとめ", title:"単元のまとめ", back:"まとめ",
@@ -260,7 +260,7 @@ const SECTIONS = [
      options:["等加速度直線運動の3式に代入する","加速度を積分して速度、速度を積分して変位を求める","この条件では求められない"],answer:1,
      explain:"3式は加速度が一定のときだけ使えます。微分・積分はどんな運動にも使えます（積分定数は初期条件で決める）。"},
     {id:"m7",type:"self",prompt:"物理基礎で学んだ内容のうち、数学とつながっていると一番感じたものを1つ選び、何と何がつながっているかを書け。",scored:false,
-     model:"例：v-t グラフの面積が変位になることは、数学Ⅱの定積分と同じ。等加速度直線運動の x ＝ v₀t ＋ ½at² は、v ＝ v₀ ＋ at を積分すると出てくる。"}
+     model:"例：<i class='qv'>v</i>-<i class='qv'>t</i> グラフの面積が変位になることは、数学Ⅱの定積分と同じ。等加速度直線運動の <i class='qv'>x</i> ＝ <i class='qv'>v</i>₀<i class='qv'>t</i> ＋ ½<i class='qv'>at</i>² は、<i class='qv'>v</i> ＝ <i class='qv'>v</i>₀ ＋ <i class='qv'>at</i> を積分すると出てくる。"}
   ]}]
 }
 ];

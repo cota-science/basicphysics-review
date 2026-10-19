@@ -217,7 +217,26 @@ let col = {};
 function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","grid","sheet","pos","vel","acc","sec","tan","red-soft","blue-soft"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
 function fit(k){ const c = CV[k], r = c.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); SZ[k] = { w:Math.max(1, Math.round(r.width)), h:Math.max(1, Math.round(r.height)) }; c.width = Math.round(SZ[k].w * d); c.height = Math.round(SZ[k].h * d); CX[k].setTransform(d, 0, 0, d, 0, 0); }
 function L(g, pts, color, w, dash, alpha){ g.save(); g.strokeStyle = color; g.lineWidth = w; g.setLineDash(dash || []); if(alpha != null) g.globalAlpha = alpha; g.lineJoin = "round"; g.lineCap = "round"; g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.stroke(); g.restore(); }
-function T(g, s, x, y, color, size, align, opt){ g.save(); g.fillStyle = color; g.font = `${opt === "i" ? "italic " : opt === "b" ? "700 " : ""}${size || 12}px ${opt === "i" ? '"Times New Roman",Times,serif' : 'BIZ UDPGothic,"Hiragino Sans",sans-serif'}`; g.textAlign = align || "center"; g.textBaseline = "middle"; g.fillText(s, x, y); g.restore(); }
+/* 図の中の文字：*…* で囲んだ部分を物理量（斜体）で描く。_x・_{in} は下付き。単位・数字は立体のまま */
+function RT(c, s, x, y, color, size, align, bold, fam, base){
+  size = size || 12; s = String(s); const seg = []; let it = false;
+  for(let i = 0; i < s.length; i++){
+    const ch = s[i];
+    if(ch === "*"){ it = !it; continue; }
+    if((ch === "_" || ch === "^") && i + 1 < s.length){
+      let t = s[i + 1]; if(t === "{"){ const j = s.indexOf("}", i + 2); t = s.slice(i + 2, j); i = j; } else i++;
+      seg.push({ t, it: ch === "_" ? /^[xyz]$/.test(t) : /^[a-zA-Z]$/.test(t), k: ch === "_" ? 1 : -1 }); continue;
+    }
+    const L = seg[seg.length - 1]; if(L && !L.k && L.it === it) L.t += ch; else seg.push({ t: ch, it, k: 0 });
+  }
+  const ff = fam || 'BIZ UDPGothic,"Hiragino Sans","Yu Gothic UI",sans-serif';
+  const font = o => { const z = o.k ? size * .72 : o.it ? size * 1.12 : size; return o.it ? `italic ${bold ? "700 " : ""}${z.toFixed(1)}px "Times New Roman",Times,serif` : `${bold ? "700 " : ""}${z.toFixed(1)}px ${ff}`; };
+  c.save(); c.fillStyle = color; c.textBaseline = base || "middle"; let w = 0;
+  seg.forEach(o => { c.font = font(o); o.w = c.measureText(o.t).width + (o.it && !o.k ? size * .04 : 0); w += o.w; });
+  let x0 = align === "right" ? x - w : align === "center" ? x - w / 2 : x; c.textAlign = "left";
+  seg.forEach(o => { c.font = font(o); c.fillText(o.t, x0, y + (o.k === 1 ? size * .3 : o.k === -1 ? -size * .4 : 0)); x0 += o.w; }); c.restore(); return w;
+}
+function T(g, s, x, y, color, size, align, opt){ if(String(s).includes("*")) return RT(g, s, x, y, color, size, align || "center", opt === "b"); g.save(); g.fillStyle = color; g.font = `${opt === "i" ? "italic " : opt === "b" ? "700 " : ""}${size || 12}px ${opt === "i" ? '"Times New Roman",Times,serif' : 'BIZ UDPGothic,"Hiragino Sans",sans-serif'}`; g.textAlign = align || "center"; g.textBaseline = "middle"; g.fillText(s, x, y); g.restore(); }
 function dot(g, x, y, r, color){ g.save(); g.fillStyle = color; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); g.restore(); }
 function range(fn){ let mn = 1e9, mx = -1e9; for(let i = 0; i <= 300; i++){ const v = fn(TMAX * i / 300); mn = Math.min(mn, v); mx = Math.max(mx, v); } mn = Math.min(mn, 0); mx = Math.max(mx, 0); const p = (mx - mn) * 0.12 || 1; return [mn - (mn < 0 ? p : 0), mx + p]; }
 function frame(k, fn){ const { w, h } = SZ[k], pl = 40, pr = 14, pt = 12, pb = 24, [mn, mx] = range(fn);
@@ -227,8 +246,8 @@ function axes(g, F, unit, sym){
   for(let t = 0; t <= TMAX; t++){ L(g, [[F.X(t), F.pt], [F.X(t), F.h - F.pb]], col.grid, 1); T(g, `${t}`, F.X(t), F.h - 10, col.muted, 11); }
   const s = niceStep(F.mx - F.mn); for(let v = Math.ceil(F.mn / s) * s; v <= F.mx + 1e-9; v += s){ L(g, [[F.pl, F.Y(v)], [F.w - F.pr, F.Y(v)]], col.grid, 1); T(g, fmt(v, s < 1 ? 1 : 0), F.pl - 6, F.Y(v), col.muted, 11, "right"); }
   L(g, [[F.pl, F.Y(0)], [F.w - F.pr, F.Y(0)]], col.muted, 1.2); L(g, [[F.pl, F.pt], [F.pl, F.h - F.pb]], col.muted, 1.2);
-  T(g, `t〔s〕`, F.w - F.pr - 2, F.h - F.pb - 9, col.muted, 11, "right", "i");
-  T(g, `${sym}〔${unit}〕`, F.pl + 4, F.pt + 2, col.muted, 11, "left", "i");
+  T(g, `*t*〔s〕`, F.w - F.pr - 2, F.h - F.pb - 9, col.muted, 11, "right");
+  T(g, `*${sym}*〔${unit}〕`, F.pl + 4, F.pt + 2, col.muted, 11, "left");
 }
 function drawG1(){
   const g = CX.g1; if(!SZ.g1 || !SZ.g1.w) return; const P = pr(), F = frame("g1", P.f), S = sc(); g.clearRect(0, 0, F.w, F.h);
@@ -246,8 +265,8 @@ function drawG1(){
   // 傾きの三角形
   if(F.X(tb) - F.X(ta) > 18){
     L(g, [[F.X(ta), F.Y(fa)], [F.X(tb), F.Y(fa)], [F.X(tb), F.Y(fb)]], col.sec, 1.2, [3, 3]);
-    T(g, `Δt＝${fdt(st.dt)}`, (F.X(ta) + F.X(tb)) / 2, F.Y(fa) + (fb >= fa ? 11 : -11), col.sec, 11, "center");
-    T(g, `Δ${S.qty}`, F.X(tb) + 5, (F.Y(fa) + F.Y(fb)) / 2, col.sec, 12, "left", "i");
+    T(g, `Δ*t*＝${fdt(st.dt)}`, (F.X(ta) + F.X(tb)) / 2, F.Y(fa) + (fb >= fa ? 11 : -11), col.sec, 11, "center");
+    T(g, `Δ*${S.qty}*`, F.X(tb) + 5, (F.Y(fa) + F.Y(fb)) / 2, col.sec, 12, "left");
   }
   dot(g, F.X(ta), F.Y(fa), 5.5, col.ink); T(g, "A", F.X(ta) - 9, F.Y(fa) - 11, col.ink, 13, "center", "b");
   if(Math.abs(F.X(tb) - F.X(ta)) > 6){ dot(g, F.X(tb), F.Y(fb), 5, col.sec); T(g, "B", F.X(tb) + 9, F.Y(fb) - 11, col.sec, 13, "center", "b"); }
@@ -281,18 +300,18 @@ function drawS(){
   const pl = 22, pr = 22, X = x => pl + (x - mn) / (mx - mn || 1) * (w - pl - pr), yT = h * 0.62;
   L(g, [[pl - 10, yT + 6], [w - pr + 10, yT + 6]], col.muted, 2);
   const step = niceStep(mx - mn); for(let x = Math.ceil(mn / step) * step; x <= mx + 1e-9; x += step){ L(g, [[X(x), yT + 6], [X(x), yT + 11]], col.muted, 1); T(g, `${fmt(x, 0)}`, X(x), yT + 20, col.muted, 10); }
-  T(g, "x〔m〕", w - pr + 8, yT - 6, col.muted, 10, "right", "i");
+  T(g, "*x*〔m〕", w - pr + 8, yT - 6, col.muted, 10, "right");
   const xa = posOf(st.t1), xb = posOf(t2());
   car(g, X(xa), yT + 2, col.ink, .35, "A"); car(g, X(xb), yT + 2, col.sec, .45, "B");
   if(st.scene === "v"){ // 変位 Δx
-    const yy = yT - 34; if(Math.abs(X(xb) - X(xa)) > 4){ arrowH(g, X(xa), X(xb), yy, col.sec, 2); T(g, `Δx ＝ ${fmt(xb - xa)} m`, (X(xa) + X(xb)) / 2, yy - 10, col.sec, 11, "center"); }
+    const yy = yT - 34; if(Math.abs(X(xb) - X(xa)) > 4){ arrowH(g, X(xa), X(xb), yy, col.sec, 2); T(g, `Δ*x* ＝ ${fmt(xb - xa)} m`, (X(xa) + X(xb)) / 2, yy - 10, col.sec, 11, "center"); }
   } else { // 速度の矢印（A と B）
     const k = (w * 0.12) / Math.max(1, ...[0, 1, 2, 3, 4, 5, 6].map(t => Math.abs(velOf(t)))), yy = yT - 34;
-    arrowH(g, X(xa), X(xa) + velOf(st.t1) * k, yy, col.vel, 2.2); T(g, `v₁`, X(xa) - 10, yy, col.vel, 12, "center", "i");
-    arrowH(g, X(xb), X(xb) + velOf(t2()) * k, yy - 2, col.vel, 2.2); T(g, `v₂`, X(xb) - 10, yy - 2, col.vel, 12, "center", "i");
+    arrowH(g, X(xa), X(xa) + velOf(st.t1) * k, yy, col.vel, 2.2); T(g, `*v*₁`, X(xa) - 10, yy, col.vel, 12, "center");
+    arrowH(g, X(xb), X(xb) + velOf(t2()) * k, yy - 2, col.vel, 2.2); T(g, `*v*₂`, X(xb) - 10, yy - 2, col.vel, 12, "center");
   }
   const tp = st.tp == null ? st.t1 : st.tp; car(g, X(posOf(tp)), yT + 2, st.scene === "v" ? col.pos : col.vel, 1, "");
-  T(g, `t ＝ ${fmt(tp)} s`, pl, 12, col.muted, 11, "left");
+  T(g, `*t* ＝ ${fmt(tp)} s`, pl, 12, col.muted, 11, "left");
 }
 function drawAll(){ readColors(); drawS(); drawG1(); drawG2(); }
 
@@ -338,11 +357,11 @@ if(window.ResizeObserver){ const ro = new ResizeObserver(resize); Object.values(
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(drawAll);
 
 $("qs").innerHTML = [
-  ["「Δt を 0 に近づける」を押そう。赤い直線 AB はどうなっていくか。表の平均の値はどうなるか。", `直線 AB は、点Aでの接線（紫の破線）に重なっていきます。表の平均の値も、瞬間の値に近づいていきます。瞬間の速度は「Δ${I("t")} を限りなく 0 に近づけたときの平均の速度」です。`],
+  ["「Δ<i class='qv'>t</i> を 0 に近づける」を押そう。赤い直線 AB はどうなっていくか。表の平均の値はどうなるか。", `直線 AB は、点Aでの接線（紫の破線）に重なっていきます。表の平均の値も、瞬間の値に近づいていきます。瞬間の速度は「Δ${I("t")} を限りなく 0 に近づけたときの平均の速度」です。`],
   [`「速度」の「行って戻る」で、${I("t")}<sub>1</sub> ＝ 1 s、Δ${I("t")} ＝ 4 s にしよう。1〜5 s の平均の速度はいくらか。`, `物体は 3 s で折り返して、5 s にはもとの位置（1 s のときと同じ位置）に戻るので、変位は 0 m、平均の速度は 0 m/s です。動いていても平均の速度が 0 になることがあります。平均の速度は「道のり ÷ 時間」（平均の速さ）とは違います。`],
   [`下の ${I("v")}-${I("t")} 図で、色をつけた部分の面積と、赤い破線の長方形の面積を比べよう。平均の速度は、グラフのどんな高さか。`, `2つの面積は等しく、どちらも変位 Δ${I("x")} です。平均の速度は、「その時間の間ずっとその速度で動いたとしたら、同じ変位になる速度」です。`],
-  ["「加速度」の「等加速度」を選ぶと、Δt をどう変えても赤い直線と接線が重なっている。なぜか。", `${I("v")}-${I("t")} 図が直線なので、どの2点を結んでも傾きは同じで、接線の傾きとも等しいからです。等加速度直線運動では、平均の加速度と瞬間の加速度がいつも等しくなります。`],
-  ["「加速がだんだん弱くなる」で、時刻 t₁ を大きくしていこう。接線の傾き（瞬間の加速度）はどう変わるか。", `だんだん小さくなり、0 に近づきます。下の ${I("a")}-${I("t")} 図でも、加速度が小さくなっていくのがわかります。速度は増え続けますが、増え方がゆるやかになります。`],
+  ["「加速度」の「等加速度」を選ぶと、Δ<i class='qv'>t</i> をどう変えても赤い直線と接線が重なっている。なぜか。", `${I("v")}-${I("t")} 図が直線なので、どの2点を結んでも傾きは同じで、接線の傾きとも等しいからです。等加速度直線運動では、平均の加速度と瞬間の加速度がいつも等しくなります。`],
+  ["「加速がだんだん弱くなる」で、時刻 <i class='qv'>t</i>₁ を大きくしていこう。接線の傾き（瞬間の加速度）はどう変わるか。", `だんだん小さくなり、0 に近づきます。下の ${I("a")}-${I("t")} 図でも、加速度が小さくなっていくのがわかります。速度は増え続けますが、増え方がゆるやかになります。`],
   [`「速度」の「速くなってから遅くなる」で、0〜6 s の平均の速度と等しい瞬間の速度になる時刻はあるか。`, `あります。${I("x")}-${I("t")} 図で、0 s と 6 s の2点を結ぶ直線と平行な接線が引ける時刻（この運動では約 1.3 s と約 4.7 s）で、瞬間の速度が平均の速度（2 m/s）と等しくなります。`]
 ].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
 

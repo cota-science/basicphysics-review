@@ -328,8 +328,8 @@ body.lr3 #viewField{display:none}
       if (c === '*') { out += it ? '</i>' : '<i class="s">'; it = !it; continue; }
       if (c === '_' || c === '^') {
         let n = s[++i]; const tag = c === '_' ? 'sub' : 'sup';
-        if (n === '{') { const j = s.indexOf('}', i); n = s.slice(i + 1, j); i = j; out += '<' + tag + '>' + n + '</' + tag + '>'; continue; }
-        out += '<' + tag + '>' + (/[a-zA-Z]/.test(n) ? '<i class="s">' + n + '</i>' : n) + '</' + tag + '>';
+        if (n === '{') { const j = s.indexOf('}', i); n = s.slice(i + 1, j); i = j; out += '<' + tag + '>' + K.h(n) + '</' + tag + '>'; continue; }
+        out += '<' + tag + '>' + ((tag === 'sup' ? /[a-zA-Z]/ : /^[xyz]$/).test(n) ? '<i class="s">' + n + '</i>' : n) + '</' + tag + '>';
         continue;
       }
       out += c === '<' ? '&lt;' : c === '&' ? '&amp;' : c;
@@ -346,7 +346,7 @@ body.lr3 #viewField{display:none}
       if (c === '_' || c === '^') {
         let n = s[++i]; const k = c === '_' ? 'sub' : 'sup';
         if (n === '{') { const j = s.indexOf('}', i); for (const ch of s.slice(i + 1, j)) r.push({ c: ch, k, it: false }); i = j; continue; }
-        r.push({ c: n, k, it: /[a-zA-Z]/.test(n) }); continue;
+        r.push({ c: n, k, it: (k === 'sub' ? /^[xyz]$/ : /[a-zA-Z]/).test(n) }); continue;
       }
       r.push({ c, k: 'n', it });
     }
@@ -762,7 +762,7 @@ body.lr3 #viewField{display:none}
       <button class="btn" id="tp-back" type="button" title="ストロボ1コマ戻る">◀|</button>
       <button class="btn" id="tp-fwd" type="button" title="ストロボ1コマ進む">|▶</button>
       <input type="range" id="tp-t" min="0" max="1000" value="0" aria-label="時刻">
-      <span class="tread" id="tp-read">t = 0.00 s</span>
+      <span class="tread" id="tp-read"><i class="s">t</i> = 0.00 s</span>
       <select id="tp-speed" aria-label="再生速度"><option value="0.25">×0.25</option><option value="0.5">×0.5</option><option value="1" selected>×1</option><option value="2">×2</option></select>
     </div>`;
   K.bindTransport = (player, getStep) => {
@@ -781,7 +781,7 @@ body.lr3 #viewField{display:none}
       if (e.code === 'ArrowRight') step(1);
       if (e.code === 'ArrowLeft') step(-1);
     });
-    return (t) => { sl.value = player.tEnd > 0 ? Math.round((t / player.tEnd) * 1000) : 0; rd.textContent = 't = ' + K.f(t, 2) + ' s'; };
+    return (t) => { sl.value = player.tEnd > 0 ? Math.round((t / player.tEnd) * 1000) : 0; rd.innerHTML = K.h('*t* = ' + K.f(t, 2) + ' s'); };
   };
 
   /* ---------- 式の項 ⇔ グラフ ---------- */
@@ -1013,20 +1013,20 @@ body.lr3 #viewField{display:none}
     const el = (k) => $(`#fx [data-s="${k}"]`); if (!el(1)) return;
     const m = S.mode, vA = M.vA, vB = M.vB, r = M.rel;
     if (m === 'line-sum') {
-      el(1).textContent = `v = ${f(vA.x, 1)} + ${fs(r.x, 1)} = ${f(vB.x, 1)} m/s`;
-      el(2).textContent = `u = ${f(vB.x, 1)} − ${fs(vA.x, 1)} = ${f(r.x, 1)} m/s`;
+      el(1).innerHTML = K.h(`*v* = ${f(vA.x, 1)} + ${fs(r.x, 1)} = ${f(vB.x, 1)} m/s`);
+      el(2).innerHTML = K.h(`*u* = ${f(vB.x, 1)} − ${fs(vA.x, 1)} = ${f(r.x, 1)} m/s`);
     } else if (m === 'line-rel') {
-      el(1).textContent = `vAB = ${f(vB.x, 1)} − ${fs(vA.x, 1)} = ${f(r.x, 1)} m/s` + (Math.abs(r.x) < 1e-9 ? '（A から見ると B は止まって見える）' : r.x > 0 ? '（A から見ると B は右向きに進む）' : '（A から見ると B は左向きに進む）');
-      el(2).textContent = `vB = ${f(vA.x, 1)} + ${fs(r.x, 1)} = ${f(vB.x, 1)} m/s`;
-      if (el(3)) el(3).textContent = `vBA = ${f(vA.x, 1)} − ${fs(vB.x, 1)} = ${f(-r.x, 1)} m/s（vAB と大きさが同じで、向きが逆）`;
+      el(1).innerHTML = K.h(`*v*_{AB} = ${f(vB.x, 1)} − ${fs(vA.x, 1)} = ${f(r.x, 1)} m/s` + (Math.abs(r.x) < 1e-9 ? '（A から見ると B は止まって見える）' : r.x > 0 ? '（A から見ると B は右向きに進む）' : '（A から見ると B は左向きに進む）'));
+      el(2).innerHTML = K.h(`*v*_B = ${f(vA.x, 1)} + ${fs(r.x, 1)} = ${f(vB.x, 1)} m/s`);
+      if (el(3)) el(3).innerHTML = K.h(`*v*_{BA} = ${f(vA.x, 1)} − ${fs(vB.x, 1)} = ${f(-r.x, 1)} m/s（*v*_{AB} と大きさが同じで、向きが逆）`);
     } else if (m === 'plane-sum') {
       const th = S.ps.th;
-      el(1).textContent = `|v| = √(${f(vB.x, 2)}² + ${f(vB.y, 2)}²) = ${f(len(vB), 2)} m/s`;
-      el(2).textContent = `vx = ${f(S.ps.V, 1)} − ${f(S.ps.u, 1)} × sin${th}° = ${f(vB.x, 2)} m/s　vy = ${f(S.ps.u, 1)} × cos${th}° = ${f(vB.y, 2)} m/s`;
-      el(3).textContent = r.y > 1e-6 ? `t = ${f(S.ps.d, 0)} ÷ ${f(r.y, 2)} = ${f(S.ps.d / r.y, 2)} s　流される距離 x = ${f(vB.x, 2)} × ${f(S.ps.d / r.y, 2)} = ${f(vB.x * S.ps.d / r.y, 1)} m（V によらず t は同じ）` : '対岸に向かう成分がないので渡れない';
+      el(1).innerHTML = K.h(`|*v*| = √(${f(vB.x, 2)}² + ${f(vB.y, 2)}²) = ${f(len(vB), 2)} m/s`);
+      el(2).innerHTML = K.h(`*v*_x = ${f(S.ps.V, 1)} − ${f(S.ps.u, 1)} × sin${th}° = ${f(vB.x, 2)} m/s　*v*_y = ${f(S.ps.u, 1)} × cos${th}° = ${f(vB.y, 2)} m/s`);
+      el(3).innerHTML = r.y > 1e-6 ? K.h(`*t* = ${f(S.ps.d, 0)} ÷ ${f(r.y, 2)} = ${f(S.ps.d / r.y, 2)} s　流される距離 *x* = ${f(vB.x, 2)} × ${f(S.ps.d / r.y, 2)} = ${f(vB.x * S.ps.d / r.y, 1)} m（*V* によらず *t* は同じ）`) : '対岸に向かう成分がないので渡れない';
     } else {
-      el(1).textContent = `|vAB| = √(${f(r.x, 2)}² + ${f(r.y, 2)}²) = ${f(len(r), 2)} m/s、向き ${f(angDeg(r), 0)}°` + (M.rain ? `（鉛直から ${f(Math.abs((Math.atan2(r.x, -r.y) * 180) / Math.PI), 1)}° 傾いて見える）` : '');
-      el(2).textContent = `vABx = ${f(vB.x, 2)} − ${fs(vA.x, 2)} = ${f(r.x, 2)}　vABy = ${f(vB.y, 2)} − ${fs(vA.y, 2)} = ${f(r.y, 2)}（m/s）`;
+      el(1).innerHTML = K.h(`|*v*_{AB}| = √(${f(r.x, 2)}² + ${f(r.y, 2)}²) = ${f(len(r), 2)} m/s、向き ${f(angDeg(r), 0)}°` + (M.rain ? `（鉛直から ${f(Math.abs((Math.atan2(r.x, -r.y) * 180) / Math.PI), 1)}° 傾いて見える）` : ''));
+      el(2).innerHTML = K.h(`*v*_{AB*x*} = ${f(vB.x, 2)} − ${fs(vA.x, 2)} = ${f(r.x, 2)}　*v*_{AB*y*} = ${f(vB.y, 2)} − ${fs(vA.y, 2)} = ${f(r.y, 2)}（m/s）`);
     }
   }
   function defs() {
@@ -1248,7 +1248,7 @@ body.lr3 #viewField{display:none}
       K.tag(ctx, tx, lx, py - 30, C(ck), 11, al);
     });
     K.tag(ctx, '地面から見る（上から見た道路）', x0 + 10, y0 + 12, ink.ink, 12, 'left');
-    K.tag(ctx, 't = ' + f(t, 1) + ' s', x0 + w - 10, y0 + 12, ink.ink2, 11, 'right');
+    K.tag(ctx, '*t* = ' + f(t, 1) + ' s', x0 + w - 10, y0 + 12, ink.ink2, 11, 'right');
     ctx.restore();
   }
   // 運転席から進行方向を見た図（遠近法）。自分の車線の右に相手の車線がある

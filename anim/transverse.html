@@ -291,7 +291,26 @@ function curve(f, x0, x1, F, n){
   for(let i = 0; i <= n; i++){ const x = x0 + (x1 - x0) * i / n; pts.push([F.X(x), F.Y(f(x))]); }
   return pts;
 }
-function text(s, x, y, color, size, align, font, italic){
+/* 図の中の文字：*…* で囲んだ部分を物理量（斜体）で描く。_x・_{in} は下付き。単位・数字は立体のまま */
+function RT(c, s, x, y, color, size, align, bold, fam, base){
+  size = size || 12; s = String(s); const seg = []; let it = false;
+  for(let i = 0; i < s.length; i++){
+    const ch = s[i];
+    if(ch === "*"){ it = !it; continue; }
+    if((ch === "_" || ch === "^") && i + 1 < s.length){
+      let t = s[i + 1]; if(t === "{"){ const j = s.indexOf("}", i + 2); t = s.slice(i + 2, j); i = j; } else i++;
+      seg.push({ t, it: ch === "_" ? /^[xyz]$/.test(t) : /^[a-zA-Z]$/.test(t), k: ch === "_" ? 1 : -1 }); continue;
+    }
+    const L = seg[seg.length - 1]; if(L && !L.k && L.it === it) L.t += ch; else seg.push({ t: ch, it, k: 0 });
+  }
+  const ff = fam || 'BIZ UDPGothic,"Hiragino Sans","Yu Gothic UI",sans-serif';
+  const font = o => { const z = o.k ? size * .72 : o.it ? size * 1.12 : size; return o.it ? `italic ${bold ? "700 " : ""}${z.toFixed(1)}px "Times New Roman",Times,serif` : `${bold ? "700 " : ""}${z.toFixed(1)}px ${ff}`; };
+  c.save(); c.fillStyle = color; c.textBaseline = base || "middle"; let w = 0;
+  seg.forEach(o => { c.font = font(o); o.w = c.measureText(o.t).width + (o.it && !o.k ? size * .04 : 0); w += o.w; });
+  let x0 = align === "right" ? x - w : align === "center" ? x - w / 2 : x; c.textAlign = "left";
+  seg.forEach(o => { c.font = font(o); c.fillText(o.t, x0, y + (o.k === 1 ? size * .3 : o.k === -1 ? -size * .4 : 0)); x0 += o.w; }); c.restore(); return w;
+}
+function text(s, x, y, color, size, align, font, italic){ if(String(s).includes("*")) return RT(ctx, s, x, y, color, size, align || "center");
   ctx.save(); ctx.fillStyle = color; ctx.font = `${italic ? "italic " : ""}${size || 12}px ${font || 'BIZ UDPGothic, "Hiragino Sans", "Yu Gothic UI", sans-serif'}`;
   ctx.textAlign = align || "center"; ctx.textBaseline = "middle"; ctx.fillText(s, x, y); ctx.restore();
 }
@@ -299,7 +318,7 @@ function axis(sc, F, x1){
   line([[F.X(sc.xmin), F.Y(0)], [F.X(x1 ?? sc.xmax), F.Y(0)]], col.line, 1.2);
 }
 function lambdaTicks(sc, F, upto){
-  const labels = {0.5:"λ/2", 1:"λ", 1.5:"3λ/2", 2:"2λ", 2.5:"5λ/2"};
+  const labels = {0.5:"*λ*/2", 1:"*λ*", 1.5:"3*λ*/2", 2:"2*λ*", 2.5:"5*λ*/2"};
   for(let k = 0.5; k <= upto + 1e-9; k += 0.5){
     ctx.save(); ctx.strokeStyle = col.line; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(F.X(k), H - F.padB + 4); ctx.lineTo(F.X(k), H - F.padB + 10); ctx.stroke(); ctx.restore();
     text(labels[k] || "", F.X(k), H - F.padB + 22, col.muted, 13, "center", '"Times New Roman", Times, serif', true);
@@ -321,9 +340,9 @@ function fmtT(t){
   if(Math.abs(t * 8 - k) < 1e-6){
     if(k === 0) return "0";
     let n = k, d = 8; const g = (a, b) => b ? g(b, a % b) : a; const c = g(n, d); n /= c; d /= c;
-    return d === 1 ? (n === 1 ? "T" : `${n}T`) : `${n === 1 ? "" : n}T/${d}`;
+    const T = '<i class="qv">T</i>'; return d === 1 ? (n === 1 ? T : `${n}${T}`) : `${n === 1 ? "" : n}${T}/${d}`;
   }
-  return `${t.toFixed(2)}T`;
+  return `${t.toFixed(2)}<i class="qv">T</i>`;
 }
 
 function draw(){
@@ -342,7 +361,7 @@ function draw(){
     line(curve(fs, 0, 12, F, 480), col.ink, 3.2);
     if(o.dots) dots(fs, Array.from({length:49}, (_, i) => i * 0.25), F);
     tracked(fs, F, sc);
-    $("clock").textContent = `t ＝ ${t.toFixed(2)} s`;
+    $("clock").innerHTML = `<i class="qv">t</i> ＝ ${t.toFixed(2)} s`;
   }
 
   if(state.scene === "std"){
@@ -358,7 +377,7 @@ function draw(){
     }
     if(o.dots) dots(fs, Array.from({length:33}, (_, i) => i / 16), F);
     tracked(fs, F, sc);
-    $("clock").textContent = `t ＝ ${fmtT(t)}`;
+    $("clock").innerHTML = `<i class="qv">t</i> ＝ ${fmtT(t)}`;
   }
 
   if(state.scene === "ref"){
@@ -393,7 +412,7 @@ function draw(){
     }
     if(o.dots) dots(fs, Array.from({length:33}, (_, i) => i / 16), F);
     tracked(fs, F, sc, Lb);
-    $("clock").textContent = `t ＝ ${fmtT(t)}`;
+    $("clock").innerHTML = `<i class="qv">t</i> ＝ ${fmtT(t)}`;
   }
 }
 function marker(x, y, color){

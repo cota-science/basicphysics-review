@@ -345,7 +345,26 @@ function redrawAll(){ readColors(); canvases.forEach(o => o.W && o.draw(o)); }
 const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
 if(mq && mq.addEventListener) mq.addEventListener("change", redrawAll);
 function Ln(ctx, pts, color, w, dash, alpha){ ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []); if(alpha != null) ctx.globalAlpha = alpha; ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore(); }
-function Tx(ctx, s, x, y, color, size, align, bold, base){ ctx.save(); ctx.fillStyle = color; ctx.font = `${bold ? "700 " : ""}${size || 12}px BIZ UDPGothic,"Hiragino Sans","Yu Gothic UI",sans-serif`; ctx.textAlign = align || "left"; ctx.textBaseline = base || "middle"; ctx.fillText(s, x, y); ctx.restore(); }
+/* 図の中の文字：*…* で囲んだ部分を物理量（斜体）で描く。_x・_{in} は下付き。単位・数字は立体のまま */
+function RT(c, s, x, y, color, size, align, bold, fam, base){
+  size = size || 12; s = String(s); const seg = []; let it = false;
+  for(let i = 0; i < s.length; i++){
+    const ch = s[i];
+    if(ch === "*"){ it = !it; continue; }
+    if((ch === "_" || ch === "^") && i + 1 < s.length){
+      let t = s[i + 1]; if(t === "{"){ const j = s.indexOf("}", i + 2); t = s.slice(i + 2, j); i = j; } else i++;
+      seg.push({ t, it: ch === "_" ? /^[xyz]$/.test(t) : /^[a-zA-Z]$/.test(t), k: ch === "_" ? 1 : -1 }); continue;
+    }
+    const L = seg[seg.length - 1]; if(L && !L.k && L.it === it) L.t += ch; else seg.push({ t: ch, it, k: 0 });
+  }
+  const ff = fam || 'BIZ UDPGothic,"Hiragino Sans","Yu Gothic UI",sans-serif';
+  const font = o => { const z = o.k ? size * .72 : o.it ? size * 1.12 : size; return o.it ? `italic ${bold ? "700 " : ""}${z.toFixed(1)}px "Times New Roman",Times,serif` : `${bold ? "700 " : ""}${z.toFixed(1)}px ${ff}`; };
+  c.save(); c.fillStyle = color; c.textBaseline = base || "middle"; let w = 0;
+  seg.forEach(o => { c.font = font(o); o.w = c.measureText(o.t).width + (o.it && !o.k ? size * .04 : 0); w += o.w; });
+  let x0 = align === "right" ? x - w : align === "center" ? x - w / 2 : x; c.textAlign = "left";
+  seg.forEach(o => { c.font = font(o); c.fillText(o.t, x0, y + (o.k === 1 ? size * .3 : o.k === -1 ? -size * .4 : 0)); x0 += o.w; }); c.restore(); return w;
+}
+function Tx(ctx, s, x, y, color, size, align, bold, base){ if(String(s).includes("*")) return RT(ctx, s, x, y, color, size, align || "left", bold, null, base); ctx.save(); ctx.fillStyle = color; ctx.font = `${bold ? "700 " : ""}${size || 12}px BIZ UDPGothic,"Hiragino Sans","Yu Gothic UI",sans-serif`; ctx.textAlign = align || "left"; ctx.textBaseline = base || "middle"; ctx.fillText(s, x, y); ctx.restore(); }
 function TxI(ctx, s, sub, x, y, color, size, align){ // 斜体の記号＋添字
   ctx.save(); ctx.fillStyle = color; ctx.textBaseline = "middle";
   ctx.font = `italic ${size * 1.1}px "Times New Roman",Times,serif`; const w1 = ctx.measureText(s).width;
@@ -416,8 +435,8 @@ const cAW = canvas("cvAW", o => {
   Ln(ctx, [[pl, cy], [W - pr, cy]], col.line, 1); Ln(ctx, [[pl, 6], [pl, H - 6]], col.line, 1);
   Ln(ctx, [[X(TAU), 6], [X(TAU), H - 6]], col.muted, 1, [3, 4]);
   Tx(ctx, "0", pl - 4, cy, col.muted, 11, "right");
-  Tx(ctx, "T", X(TAU) + 4, H - 10, col.muted, 11);
-  Tx(ctx, "2T", W - pr - 2, H - 10, col.muted, 11, "right");
+  Tx(ctx, "*T*", X(TAU) + 4, H - 10, col.muted, 11);
+  Tx(ctx, "2*T*", W - pr - 2, H - 10, col.muted, 11, "right");
   const a = ampsA(), M = Math.max(600, Math.round((W - pl - pr) * 2));
   if(A.parts){
     let shown = 0;
@@ -449,8 +468,8 @@ const cAS = canvas("cvAS", o => {
     if(cf < -1e-4 && bw > 9) Tx(ctx, "−", x + bw / 2, Y(Math.abs(cf)) - 7, col.orange, 12, "center", true);
     if(n0 <= 20 || n % 5 === 0 || n === 1) Tx(ctx, String(n), x + bw / 2, H - pb + 10, col.muted, 10, "center");
   }
-  Tx(ctx, "基音の何倍か（n）", W - pr, H - 8, col.muted, 11, "right");
-  Tx(ctx, `n×${Math.round(A.f0)} Hz`, pl, H - 8, col.muted, 11, "left");
+  Tx(ctx, "基音の何倍か（*n*）", W - pr, H - 8, col.muted, 11, "right");
+  Tx(ctx, `*n*×${Math.round(A.f0)} Hz`, pl, H - 8, col.muted, 11, "left");
 });
 /* 自由モード：棒を上下にドラッグ */
 (function(){

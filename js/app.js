@@ -78,6 +78,12 @@ function parseNum(str){
   if(!/^[+-]?\d*\.?\d+$/.test(t)) return NaN;
   return parseFloat(t);
 }
+/* 選択肢（<select> の中）は書式を付けられないので、タグを外して文字だけにする（下付きは「_」でつなぐ） */
+const SUBCH = {"0":"₀","1":"₁","2":"₂","3":"₃","4":"₄","5":"₅","6":"₆","7":"₇","8":"₈","9":"₉"};
+function optText(o){
+  return String(o).replace(/<sub>([^<]*)<\/sub>/g, (_, x) => /^[0-9]+$/.test(x) ? x.replace(/[0-9]/g, c => SUBCH[c]) : "_" + x)
+                  .replace(/<sup>([^<]*)<\/sup>/g, "^$1").replace(/<[^>]*>/g, "");
+}
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;"); }
 function markSVG(kind){
   const p = kind==="ok" ? "M46 13 C37 5 16 6 9 22 C3 38 17 53 33 52 C49 51 57 36 51 22 C49 17 45 13 40 11"
@@ -140,7 +146,7 @@ function qHTML(q){
     h += `<p class="sentence">${sentence}</p><div class="selects">`;
     q.options.forEach((opts,n) => {
       h += `<div class="selrow"><label for="sel-${q.id}-${n}">${KANA[n]}</label><select id="sel-${q.id}-${n}" data-act="blank" data-n="${n}" ${done?"disabled":""}>
-        <option value="">選ぶ</option>${opts.map((o,i) => `<option value="${i}" ${v[n]===i?"selected":""}>${o}</option>`).join("")}</select></div>`;
+        <option value="">選ぶ</option>${opts.map((o,i) => `<option value="${i}" ${v[n]===i?"selected":""}>${optText(o)}</option>`).join("")}</select></div>`;
     });
     h += `</div>`;
   } else if(q.type==="num"){
