@@ -238,7 +238,7 @@ const UPDN = ["上（<i class='qv'>y</i> の正の向き）","下（<i class='qv
 const ANIM = (href, label) => `<a href='${href}' style='display:inline-block;margin:8px 6px 0 0;padding:6px 12px;border:1.5px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:700;text-decoration:none;line-height:1.5'>▶ ${label}</a>`;
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:`波で動いているのは「振動の状態」で、媒質そのものではありません。用語と記号を正確に覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/wave-speed.html",`波の速さ（${v} ＝ ${f}${L}）`)}${ANIM("anim/wave-3d.html","波を3次元で見る")}${ANIM("anim/transverse.html#sup","波の重ね合わせ")}${ANIM("anim/transverse.html#ref","波の反射")}${ANIM("anim/transverse.html#std","定在波（定常波）")}${ANIM("anim/longitudinal.html","縦波（疎密波）")}`,
+  intro:`波で動いているのは「振動の状態」で、媒質そのものではありません。用語と記号を正確に覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/wave-model.html","波の模型（ばねとおもりの列）")}${ANIM("anim/wave-speed.html",`波の速さ（${v} ＝ ${f}${L}）`)}${ANIM("anim/wave-3d.html","波を3次元で見る")}${ANIM("anim/transverse.html#sup","波の重ね合わせ")}${ANIM("anim/transverse.html#ref","波の反射")}${ANIM("anim/transverse.html#std","定在波（定常波）")}${ANIM("anim/longitudinal.html","縦波（疎密波）")}`,
   advice:"波長と周期の定義（何と何の間隔か）と、<i class='qv'>v</i> ＝ <i class='qv'>fλ</i> を覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[

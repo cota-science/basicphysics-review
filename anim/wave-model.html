@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>波の模型（ばねとおもりの列）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Klee+One:wght@600&display=swap" rel="stylesheet">
+<style>
+/* Layout: one-column worksheet on graph paper — a row of masses hung on springs and tied by threads (the medium), the y-t trace of one chosen mass below, controls and conditions, questions last. PC (≥1000px): figures left (sticky), controls right. */
+:root{
+  --paper:#FAFBF7; --grid:#E4EBF1; --ink:#1C2430; --muted:#5B6675;
+  --blue:#2447B3; --blue-soft:#E7EDFB; --red:#CF2A2A; --red-soft:#FCECEA;
+  --line:#CBD5DF; --sheet:#FFFFFF; --btn:#2447B3; --shade:#EEF2F6; --green:#1F7A4D;
+  --spring:#8A96A6; --bob:#3B4656; --thread:#B07A2A;
+  --body:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --math:"Times New Roman",Times,"Noto Serif",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+    --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+    --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37; --green:#5FD39A;
+    --spring:#6F7C8D; --bob:#C9D2DE; --thread:#D9A85A; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121821; --grid:#1B2430; --ink:#E4E9F0; --muted:#9AA6B5;
+  --blue:#93AAFF; --blue-soft:#1F2B4B; --red:#FF7A70; --red-soft:#3A2022;
+  --line:#2F3B49; --sheet:#18202B; --btn:#3A5BD0; --shade:#202A37; --green:#5FD39A;
+  --spring:#6F7C8D; --bob:#C9D2DE; --thread:#D9A85A; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qv{font-family:var(--math);font-style:italic;font-size:1.08em}
+sub{font-size:.7em;line-height:0}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.top-inner{max-width:760px;margin:0 auto;padding:10px 16px 10px}
+.back{font-size:14px;color:var(--blue);text-decoration:none}
+h1{font-size:19px;margin:2px 0 0;line-height:1.4;text-wrap:balance}
+.nav{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin-top:2px}
+.nav a{color:var(--blue);text-decoration:none}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:700}
+
+main{max-width:760px;margin:0 auto;padding:18px 16px 40px;display:grid;gap:16px}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px;min-width:0}
+h2{font-size:20px;margin:0 0 4px;line-height:1.4;text-wrap:balance}
+.lead{margin:0 0 12px;color:var(--muted);font-size:15px}
+
+.stage{position:relative;width:100%;max-width:100%;background:var(--sheet);border:1px solid var(--line);border-radius:4px}
+.cap{font-size:13px;color:var(--muted);margin:10px 0 4px}
+.stage.chain{aspect-ratio:2.1/1}
+.stage.yt{aspect-ratio:4/1}
+@media (max-width:520px){.stage.chain{aspect-ratio:1.35/1}.stage.yt{aspect-ratio:2.6/1}}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+#cvc{cursor:pointer}
+.clock{position:absolute;right:8px;top:4px;background:var(--sheet);padding:0 6px;border-radius:4px;font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums;pointer-events:none}
+
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.btn{border:0;border-radius:8px;padding:9px 16px;min-height:44px;font-weight:700;cursor:pointer;background:var(--btn);color:#fff}
+.btn.ghost{background:none;color:var(--blue);border:1.5px solid var(--blue)}
+.btn.ghost[aria-pressed="true"]{background:var(--blue-soft)}
+.speed{display:inline-block;font-size:14px;color:var(--muted);margin-left:auto}
+.speed select{min-height:40px;border:1.5px solid var(--line);border-radius:8px;background:var(--sheet);padding:4px 8px;margin-left:6px}
+
+.opts{display:grid;gap:12px;margin-top:14px}
+.seg{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.seg-label{font-size:14px;color:var(--muted);min-width:5.5em}
+.seg button{border:1.5px solid var(--line);background:var(--sheet);border-radius:999px;padding:6px 14px;min-height:40px;cursor:pointer;font-size:15px}
+.seg button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft);font-weight:700}
+.slider{display:grid;grid-template-columns:8.5em minmax(0,1fr) 4.8em;align-items:center;gap:10px}
+.slider label{font-size:15px;line-height:1.35}
+.slider label small{display:block;font-size:12px;color:var(--muted)}
+.slider input{width:100%;accent-color:var(--blue);min-height:32px}
+.slider output{font-variant-numeric:tabular-nums;text-align:right;font-weight:700}
+.slider.locked label,.slider.locked output{color:var(--muted)}
+.slider.locked input{opacity:.45}
+@media (max-width:520px){.slider{grid-template-columns:6.8em minmax(0,1fr) 4.4em}}
+.checks{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px}
+.checks label{display:inline-block;min-height:32px;cursor:pointer}
+.checks input{vertical-align:middle;margin:0 5px 0 0;accent-color:var(--blue);width:17px;height:17px}
+.hint{font-size:13px;color:var(--muted);margin:10px 0 0}
+.status{font-size:14px;margin:10px 0 0;padding:8px 12px;background:var(--shade);border-radius:6px;min-height:2.6em}
+
+h3{font-size:17px;margin:0 0 8px}
+.qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
+.qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
+.ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+/* 配置：スマホは1列。PC（幅 1000px 以上）は左に図（おもりの列の真下に y-t）を固定し、右に操作・条件・問いを並べる */
+.board{display:flex;flex-direction:column}
+.colG,.colC,.head{display:contents}
+.qbox{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+@media (min-width:1000px){
+  .top-inner,main{max-width:1360px}
+  .board{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(330px,1fr);column-gap:22px;align-items:start}
+  .head,.colC{display:block;grid-column:2}
+  .head{grid-row:1}.colC{grid-row:2}
+  .colG{display:block;grid-column:1;grid-row:1 / span 2;position:sticky;top:calc(var(--hdr,120px) + 10px)}
+  .colG .cap:first-child{margin-top:0}
+  .colG .stage.chain{aspect-ratio:auto;height:max(280px,calc((100vh - var(--hdr,120px) - 110px) * .66))}
+  .colG .stage.yt{aspect-ratio:auto;height:max(130px,calc((100vh - var(--hdr,120px) - 110px) * .34))}
+  .head .lead{font-size:14px}
+  .colC .controls{margin-top:4px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <a class="back" id="backLink" href="../index.html#/u/waves/0" hidden>‹ 波の性質（演習）へ</a>
+    <h1>波の模型（ばねでつるしたおもりの列）</h1>
+    <nav class="nav" id="nav" hidden aria-label="アニメーション">
+      <a href="index.html">≡ アニメーション集</a>
+      <a href="wave-model.html" aria-current="page">波の模型</a>
+      <a href="wave-speed.html">波の速さ</a>
+      <a href="wave-3d.html">波を3次元で見る</a>
+      <a href="transverse.html">横波（重ね合わせ・定在波（定常波）・反射）</a>
+      <a href="longitudinal.html">縦波（疎密波）</a>
+      <a href="string.html">弦の固有振動</a>
+      <a href="air-column.html">気柱の固有振動</a>
+      <a href="beats.html">うなり</a>
+      <a href="timbre.html">音色と波形</a>
+      <a href="hearing.html">可聴域</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="sheet board" aria-labelledby="t1">
+    <div class="head"><h2 id="t1">となりへ、となりへと振動が伝わる</h2>
+    <p class="lead">ばねでつるしたおもりが横一列に並び、となりどうしは軽くて丈夫な糸でつながっています。これが波を伝える<b>媒質</b>の模型です。左端のおもり（波源）を引いて手をはなすと、糸に引かれて右のおもりが少しずつ遅れて動きだし、横波が右へ伝わります。</p></div>
+
+    <div class="colG">
+      <div class="cap">おもりの列（横の点線はつり合いの位置）。左端のおもりは指やマウスでつかんで動かせます。ほかのおもりをタップすると、そのおもりに注目します。</div>
+      <div class="stage chain"><canvas id="cvc" role="img" aria-label="ばねでつるしたおもりの列。左端の波源を引いてはなすと、横波が右へ伝わる。"></canvas><div class="clock" id="clock"></div></div>
+      <div class="cap" id="ytCap"></div>
+      <div class="stage yt"><canvas id="cvt" role="img" aria-label="波源と注目するおもりの変位の時間変化（y-tグラフ）。"></canvas></div>
+    </div>
+
+    <div class="colC">
+      <div class="controls">
+        <button type="button" class="btn" id="pullBtn">左端を引いてはなす</button>
+        <button type="button" class="btn ghost" id="driveBtn" aria-pressed="false">左端を振り続ける</button>
+      </div>
+      <div class="controls">
+        <button type="button" class="btn ghost" id="playBtn">一時停止</button>
+        <button type="button" class="btn ghost" id="stepBtn">コマ送り</button>
+        <button type="button" class="btn ghost" id="resetBtn">最初から</button>
+        <label class="speed" for="speedSel">速さ<select id="speedSel"><option value="0.25">ゆっくり</option><option value="0.5" selected>ふつう</option><option value="1">はやい</option></select></label>
+      </div>
+      <p class="status" id="status" aria-live="polite"></p>
+
+      <div class="opts">
+        <div class="seg" role="group" aria-label="波源">
+          <span class="seg-label">波源</span>
+          <button type="button" data-src="heavy" aria-pressed="true">大きいおもり</button>
+          <button type="button" data-src="same" aria-pressed="false">ほかと同じおもり</button>
+        </div>
+        <div class="seg" role="group" aria-label="右端">
+          <span class="seg-label">右端</span>
+          <button type="button" data-end="open" aria-pressed="true">どこまでも続く</button>
+          <button type="button" data-end="fixed" aria-pressed="false">固定端</button>
+          <button type="button" data-end="free" aria-pressed="false">自由端</button>
+        </div>
+        <div class="slider" id="rowP"><label for="sP"><small>振り続けるときの</small>周期 <i class="qv">T</i></label><input type="range" id="sP" min="0.8" max="2" step="0.1" value="1.2"><output id="oP" for="sP"></output></div>
+        <div class="slider"><label for="sS"><small>媒質の</small>糸の張力</label><input type="range" id="sS" min="0.5" max="2" step="0.25" value="1"><output id="oS" for="sS"></output></div>
+        <div class="slider"><label for="sM"><small>媒質の</small>おもりの質量</label><input type="range" id="sM" min="0.5" max="2" step="0.25" value="1"><output id="oM" for="sM"></output></div>
+        <div class="checks" role="group" aria-label="表示">
+          <label><input type="checkbox" id="chCurve" checked>波形の線</label>
+          <label><input type="checkbox" id="chVel">おもりの速度の矢印</label>
+          <label><input type="checkbox" id="chFront" checked>波の先頭</label>
+        </div>
+      </div>
+      <p class="hint">張力と質量は、媒質の性質を変える条件で、動かしている途中でも変えられます。波源や右端を変えると最初からになります。</p>
+
+      <div class="qbox" aria-labelledby="qsTitle">
+        <h3 id="qsTitle">見てみよう</h3>
+        <ol class="qs" id="qs"></ol>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id), TAU = 2 * Math.PI;
+const I = s => `<i class="qv">${s}</i>`;
+if(/\/anim\//.test(location.pathname)){ $("backLink").hidden = false; $("nav").hidden = false; }
+const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- 物理モデル ----------
+   i 番目のおもり（質量 m）：ばねの復元力 −k y と、両どなりの糸の張力の上下成分
+     m y_i'' ＝ −k y_i ＋ (S/a)(y_{i+1} − 2y_i ＋ y_{i−1})
+   左端（i ＝ 0）は波源。右どなりの糸だけでつながる。
+   「どこまでも続く」は、見えない右側におもりの列をのばし、その先でゆっくり振動を吸収して反射を消す。 */
+const N = 60, EXT = 240, M = N + EXT;
+const K0 = 1.6, S0 = 100;                 // ばね k/m（1/s²）、張力 S/(ma)（1/s²）。速さの目安は √(S/(ma))·a ＝ 10 個/s
+const SRC = { heavy:{ m:12, f:0.8 }, same:{ m:1, f:null } };
+const st = { src:"heavy", end:"open", P:1.2, sMul:1, mMul:1, t:0, playing:!reduce, speed:0.5,
+  hold:null, drive:false, driveT0:0, pullT0:null, probe:20, frontMax:-1, curve:true, vel:false, front:true, stepTo:null, everMoved:false };
+const y = new Float64Array(M), v = new Float64Array(M), gam = new Float64Array(M);
+for(let i = 1; i < M; i++){ const u = Math.max(0, (i - N) / EXT); gam[i] = 0.04 + 5 * u * u; }   // 見える部分はごくわずかな減衰（振り続けても振幅が増え続けないように）
+const HIST = 1200, hist = { t:new Float64Array(HIST), s:new Float64Array(HIST), p:new Float64Array(HIST), n:0, i:0 };
+const A0 = 1;                             // 引く量（表示上の振幅の基準）
+
+function params(){
+  const mMed = st.mMul, kap = S0 * st.sMul / mMed, w2 = K0;   // ばね定数は一定 → k/m も質量に反比例
+  const src = SRC[st.src];
+  const mSrc = src.m === 1 ? mMed : src.m;
+  const kSrc = src.f ? mSrc * Math.pow(TAU * src.f, 2) : K0;   // 同じおもりなら同じばね（ばね定数 K0）
+  return { kap, w2: K0 / mMed, mMed, mSrc, kSrc, S: S0 * st.sMul };
+}
+function step(dt){
+  const p = params(), S = p.S, mm = p.mMed;
+  // 波源を手で持っているときの位置
+  let held = null;
+  if(st.hold != null) held = st.hold;
+  else if(st.pullT0 != null){ const u = (st.t - st.pullT0) / 0.35; if(u < 1) held = A0 * 0.5 * (1 - Math.cos(Math.PI * u)); else { st.pullT0 = null; } }
+  else if(st.drive){ const tt = st.t - st.driveT0; const ramp = Math.min(1, tt / (st.P * 0.5)); held = 0.7 * ramp * Math.sin(TAU * tt / st.P); }
+  const fixed = st.end === "fixed", free = st.end === "free";
+  const last = (st.end === "open") ? M - 1 : N - 1;
+  // 加速度（半陰的オイラー法：速度を先に更新）
+  for(let i = 0; i <= last; i++){
+    const yl = i > 0 ? y[i - 1] : null;
+    let yr;
+    if(i < last) yr = y[i + 1]; else if(fixed) yr = 0; else yr = null;   // 固定端：右の壁（変位 0）と糸でつながる
+    let F = 0;
+    if(yl !== null) F += S * (yl - y[i]);
+    if(yr !== null) F += S * (yr - y[i]);
+    if(st.end === "open" && i === last) F += S * (0 - y[i]);
+    let a;
+    if(i === 0) a = (F - p.kSrc * y[0]) / p.mSrc;
+    else a = (F - K0 * y[i]) / mm - gam[i] * v[i];
+    v[i] += a * dt;
+  }
+  for(let i = 0; i <= last; i++) y[i] += v[i] * dt;
+  for(let i = last + 1; i < M; i++){ y[i] = 0; v[i] = 0; }
+  if(held !== null){ const prev = y[0]; y[0] = held; v[0] = (held - prev) / dt; }
+  st.t += dt;
+  // 波の先頭：一度でも動いたおもりのうち最も右
+  for(let i = Math.max(1, st.frontMax); i < N; i++){ if(Math.abs(y[i]) > 0.03){ st.frontMax = Math.max(st.frontMax, i); } else if(i > st.frontMax + 1) break; }
+  if(Math.abs(y[0]) > 0.01) st.everMoved = true;
+}
+function record(){
+  const k = hist.i; hist.t[k] = st.t; hist.s[k] = y[0]; hist.p[k] = y[st.probe];
+  hist.i = (k + 1) % HIST; hist.n = Math.min(HIST, hist.n + 1);
+}
+function reset(){
+  y.fill(0); v.fill(0); st.t = 0; st.hold = null; st.pullT0 = null; st.drive = false; st.frontMax = -1; st.everMoved = false; st.stepTo = null;
+  hist.n = 0; hist.i = 0; syncUI(); draw();
+}
+
+/* ---------- 描画 ---------- */
+const C = { c:$("cvc"), t:$("cvt") }, X = { c:C.c.getContext("2d"), t:C.t.getContext("2d") }, SZ = { c:{}, t:{} };
+let col = {};
+function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","grid","green","shade","spring","bob","thread","sheet"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
+function fit(k){ const c = C[k], r = c.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5);
+  SZ[k] = { w:Math.max(1, Math.round(r.width)), h:Math.max(1, Math.round(r.height)) };
+  c.width = Math.round(SZ[k].w * d); c.height = Math.round(SZ[k].h * d); X[k].setTransform(d, 0, 0, d, 0, 0); }
+function L(ctx, pts, color, w, dash){ ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore(); }
+const FONT = 'BIZ UDPGothic,"Hiragino Sans","Yu Gothic UI",sans-serif', MATH = '"Times New Roman",Times,serif';
+// parts: [["文字", 斜体?], ...]
+function TX(ctx, parts, x, yy, color, size, align){
+  if(typeof parts === "string") parts = [[parts, false]];
+  ctx.save(); ctx.fillStyle = color; ctx.textBaseline = "middle";
+  const fs = p => p[1] ? `italic ${Math.round(size * 1.12)}px ${MATH}` : `${size}px ${FONT}`;
+  let wsum = 0; parts.forEach(p => { ctx.font = fs(p); wsum += ctx.measureText(p[0]).width; });
+  let x0 = align === "left" ? x : align === "right" ? x - wsum : x - wsum / 2;
+  parts.forEach(p => { ctx.font = fs(p); ctx.textAlign = "left"; ctx.fillText(p[0], x0, yy); x0 += ctx.measureText(p[0]).width; });
+  ctx.restore();
+}
+function geom(){
+  const {w, h} = SZ.c, narrow = w < 560;
+  const pl = narrow ? 22 : 34, pr = narrow ? 26 : 46, top = narrow ? 22 : 26;
+  const yEq = top + (h - top) * 0.58, amp = (h - top) * (narrow ? 0.27 : 0.3);
+  const dx = (w - pl - pr) / (N - 1);
+  return { w, h, pl, pr, top, yEq, amp, dx, narrow, X:i => pl + i * dx, Y:val => yEq - val * amp };
+}
+function spring(ctx, x, y0, y1, color, width, coils){
+  const n = coils * 2, len = y1 - y0, lead = Math.min(6, len * 0.12), body = len - 2 * lead, pts = [[x, y0], [x, y0 + lead]];
+  for(let k = 1; k < n; k++) pts.push([x + (k % 2 ? width : -width), y0 + lead + body * k / n]);
+  pts.push([x, y1 - lead], [x, y1]);
+  L(ctx, pts, color, 0.9);
+}
+function arrowV(ctx, x, y0, y1, color){
+  if(Math.abs(y1 - y0) < 3) return;
+  const s = Math.sign(y1 - y0);
+  L(ctx, [[x, y0], [x, y1]], color, 1.8);
+  L(ctx, [[x - 3.5, y1 - 5 * s], [x, y1], [x + 3.5, y1 - 5 * s]], color, 1.8);
+}
+function drawChain(){
+  const ctx = X.c, G = geom(), {w, h} = G; ctx.clearRect(0, 0, w, h);
+  // 天井
+  ctx.save(); ctx.fillStyle = col.shade; ctx.fillRect(G.pl - 14, G.top - 10, G.X(N - 1) - G.pl + 28, 8); ctx.restore();
+  L(ctx, [[G.pl - 14, G.top - 2], [G.X(N - 1) + 14, G.top - 2]], col.muted, 1.4);
+  // つり合いの位置
+  L(ctx, [[G.pl - 10, G.yEq], [w - 6, G.yEq]], col.line, 1, [4, 5]);
+  // ばね
+  const cw = Math.max(1.4, Math.min(3, G.dx * 0.2)), coils = G.narrow ? 4 : 5;
+  ctx.save(); ctx.globalAlpha = 0.75;
+  for(let i = 1; i < N; i++) spring(ctx, G.X(i), G.top - 2, G.Y(y[i]) - 3, col.spring, cw, coils);
+  ctx.restore();
+  spring(ctx, G.X(0), G.top - 2, G.Y(y[0]) - (st.src === "heavy" ? 9 : 3), col.ink, Math.max(3, cw * 1.6), coils);
+  // 糸
+  const pts = []; for(let i = 0; i < N; i++) pts.push([G.X(i), G.Y(y[i])]);
+  if(st.end === "open"){ pts.push([G.X(N - 1) + G.dx * 0.9, G.Y(y[N] || 0)]); }
+  if(st.end === "fixed"){ pts.push([G.X(N - 1) + G.dx * 1.2, G.yEq]); }
+  L(ctx, pts, col.thread, 1.4);
+  if(st.end === "open"){ L(ctx, [[G.X(N - 1) + G.dx * 0.9, G.Y(y[N] || 0)], [w - 4, G.Y(y[N + 2] || 0)]], col.thread, 1.4, [3, 4]); TX(ctx, "…", w - 10, G.Y(0) - 12, col.muted, 13, "center"); }
+  if(st.end === "fixed"){ const xw = G.X(N - 1) + G.dx * 1.2;
+    L(ctx, [[xw, G.yEq - G.amp * 1.1], [xw, G.yEq + G.amp * 1.1]], col.ink, 2.4);
+    for(let k = -5; k <= 5; k++) L(ctx, [[xw, G.yEq + k * G.amp * 0.2], [xw + 7, G.yEq + k * G.amp * 0.2 - 7]], col.muted, 1);
+    TX(ctx, "固定端", xw - 2, G.yEq + G.amp * 1.1 + 12, col.muted, 11, "center"); }
+  if(st.end === "free") TX(ctx, "自由端", G.X(N - 1), G.yEq + G.amp * 1.1 + 12, col.muted, 11, "center");
+  // 波形の線
+  if(st.curve){ const cp = []; for(let i = 0; i < N; i++) cp.push([G.X(i), G.Y(y[i])]); L(ctx, cp, col.blue, 2.2); }
+  // 波の先頭
+  if(st.front && st.frontMax > 2 && st.frontMax < N - 1){ const xf = G.X(st.frontMax);
+    L(ctx, [[xf, G.yEq - G.amp * 1.15], [xf, G.yEq + G.amp * 1.15]], col.green, 1.3, [4, 4]); TX(ctx, "波の先頭", xf, G.yEq + G.amp * 1.15 + 11, col.green, 11, "center"); }
+  // おもり
+  const r = Math.max(2.4, Math.min(5.5, G.dx * 0.36));
+  for(let i = 1; i < N; i++){ ctx.save(); ctx.fillStyle = i === st.probe ? col.red : col.bob; ctx.beginPath(); ctx.arc(G.X(i), G.Y(y[i]), i === st.probe ? r + 1.5 : r, 0, TAU); ctx.fill(); ctx.restore(); }
+  // 注目するおもり：上下の動きのガイド
+  { const xp = G.X(st.probe); L(ctx, [[xp, G.yEq - G.amp * 1.15], [xp, G.yEq + G.amp * 1.15]], col.red, 1, [2, 4]); }
+  // 波源
+  const rs = st.src === "heavy" ? (G.narrow ? 7.5 : 9) : r + 0.5;
+  ctx.save(); ctx.fillStyle = col.ink; ctx.beginPath(); ctx.arc(G.X(0), G.Y(y[0]), rs, 0, TAU); ctx.fill(); ctx.restore();
+  TX(ctx, "波源", G.X(0) - 4, G.yEq + G.amp * 1.1 + 12, col.muted, 11, "left");
+  if(st.hold != null || st.pullT0 != null || st.drive){ // 手
+    ctx.save(); ctx.strokeStyle = col.muted; ctx.lineWidth = 1.4; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.arc(G.X(0), G.Y(y[0]), rs + 6, 0, TAU); ctx.stroke(); ctx.restore();
+    TX(ctx, "手", G.X(0) + rs + 12, G.Y(y[0]) - 2, col.muted, 11, "left");
+  }
+  // 速度の矢印
+  if(st.vel){ const sc = G.amp * 0.12; for(let i = 0; i < N; i += (G.narrow ? 2 : 1)){ const yy = G.Y(y[i]); arrowV(ctx, G.X(i), yy, yy - Math.max(-G.amp * 0.6, Math.min(G.amp * 0.6, v[i] * sc)), i === st.probe ? col.red : col.green); } }
+  // 進む向き
+  if(!st.everMoved) TX(ctx, "左端を引いてはなしてみよう →", G.pl + 10, G.top + 14, col.blue, 13, "left");
+}
+function drawYT(){
+  const ctx = X.t, {w, h} = SZ.t; ctx.clearRect(0, 0, w, h);
+  const pl = 30, pr = 12, pt = 14, pb = 22, WIN = 8;
+  const t1 = Math.max(WIN, st.t), t0 = t1 - WIN;
+  const Xt = t => pl + (t - t0) / WIN * (w - pl - pr), Yv = val => pt + (h - pt - pb) / 2 - val * (h - pt - pb) / 2.3;
+  for(let s = Math.ceil(t0); s <= t1; s++){ L(ctx, [[Xt(s), pt - 4], [Xt(s), h - pb]], col.grid, 1); TX(ctx, `${s} s`, Xt(s), h - pb + 11, col.muted, 10, "center"); }
+  L(ctx, [[pl, Yv(0)], [w - pr, Yv(0)]], col.line, 1.2);
+  TX(ctx, [["y", true]], 12, pt + 4, col.muted, 12, "center");
+  TX(ctx, [["t", true]], w - pr + 4, Yv(0) - 9, col.muted, 12, "center");
+  if(hist.n < 2) return;
+  const ps = [], pp = [];
+  for(let k = 0; k < hist.n; k++){ const j = (hist.i - hist.n + k + HIST) % HIST; const tt = hist.t[j]; if(tt < t0) continue; ps.push([Xt(tt), Yv(hist.s[j])]); pp.push([Xt(tt), Yv(hist.p[j])]); }
+  L(ctx, ps, col.muted, 1.6, [4, 3]); L(ctx, pp, col.red, 2.2);
+}
+function draw(){ readColors(); if(SZ.c.w) drawChain(); if(SZ.t.w) drawYT(); $("clock").innerHTML = `${I("t")} ＝ ${st.t.toFixed(1)} s`; }
+
+/* ---------- UI ---------- */
+function syncUI(){
+  document.querySelectorAll("[data-src]").forEach(b => b.setAttribute("aria-pressed", b.dataset.src === st.src));
+  document.querySelectorAll("[data-end]").forEach(b => b.setAttribute("aria-pressed", b.dataset.end === st.end));
+  $("driveBtn").setAttribute("aria-pressed", st.drive); $("driveBtn").textContent = st.drive ? "振るのをやめる" : "左端を振り続ける";
+  $("rowP").classList.toggle("locked", !st.drive);
+  $("oP").textContent = `${st.P.toFixed(1)} s`; $("oS").textContent = `×${st.sMul}`; $("oM").textContent = `×${st.mMul}`;
+  $("playBtn").textContent = st.playing ? "一時停止" : "再生";
+  $("ytCap").innerHTML = `注目するおもり（左から ${st.probe} 番目，赤）と波源（灰色の破線）の振動（${I("y")}-${I("t")} グラフ）`;
+  let msg;
+  if(st.hold != null) msg = "左端のおもりを手で持っています。はなすと振動を始めます。";
+  else if(st.drive) msg = `手で左端を周期 ${st.P.toFixed(1)} s で上下に振り続けています。どのおもりも同じ周期で振動し、右のものほど遅れます。`;
+  else if(!st.everMoved) msg = "「左端を引いてはなす」を押すか、左端のおもりを直接つかんで上下に動かしてはなそう。";
+  else if(st.src === "heavy") msg = "波源（大きいおもり）は、ばねの力で上下に振動しながら、糸を通してとなりのおもりを引いています。";
+  else msg = "波源がほかと同じおもりだと、振動はすぐに止まり、ほぼ1つの山（パルス波）が伝わります。";
+  $("status").textContent = msg;
+}
+function setPlaying(p){ st.playing = p; syncUI(); }
+document.querySelectorAll("[data-src]").forEach(b => b.addEventListener("click", () => { st.src = b.dataset.src; reset(); }));
+document.querySelectorAll("[data-end]").forEach(b => b.addEventListener("click", () => { st.end = b.dataset.end; reset(); }));
+$("sP").addEventListener("input", e => { st.P = +e.target.value; syncUI(); });
+$("sS").addEventListener("input", e => { st.sMul = +e.target.value; syncUI(); });
+$("sM").addEventListener("input", e => { st.mMul = +e.target.value; syncUI(); });
+$("chCurve").addEventListener("change", e => { st.curve = e.target.checked; draw(); });
+$("chVel").addEventListener("change", e => { st.vel = e.target.checked; draw(); });
+$("chFront").addEventListener("change", e => { st.front = e.target.checked; draw(); });
+$("speedSel").addEventListener("change", e => st.speed = +e.target.value);
+$("playBtn").addEventListener("click", () => setPlaying(!st.playing));
+$("resetBtn").addEventListener("click", () => reset());
+$("stepBtn").addEventListener("click", () => { setPlaying(false); advance(0.1); draw(); });
+$("pullBtn").addEventListener("click", () => {
+  st.drive = false; st.hold = null; st.pullT0 = st.t; st.everMoved = true;
+  if(!st.playing) setPlaying(true); syncUI();
+});
+$("driveBtn").addEventListener("click", () => {
+  st.drive = !st.drive; st.hold = null; st.pullT0 = null;
+  if(st.drive){ st.driveT0 = st.t; st.everMoved = true; if(!st.playing) setPlaying(true); }
+  syncUI();
+});
+
+// つかむ・注目するおもりを選ぶ
+let dragging = false;
+function evPos(e){ const r = C.c.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+C.c.addEventListener("pointerdown", e => {
+  const G = geom(), [px, py] = evPos(e);
+  if(Math.abs(px - G.X(0)) < Math.max(26, G.dx * 1.5)){
+    dragging = true; C.c.setPointerCapture(e.pointerId);
+    st.drive = false; st.pullT0 = null; st.hold = Math.max(-1.3, Math.min(1.3, (G.yEq - py) / G.amp)); st.everMoved = true;
+    if(!st.playing) setPlaying(true); syncUI(); e.preventDefault(); return;
+  }
+  const i = Math.max(1, Math.min(N - 1, Math.round((px - G.pl) / G.dx)));
+  st.probe = i; hist.n = 0; hist.i = 0; syncUI(); draw();
+});
+C.c.addEventListener("pointermove", e => { if(!dragging) return; const G = geom(), [, py] = evPos(e); st.hold = Math.max(-1.3, Math.min(1.3, (G.yEq - py) / G.amp)); });
+function release(){ if(!dragging) return; dragging = false; st.hold = null; v[0] = 0; syncUI(); }
+C.c.addEventListener("pointerup", release); C.c.addEventListener("pointercancel", release);
+C.c.addEventListener("pointermove", e => { if(dragging) return; const G = geom(), [px] = evPos(e); C.c.style.cursor = Math.abs(px - G.X(0)) < Math.max(26, G.dx * 1.5) ? "grab" : "pointer"; });
+
+const DT = 1 / 800;
+let acc = 0;
+function advance(simT){
+  acc += simT;
+  let k = 0;
+  while(acc >= DT && k < 4000){ step(DT); acc -= DT; k++; if(k % 8 === 0) record(); }
+}
+let last = null;
+function tick(ts){
+  if(last == null) last = ts; const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
+  if(st.playing || dragging){ advance(dt * (st.playing ? st.speed : 0.5)); draw(); }
+  requestAnimationFrame(tick);
+}
+function resize(){ const tp = document.querySelector(".top"); if(tp) document.documentElement.style.setProperty("--hdr", tp.offsetHeight + "px"); fit("c"); fit("t"); draw(); }
+const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+if(mq && mq.addEventListener) mq.addEventListener("change", draw);
+new MutationObserver(draw).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+if(window.ResizeObserver){ const ro = new ResizeObserver(resize); ro.observe(C.c); ro.observe(C.t); } else window.addEventListener("resize", resize);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+
+$("qs").innerHTML = [
+  ["「左端を引いてはなす」を押して、赤いおもりだけを見よう。赤いおもりは右へ進んでいくか。",
+   "右へは進まず、つり合いの位置を中心に上下に振動するだけです。右へ進んでいくのは、山や谷の形（振動の状態）です。これが波です。媒質そのものは運ばれません。"],
+  ["左端をはなした瞬間に、右のほうのおもりもすぐに動きだすか。",
+   "すぐには動きません。おもりは、となりのおもりに糸で引かれてから動きだすので、右のおもりほど遅れて動きます。この遅れが次々に伝わることで、波が進みます。"],
+  [`下の ${I("y")}-${I("t")} グラフで、波源（灰色の破線）と赤いおもりの振動を比べよう。赤いおもりを右のほうに変えると、どうなるか。`,
+   "同じような形の振動が、時間が遅れて起こります。波源から遠いおもりほど、遅れは大きくなります。"],
+  ["波源が大きいおもりのとき、はなしたあとの波源の振動は、だんだん小さくなる。なぜか。",
+   "波源の振動のエネルギーが、糸を通してとなりのおもりへ移り、波として右へ運ばれていくからです。波は、媒質を運ばずにエネルギーを運びます。"],
+  ["波源を「ほかと同じおもり」にして、引いてはなそう。大きいおもりのときと、何が違うか。",
+   "波源はすぐに止まり、ほぼ1つの山（パルス波）だけが伝わります。軽い波源はエネルギーをすぐにとなりへ渡してしまうので、振動が続きません。波源が振動し続ける間だけ、波が続いて送り出されます。"],
+  ["糸の張力を大きくすると、波の先頭の進む速さはどうなるか。おもりの質量を大きくするとどうなるか。",
+   "張力を大きくすると速くなり、おもりを重くすると遅くなります。となりを引く力が強いほど、また動かしやすい（軽い）ほど、振動が早く伝わります。波の速さは媒質の性質で決まります。"],
+  [`「左端を振り続ける」で、周期 ${I("T")} を短くすると、波長（山と山の間隔）はどうなるか。`,
+   `短くなります。1周期の間に波は1波長進むので ${I("λ")} ＝ ${I("v")}${I("T")} です。どのおもりも、波源と同じ周期で振動します。`],
+  ["右端を「固定端」「自由端」にして、右端で反射した山がどうなるか比べよう。",
+   "固定端では、山は谷になって戻ってきます（位相が逆になる）。自由端では、山は山のまま戻ってきます。"]
+].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
+
+syncUI(); resize(); requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
