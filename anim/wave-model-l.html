@@ -174,7 +174,7 @@ h3{font-size:17px;margin:0 0 8px}
           <button type="button" data-end="free" aria-pressed="false">自由端</button>
         </div>
         <div class="slider" id="rowP"><label for="sP"><small>振り続けるときの</small>周期 <i class="qv">T</i></label><input type="range" id="sP" min="0.6" max="1.6" step="0.1" value="0.9"><output id="oP" for="sP"></output></div>
-        <div class="slider"><label for="sS"><small>媒質の</small>ばねの強さ</label><input type="range" id="sS" min="0.5" max="2" step="0.25" value="1"><output id="oS" for="sS"></output></div>
+        <div class="slider"><label for="sS"><small>となりどうしをつなぐ</small>ばね定数 <i class="qv">k</i></label><input type="range" id="sS" min="0.5" max="2" step="0.25" value="1"><output id="oS" for="sS"></output></div>
         <div class="slider"><label for="sM"><small>媒質の</small>おもりの質量</label><input type="range" id="sM" min="0.5" max="2" step="0.25" value="1"><output id="oM" for="sM"></output></div>
         <div class="checks" role="group" aria-label="表示">
           <label><input type="checkbox" id="chBand" checked>密・疎の色</label>
@@ -183,7 +183,7 @@ h3{font-size:17px;margin:0 0 8px}
           <label><input type="checkbox" id="chFront" checked>波の先頭</label>
         </div>
       </div>
-      <p class="hint">ばねの強さと質量は、媒質の性質を変える条件で、動かしている途中でも変えられます。波源や右端を変えると最初からになります。</p>
+      <p class="hint">ばね定数と質量は、媒質の性質を変える条件で、動かしている途中でも変えられます。波源や右端を変えると最初からになります。</p>
 
       <div class="qbox" aria-labelledby="qsTitle">
         <h3 id="qsTitle">見てみよう</h3>
@@ -214,7 +214,7 @@ const st = { src:"heavy", end:"open", P:0.9, sMul:1, mMul:1, t:0, playing:!reduc
   hold:null, drive:false, driveT0:0, pullT0:null, probe:16, frontMax:-1, band:true, tick:true, vel:false, front:true, everMoved:false };
 const y = new Float64Array(M), v = new Float64Array(M), gam = new Float64Array(M);
 for(let i = 1; i < M; i++){ const u = Math.max(0, (i - N) / EXT); gam[i] = 0.15 + 5 * u * u; }   // 見える部分の弱い減衰（固定端や自由端で振り続けても、共振で振幅が大きくなりすぎないように）
-const HIST = 1400, hist = { t:new Float64Array(HIST), s:new Float64Array(HIST), p:new Float64Array(HIST), n:0, i:0 };
+const HIST = 1000, hist = { t:new Float64Array(HIST), y:new Float32Array(HIST * N), n:0, i:0, next:0 };   // 0.01 s ごとに全おもりの変位を記録（注目するおもりを変えても過去のグラフが残る）
 const PUSH = 0.7;
 
 function step(dt){
@@ -242,16 +242,17 @@ function step(dt){
   for(let i = last + 1; i < M; i++){ y[i] = 0; v[i] = 0; }
   if(held !== null){ const prev = y[0]; y[0] = held; v[0] = (held - prev) / dt; }
   st.t += dt;
+  if(st.t >= hist.next - 1e-9){ record(); hist.next = st.t + 0.01; }
   for(let i = Math.max(1, st.frontMax); i < N; i++){ if(Math.abs(y[i]) > 0.02){ st.frontMax = Math.max(st.frontMax, i); } else if(i > st.frontMax + 1) break; }
   if(Math.abs(y[0]) > 0.01) st.everMoved = true;
 }
 function record(){
-  const k = hist.i; hist.t[k] = st.t; hist.s[k] = y[0]; hist.p[k] = y[st.probe];
+  const k = hist.i; hist.t[k] = st.t; for(let j = 0; j < N; j++) hist.y[k * N + j] = y[j];
   hist.i = (k + 1) % HIST; hist.n = Math.min(HIST, hist.n + 1);
 }
 function reset(){
   y.fill(0); v.fill(0); st.t = 0; st.hold = null; st.pullT0 = null; st.drive = false; st.frontMax = -1; st.everMoved = false;
-  hist.n = 0; hist.i = 0; syncUI(); draw();
+  hist.n = 0; hist.i = 0; hist.next = 0; syncUI(); draw();
 }
 
 /* ---------- 描画 ---------- */
@@ -373,7 +374,7 @@ function drawYT(){
   TX(ctx, [["t", true]], w - pr + 4, Yv(0) - 9, col.muted, 12, "center");
   if(hist.n < 2) return;
   const ps = [], pp = [];
-  for(let k = 0; k < hist.n; k++){ const j = (hist.i - hist.n + k + HIST) % HIST; const tt = hist.t[j]; if(tt < t0) continue; ps.push([Xt(tt), Yv(hist.s[j])]); pp.push([Xt(tt), Yv(hist.p[j])]); }
+  for(let k = 0; k < hist.n; k++){ const j = (hist.i - hist.n + k + HIST) % HIST; const tt = hist.t[j]; if(tt < t0) continue; ps.push([Xt(tt), Yv(hist.y[j * N])]); pp.push([Xt(tt), Yv(hist.y[j * N + st.probe])]); }
   L(ctx, ps, col.muted, 1.6, [4, 3]); L(ctx, pp, col.red, 2.2);
 }
 function draw(){ readColors(); if(SZ.c.w) drawChain(); if(SZ.x.w) drawYX(); if(SZ.t.w) drawYT(); $("clock").innerHTML = `${I("t")} ＝ ${st.t.toFixed(1)} s`; }
@@ -430,7 +431,7 @@ C.c.addEventListener("pointerdown", e => {
     if(!st.playing) setPlaying(true); syncUI(); e.preventDefault(); return;
   }
   const i = Math.max(1, Math.min(N - 1, Math.round((px - G.pl) / G.dx)));
-  st.probe = i; hist.n = 0; hist.i = 0; syncUI(); draw();
+  st.probe = i; syncUI(); draw();
 });
 C.c.addEventListener("pointermove", e => {
   const G = geomOf("c"), [px] = evPos(e);
@@ -445,7 +446,7 @@ let acc = 0;
 function advance(simT){
   acc += simT;
   let k = 0;
-  while(acc >= DT && k < 4000){ step(DT); acc -= DT; k++; if(k % 8 === 0) record(); }
+  while(acc >= DT && k < 4000){ step(DT); acc -= DT; k++;  }
 }
 let last = null;
 function tick(ts){
@@ -471,8 +472,8 @@ $("qs").innerHTML = [
    "疎の中心のすぐ右、密の中心のすぐ左にいます。密と疎のちょうど中間で、そのおもりは密の方へいちばん大きく動いています。縦波を横波のグラフで表すと、山や谷が密・疎の中心ではないことに注意しましょう。"],
   [`「左端を振り続ける」で、周期 ${I("T")} を短くすると、密と密の間隔（波長 ${I("λ")}）はどうなるか。`,
    `短くなります。1周期の間に波は1波長進むので ${I("λ")} ＝ ${I("v")}${I("T")} です。どのおもりも、波源と同じ周期で振動します。`],
-  ["ばねを強くすると、波の先頭の進む速さはどうなるか。おもりの質量を大きくするとどうなるか。",
-   "ばねを強くすると速くなり、おもりを重くすると遅くなります。押す力が強いほど、また動かしやすい（軽い）ほど、振動が早く伝わります。波の速さは媒質の性質で決まります。"],
+  ["ばね定数を大きくすると、波の先頭の進む速さはどうなるか。おもりの質量を大きくするとどうなるか。",
+   "ばね定数を大きくすると速くなり、おもりを重くすると遅くなります。押す力が強いほど、また動かしやすい（軽い）ほど、振動が早く伝わります。波の速さは媒質の性質で決まります。"],
   ["波源を「ほかと同じおもり」にして、押してはなそう。大きいおもりのときと、何が違うか。",
    "波源はすぐに止まり、密と疎が1組だけ（パルス波）伝わります。波源が振動し続ける間だけ、疎と密が続いて送り出されます。"],
   ["右端を「固定端」「自由端」にして、右端で反射した密がどうなるか比べよう。",
