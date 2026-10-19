@@ -92,6 +92,29 @@ h3.qh{font-size:17px;margin:0 0 8px}
 .qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
 .qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
 .ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+/* 配置：スマホは1列（元の順）。PC（幅 1000px 以上）は左に図・ボタン・結果（固定、図の高さは画面に合わせる）、右に説明・物体 A・B の条件（縦に重ねる）・表示の設定・見てみよう */
+.board{display:flex;flex-direction:column}
+.colG,.colC,.head{display:contents}
+.head>*{order:1}.stage,.controls{order:2}.checks{order:3}.objs{order:4}.res,.now{order:5}.hint,.qbox{order:6}
+.qbox{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+@media (min-width:1000px){
+  .top-inner,main{max-width:1360px}
+  .board{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(340px,1fr);column-gap:22px;align-items:start}
+  .head,.colC{display:block;grid-column:2}
+  .head{grid-row:1}.colC{grid-row:2}
+  .colG{display:block;grid-column:1;grid-row:1 / span 2;position:sticky;top:calc(var(--hdr,90px) + 10px)}
+  .colG .stage{max-height:max(260px,calc(100vh - var(--hdr,90px) - 290px))}
+  .colG .res{margin-top:10px}
+  .colG .now{margin-top:10px;padding:8px 12px}
+  .colC .objs{grid-template-columns:minmax(0,1fr);gap:10px;margin-top:0}
+  .colC .checks{margin-top:8px}
+  .head .lead{font-size:13.5px;margin-bottom:10px}
+  .colC .obj{padding:6px 12px 8px}
+  .colC .obj h3{margin-bottom:2px}
+  .colC .obj select{min-height:32px}
+  .colC .slider input{min-height:26px}
+  .colC .cap{font-size:14px;padding:3px 10px;margin-top:4px}
+}
 </style>
 </head>
 <body>
@@ -112,9 +135,12 @@ h3.qh{font-size:17px;margin:0 0 8px}
 </header>
 
 <main>
-  <section class="sheet" aria-labelledby="t1">
+  <section class="sheet board" aria-labelledby="t1">
+    <div class="head">
     <h2 id="t1">温度の異なる2つの物体を接触させると</h2>
     <p class="lead">物体 A と B の初めの温度・質量・比熱を決めて「接触させる」を押そう。熱は高温の物体から低温の物体へ移り、やがて2つの温度が等しくなります（熱平衡）。下の水槽は、<b>幅＝熱容量 <i class="qv">C</i></b>、<b>水位＝温度 <i class="qv">t</i></b> として、熱の移動を水の移動にたとえたモデルです。</p>
+    </div>
+    <div class="colG">
     <div class="stage"><canvas id="cv" role="img" aria-label="上に接触した物体AとB。左に、幅が熱容量、水位が温度を表す2つの水槽が底の管でつながっている。右に、AとBの温度の時間変化のグラフ。水位とグラフの高さはそろえてある。"></canvas></div>
     <div class="controls">
       <button type="button" class="btn" id="goBtn">接触させる</button>
@@ -124,12 +150,15 @@ h3.qh{font-size:17px;margin:0 0 8px}
         <select id="speedSel"><option value="0.5">ゆっくり</option><option value="1" selected>ふつう</option><option value="2.5">はやい</option></select>
       </label>
     </div>
-    <div class="checks">
-      <label for="ckCube"><input type="checkbox" id="ckCube">水槽を直方体で表す（横＝質量、奥行＝比熱）</label>
-      <label for="ckArea"><input type="checkbox" id="ckArea" checked>移動した熱を色で示す</label>
-      <label for="ckPred"><input type="checkbox" id="ckPred">熱平衡の温度（計算値）を先に表示</label>
-    </div>
 
+    <div class="res" aria-live="polite">
+      <div><span class="k">いまの温度（A ／ B）</span><span class="v" id="rNow"></span></div>
+      <div><span class="k">A が失った熱量 ／ B が得た熱量</span><span class="v" id="rQ"></span></div>
+      <div><span class="k">熱平衡の温度</span><span class="v" id="rF"></span></div>
+    </div>
+    <div class="now" id="now"><b></b><p></p></div>
+    </div>
+    <div class="colC">
     <div class="objs">
       <div class="obj" id="objA" style="--c:var(--ca)">
         <h3><span>物体 A</span><select id="mA" aria-label="物体Aの物質"></select></h3>
@@ -147,18 +176,17 @@ h3.qh{font-size:17px;margin:0 0 8px}
       </div>
     </div>
 
-    <div class="res" aria-live="polite">
-      <div><span class="k">いまの温度（A ／ B）</span><span class="v" id="rNow"></span></div>
-      <div><span class="k">A が失った熱量 ／ B が得た熱量</span><span class="v" id="rQ"></span></div>
-      <div><span class="k">熱平衡の温度</span><span class="v" id="rF"></span></div>
+    <div class="checks">
+      <label for="ckCube"><input type="checkbox" id="ckCube">水槽を直方体で表す（横＝質量、奥行＝比熱）</label>
+      <label for="ckArea"><input type="checkbox" id="ckArea" checked>移動した熱を色で示す</label>
+      <label for="ckPred"><input type="checkbox" id="ckPred">熱平衡の温度（計算値）を先に表示</label>
     </div>
-    <div class="now" id="now"><b></b><p></p></div>
     <p class="hint">水槽の水全体は、物体がもっている「熱」ではありません（熱は移動するエネルギーの名前です）。水全体は 0&nbsp;℃ を基準にした内部エネルギーの増え分の目安で、管を通って<b>移動した水だけ</b>が「熱」にあたります。熱は2物体の間だけで移動し、外へは逃げないものとします。状態変化は起こらない温度の範囲で考えます。時間の目盛りは、見やすいように調整したモデルの時間です。</p>
-  </section>
-
-  <section class="sheet" aria-labelledby="qsTitle">
+    <div class="qbox" aria-labelledby="qsTitle">
     <h3 class="qh" id="qsTitle">見てみよう</h3>
     <ol class="qs" id="qs"></ol>
+    </div>
+    </div>
   </section>
 </main>
 
@@ -194,7 +222,7 @@ const fmtC = v => v >= 100 ? `${Math.round(v)}` : v >= 10 ? v.toFixed(1).replace
 /* ---------- 描画 ---------- */
 const cv = $("cv"), ctx = cv.getContext("2d"); let W = 0, H = 0, col = {}, LY = null;
 function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","shade","sheet","ca","cb","heat","paper"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
-function resize(){ const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0); LY = layout(); draw(); }
+function resize(){ const tp = document.querySelector(".top"); if(tp) document.documentElement.style.setProperty("--hdr", tp.offsetHeight + "px"); const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0); LY = layout(); draw(); }
 function L(pts, color, w, dash){ ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore(); }
 function F(pts, color, a){ ctx.save(); ctx.fillStyle = color; ctx.globalAlpha = a == null ? 1 : a; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.fill(); ctx.restore(); }
 function T(s, x, y, color, size, align, bold){ ctx.save(); ctx.fillStyle = color; ctx.font = `${bold ? "700 " : ""}${size || 12}px "BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`; ctx.textAlign = align || "left"; ctx.textBaseline = "middle"; ctx.fillText(s, x, y); ctx.restore(); }
