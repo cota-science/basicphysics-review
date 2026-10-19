@@ -100,6 +100,37 @@ tr.sum td{font-weight:700;border-top:2px solid var(--ink)}
 .qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
 .qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
 .ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+/* 配置：スマホは1列（元の順）。PC（幅 1000px 以上）は左に図・過程の説明・操作・熱効率、右に説明・サイクルの大きさ・過程ごとの表。見てみようは下 */
+.board{display:flex;flex-direction:column}
+.colG,.colC,.head{display:contents}
+.head>*{order:1}.stage{order:2}.setrow{order:3}.chips,.step,.controls{order:4}.part2{order:5}.part3{order:6}
+.part2,.part3{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+@media (min-width:1000px){
+  .top-inner,main{max-width:1360px}
+  main{padding-top:12px;gap:14px}
+  .board{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(400px,1fr);grid-template-rows:auto 1fr;column-gap:22px;align-items:start;padding-top:14px}
+  .head,.colC{display:block;grid-column:2}
+  .head{grid-row:1}.colC{grid-row:2}
+  .colG{display:block;grid-column:1;grid-row:1 / span 2}
+  .colG .stage{max-height:max(240px,calc(100vh - var(--hdr,90px) - 330px))}
+  .colG .chips{margin-top:8px}
+  .colG .step{margin-top:8px;padding:8px 12px}
+  .colG .step h3{font-size:16px}
+  .colG .step p,.colG .step .eq{font-size:14px}
+  .colG .step .eq{margin-top:6px;padding:4px 10px}
+  .colG .controls{margin-top:8px}
+  .colG .part3{margin-top:12px;padding-top:10px}
+  .head h2{font-size:18px}
+  .head .lead{font-size:13.5px;margin-bottom:6px}
+  .colC .setrow{margin-top:0;font-size:13px;gap:4px 12px}
+  .colC .part2{margin-top:12px;padding-top:10px}
+  .part2 h2,.part3 h2{font-size:16px}
+  .colC .part2 .lead{font-size:13px;margin-bottom:4px}
+  .colC table{min-width:0;font-size:13.5px}
+  .colC th{font-size:12px}
+  .colC th,.colC td{padding:4px 6px}
+  .colC .note{font-size:12px}
+}
 </style>
 </head>
 <body>
@@ -120,18 +151,13 @@ tr.sum td{font-weight:700;border-top:2px solid var(--ink)}
 </header>
 
 <main>
-  <section class="sheet" aria-labelledby="t1">
+  <section class="sheet board" aria-labelledby="t1">
+    <div class="head">
     <h2 id="t1">気体を加熱・冷却して、ピストンを1往復させる</h2>
     <p class="lead">シリンダーの気体を加熱して膨張させ、冷却して縮ませて、もとの状態に戻します（1サイクル）。この間に気体が外部にした正味の仕事と、吸収した熱量から、熱機関の熱効率を考えます。過程ごとに止まるので、確かめてから「次の過程 ▶」を押そう。</p>
-    <div class="stage"><canvas id="cv" role="img" aria-label="左にストッパーとおもりのついたシリンダー、中央に圧力と体積のグラフ、右に体積と温度のグラフ（V-T グラフ）。サイクルの進み具合に合わせて、グラフの上の点が動く。"></canvas></div>
-    <div class="setrow">
-      <span>サイクルの大きさ：</span>
-      <label for="selP">おもりをのせたときの圧力 <i class="qv">p</i>₂
-        <select id="selP"><option value="1.5">1.5×10⁵ Pa</option><option value="2" selected>2.0×10⁵ Pa</option><option value="3">3.0×10⁵ Pa</option></select></label>
-      <label for="selV">上のストッパーの位置 <i class="qv">V</i>₂
-        <select id="selV"><option value="1.5">1.5 L</option><option value="2" selected>2.0 L</option><option value="3">3.0 L</option></select></label>
-      <span>（<i class="qv">p</i>₁ ＝ 1.0×10⁵ Pa、<i class="qv">V</i>₁ ＝ 1.0 L、<i class="qv">T</i><sub>A</sub> ＝ 300 K）</span>
     </div>
+    <div class="colG">
+    <div class="stage"><canvas id="cv" role="img" aria-label="左にストッパーとおもりのついたシリンダー、中央に圧力と体積のグラフ、右に体積と温度のグラフ（V-T グラフ）。サイクルの進み具合に合わせて、グラフの上の点が動く。"></canvas></div>
 
     <ol class="chips" id="chips"></ol>
     <div class="step" id="step"><div class="no"></div><h3></h3><p class="txt"></p><div class="eq"></div></div>
@@ -142,19 +168,7 @@ tr.sum td{font-weight:700;border-top:2px solid var(--ink)}
         <select id="speedSel"><option value="0.5">ゆっくり</option><option value="1" selected>ふつう</option><option value="2">はやい</option></select></label>
       <button type="button" class="btn next" id="nextBtn">次の過程 ▶</button>
     </div>
-  </section>
-
-  <section class="sheet" aria-labelledby="t2">
-    <h2 id="t2">過程ごとの熱・仕事・内部エネルギー</h2>
-    <p class="lead">熱力学第一法則 Δ<i class="qv">U</i> ＝ <i class="qv">Q</i> ＋ <i class="qv">W</i>（<i class="qv">Q</i>：気体が吸収した熱量、<i class="qv">W</i>：気体が外部から<b>された</b>仕事）。終わった過程から表が埋まっていきます。</p>
-    <div class="tbl"><table>
-      <thead><tr><th>過程</th><th>吸収した熱量 <i class="qv">Q</i>〔J〕</th><th>された仕事 <i class="qv">W</i>〔J〕<br>（した仕事 <i class="qv">W</i>′ ＝ −<i class="qv">W</i>）</th><th>内部エネルギーの変化 Δ<i class="qv">U</i>〔J〕</th></tr></thead>
-      <tbody id="tb"></tbody>
-    </table></div>
-    <p class="note">単原子分子の理想気体として計算しています（物理で学ぶ内容：Δ<i class="qv">U</i> ＝ 3/2 <i class="qv">nR</i>Δ<i class="qv">T</i>、定積変化の <i class="qv">Q</i> ＝ 3/2 <i class="qv">nR</i>Δ<i class="qv">T</i>、定圧変化の <i class="qv">Q</i> ＝ 5/2 <i class="qv">nR</i>Δ<i class="qv">T</i>、仕事 ＝ <i class="qv">p</i>Δ<i class="qv">V</i>）。</p>
-  </section>
-
-  <section class="sheet" aria-labelledby="t3">
+    <div class="part3" role="group" aria-labelledby="t3">
     <h2 id="t3">1サイクルで取り出せる仕事と熱効率</h2>
     <div class="locked" id="locked">1サイクルを終える（段階 6 まで進む）と表示されます。</div>
     <div class="eff" id="eff" hidden>
@@ -173,6 +187,27 @@ tr.sum td{font-weight:700;border-top:2px solid var(--ink)}
         <div><b>④ もし正味の熱量を分母にすると…</b><span id="w4"></span></div>
         <div><b>⑤ 熱効率は 1 にできない</b>もとの状態に戻して次のサイクルを行うには、冷却して熱 <i class="qv">Q</i><sub>out</sub> を捨てる過程（C→D、D→A）が欠かせません。<i class="qv">Q</i><sub>out</sub> ＞ 0 なので、<i class="qv">W</i>′ ＝ <i class="qv">Q</i><sub>in</sub> − <i class="qv">Q</i><sub>out</sub> ＜ <i class="qv">Q</i><sub>in</sub>、つまり <i class="qv">e</i> ＜ 1 です。</div>
       </div>
+    </div>
+    </div>
+    </div>
+    <div class="colC">
+    <div class="setrow">
+      <span>サイクルの大きさ：</span>
+      <label for="selP">おもりをのせたときの圧力 <i class="qv">p</i>₂
+        <select id="selP"><option value="1.5">1.5×10⁵ Pa</option><option value="2" selected>2.0×10⁵ Pa</option><option value="3">3.0×10⁵ Pa</option></select></label>
+      <label for="selV">上のストッパーの位置 <i class="qv">V</i>₂
+        <select id="selV"><option value="1.5">1.5 L</option><option value="2" selected>2.0 L</option><option value="3">3.0 L</option></select></label>
+      <span>（<i class="qv">p</i>₁ ＝ 1.0×10⁵ Pa、<i class="qv">V</i>₁ ＝ 1.0 L、<i class="qv">T</i><sub>A</sub> ＝ 300 K）</span>
+    </div>
+    <div class="part2" role="group" aria-labelledby="t2">
+    <h2 id="t2">過程ごとの熱・仕事・内部エネルギー</h2>
+    <p class="lead">熱力学第一法則 Δ<i class="qv">U</i> ＝ <i class="qv">Q</i> ＋ <i class="qv">W</i>（<i class="qv">Q</i>：気体が吸収した熱量、<i class="qv">W</i>：気体が外部から<b>された</b>仕事）。終わった過程から表が埋まっていきます。</p>
+    <div class="tbl"><table>
+      <thead><tr><th>過程</th><th>吸収した熱量 <i class="qv">Q</i>〔J〕</th><th>された仕事 <i class="qv">W</i>〔J〕<br>（した仕事 <i class="qv">W</i>′ ＝ −<i class="qv">W</i>）</th><th>内部エネルギーの変化 Δ<i class="qv">U</i>〔J〕</th></tr></thead>
+      <tbody id="tb"></tbody>
+    </table></div>
+    <p class="note">単原子分子の理想気体として計算しています（物理で学ぶ内容：Δ<i class="qv">U</i> ＝ 3/2 <i class="qv">nR</i>Δ<i class="qv">T</i>、定積変化の <i class="qv">Q</i> ＝ 3/2 <i class="qv">nR</i>Δ<i class="qv">T</i>、定圧変化の <i class="qv">Q</i> ＝ 5/2 <i class="qv">nR</i>Δ<i class="qv">T</i>、仕事 ＝ <i class="qv">p</i>Δ<i class="qv">V</i>）。</p>
+    </div>
     </div>
   </section>
 
@@ -232,7 +267,7 @@ for(let i = 0; i < NP; i++){ const a = Math.random() * TAU; parts.push({ x: Math
 /* ---------- 描画 ---------- */
 const cv = $("cv"), ctx = cv.getContext("2d"); let W = 0, H = 0, col = {}, LY = null;
 function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","shade","sheet","heat","cool","work","net","wout","paper"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
-function resize(){ const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0); LY = layout(); draw(); }
+function resize(){ const tp = document.querySelector(".top"); if(tp) document.documentElement.style.setProperty("--hdr", tp.offsetHeight + "px"); const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0); LY = layout(); draw(); }
 function L(pts, color, w, dash){ ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore(); }
 function T(s, x, y, color, size, align, bold, base){ ctx.save(); ctx.fillStyle = color; ctx.font = `${bold ? "700 " : ""}${size || 12}px "BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`; ctx.textAlign = align || "left"; ctx.textBaseline = base || "middle"; ctx.fillText(s, x, y); ctx.restore(); }
 function TI(s, x, y, color, size, align){ ctx.save(); ctx.fillStyle = color; ctx.font = `italic ${size || 13}px "Times New Roman",Times,serif`; ctx.textAlign = align || "left"; ctx.textBaseline = "middle"; ctx.fillText(s, x, y); ctx.restore(); }
