@@ -293,7 +293,7 @@ function renderMenu(){
     h += `<h3>${g.group}</h3><ul class="units">`;
     g.units.forEach(u => {
       if(u.href){   // 単元ではないページ（アニメーション集など）へのボタン
-        h += `<li><a class="unit link" href="${u.href}"><span class="ut">${u.title}</span>${u.note ? `<span class="us">${u.note}</span>` : ""}</a></li>`;
+        h += `<li><a class="unit link" href="${u.href}"><span class="ut">${u.title}</span>${u.note ? `<span class="us tx">${u.note}</span>` : ""}</a></li>`;
         return;
       }
       if(!u.file){

@@ -167,3 +167,4 @@ a.link{color:var(--muted)}
 
 /* 物理量の文字（斜体）。単元ファイルでも同じ指定を読み込む */
 .qv{font-family:"Times New Roman",Times,"Noto Serif",serif;font-style:italic;font-size:1.1em;padding:0 .04em}
+.unit .us.tx{display:block;line-height:1.6}
