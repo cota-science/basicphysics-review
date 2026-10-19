@@ -9,6 +9,16 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic&family=BIZ+UDPGothic:wght@400;700&display=swap">
 <link rel="stylesheet" href="lab.css">
 <script src="lab.js"></script>
+<style>
+/* 配置：PC では「条件を変える」をグラフの直下（右の列）に置き、スクロールせずに操作できるようにする。スマホは図→グラフ→式→条件の順 */
+@media (max-width:900px){ .colR .prmP{order:3} }
+@media (min-width:901px){
+  .colL{position:sticky;top:8px}
+  .stage canvas{height:clamp(260px,calc(100vh - 310px),470px)}
+  .gcard canvas{height:clamp(140px,calc(100vh - 590px),230px)}
+}
+@media (min-width:901px) and (max-width:1199px){ .stage canvas{height:clamp(240px,calc(100vh - 350px),440px)} }
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -39,10 +49,10 @@
         <canvas id="gv"></canvas>
         <div class="gfoot" id="gf"></div>
       </section>
-      <section class="panel"><h2>式で確かめる</h2><div class="body fx" id="fx"></div></section>
+      <section class="panel prmP"><h2>条件を変える</h2><div class="body" id="prm"></div></section>
+      <section class="panel fxP"><h2>式で確かめる</h2><div class="body fx" id="fx"></div></section>
     </div>
   </div>
-  <section class="panel below"><h2>条件を変える</h2><div class="body" id="prm"></div></section>
   <p class="foot" id="foot"></p>
 </div>
 
