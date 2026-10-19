@@ -108,6 +108,28 @@ th{background:var(--shade)}
 .ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
 .meter{height:10px;border-radius:5px;background:var(--shade);overflow:hidden;margin-top:6px}
 .meter i{display:block;height:100%;width:0;background:var(--green);transition:width .08s}
+/* 配置：スマホは1列。PC（幅 1000px 以上）は左に数値・波形・スペクトル・再生ボタン（固定、図の高さは画面に合わせる）、右に説明・設定・見てみよう */
+.board{display:flex;flex-direction:column}
+.colG,.colC,.head{display:contents}
+.qbox{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+@media (min-width:1000px){
+  .top-inner,main{max-width:1360px}
+  .board{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(320px,1fr);column-gap:22px;align-items:start}
+  .head,.colC{display:block;grid-column:2}
+  .head{grid-row:1}.colC{grid-row:2}
+  .colG{display:block;grid-column:1;grid-row:1 / span 2;position:sticky;top:calc(var(--hdr,110px) + 10px)}
+  .colG .stage.wave,.colG .stage.spec{max-height:max(140px,calc((100vh - var(--hdr,110px) - 305px) / 2))}
+  #sc-mic .colG .stage.wave,#sc-mic .colG .stage.spec{max-height:max(130px,calc((100vh - var(--hdr,110px) - 345px) / 2))}
+  #sc-mic .colG .status{font-size:13px;padding:6px 10px}
+  .colG .cap{margin-top:6px}
+  .colG .controls{margin-top:8px}
+  .colC .opts{margin-top:0}
+  .head .lead{font-size:14px}
+  .top-inner{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,440px);column-gap:24px;align-items:end;padding-top:6px}
+  .top-inner .back,.top-inner h1,.top-inner .nav{grid-column:1}
+  .top-inner .tabs{grid-column:2;grid-row:1 / span 3;align-self:end;width:100%}
+  main{padding-top:12px}
+}
 </style>
 </head>
 <body>
@@ -139,9 +161,12 @@ th{background:var(--shade)}
 <main>
 <!-- ============ 倍音を重ねる ============ -->
 <div class="scene" id="sc-add" role="tabpanel">
-  <section class="sheet" aria-labelledby="h-add">
+  <section class="sheet board" aria-labelledby="h-add">
+    <div class="head">
     <h2 id="h-add">倍音の正弦波を重ねて、波形と音色をつくる</h2>
     <p class="lead">振動数 <i class="qv">f</i> の正弦波（基音）に、2<i class="qv">f</i>、3<i class="qv">f</i>、… の正弦波（倍音）を重ねます。どの倍音をどれだけ重ねるかで波形が変わり、同じ高さでも違う音色に聞こえます。</p>
+    </div>
+    <div class="colG">
     <div class="readout" aria-live="polite">
       <div><span class="k">基音の振動数 <i class="qv">f</i>（高さ）</span><span class="v" id="aF"></span></div>
       <div><span class="k">波形の周期 <i class="qv">T</i></span><span class="v" id="aT"></span></div>
@@ -158,6 +183,8 @@ th{background:var(--shade)}
       <button type="button" class="btn ghost" id="aTour">聞き比べ（4つの波形を順に）</button>
     </div>
     <p class="warn">音量に注意してください（はじめは小さめに。イヤホンでは特に）。</p>
+    </div>
+    <div class="colC">
     <div class="opts">
       <div class="seg" role="group" aria-label="波形"><span class="seg-label">波形</span>
         <button type="button" data-pre="sine">正弦波（基音だけ）</button><button type="button" data-pre="saw">のこぎり波</button><button type="button" data-pre="square">矩形波</button><button type="button" data-pre="tri">三角波</button><button type="button" data-pre="free">自由に（棒を動かす）</button>
@@ -172,9 +199,7 @@ th{background:var(--shade)}
       </div>
     </div>
     <p class="hint" id="aHint"></p>
-  </section>
-
-  <section class="sheet" aria-labelledby="h-add2">
+    <div class="qbox" aria-labelledby="h-add2">
     <h3 id="h-add2">3つの波形のつくり方</h3>
     <div class="tbl"><table>
       <colgroup><col style="width:5.2em"><col style="width:7.5em"><col style="width:5em"><col></colgroup>
@@ -190,16 +215,20 @@ th{background:var(--shade)}
       <p><b>減算合成</b>：多くのアナログシンセサイザーは、倍音を多く含むのこぎり波や矩形波を電気回路（発振器）でつくり、フィルターで高い倍音を削って音色を整えます。「フィルター」のスライダーで試せます。</p>
       <p>どちらも「音色は、どの倍音がどれだけ含まれるか（波形）で決まる」という考え方に基づいています。どんな形の周期的な波も、基本振動数の整数倍の正弦波の和で表せます（フーリエ級数。大学の数学で学びます）。</p>
     </div>
+    </div>
+    <div class="qbox"><h3>見てみよう・聞いてみよう</h3><ol class="qs" id="qsAdd"></ol></div>
+    </div>
   </section>
-
-  <section class="sheet"><h3>見てみよう・聞いてみよう</h3><ol class="qs" id="qsAdd"></ol></section>
 </div>
 
 <!-- ============ 声の波形を見る ============ -->
 <div class="scene" id="sc-mic" role="tabpanel" hidden>
-  <section class="sheet" aria-labelledby="h-mic">
+  <section class="sheet board" aria-labelledby="h-mic">
+    <div class="head">
     <h2 id="h-mic">マイクで声や楽器の波形を見る</h2>
     <p class="lead">マイクに向かって「あー」と、同じ高さで声を出し続けてみよう。くり返しの1回分が周期 <i class="qv">T</i>、その形が音色です。スペクトルには、基音と倍音が等間隔の山として並びます。</p>
+    </div>
+    <div class="colG">
     <div class="controls">
       <button type="button" class="btn" id="mStart">🎤 マイクを使う</button>
       <button type="button" class="btn ghost" id="mFreeze" disabled>波形を止める</button>
@@ -217,21 +246,27 @@ th{background:var(--shade)}
     <div class="stage wave"><canvas id="cvMW" role="img" aria-label="マイクから入力された音の波形。"></canvas></div>
     <div class="cap">スペクトル（0〜4000 Hz）<span>縦の点線：基本振動数の整数倍</span></div>
     <div class="stage spec"><canvas id="cvMS" role="img" aria-label="マイクから入力された音のスペクトル。"></canvas></div>
+    </div>
+    <div class="colC">
     <div class="opts">
       <div class="seg" role="group" aria-label="表示する時間"><span class="seg-label">表示する時間</span>
         <button type="button" data-mw="3">3周期分</button><button type="button" data-mw="20">20 ms</button><button type="button" data-mw="60">60 ms</button>
       </div>
     </div>
     <p class="hint">パソコンやスマートフォンの設定で、このページにマイクの使用を許可してください。うまく表示されないときは、マイクに近づいて声を出すか、イヤホンのマイクを使ってください。</p>
+    <div class="qbox"><h3>やってみよう</h3><ol class="qs" id="qsMic"></ol></div>
+    </div>
   </section>
-  <section class="sheet"><h3>やってみよう</h3><ol class="qs" id="qsMic"></ol></section>
 </div>
 
 <!-- ============ 母音を合成する ============ -->
 <div class="scene" id="sc-vowel" role="tabpanel" hidden>
-  <section class="sheet" aria-labelledby="h-vow">
+  <section class="sheet board" aria-labelledby="h-vow">
+    <div class="head">
     <h2 id="h-vow">声帯の音に「口の形の共鳴」をかけて母音をつくる</h2>
     <p class="lead">声帯の振動は、基音と多くの倍音を含むブザーのような音です（音源）。これが口やのど（声道）を通るとき、舌やあごの位置で決まるいくつかの振動数の倍音が共鳴して強められます。この強められる振動数の山を<b>フォルマント</b>といい、低い方から <i class="qv">F</i><sub>1</sub>、<i class="qv">F</i><sub>2</sub> の位置で母音が決まります。</p>
+    </div>
+    <div class="colG">
     <div class="readout" aria-live="polite">
       <div><span class="k">声の高さ <i class="qv">f</i></span><span class="v" id="vF"></span></div>
       <div><span class="k">周期 <i class="qv">T</i></span><span class="v" id="vT"></span></div>
@@ -247,6 +282,8 @@ th{background:var(--shade)}
       <button type="button" class="btn ghost" id="vTour">あ・い・う・え・お を順に</button>
     </div>
     <p class="warn">音量に注意してください（はじめは小さめに）。</p>
+    </div>
+    <div class="colC">
     <div class="opts">
       <div class="seg big" role="group" aria-label="母音"><span class="seg-label">母音</span>
         <button type="button" data-v="a">あ</button><button type="button" data-v="i">い</button><button type="button" data-v="u">う</button><button type="button" data-v="e">え</button><button type="button" data-v="o">お</button>
@@ -264,9 +301,7 @@ th{background:var(--shade)}
     <div class="cap"><b>母音の地図（<i class="qv">F</i><sub>1</sub> と <i class="qv">F</i><sub>2</sub>）</b><span>地図の上をドラッグすると、母音の間の音もつくれる</span></div>
     <div class="stage map" id="stVM"><canvas id="cvVM" role="img" aria-label="横軸を第2フォルマント、縦軸を第1フォルマントにとった母音の地図。あ・い・う・え・おの位置と、いまの音の位置。"></canvas></div>
     <p class="hint">フォルマントの値は日本語の母音の代表的な値です（人によって違います）。この画面の音は、各倍音の正弦波を重ねて（加算合成で）つくっています。</p>
-  </section>
-
-  <section class="sheet" aria-labelledby="h-vow2">
+    <div class="qbox" aria-labelledby="h-vow2">
     <h3 id="h-vow2">声のしくみと合成音声</h3>
     <p><b>音源とフィルター</b>：声の高さは声帯の振動数（基音）で、母音（音色）は声道の共鳴（フォルマント）で決まります。高さを変えても母音が変わらないのは、フォルマントの位置がほぼ変わらないからです。この考え方を「ソース・フィルター理論」といいます。</p>
     <div class="box">
@@ -275,8 +310,10 @@ th{background:var(--shade)}
       <p><b>ボーカロイド（VOCALOID）などの歌声合成</b>：実際の歌手の声を録音し、「か」「ka→a」のような短い音の断片（音声素片）を集めたデータベースをつくっておきます。歌詞と楽譜に合わせて断片をつなぎ、高さ（基本振動数）や長さを変えて歌わせます（素片連結方式）。最近は、AI（深層学習）で人の声の特徴を学習して合成する方式も広がっています。</p>
       <p>どの方式でも、声の高さ（基本振動数）と音色（スペクトルの形）を別々に調整して、声らしく聞かせています。</p>
     </div>
+    </div>
+    <div class="qbox"><h3>見てみよう・聞いてみよう</h3><ol class="qs" id="qsVowel"></ol></div>
+    </div>
   </section>
-  <section class="sheet"><h3>見てみよう・聞いてみよう</h3><ol class="qs" id="qsVowel"></ol></section>
 </div>
 </main>
 
@@ -302,6 +339,8 @@ function canvas(id, draw){
   if(window.ResizeObserver) new ResizeObserver(o.fit).observe(cv); else addEventListener("resize", o.fit);
   canvases.push(o); return o;
 }
+function setHdr(){ const tp = document.querySelector(".top"); if(tp) document.documentElement.style.setProperty("--hdr", tp.offsetHeight + "px"); }
+setHdr(); addEventListener("resize", setHdr);
 function redrawAll(){ readColors(); canvases.forEach(o => o.W && o.draw(o)); }
 const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
 if(mq && mq.addEventListener) mq.addEventListener("change", redrawAll);

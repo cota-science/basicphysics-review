@@ -92,6 +92,29 @@ th{background:var(--shade)}
 .qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
 .qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
 .ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+/* 配置：スマホは1列。PC（幅 1000px 以上）は左に数値・地図・波形（固定、図の高さは画面に合わせる）、右に説明・振動数の操作・上限さがし・解説・やってみよう */
+.board{display:flex;flex-direction:column}
+.colG,.colC,.colC2,.head{display:contents}
+.qbox{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+@media (min-width:1000px){
+  .top-inner,main{max-width:1360px}
+  .board{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(320px,1fr);column-gap:22px;align-items:start}
+  .head,.colC,.colC2{display:block;grid-column:2}
+  .head{grid-row:1}.colC{grid-row:2}.colC2{grid-row:3}
+  .colG{display:block;grid-column:1;grid-row:1 / span 3;position:sticky;top:calc(var(--hdr,110px) + 10px)}
+  .colG .readout{margin-top:0 !important}
+  .colG .stage.map{max-height:max(170px,calc((100vh - var(--hdr,110px) - 330px) * .6))}
+  .colG .stage.wave{max-height:max(110px,calc((100vh - var(--hdr,110px) - 330px) * .4))}
+  .colG .controls{margin-top:8px}
+  .colG .result{margin-top:8px}
+  .head .lead{font-size:14px;margin-bottom:8px}
+  .head .warn{font-size:12.5px;margin-top:4px}
+  .colC .big{margin:4px 0 0}
+  .colC .big input{font-size:28px;padding-top:2px;padding-bottom:2px}
+  .colC .steps{margin-top:6px}
+  .colC .steps button{min-height:34px;font-size:13.5px}
+  .colC .controls{margin-top:10px}
+}
 </style>
 </head>
 <body>
@@ -116,11 +139,13 @@ th{background:var(--shade)}
 </header>
 
 <main>
-  <section class="sheet" aria-labelledby="h1x">
+  <section class="sheet board" aria-labelledby="h1x">
+    <div class="head">
     <h2 id="h1x">振動数を選んで正弦波を鳴らし、聞こえるか試す</h2>
     <p class="lead">人が聞くことのできる音の振動数の範囲（可聴域）は、およそ 20 Hz 〜 20000 Hz です。スライダーで振動数を選んで音を出し、「聞こえた」「聞こえない」を記録して、自分の可聴域を調べよう。</p>
     <p class="warn"><b>はじめに音量を小さめにしてください。</b>聞こえないからといって、音量を大きくしすぎないこと。イヤホンでは特に注意。周りに人がいるときは、高い音が迷惑にならないようにしよう。</p>
-
+    </div>
+    <div class="colC">
     <div class="big"><input type="text" id="fIn" inputmode="decimal" autocomplete="off" aria-label="振動数（Hz）"><span>Hz</span></div>
     <input type="range" id="fS" min="0" max="1000" step="1" aria-label="振動数（20〜20000 Hz、対数目盛り）">
     <div class="steps" id="pre"></div>
@@ -132,7 +157,8 @@ th{background:var(--shade)}
       <button type="button" class="btn no" id="no">× 聞こえない</button>
     </div>
     <div class="slider"><label for="vol">音量</label><input type="range" id="vol" min="0" max="0.6" step="0.02" value="0.12"><output id="volO" for="vol"></output></div>
-
+    </div>
+    <div class="colG">
     <div class="readout" aria-live="polite" style="margin-top:10px">
       <div><span class="k">振動数 <i class="qv">f</i></span><span class="v" id="rF"></span></div>
       <div><span class="k">周期 <i class="qv">T</i> ＝ 1/<i class="qv">f</i></span><span class="v" id="rT"></span></div>
@@ -147,9 +173,9 @@ th{background:var(--shade)}
 
     <div class="cap">波形<span id="waveNote"></span></div>
     <div class="stage wave"><canvas id="cvWave" role="img" aria-label="いま選んでいる振動数の正弦波の波形。"></canvas></div>
-  </section>
-
-  <section class="sheet" aria-labelledby="hUp">
+    </div>
+    <div class="colC2">
+    <div class="qbox" aria-labelledby="hUp">
     <h3 id="hUp">高い音の上限をさがす（自動）</h3>
     <p class="hint" style="margin-top:0">8000 Hz 〜 20000 Hz の間で、聞こえたかどうかの答えに合わせて振動数を半分ずつしぼりこみます（7回）。</p>
     <div class="controls">
@@ -159,9 +185,8 @@ th{background:var(--shade)}
       <button type="button" class="btn ghost" id="upAgain" disabled>もう一度聞く</button>
     </div>
     <p class="result" id="upMsg">「上限さがしを始める」を押すと、音が 1.5 秒鳴ります。</p>
-  </section>
-
-  <section class="sheet" aria-labelledby="hEx">
+    </div>
+    <div class="qbox" aria-labelledby="hEx">
     <h3 id="hEx">可聴域・超音波・機器の限界</h3>
     <div class="tbl"><table>
       <colgroup><col style="width:7.5em"><col></colgroup>
@@ -174,9 +199,10 @@ th{background:var(--shade)}
       <p><b>機器の限界にも注意</b>：スマートフォンやノートパソコンの小さなスピーカーは、低い音（およそ 200 Hz 以下）をほとんど出せません。低い音が聞こえないときは、イヤホンやヘッドホンで試そう。また、多くの機器は 20000 Hz 前後より高い音を出せません。</p>
       <p><b>音量の感じ方</b>：同じ「音量」の設定でも、振動数によって大きさの感じ方が違います。2000 〜 5000 Hz の音は特に大きく感じるので、振動数を変えたら音量にも気をつけよう。</p>
     </div>
+    </div>
+    <div class="qbox"><h3>やってみよう・考えよう</h3><ol class="qs" id="qs"></ol></div>
+    </div>
   </section>
-
-  <section class="sheet"><h3>やってみよう・考えよう</h3><ol class="qs" id="qs"></ol></section>
 </main>
 
 <script>
@@ -221,6 +247,8 @@ function syncBtn(){ const b = $("play"); b.textContent = playing() ? "■ 音を
 let col = {};
 function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","green","shade","sheet","orange","blue-soft","red-soft"].forEach(k => col[k.replace("-","_")] = cs.getPropertyValue("--" + k).trim()); }
 const cvs = [];
+function setHdr(){ const tp = document.querySelector(".top"); if(tp) document.documentElement.style.setProperty("--hdr", tp.offsetHeight + "px"); }
+setHdr(); addEventListener("resize", setHdr);
 function canvas(id, draw){ const cv = $(id), ctx = cv.getContext("2d"), o = { cv, ctx, W:0, H:0, draw };
   o.fit = () => { const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); if(r.width < 2) return; o.W = Math.round(r.width); o.H = Math.round(r.height); cv.width = Math.round(o.W * d); cv.height = Math.round(o.H * d); ctx.setTransform(d, 0, 0, d, 0, 0); readColors(); o.draw(o); };
   if(window.ResizeObserver) new ResizeObserver(o.fit).observe(cv); else addEventListener("resize", o.fit); cvs.push(o); return o; }

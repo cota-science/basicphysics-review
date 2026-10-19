@@ -92,6 +92,23 @@ h3{font-size:17px;margin:0 0 8px}
 .qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
 .qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
 .ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+/* 配置：スマホは1列。PC（幅 1000px 以上）は左に数値・式・図・再生ボタン（固定、図の高さは画面に合わせる）、右に説明・設定・見てみよう */
+.board{display:flex;flex-direction:column}
+.colG,.colC,.head{display:contents}
+.qbox{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+@media (min-width:1000px){
+  .top-inner,main{max-width:1360px}
+  .board{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(320px,1fr);column-gap:22px;align-items:start}
+  .head,.colC{display:block;grid-column:2}
+  .head{grid-row:1}.colC{grid-row:2}
+  .colG{display:block;grid-column:1;grid-row:1 / span 2;position:sticky;top:calc(var(--hdr,110px) + 10px)}
+  .colG .stage{max-height:max(230px,calc(100vh - var(--hdr,110px) - 330px))}
+  .colG .controls{margin-top:8px}
+  .colG .formula{font-size:15px}
+  .colG .note{font-size:12.5px;margin-bottom:6px}
+  .colC .opts{margin-top:0}
+  .head .lead{font-size:14px}
+}
 </style>
 </head>
 <body>
@@ -115,10 +132,13 @@ h3{font-size:17px;margin:0 0 8px}
 </header>
 
 <main>
-  <section class="sheet" aria-labelledby="t1">
+  <section class="sheet board" aria-labelledby="t1">
+    <div class="head">
     <h2 id="t1">振動数がわずかに違う2つの音を重ねる</h2>
     <p class="lead">2つの音の山と山がそろう時刻には強め合って大きな音に、山と谷が重なる時刻には弱め合って小さな音になります。これが周期的にくり返される現象がうなりです。</p>
 
+    </div>
+    <div class="colG">
     <div class="readout" aria-live="polite">
       <div><span class="k">音1 <i class="qv">f</i><sub>1</sub></span><span class="v" id="rF1"></span></div>
       <div><span class="k">音2 <i class="qv">f</i><sub>2</sub></span><span class="v" id="rF2"></span></div>
@@ -137,6 +157,8 @@ h3{font-size:17px;margin:0 0 8px}
     </div>
     <p class="warn">音量に注意してください（はじめは小さめに。イヤホンでは特に）。</p>
 
+    </div>
+    <div class="colC">
     <div class="opts">
       <div class="tone">
         <div class="tone-head"><span class="name c1">音1</span>
@@ -163,11 +185,11 @@ h3{font-size:17px;margin:0 0 8px}
       </div>
     </div>
     <p class="hint" id="viewHint"></p>
-  </section>
-
-  <section class="sheet" aria-labelledby="qsTitle">
+    <div class="qbox" aria-labelledby="qsTitle">
     <h3 id="qsTitle">見てみよう・聞いてみよう</h3>
     <ol class="qs" id="qs"></ol>
+    </div>
+    </div>
   </section>
 </main>
 
@@ -226,7 +248,7 @@ function syncSoundBtn(){ const b = $("soundBtn"); b.textContent = st.sound ? "�
 /* ---------- canvas ---------- */
 const cv = $("cv"), ctx = cv.getContext("2d"); let W = 0, H = 0, col = {};
 function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","green","shade","sheet"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
-function resize(){ const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0); draw(); hint(); }
+function resize(){ const tp = document.querySelector(".top"); if(tp) document.documentElement.style.setProperty("--hdr", tp.offsetHeight + "px"); const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0); draw(); hint(); }
 function Ln(pts, color, w, dash){ ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore(); }
 function Tx(s, x, y, color, size, align, opt){ ctx.save(); ctx.fillStyle = color; ctx.font = `${opt === "b" ? "700 " : ""}${size || 12}px BIZ UDPGothic,"Hiragino Sans","Yu Gothic UI",sans-serif`; ctx.textAlign = align || "left"; ctx.textBaseline = "middle"; ctx.fillText(s, x, y); ctx.restore(); }
 function band(X, Y, t0w, t1w, envFn, color){ // 密な波形を、振幅の範囲の帯として描く
