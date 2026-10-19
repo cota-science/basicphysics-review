@@ -303,7 +303,7 @@ const SECTIONS = [
     {id:"rc5",type:"choice",prompt:"定在波（定常波）は、波形が左右どちらにも進まない。",options:TF,answer:0,explain:"正しい。節の位置は動かず、腹の位置でその場の振動をくり返します。"},
     {id:"rc6",type:"choice",prompt:"振幅が大きい波ほど、速く伝わる。",options:TF,answer:1,explain:"誤り。振幅は波の速さに関係しません。"}
   ]},
-  { title:"D. 縦波を横波のように表したグラフを読む", lead:`縦波（疎密波）のある時刻の変位を、右向き（${x} の正の向き）の変位を ${y} の正にとって、横波のように表したグラフ。点 a〜e は、媒質の各点のもとの位置。答えたら確かめよう：${ANIM("anim/wave-model-l.html","縦波の模型（ばねとおもりの列）")}${ANIM("anim/longitudinal.html","縦波（疎密波）")}`, figure:LONG, qs:[
+  { title:"D. 縦波を横波のように表したグラフを読む", lead:`縦波（疎密波）のある時刻の変位を、右向き（${x} の正の向き）の変位を ${y} の正にとって、横波のように表したグラフ。点 a〜e は、媒質の各点のもとの位置。答えたら確かめよう：${ANIM("anim/long-to-trans.html","縦波を横波のように表す")}${ANIM("anim/wave-model-l.html","縦波の模型（ばねとおもりの列）")}${ANIM("anim/longitudinal.html","縦波（疎密波）")}`, figure:LONG, qs:[
     {id:"rd1",type:"choice",prompt:"点 b の媒質は、この瞬間どちら向きにずれているか。",options:["右向きに最大","左向きに最大","ずれていない"],answer:0,
      explain:`${y} が正の最大なので、右向きに最大だけずれています。縦波のグラフの「上」は「右向き」の意味です。`},
     {id:"rd2",type:"choice",prompt:"媒質が最も密になっている点はどれか。",options:["a","b","c","d","e"],answer:2,
