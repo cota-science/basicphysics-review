@@ -98,10 +98,10 @@ h3.qh{font-size:17px;margin:0 0 8px}
 .qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
 .qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
 .ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
-/* 配置：スマホは1列（元の順）。PC（幅 1000px 以上）は左に図・数値・再生ボタン・いまの状態（固定、図の高さは画面に合わせる）、右に説明・Q と W の設定・式・例・表示・注記。見てみようは下 */
+/* 配置：スマホは1列（元の順）。PC（幅 1000px 以上）は左に図・数値・例・再生ボタン・表示（固定、図の高さは画面に合わせる）、右に説明・Q と W の設定・式・いまの状態・注記。見てみようは下 */
 .board{display:flex;flex-direction:column}
 .colG,.colC,.head{display:contents}
-.head>*{order:1}.stage,.keys{order:2}.set,.formula,.presets{order:3}.controls{order:4}.checks{order:5}.read{order:6}.now{order:7}.hint{order:8}
+.head>*{order:1}.stage,.keys{order:2}.set,.formula{order:3}.presets{order:4}.controls{order:5}.checks{order:6}.read{order:7}.now{order:8}.hint{order:9}
 @media (min-width:1000px){
   .top-inner,main{max-width:1360px}
   main{padding-top:12px;gap:14px}
@@ -116,18 +116,18 @@ h3.qh{font-size:17px;margin:0 0 8px}
   .head h2{font-size:18px}
   .head .lead{font-size:13.5px;margin-bottom:8px}
   .colC .set{grid-template-columns:minmax(0,1fr);gap:8px;margin-top:0}
-  .colG .now{margin-top:8px;padding:6px 12px}
-  .colG .now > b,.colG .now p{font-size:14px}
+  .colC .now{margin-top:8px;padding:6px 12px}
+  .colC .now > b,.colC .now p{font-size:14px}
   .colC .card{padding:6px 12px 4px}
   .colC .card h3{font-size:15px}
   .colC .card p{font-size:12px;line-height:1.5}
   .colC .formula{margin-top:8px;padding:4px 12px;font-size:16px}
-  .colC .presets{margin-top:6px;gap:4px}
-  .colC .presets span{font-size:13px}
-  .colC .chip{min-height:30px;padding:2px 10px;font-size:13px}
-  .colC .checks{margin-top:4px}
-  .colC .checks label{min-height:32px;font-size:13.5px}
-  .colC .checks input{width:18px;height:18px}
+  .colG .presets{margin-top:8px;gap:4px}
+  .colG .presets span{font-size:13px}
+  .colG .chip{min-height:32px;padding:2px 10px;font-size:13px}
+  .colG .checks{margin-top:2px}
+  .colG .checks label{min-height:30px;font-size:13.5px}
+  .colG .checks input{width:18px;height:18px}
   .colC .hint{font-size:12px;line-height:1.5;margin-top:8px}
 }
 </style>
@@ -168,6 +168,13 @@ h3.qh{font-size:17px;margin:0 0 8px}
       <div><span class="k">体積（はじめの何倍か）</span><span class="v" id="rV"></span></div>
       <div><span class="k">粒子の平均の速さ</span><span class="v" id="rS"></span></div>
     </div>
+    <div class="presets"><span>例：</span>
+      <button type="button" class="chip" data-q="200" data-w="0">加熱（体積一定）</button>
+      <button type="button" class="chip" data-q="0" data-w="200">断熱圧縮</button>
+      <button type="button" class="chip" data-q="0" data-w="-200">断熱膨張</button>
+      <button type="button" class="chip" data-q="150" data-w="-150">温度一定で膨張</button>
+      <button type="button" class="chip" data-q="300" data-w="-120">④手順 問題2</button>
+    </div>
     <div class="controls">
       <button type="button" class="btn" id="goBtn">変化させる</button>
       <button type="button" class="btn ghost" id="playBtn">一時停止</button>
@@ -176,7 +183,10 @@ h3.qh{font-size:17px;margin:0 0 8px}
         <select id="speedSel"><option value="0.35">スロー</option><option value="1" selected>ふつう</option><option value="2">はやい</option></select>
       </label>
     </div>
-    <div class="now" id="now"><b></b><p></p></div>
+    <div class="checks">
+      <label for="ckTag"><input type="checkbox" id="ckTag" checked>注目する粒子と速度の矢印</label>
+      <label for="ckRing"><input type="checkbox" id="ckRing" checked>ぶつかったときの速さの変化</label>
+    </div>
     </div>
     <div class="colC">
     <div class="set">
@@ -192,17 +202,7 @@ h3.qh{font-size:17px;margin:0 0 8px}
       </div>
     </div>
     <div class="formula" id="formula"></div>
-    <div class="presets"><span>例：</span>
-      <button type="button" class="chip" data-q="200" data-w="0">加熱（体積一定）</button>
-      <button type="button" class="chip" data-q="0" data-w="200">断熱圧縮</button>
-      <button type="button" class="chip" data-q="0" data-w="-200">断熱膨張</button>
-      <button type="button" class="chip" data-q="150" data-w="-150">温度一定で膨張</button>
-      <button type="button" class="chip" data-q="300" data-w="-120">④手順 問題2</button>
-    </div>
-    <div class="checks">
-      <label for="ckTag"><input type="checkbox" id="ckTag" checked>注目する粒子と速度の矢印</label>
-      <label for="ckRing"><input type="checkbox" id="ckRing" checked>ぶつかったときの速さの変化</label>
-    </div>
+    <div class="now" id="now"><b></b><p></p></div>
     <p class="hint">2次元の理想気体（粒子どうしの引力なし）のモデルです。内部エネルギーは粒子の運動エネルギーの合計で、はじめを 500&nbsp;J、300&nbsp;K としています。<i class="qv">Q</i> は底の板にぶつかった粒子の運動エネルギーの増減の合計、<i class="qv">W</i> はピストンにぶつかった粒子の運動エネルギーの増減の合計を、それぞれ数えたものです。容器にタップすると、注目する粒子を選べます。</p>
     </div>
   </section>
