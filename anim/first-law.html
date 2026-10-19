@@ -98,6 +98,38 @@ h3.qh{font-size:17px;margin:0 0 8px}
 .qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
 .qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
 .ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+/* 配置：スマホは1列（元の順）。PC（幅 1000px 以上）は左に図・数値・再生ボタン・いまの状態（固定、図の高さは画面に合わせる）、右に説明・Q と W の設定・式・例・表示・注記。見てみようは下 */
+.board{display:flex;flex-direction:column}
+.colG,.colC,.head{display:contents}
+.head>*{order:1}.stage,.keys{order:2}.set,.formula,.presets{order:3}.controls{order:4}.checks{order:5}.read{order:6}.now{order:7}.hint{order:8}
+@media (min-width:1000px){
+  .top-inner,main{max-width:1360px}
+  main{padding-top:12px;gap:14px}
+  .board{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(340px,1fr);grid-template-rows:auto 1fr;column-gap:22px;align-items:start;padding-top:14px}
+  .head,.colC{display:block;grid-column:2}
+  .head{grid-row:1}.colC{grid-row:2}
+  .colG{display:block;grid-column:1;grid-row:1 / span 2;position:sticky;top:calc(var(--hdr,90px) + 10px)}
+  .colG .stage{max-height:max(250px,calc(100vh - var(--hdr,90px) - 315px))}
+  .colG .read{margin-top:8px}
+  .colG .controls{margin-top:8px}
+  .colG .hint{margin-top:6px}
+  .head h2{font-size:18px}
+  .head .lead{font-size:13.5px;margin-bottom:8px}
+  .colC .set{grid-template-columns:minmax(0,1fr);gap:8px;margin-top:0}
+  .colG .now{margin-top:8px;padding:6px 12px}
+  .colG .now > b,.colG .now p{font-size:14px}
+  .colC .card{padding:6px 12px 4px}
+  .colC .card h3{font-size:15px}
+  .colC .card p{font-size:12px;line-height:1.5}
+  .colC .formula{margin-top:8px;padding:4px 12px;font-size:16px}
+  .colC .presets{margin-top:6px;gap:4px}
+  .colC .presets span{font-size:13px}
+  .colC .chip{min-height:30px;padding:2px 10px;font-size:13px}
+  .colC .checks{margin-top:4px}
+  .colC .checks label{min-height:32px;font-size:13.5px}
+  .colC .checks input{width:18px;height:18px}
+  .colC .hint{font-size:12px;line-height:1.5;margin-top:8px}
+}
 </style>
 </head>
 <body>
@@ -118,16 +150,35 @@ h3.qh{font-size:17px;margin:0 0 8px}
 </header>
 
 <main>
-  <section class="sheet" aria-labelledby="t1">
+  <section class="sheet board" aria-labelledby="t1">
+    <div class="head">
     <h2 id="t1">熱と仕事で、気体の内部エネルギーはどう変わるか</h2>
     <p class="lead">シリンダーの中の気体に、底の板から熱 <i class="qv">Q</i> を出し入れし、ピストンを押し引きして仕事 <i class="qv">W</i> をします。気体の内部エネルギー <i class="qv">U</i> は、粒子の熱運動のエネルギーの合計です。粒子が底の板やピストンにぶつかったときの速さの変化に注目しよう。</p>
+    </div>
+    <div class="colG">
     <div class="stage"><canvas id="cv" role="img" aria-label="左に縦のシリンダー。底は加熱・冷却する板、上はピストン。中の気体の粒子は速さによって色が変わる。右に、熱量Q、仕事W、内部エネルギーの変化ΔU、内部エネルギーUの帯グラフ。"></canvas></div>
     <ul class="keys">
       <li><span class="grad"></span>粒子の速さ（遅い → 速い）</li>
       <li><span class="ring" style="border-color:var(--heat)"></span>ぶつかって速くなった</li>
       <li><span class="ring" style="border-color:var(--cool)"></span>ぶつかって遅くなった</li>
     </ul>
-
+    <div class="read" aria-live="polite">
+      <div><span class="k">内部エネルギー <i class="qv">U</i></span><span class="v" id="rU"></span></div>
+      <div><span class="k">温度 <i class="qv">T</i></span><span class="v" id="rT"></span></div>
+      <div><span class="k">体積（はじめの何倍か）</span><span class="v" id="rV"></span></div>
+      <div><span class="k">粒子の平均の速さ</span><span class="v" id="rS"></span></div>
+    </div>
+    <div class="controls">
+      <button type="button" class="btn" id="goBtn">変化させる</button>
+      <button type="button" class="btn ghost" id="playBtn">一時停止</button>
+      <button type="button" class="btn ghost" id="resetBtn">最初の状態に戻す</button>
+      <label class="speed" for="speedSel">速さ
+        <select id="speedSel"><option value="0.35">スロー</option><option value="1" selected>ふつう</option><option value="2">はやい</option></select>
+      </label>
+    </div>
+    <div class="now" id="now"><b></b><p></p></div>
+    </div>
+    <div class="colC">
     <div class="set">
       <div class="card" style="--c:var(--heat)">
         <h3>熱量 <i class="qv">Q</i>（気体が吸収する熱量）</h3>
@@ -148,27 +199,12 @@ h3.qh{font-size:17px;margin:0 0 8px}
       <button type="button" class="chip" data-q="150" data-w="-150">温度一定で膨張</button>
       <button type="button" class="chip" data-q="300" data-w="-120">④手順 問題2</button>
     </div>
-    <div class="controls">
-      <button type="button" class="btn" id="goBtn">変化させる</button>
-      <button type="button" class="btn ghost" id="playBtn">一時停止</button>
-      <button type="button" class="btn ghost" id="resetBtn">最初の状態に戻す</button>
-      <label class="speed" for="speedSel">速さ
-        <select id="speedSel"><option value="0.35">スロー</option><option value="1" selected>ふつう</option><option value="2">はやい</option></select>
-      </label>
-    </div>
     <div class="checks">
       <label for="ckTag"><input type="checkbox" id="ckTag" checked>注目する粒子と速度の矢印</label>
       <label for="ckRing"><input type="checkbox" id="ckRing" checked>ぶつかったときの速さの変化</label>
     </div>
-
-    <div class="read" aria-live="polite">
-      <div><span class="k">内部エネルギー <i class="qv">U</i></span><span class="v" id="rU"></span></div>
-      <div><span class="k">温度 <i class="qv">T</i></span><span class="v" id="rT"></span></div>
-      <div><span class="k">体積（はじめの何倍か）</span><span class="v" id="rV"></span></div>
-      <div><span class="k">粒子の平均の速さ</span><span class="v" id="rS"></span></div>
-    </div>
-    <div class="now" id="now"><b></b><p></p></div>
     <p class="hint">2次元の理想気体（粒子どうしの引力なし）のモデルです。内部エネルギーは粒子の運動エネルギーの合計で、はじめを 500&nbsp;J、300&nbsp;K としています。<i class="qv">Q</i> は底の板にぶつかった粒子の運動エネルギーの増減の合計、<i class="qv">W</i> はピストンにぶつかった粒子の運動エネルギーの増減の合計を、それぞれ数えたものです。容器にタップすると、注目する粒子を選べます。</p>
+    </div>
   </section>
 
   <section class="sheet" aria-labelledby="qsTitle">
@@ -259,7 +295,7 @@ function physics(dt){
 /* ---------- 描画 ---------- */
 const cv = $("cv"), ctx = cv.getContext("2d"); let W = 0, H = 0, col = {}, LY = null;
 function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","shade","sheet","heat","cool","work","du"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
-function resize(){ const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0); LY = layout(); draw(); }
+function resize(){ const tp = document.querySelector(".top"); if(tp) document.documentElement.style.setProperty("--hdr", tp.offsetHeight + "px"); const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0); LY = layout(); draw(); }
 function L(pts, color, w, dash){ ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore(); }
 function T(s, x, y, color, size, align, bold){ ctx.save(); ctx.fillStyle = color; ctx.font = `${bold ? "700 " : ""}${size || 12}px "BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`; ctx.textAlign = align || "left"; ctx.textBaseline = "middle"; ctx.fillText(s, x, y); ctx.restore(); }
 function arrow(x0, y0, x1, y1, color, w){ const a = Math.atan2(y1 - y0, x1 - x0), h = 5 + (w || 2) * 1.5; if(Math.hypot(x1 - x0, y1 - y0) < 2) return;
