@@ -93,6 +93,22 @@ h3{font-size:17px;margin:0 0 8px}
 .qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
 .qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
 .ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+/* 配置：スマホは1列。PC（幅 1000px 以上）は左にグラフ（y-x の真下に y-t）を固定し、右に数値・操作・条件・問いを並べる */
+.board{display:flex;flex-direction:column}
+.colG,.colC,.head{display:contents}
+.qbox{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+@media (min-width:1000px){
+  .top-inner,main{max-width:1360px}
+  .board{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(330px,1fr);column-gap:22px;align-items:start}
+  .head,.colC{display:block;grid-column:2}
+  .head{grid-row:1}.colC{grid-row:2}
+  .colG{display:block;grid-column:1;grid-row:1 / span 2;position:sticky;top:calc(var(--hdr,120px) + 10px)}
+  .colG .cap:first-child{margin-top:0}
+  .colG .stage.yx{aspect-ratio:auto;height:max(240px,calc((100vh - var(--hdr,120px) - 116px) * .58))}
+  .colG .stage.yt{aspect-ratio:auto;height:max(160px,calc((100vh - var(--hdr,120px) - 116px) * .42))}
+  .head .lead{font-size:14px}
+  .colC .controls{margin-top:4px}
+}
 </style>
 </head>
 <body>
@@ -116,8 +132,8 @@ h3{font-size:17px;margin:0 0 8px}
 </header>
 
 <main>
-  <section class="sheet" aria-labelledby="t1">
-    <h2 id="t1">振動数・波長・速さの関係</h2>
+  <section class="sheet board" aria-labelledby="t1">
+    <div class="head"><h2 id="t1">振動数・波長・速さの関係</h2>
     <p class="lead">左端の波源が 1 回振動するたびに、波は 1 波長ぶん進みます。1 s 間に <i class="qv">f</i> 回振動するので、1 s 間に進む距離（速さ）は <i class="qv">v</i> ＝ <i class="qv">fλ</i> です。</p>
 
     <div class="readout" aria-live="polite">
@@ -126,14 +142,13 @@ h3{font-size:17px;margin:0 0 8px}
       <div id="cellL"><span class="k">波長 <i class="qv">λ</i></span><span class="v" id="rL"></span></div>
       <div id="cellV"><span class="k">速さ <i class="qv">v</i></span><span class="v" id="rV"></span></div>
     </div>
-    <p class="formula" id="formula"></p>
-
-    <div class="cap">波形（<i class="qv">y</i>-<i class="qv">x</i> グラフ）</div>
+    <p class="formula" id="formula"></p></div>
+    <div class="colG"><div class="cap">波形（<i class="qv">y</i>-<i class="qv">x</i> グラフ）</div>
     <div class="stage yx"><canvas id="cvx" role="img" aria-label="波形（y-xグラフ）。左端の波源から波が右へ進む。"></canvas></div>
     <div class="cap" id="ytTag"></div>
-    <div class="stage yt"><canvas id="cvt" role="img" aria-label="注目する点の振動（y-tグラフ）。"></canvas></div>
-
-    <div class="controls">
+    <div class="stage yt"><canvas id="cvt" role="img" aria-label="注目する点の振動（y-tグラフ）。"></canvas></div></div>
+    <div class="colC">
+    <div class="ctl"><div class="controls">
       <button type="button" class="btn" id="playBtn">一時停止</button>
       <button type="button" class="btn ghost" id="periodBtn">1周期だけ進める</button>
       <button type="button" class="btn ghost" id="resetBtn">最初から</button>
@@ -153,12 +168,12 @@ h3{font-size:17px;margin:0 0 8px}
       <div class="slider" id="rowV"><label for="sV"><small class="sub">媒質中を伝わる</small>波の速さ <i class="qv">v</i></label><input type="range" id="sV" min="0.5" max="2" step="0.5" value="1"><output id="oV" for="sV"></output></div>
       <div class="slider" id="rowA"><label for="sA">振幅 <i class="qv">A</i></label><input type="range" id="sA" min="0.3" max="1" step="0.1" value="0.7"><output id="oA" for="sA"></output></div>
     </div>
-    <p class="hint">条件を変えると、波は最初から出直します。波形の図をタップすると、その位置の点の振動が下のグラフに描かれます（はじめは波源の点）。</p>
-  </section>
-
-  <section class="sheet" aria-labelledby="qsTitle">
+    <p class="hint">条件を変えると、波は最初から出直します。波形の図をタップすると、その位置の点の振動が下のグラフに描かれます（はじめは波源の点）。</p></div>
+    <div class="qbox" aria-labelledby="qsTitle">
     <h3 id="qsTitle">見てみよう</h3>
     <ol class="qs" id="qs"></ol>
+    </div>
+    </div>
   </section>
 </main>
 
@@ -291,7 +306,7 @@ function tick(ts){
   }
   requestAnimationFrame(tick);
 }
-function resize(){ fit("x"); fit("t"); draw(); }
+function resize(){ const tp = document.querySelector(".top"); if(tp) document.documentElement.style.setProperty("--hdr", tp.offsetHeight + "px"); fit("x"); fit("t"); draw(); }
 const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
 if(mq && mq.addEventListener) mq.addEventListener("change", draw);
 new MutationObserver(draw).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
