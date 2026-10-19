@@ -77,7 +77,7 @@ const LAM = ["2<i class='qv'>L</i>","4<i class='qv'>L</i>","<i class='qv'>L</i>"
 const ANIM = (href, label) => `<a href='${href}' style='display:inline-block;margin:8px 6px 0 0;padding:6px 12px;border:1.5px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:700;text-decoration:none;line-height:1.5'>▶ ${label}</a>`;
 const SECTIONS = [
 { id:"def", tab:"①定義", title:"① 定義カード",
-  intro:`音は空気を伝わる縦波です。「高い・大きい・音色」がそれぞれどの量に対応するかを正確に覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/longitudinal.html","縦波（疎密波）")}${ANIM("anim/string.html","弦の固有振動")}${ANIM("anim/air-column.html","気柱の固有振動")}${ANIM("anim/beats.html","うなり")}${ANIM("anim/timbre.html#add","音色と波形（倍音を重ねる）")}${ANIM("anim/timbre.html#mic","声の波形を見る（マイク）")}${ANIM("anim/timbre.html#vowel","母音を合成する")}${ANIM("anim/hearing.html","可聴域を調べる")}`,
+  intro:`音は空気を伝わる縦波です。「高い・大きい・音色」がそれぞれどの量に対応するかを正確に覚えます。<br>アニメーションで確かめよう：<br>${ANIM("anim/longitudinal.html","音波")}${ANIM("anim/string.html","弦の固有振動")}${ANIM("anim/air-column.html","気柱の固有振動")}${ANIM("anim/beats.html","うなり")}${ANIM("anim/timbre.html#add","音色と波形（倍音を重ねる）")}${ANIM("anim/timbre.html#mic","声の波形を見る（マイク）")}${ANIM("anim/timbre.html#vowel","母音を合成する")}${ANIM("anim/hearing.html","可聴域を調べる")}`,
   advice:"音の3要素の対応と、弦・閉管・開管の端の条件（節か腹か）を覚え直そう。",
   ref:{label:"定義カードを見る", html:DEF_TABLE},
   groups:[{ title:"穴埋め", qs:[

@@ -122,8 +122,7 @@ h3{font-size:17px;margin:0 0 8px}
       <a href="wave-speed.html">波の速さ</a>
       <a href="wave-3d.html">波を3次元で見る</a>
       <a href="transverse.html">横波（重ね合わせ・定在波（定常波）・反射）</a>
-      <a href="longitudinal.html">縦波（疎密波）</a>
-      <a href="long-to-trans.html">縦波の横波表示</a>
+      <a href="longitudinal.html">音波</a>
       <a href="string.html">弦の固有振動</a>
       <a href="air-column.html">気柱の固有振動</a>
       <a href="beats.html">うなり</a>
@@ -174,13 +173,14 @@ h3{font-size:17px;margin:0 0 8px}
         <div class="slider"><label for="sS"><small>媒質の</small>糸の張力</label><input type="range" id="sS" min="0.5" max="2" step="0.25" value="1"><output id="oS" for="sS"></output></div>
         <div class="slider"><label for="sK"><small>おもりをつるす</small>ばね定数 <i class="qv">k</i></label><input type="range" id="sK" min="0.5" max="2" step="0.25" value="1"><output id="oK" for="sK"></output></div>
         <div class="slider"><label for="sM"><small>媒質の</small>おもりの質量</label><input type="range" id="sM" min="0.5" max="2" step="0.25" value="1"><output id="oM" for="sM"></output></div>
+        <div class="slider"><label for="sPr">注目するおもり<small>（図をタップしても選べます）</small></label><input type="range" id="sPr" min="1" max="59" step="1" value="20"><output id="oPr" for="sPr"></output></div>
         <div class="checks" role="group" aria-label="表示">
           <label><input type="checkbox" id="chCurve" checked>波形の線</label>
-          <label><input type="checkbox" id="chVel">おもりの速度の矢印</label>
+          <label><input type="checkbox" id="chVel">おもり（媒質）の速度の矢印</label>
           <label><input type="checkbox" id="chFront" checked>波の先頭</label>
         </div>
       </div>
-      <p class="hint">糸の張力・ばね定数・質量は、動かしている途中でも変えられます。ばね定数を変えると、おもりをつるすばね（波源のばねも）の強さが変わり、波源の振動数が変わります。波源や右端を変えると最初からになります。</p>
+      <p class="hint">糸の張力・ばね定数・質量は、動かしている途中でも変えられます。ばね定数を変えると、おもりをつるすばね（波源のばねも）の強さが変わり、波源の振動数が変わります。波源や右端を変えると最初からになります。この模型では、おもりや糸の中でエネルギーが失われない（波は弱まらずに進む）と仮定しています。</p>
 
       <div class="qbox" aria-labelledby="qsTitle">
         <h3 id="qsTitle">見てみよう</h3>
@@ -209,7 +209,7 @@ const SRC = { heavy:{ m:12, f:0.8 }, same:{ m:1, f:null } };
 const st = { src:"heavy", end:"open", P:1.2, sMul:1, mMul:1, kMul:1, t:0, playing:!reduce, speed:0.5,
   hold:null, drive:false, driveT0:0, pullT0:null, probe:20, frontMax:-1, curve:true, vel:false, front:true, stepTo:null, everMoved:false };
 const y = new Float64Array(M), v = new Float64Array(M), gam = new Float64Array(M);
-for(let i = 1; i < M; i++){ const u = Math.max(0, (i - N) / EXT); gam[i] = 0.04 + 5 * u * u; }   // 見える部分はごくわずかな減衰（振り続けても振幅が増え続けないように）
+for(let i = 1; i < M; i++){ const u = Math.max(0, (i - N) / EXT); gam[i] = 5 * u * u; }   // 見える範囲（i < N）には減衰がない：波が伝わる間、波のエネルギーは失われない。「どこまでも続く」では、見えない右側の先だけで振動を吸収して反射を消す
 const HIST = 1000, hist = { t:new Float64Array(HIST), y:new Float32Array(HIST * N), n:0, i:0, next:0 };   // 0.01 s ごとに全おもりの変位を記録（注目するおもりを変えても過去のグラフが残る）
 const A0 = 1;                             // 引く量（表示上の振幅の基準）
 
@@ -247,6 +247,7 @@ function step(dt){
   for(let i = last + 1; i < M; i++){ y[i] = 0; v[i] = 0; }
   if(held !== null){ const prev = y[0]; y[0] = held; v[0] = (held - prev) / dt; }
   st.t += dt;
+  if(st.drive && st.end !== "open"){ let m = 0; for(let i = 0; i < N; i++) m = Math.max(m, Math.abs(y[i])); if(m > 1.35){ st.drive = false; st.warn = true; } }
   if(st.t >= hist.next - 1e-9){ record(); hist.next = st.t + 0.01; }
   // 波の先頭：一度でも動いたおもりのうち最も右
   for(let i = Math.max(1, st.frontMax); i < N; i++){ if(Math.abs(y[i]) > 0.03){ st.frontMax = Math.max(st.frontMax, i); } else if(i > st.frontMax + 1) break; }
@@ -257,7 +258,7 @@ function record(){
   hist.i = (k + 1) % HIST; hist.n = Math.min(HIST, hist.n + 1);
 }
 function reset(){
-  y.fill(0); v.fill(0); st.t = 0; st.hold = null; st.pullT0 = null; st.drive = false; st.frontMax = -1; st.everMoved = false; st.stepTo = null;
+  y.fill(0); v.fill(0); st.t = 0; st.hold = null; st.pullT0 = null; st.drive = false; st.frontMax = -1; st.everMoved = false; st.stepTo = null; st.warn = false; warnShown = false;
   hist.n = 0; hist.i = 0; hist.next = 0; syncUI(); draw();
 }
 
@@ -370,9 +371,11 @@ function syncUI(){
   $("rowP").classList.toggle("locked", !st.drive);
   $("oP").textContent = `${st.P.toFixed(1)} s`; $("oS").textContent = `×${st.sMul}`; $("oM").textContent = `×${st.mMul}`; $("oK").textContent = `×${st.kMul}`;
   $("playBtn").textContent = st.playing ? "一時停止" : "再生";
+  $("sPr").value = st.probe; $("oPr").textContent = `${st.probe} 番目`;
   $("ytCap").innerHTML = `注目するおもり（左から ${st.probe} 番目，赤）と波源（灰色の破線）の振動（${I("y")}-${I("t")} グラフ）`;
   let msg;
-  if(st.hold != null) msg = "左端のおもりを手で持っています。はなすと振動を始めます。";
+  if(st.warn) msg = "閉じた端で反射した波が重なり、エネルギーが失われないので、振幅がどんどん大きくなりました（共振）。手の振動を止めました。";
+  else if(st.hold != null) msg = "左端のおもりを手で持っています。はなすと振動を始めます。";
   else if(st.drive) msg = `手で左端を周期 ${st.P.toFixed(1)} s で上下に振り続けています。どのおもりも同じ周期で振動し、右のものほど遅れます。`;
   else if(!st.everMoved) msg = "「左端を引いてはなす」を押すか、左端のおもりを直接つかんで上下に動かしてはなそう。";
   else if(st.src === "heavy") msg = "波源（大きいおもり）は、ばねの力で上下に振動しながら、糸を通してとなりのおもりを引いています。";
@@ -389,16 +392,17 @@ $("sK").addEventListener("input", e => { st.kMul = +e.target.value; syncUI(); })
 $("chCurve").addEventListener("change", e => { st.curve = e.target.checked; draw(); });
 $("chVel").addEventListener("change", e => { st.vel = e.target.checked; draw(); });
 $("chFront").addEventListener("change", e => { st.front = e.target.checked; draw(); });
+$("sPr").addEventListener("input", e => { st.probe = +e.target.value; syncUI(); draw(); });
 $("speedSel").addEventListener("change", e => st.speed = +e.target.value);
 $("playBtn").addEventListener("click", () => setPlaying(!st.playing));
 $("resetBtn").addEventListener("click", () => reset());
 $("stepBtn").addEventListener("click", () => { setPlaying(false); advance(0.1); draw(); });
 $("pullBtn").addEventListener("click", () => {
-  st.drive = false; st.hold = null; st.pullT0 = st.t; st.everMoved = true;
+  st.drive = false; st.hold = null; st.pullT0 = st.t; st.everMoved = true; st.warn = false; warnShown = false;
   if(!st.playing) setPlaying(true); syncUI();
 });
 $("driveBtn").addEventListener("click", () => {
-  st.drive = !st.drive; st.hold = null; st.pullT0 = null;
+  st.drive = !st.drive; st.hold = null; st.pullT0 = null; st.warn = false; warnShown = false;
   if(st.drive){ st.driveT0 = st.t; st.everMoved = true; if(!st.playing) setPlaying(true); }
   syncUI();
 });
@@ -422,11 +426,12 @@ C.c.addEventListener("pointerup", release); C.c.addEventListener("pointercancel"
 C.c.addEventListener("pointermove", e => { if(dragging) return; const G = geom(), [px] = evPos(e); C.c.style.cursor = Math.abs(px - G.X(0)) < Math.max(26, G.dx * 1.5) ? "grab" : "pointer"; });
 
 const DT = 1 / 800;
-let acc = 0;
+let acc = 0, warnShown = false;
 function advance(simT){
   acc += simT;
   let k = 0;
   while(acc >= DT && k < 4000){ step(DT); acc -= DT; k++;  }
+  if(st.warn && !warnShown){ warnShown = true; syncUI(); }
 }
 let last = null;
 function tick(ts){
