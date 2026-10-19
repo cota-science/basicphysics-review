@@ -99,6 +99,38 @@ h3{font-size:17px;margin:0 0 8px}
 .qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
 .qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
 .ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+/* 配置：スマホは1列。PC（幅 1000px 以上）は左に粒子モデルとグラフ・数値・操作、右に説明・設定・いまの状態・加えた熱の使われ方。見てみようは下に全幅 */
+.board{display:flex;flex-direction:column}
+.colG,.colC,.head{display:contents}
+.part2{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+.part2 h2{font-size:18px}
+@media (min-width:1000px){
+  .top-inner,main{max-width:1360px}
+  main{padding-top:12px;gap:14px}
+  .board{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(340px,1fr);column-gap:22px;align-items:start;padding-top:14px;padding-bottom:14px}
+  .head,.colC{display:block;grid-column:2}
+  .head{grid-row:1}.colC{grid-row:2}
+  .colG{display:block;grid-column:1;grid-row:1 / span 2}
+  .colG .stage{max-height:max(260px,calc(100vh - var(--hdr,90px) - 250px))}
+  .colG .read{margin-top:8px}
+  .colG .read .v{font-size:17px;line-height:1.4}
+  .colG .controls{margin-top:8px}
+  .colG .hint{margin-top:6px}
+  .head h2{font-size:18px}
+  .head .lead{font-size:13.5px;margin-bottom:8px}
+  .colC .opts{margin-top:0;gap:6px}
+  .colC .slider label{font-size:14px}
+  .colC .checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}
+  .colC .checks label{min-height:32px;font-size:13.5px;line-height:1.35}
+  .colC .checks input{width:18px;height:18px;flex:none}
+  .colC .now{margin-top:8px;padding:6px 12px}
+  .colC .now b,.colC .now p{font-size:14px}
+  .part2{margin-top:12px;padding-top:10px}
+  .part2 h2{font-size:16px}
+  .part2 .lead{font-size:13px;margin-bottom:6px}
+  .part2 .bar .lab{font-size:13px}
+  .part2 .sub{font-size:12px}
+}
 </style>
 </head>
 <body>
@@ -119,9 +151,12 @@ h3{font-size:17px;margin:0 0 8px}
 </header>
 
 <main>
-  <section class="sheet" aria-labelledby="t1">
+  <section class="sheet board" aria-labelledby="t1">
+    <div class="head">
     <h2 id="t1">氷 1 g を加熱すると、粒子はどう動くか</h2>
     <p class="lead">−50 ℃ の氷 1 g に、1気圧のもとで一定の割合で熱を加えます。水分子の熱運動のモデルと、温度のグラフを並べて表示します。「加熱する」を押して、温度・状態・粒子の動きがどう変わるか観察しよう。</p>
+    </div>
+    <div class="colG">
     <div class="stage"><canvas id="cv" role="img" aria-label="容器の中の粒子のモデルと、加えた熱量と温度のグラフ。固体では粒子が決まった位置で振動し、液体では位置を入れかえ、気体では自由に飛び回る。"></canvas></div>
     <ul class="keys">
       <li><span class="dot" style="background:var(--solid)"></span>固体の粒子</li>
@@ -143,6 +178,9 @@ h3{font-size:17px;margin:0 0 8px}
       </div>
       <button type="button" class="btn ghost" id="resetBtn">最初から</button>
     </div>
+    <p class="hint">容器の中をタップすると、その粒子を赤で追いかけます。グラフをタップすると、その状態に移ります。粒子の数や体積の変化は実際とは違い、温度による動きの違いは見やすく誇張しています。（参考：水分子の平均の速さは、0&nbsp;℃ で約 6×10²&nbsp;m/s。<span id="vReal"></span>）</p>
+    </div>
+    <div class="colC">
     <div class="opts">
       <div class="slider"><label for="sP">熱の出入りの速さ</label><input type="range" id="sP" min="10" max="200" step="10" value="40"><output id="oP" for="sP"></output></div>
       <div class="checks">
@@ -153,10 +191,7 @@ h3{font-size:17px;margin:0 0 8px}
       </div>
     </div>
     <div class="now" id="now"><b></b><p></p></div>
-    <p class="hint">容器の中をタップすると、その粒子を赤で追いかけます。グラフをタップすると、その状態に移ります。粒子の数や体積の変化は実際とは違い、温度による動きの違いは見やすく誇張しています。（参考：水分子の平均の速さは、0&nbsp;℃ で約 6×10²&nbsp;m/s。<span id="vReal"></span>）</p>
-  </section>
-
-  <section class="sheet" aria-labelledby="t2">
+    <div class="part2" role="group" aria-labelledby="t2">
     <h2 id="t2">加えた熱は何に使われたか</h2>
     <p class="lead">−50 ℃ の氷に加えた熱量 <i class="qv">Q</i> を、温度を上げるのに使われた分と、状態変化（粒子どうしの結びつきを断つこと）に使われた分に分けて表します。</p>
     <div class="bars">
@@ -165,6 +200,8 @@ h3{font-size:17px;margin:0 0 8px}
     </div>
     <p class="sub" id="bNote"></p>
     <p class="sub">比熱：氷 2.1&nbsp;J/(g·K)、水 4.2&nbsp;J/(g·K)、水蒸気 約 2.0&nbsp;J/(g·K)。融解熱 3.3×10²&nbsp;J/g、蒸発熱 2.3×10³&nbsp;J/g（100&nbsp;℃）。</p>
+    </div>
+    </div>
   </section>
 
   <section class="sheet" aria-labelledby="qsTitle">
@@ -298,7 +335,7 @@ function langevin(p, g, u, dt){ const s = Math.sqrt(g * u * u * dt); p.vx += -g 
 /* ---------- 描画 ---------- */
 const cv = $("cv"), ctx = cv.getContext("2d"); let W = 0, H = 0, col = {}, LY = null;
 function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","grid","shade","solid","liquid","gas","cold","sheet","blue-soft"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
-function resize(){ const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0); LY = layout(); draw(); }
+function resize(){ const tp = document.querySelector(".top"); if(tp) document.documentElement.style.setProperty("--hdr", tp.offsetHeight + "px"); const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0); LY = layout(); draw(); }
 function L(pts, color, w, dash){ ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore(); }
 function T(s, x, y, color, size, align, bold){ ctx.save(); ctx.fillStyle = color; ctx.font = `${bold ? "700 " : ""}${size || 12}px "BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",sans-serif`; ctx.textAlign = align || "left"; ctx.textBaseline = "middle"; ctx.fillText(s, x, y); ctx.restore(); }
 function arrow(x0, y0, x1, y1, color, w){ L([[x0, y0], [x1, y1]], color, w || 2); const a = Math.atan2(y1 - y0, x1 - x0), h = 6; L([[x1 - h * Math.cos(a - .5), y1 - h * Math.sin(a - .5)], [x1, y1], [x1 - h * Math.cos(a + .5), y1 - h * Math.sin(a + .5)]], color, w || 2); }
