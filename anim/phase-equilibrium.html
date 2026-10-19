@@ -96,6 +96,27 @@ h3{font-size:17px;margin:20px 0 8px}
 .qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
 .qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
 .ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+/* 配置：スマホは1列。PC（幅 1000px 以上）は左に図・数値・操作、右に説明・設定・いまの状態。見てみようは下に全幅 */
+.board{display:flex;flex-direction:column}
+.colG,.colC,.head{display:contents}
+.qbox{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+@media (min-width:1000px){
+  .top-inner,main{max-width:1360px}
+  main{padding-top:12px;gap:14px}
+  .board{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(340px,1fr);grid-template-rows:auto 1fr auto;column-gap:22px;align-items:start;padding-top:14px}
+  .head,.colC{display:block;grid-column:2}
+  .head{grid-row:1}.colC{grid-row:2}
+  .colG{display:block;grid-column:1;grid-row:1 / span 2}
+  .qbox{grid-column:1 / -1;grid-row:3}
+  .colG .stage{max-height:max(260px,calc(100vh - var(--hdr,90px) - 250px))}
+  .colG .read{margin-top:8px}
+  .colG .controls{margin-top:8px}
+  .colG .hint{margin-top:6px}
+  .head h2{font-size:18px}
+  .head .lead{font-size:13.5px;margin-bottom:8px}
+  .colC .opts{margin-top:0}
+  .colC .now{margin-top:10px}
+}
 </style>
 </head>
 <body>
@@ -117,9 +138,12 @@ h3{font-size:17px;margin:20px 0 8px}
 
 <main>
   <!-- ================= A. 気液平衡 ================= -->
-  <section class="sheet" id="lv" aria-labelledby="tA">
+  <section class="sheet board" id="lv" aria-labelledby="tA">
+    <div class="head">
     <h2 id="tA"><span class="no">A</span>蒸発と凝縮（気液平衡）</h2>
     <p class="lead">液体の表面では、熱運動で勢いのついた粒子が飛び出し（蒸発）、気体の粒子が液面にぶつかって戻ってきます（凝縮）。ふたをした容器で、気体の粒子の数と、1秒あたりの蒸発・凝縮の数がどう変わるか観察しよう。</p>
+    </div>
+    <div class="colG">
     <div class="stage"><canvas id="cvA" role="img" aria-label="容器の底に液体、その上に気体の粒子。右に、気体の粒子の数と、1秒あたりの蒸発と凝縮の数の時間変化のグラフ。"></canvas></div>
     <ul class="keys">
       <li><span class="dot" style="background:var(--liquid)"></span>液体の粒子</li>
@@ -137,6 +161,9 @@ h3{font-size:17px;margin:20px 0 8px}
       <button type="button" class="btn" id="aPlay">一時停止</button>
       <button type="button" class="btn ghost" id="aReset">最初から（気体なし）</button>
     </div>
+    <p class="hint">粒子の数や速さは実際とは違うモデルです。温度による違いは見やすくしてあります（実際の水では、100&nbsp;℃ の飽和水蒸気圧は 20&nbsp;℃ の約40倍）。<span id="aPs"></span></p>
+    </div>
+    <div class="colC">
     <div class="opts">
       <div class="slider"><label for="aSt">液体の温度 <i class="qv">t</i></label><input type="range" id="aSt" min="20" max="100" step="5" value="60"><output id="aOt" for="aSt"></output></div>
       <div class="checks">
@@ -145,16 +172,20 @@ h3{font-size:17px;margin:20px 0 8px}
       </div>
     </div>
     <div class="now" id="aNow"><b></b><p></p><p class="heat"></p></div>
-    <p class="hint">粒子の数や速さは実際とは違うモデルです。温度による違いは見やすくしてあります（実際の水では、100&nbsp;℃ の飽和水蒸気圧は 20&nbsp;℃ の約40倍）。<span id="aPs"></span></p>
-
+    </div>
+    <div class="qbox">
     <h3>見てみよう</h3>
     <ol class="qs" id="qsA"></ol>
+    </div>
   </section>
 
   <!-- ================= B. 固液平衡 ================= -->
-  <section class="sheet" id="sl" aria-labelledby="tB">
+  <section class="sheet board" id="sl" aria-labelledby="tB">
+    <div class="head">
     <h2 id="tB"><span class="no">B</span>融解と凝固（固液平衡）</h2>
     <p class="lead">外から熱が出入りしない容器に、0 ℃ の氷と水（あわせて 20 g）が入っています。氷の表面では、粒子が離れたり（融解）くっついたり（凝固）しています。熱を加えたり奪ったりすると、氷の量と温度はどうなるか観察しよう。</p>
+    </div>
+    <div class="colG">
     <div class="stage"><canvas id="cvB" role="img" aria-label="容器の中に氷のかたまりと水の粒子。右に、温度と氷の質量の時間変化のグラフ。"></canvas></div>
     <ul class="keys">
       <li><span class="dot" style="background:var(--solid)"></span>氷（固体）の粒子</li>
@@ -177,14 +208,18 @@ h3{font-size:17px;margin:20px 0 8px}
       <button type="button" class="btn ghost" id="bPlay">一時停止</button>
       <button type="button" class="btn ghost" id="bReset">最初から</button>
     </div>
+    <p class="hint">粒子1個を氷または水 0.1&nbsp;g として描いたモデルです（融解熱 334&nbsp;J/g、水の比熱 4.2&nbsp;J/(g·K)、氷の比熱 2.1&nbsp;J/(g·K)）。実際の氷は水に浮きますが、ここでは容器の底に固定して描いています。</p>
+    </div>
+    <div class="colC">
     <div class="opts">
       <div class="slider"><label for="bSp">熱の出入りの速さ</label><input type="range" id="bSp" min="10" max="100" step="10" value="30"><output id="bOp" for="bSp"></output></div>
     </div>
     <div class="now" id="bNow"><b></b><p></p><p class="heat"></p></div>
-    <p class="hint">粒子1個を氷または水 0.1&nbsp;g として描いたモデルです（融解熱 334&nbsp;J/g、水の比熱 4.2&nbsp;J/(g·K)、氷の比熱 2.1&nbsp;J/(g·K)）。実際の氷は水に浮きますが、ここでは容器の底に固定して描いています。</p>
-
+    </div>
+    <div class="qbox">
     <h3>見てみよう</h3>
     <ol class="qs" id="qsB"></ol>
+    </div>
   </section>
 </main>
 
@@ -476,7 +511,7 @@ $("qsB").innerHTML = qs([
 ]);
 
 /* ---------- ループ ---------- */
-function resizeAll(){ oA.resize(); oB.resize(); drawA(); drawB(); }
+function resizeAll(){ const tp = document.querySelector(".top"); if(tp) document.documentElement.style.setProperty("--hdr", tp.offsetHeight + "px"); oA.resize(); oB.resize(); drawA(); drawB(); }
 let last = null, uiT = 0;
 const vis = { A: true, B: true };
 if(window.IntersectionObserver){ const io = new IntersectionObserver(es => es.forEach(e => vis[e.target === $("cvA") ? "A" : "B"] = e.isIntersecting)); io.observe($("cvA")); io.observe($("cvB")); }
