@@ -79,6 +79,21 @@ h3{font-size:17px;margin:0 0 8px}
 .qs{margin:0;padding-left:1.4em;display:grid;gap:10px}
 .qs summary{cursor:pointer;color:var(--blue);font-weight:700;font-size:14px;padding:4px 0}
 .ans{margin:4px 0 0;padding:8px 12px;background:var(--blue-soft);border-radius:6px;font-size:15px}
+/* 配置：スマホは1列。PC（幅 1000px 以上）は左に図・凡例・再生ボタン（固定、高さは画面に合わせる）、右に説明・設定・見てみよう */
+.board{display:flex;flex-direction:column}
+.colG,.colC,.head{display:contents}
+.qbox{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+@media (min-width:1000px){
+  .top-inner,main{max-width:1360px}
+  .board{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(320px,1fr);column-gap:22px;align-items:start}
+  .head,.colC{display:block;grid-column:2}
+  .head{grid-row:1}.colC{grid-row:2}
+  .colG{display:block;grid-column:1;grid-row:1 / span 2;position:sticky;top:calc(var(--hdr,110px) + 10px)}
+  .colG .stage{aspect-ratio:auto;height:max(380px,calc(100vh - var(--hdr,110px) - 175px))}
+  .colG .keys{margin:8px 0 0}
+  .colG .controls{margin-top:8px}
+  .head .lead{font-size:14px}
+}
 </style>
 </head>
 <body>
@@ -102,10 +117,10 @@ h3{font-size:17px;margin:0 0 8px}
 </header>
 
 <main>
-  <section class="sheet" aria-labelledby="t1">
-    <h2 id="t1">媒質の動きと疎密</h2>
-    <p class="lead" id="lead">左のスピーカーが左右に振動すると、空気の粒子も左右に振動し、粒子が集まった「密」と、まばらな「疎」が右へ伝わっていきます。粒子そのものは右へ進まず、その場で振動するだけです。</p>
-    <div class="stage"><canvas id="cv" role="img" aria-label="上段は空気の粒子やつるまきばね、中段は変位を横波のように描いたグラフ、下段は密度のグラフ。密と疎の位置を縦の点線で結んでいる。"></canvas></div>
+  <section class="sheet board" aria-labelledby="t1">
+    <div class="head"><h2 id="t1">媒質の動きと疎密</h2>
+    <p class="lead" id="lead">左のスピーカーが左右に振動すると、空気の粒子も左右に振動し、粒子が集まった「密」と、まばらな「疎」が右へ伝わっていきます。粒子そのものは右へ進まず、その場で振動するだけです。</p></div>
+    <div class="colG"><div class="stage"><canvas id="cv" role="img" aria-label="上段は空気の粒子やつるまきばね、中段は変位を横波のように描いたグラフ、下段は密度のグラフ。密と疎の位置を縦の点線で結んでいる。"></canvas></div>
     <ul class="keys">
       <li><span class="dot" style="background:var(--red)"></span>注目する点（粒子・ばねの巻き）</li>
       <li><span class="dot" style="background:var(--dense)"></span>密（粒子が集まっている）</li>
@@ -118,7 +133,8 @@ h3{font-size:17px;margin:0 0 8px}
       <label class="speed" for="speedSel">速さ
         <select id="speedSel"><option value="0.25">ゆっくり</option><option value="0.5" selected>ふつう</option><option value="1">はやい</option></select>
       </label>
-    </div>
+    </div></div>
+    <div class="colC">
     <div class="opts">
       <div class="seg" role="group" aria-label="媒質のモデル"><span class="seg-label">媒質のモデル</span>
         <button type="button" data-model="air" aria-pressed="false">空気の粒子</button>
@@ -135,10 +151,11 @@ h3{font-size:17px;margin:0 0 8px}
       </div>
     </div>
     <p class="hint">図をタップすると、その位置の粒子やばねの巻きを赤で追いかけます。波の速さは 1.0 m/s、波長は <i class="qv">λ</i> ＝ <i class="qv">v</i>/<i class="qv">f</i> です（実際の音より大きく、ゆっくり描いたモデルです）。</p>
-  </section>
-  <section class="sheet" aria-labelledby="qsTitle">
+    <div class="qbox" aria-labelledby="qsTitle">
     <h3 id="qsTitle">見てみよう</h3>
     <ol class="qs" id="qs"></ol>
+    </div>
+    </div>
   </section>
 </main>
 
@@ -167,7 +184,7 @@ for(let i = 0; i * DX <= XMAX + 1e-9; i++) for(let r = 0; r < ROWS; r++) parts.p
 
 const cv = $("cv"), ctx = cv.getContext("2d"); let W = 0, H = 0, col = {};
 function readColors(){ const cs = getComputedStyle(document.documentElement); ["ink","muted","blue","red","line","grid","shade","dense","sparse","sheet"].forEach(k => col[k] = cs.getPropertyValue("--" + k).trim()); }
-function resize(){ const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0); draw(); }
+function resize(){ const tp = document.querySelector(".top"); if(tp) document.documentElement.style.setProperty("--hdr", tp.offsetHeight + "px"); const r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2.5); W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height)); cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0); draw(); }
 function L(pts, color, w, dash){ ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore(); }
 function T(s, x, y, color, size, align, bold){ ctx.save(); ctx.fillStyle = color; ctx.font = `${bold ? "700 " : ""}${size || 12}px BIZ UDPGothic,"Hiragino Sans","Yu Gothic UI",sans-serif`; ctx.textAlign = align || "left"; ctx.textBaseline = "middle"; ctx.fillText(s, x, y); ctx.restore(); }
 function arrow(x0, y0, x1, y1, color){
