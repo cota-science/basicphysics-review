@@ -268,6 +268,15 @@ sub .s, sub i{font-family:var(--f-sym)}
 .verdict.dn{border-color:var(--wn);background:var(--wn-a)}
 .verdict.upv{border-color:var(--frc);background:var(--frc-a)}
 .scgrp{display:flex;flex-direction:column;gap:6px}
+/* 配置：PC は左に運動のようす（固定、高さは画面に合わせる）、右の先頭に条件、その下にエネルギー図・説明・グラフ。スマホは元の順（o1〜o6） */
+@media (max-width:900px){ .colL,.colR{display:contents} .o1{order:1}.o2{order:2}.o3{order:3}.o4{order:4}.o5{order:5}.o6{order:6} }
+@media (min-width:901px){
+  .colL,.colR{display:flex;flex-direction:column;gap:10px;min-width:0}
+  .colL{position:sticky;top:8px}
+  .stage canvas.sc{height:clamp(240px,calc(100vh - 330px),400px)}
+  .gcard canvas.eb{height:clamp(170px,calc(100vh - 520px),250px)!important}
+  #pane-lab .gcard canvas.eb{height:clamp(160px,calc(100vh - 560px),250px)!important}
+}
 </style>
 </head>
 <body>
@@ -290,7 +299,7 @@ sub .s, sub i{font-family:var(--f-sym)}
     <p class="lead">重力だけを受けて運動する物体の軌道上に、2点 A・B をとります（スライダーで動かせる）。「<b>重力がする仕事 ＝ 位置エネルギーの差</b>」と「<b>運動エネルギーの変化 ＝ された仕事</b>」の2つを組み合わせると、<b>力学的エネルギー <i class="s">E</i> ＝ <i class="s">K</i> ＋ <i class="s">U</i> が A と B で等しい</b>ことが証明できます。A・B はどこにとってもよいので、<i class="s">E</i> は運動中ずっと一定です。</p>
     <div class="grid">
       <div class="colL">
-        <section class="panel stage">
+        <section class="panel stage o1">
           <canvas class="sc" id="q-sc" aria-label="投げた物体の軌道と点A・B"></canvas>
           <div id="q-tp"></div>
           <div class="readout">
@@ -300,29 +309,29 @@ sub .s, sub i{font-family:var(--f-sym)}
             <div class="me"><div class="k">力学的エネルギー <i class="s">E</i></div><div class="v num" id="q-re"></div></div>
           </div>
         </section>
-        <section class="panel">
-          <h2>証明を1段階ずつ</h2>
-          <div class="body" id="q-step"></div>
-        </section>
-        <section class="panel">
+      </div>
+      <div class="colR">
+        <section class="panel o3">
           <h2>条件</h2>
           <div class="body" style="display:flex;flex-direction:column;gap:12px">
             <div class="row" id="q-pre"></div>
             <div class="prm" id="q-prm"></div>
           </div>
         </section>
-      </div>
-      <div class="colR">
-        <div class="gcard">
+        <div class="gcard o4">
           <div class="ghead"><span class="gt">エネルギー図（A・いま・B）</span><span class="meaning">積み上げた高さ ＝ <i class="s">E</i> ＝ <i class="s">K</i> ＋ <i class="s">U</i>（基準水平面は床）</span></div>
           <canvas class="eb" id="q-eb" style="height:250px"></canvas>
         </div>
-        <div class="gcard">
+        <section class="panel o2">
+          <h2>証明を1段階ずつ</h2>
+          <div class="body" id="q-step"></div>
+        </section>
+        <div class="gcard o5">
           <div class="ghead"><span class="gt">エネルギー − 時間 グラフ</span></div>
           <canvas class="gp" id="q-et"></canvas>
           <div class="legend2"><span><i class="sw" style="--c:var(--ke)"></i>運動エネルギー <i class="s">K</i></span><span><i class="sw" style="--c:var(--ug)"></i>重力による位置エネルギー <i class="s">U</i></span><span><i class="sw" style="--c:var(--me)"></i>力学的エネルギー <i class="s">E</i></span></div>
         </div>
-        <div class="gcard">
+        <div class="gcard o6">
           <div class="ghead"><span class="gt">エネルギー − 高さ グラフ</span><span class="meaning"><i class="s">U</i> は高さに比例。<i class="s">K</i> ＝ <i class="s">E</i> − <i class="s">U</i></span></div>
           <canvas class="gp" id="q-eh"></canvas>
         </div>
@@ -335,7 +344,7 @@ sub .s, sub i{font-family:var(--f-sym)}
     <p class="lead" id="l-lead"></p>
     <div class="grid">
       <div class="colL">
-        <section class="panel stage">
+        <section class="panel stage o1">
           <canvas class="sc" id="l-sc" aria-label="運動のようす"></canvas>
           <div id="l-tp"></div>
           <div class="readout">
@@ -345,7 +354,9 @@ sub .s, sub i{font-family:var(--f-sym)}
             <div class="me"><div class="k">力学的エネルギー <i class="s">E</i></div><div class="v num" id="l-re"></div></div>
           </div>
         </section>
-        <section class="panel">
+      </div>
+      <div class="colR">
+        <section class="panel o2">
           <h2>運動の種類と条件</h2>
           <div class="body" style="display:flex;flex-direction:column;gap:12px">
             <div class="scgrp" id="l-scn"></div>
@@ -353,23 +364,21 @@ sub .s, sub i{font-family:var(--f-sym)}
             <div class="note" id="l-note"></div>
           </div>
         </section>
-      </div>
-      <div class="colR">
-        <div class="gcard">
+        <div class="gcard o4">
+          <div class="ghead"><span class="gt">エネルギー図</span><span class="meaning" id="l-em">点線の枠 ＝ はじめの力学的エネルギー <i class="s">E</i><sub>0</sub></span></div>
+          <canvas class="eb" id="l-eb" style="height:250px"></canvas>
+        </div>
+        <div class="gcard o3">
           <div class="ghead"><span class="gt">受ける力と、その仕事</span><span class="meaning">重力・弾性力以外の力が仕事をするか？</span></div>
           <div class="tblwrap" style="padding:0 10px 8px"><table class="wt" id="l-tbl"></table></div>
           <div style="padding:0 10px 10px"><div class="verdict" id="l-ver"></div></div>
         </div>
-        <div class="gcard">
-          <div class="ghead"><span class="gt">エネルギー図</span><span class="meaning" id="l-em">点線の枠 ＝ はじめの力学的エネルギー <i class="s">E</i><sub>0</sub></span></div>
-          <canvas class="eb" id="l-eb" style="height:250px"></canvas>
-        </div>
-        <div class="gcard">
+        <div class="gcard o5">
           <div class="ghead"><span class="gt">エネルギー − 時間 グラフ</span></div>
           <canvas class="gp tall" id="l-et"></canvas>
           <div class="legend2" id="l-leg"></div>
         </div>
-        <section class="panel">
+        <section class="panel o6">
           <h2>式</h2>
           <div class="body fx">
             <div class="eq"><div class="main" id="l-eq"></div><div class="subst" id="l-sub"></div></div>
