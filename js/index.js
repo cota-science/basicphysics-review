@@ -31,7 +31,7 @@ window.UNIT_LIST = [
     { id: "heat",       title: "熱とエネルギー",             file: "units/heat.js" }
   ]},
   { group: "波", units: [
-    { id: "anim-waves", title: "▶ 波と音のアニメーション集", href: "anim/index.html", note: "演習の前に、波の動きを見て確かめよう" },
+    { id: "anim-waves", title: "▶ 波と音のアニメーション集", href: "anim/index.html#waves", note: "演習の前に、波の動きを見て確かめよう" },
     { id: "waves",      title: "波の性質",                   file: "units/waves.js" },
     { id: "sound",      title: "音",                         file: "units/sound.js" }
   ]},
