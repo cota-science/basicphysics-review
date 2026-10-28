@@ -93,7 +93,7 @@ h3{font-size:17px;margin:0 0 8px}
   .head,.colC{display:block;grid-column:2}
   .head{grid-row:1}.colC{grid-row:2}
   .colG{display:block;grid-column:1;grid-row:1 / span 2;position:sticky;top:calc(var(--hdr,110px) + 10px)}
-  .colG .stage{max-height:max(230px,calc(100vh - var(--hdr,110px) - 330px))}
+  .colG .stage{max-height:max(215px,calc(100vh - var(--hdr,110px) - 500px))}
   .colG .controls{margin-top:8px}
   .colG .note{font-size:12.5px}
   .head .lead{font-size:14px}
@@ -146,6 +146,7 @@ h3{font-size:17px;margin:0 0 8px}
         <select id="speedSel"><option value="0.5">ゆっくり</option><option value="1" selected>ふつう</option><option value="2">はやい</option></select>
       </label>
     </div>
+    <div id="staff"></div>
     </div>
     <div class="colC">
     <div class="opts">
@@ -170,6 +171,7 @@ h3{font-size:17px;margin:0 0 8px}
   </section>
 </main>
 
+<script src="staff.js"></script>
 <script>
 (function(){
 "use strict";
@@ -285,6 +287,7 @@ function sync(){
   $("fF").innerHTML = `${I("f")} ＝ ${I("n")}${I("v")}/(2${I("L")}) ＝ ${st.n} × ${v.toFixed(0)} ÷ (2 × ${fmt(st.L, 2)}) ≒ <b>${fmtF(f)} Hz</b>　（${I("n")} ＝ ${st.n}：${I("f")} ＝ ${st.n}${I("f")}<sub>1</sub>）`;
   document.querySelectorAll("[data-n]").forEach(b => b.setAttribute("aria-pressed", +b.dataset.n === st.n));
   $("soundBtn").textContent = `♪ この音を聞く（${fmtF(f)} Hz）`;
+  Staff.set($("staff"), f);
   draw();
 }
 function setPlaying(p){ st.playing = p; $("playBtn").textContent = p ? "一時停止" : "再生"; }
@@ -317,7 +320,7 @@ $("qs").innerHTML = [
   ["「進行波に分けて見る」をオンにしよう。弦の定在波（定常波）は、どんな波が重なってできているか。", "弦を左右に往復する波（右へ進む波と、端で反射して左へ進む波）の重ね合わせです。両端で固定端反射をくり返しても形がそろう波長だけが、定在波（定常波）として残ります。"]
 ].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
 
-sync(); setPlaying(st.playing); resize(); requestAnimationFrame(tick);
+Staff.mount($("staff")); sync(); setPlaying(st.playing); resize(); requestAnimationFrame(tick);
 })();
 </script>
 </body>

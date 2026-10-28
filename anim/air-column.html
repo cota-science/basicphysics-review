@@ -100,7 +100,7 @@ h3{font-size:17px;margin:0 0 8px}
   .head,.colC{display:block;grid-column:2}
   .head{grid-row:1}.colC{grid-row:2}
   .colG{display:block;grid-column:1;grid-row:1 / span 2;position:sticky;top:calc(var(--hdr,110px) + 10px)}
-  .colG .stage{max-height:max(230px,calc(100vh - var(--hdr,110px) - 360px))}
+  .colG .stage{max-height:max(215px,calc(100vh - var(--hdr,110px) - 520px))}
   .colG .controls{margin-top:8px}
   .colG .note{font-size:12.5px}
   .head .lead{font-size:14px}
@@ -158,6 +158,7 @@ h3{font-size:17px;margin:0 0 8px}
         <select id="speedSel"><option value="0.5">ゆっくり</option><option value="1" selected>ふつう</option><option value="2">はやい</option></select>
       </label>
     </div>
+    <div id="staff"></div>
     </div>
     <div class="colC">
     <div class="opts">
@@ -187,6 +188,7 @@ h3{font-size:17px;margin:0 0 8px}
   </section>
 </main>
 
+<script src="staff.js"></script>
 <script>
 (function(){
 "use strict";
@@ -342,6 +344,7 @@ function sync(){
   document.querySelectorAll("[data-n]").forEach(b => b.setAttribute("aria-pressed", +b.dataset.n === st.n));
   $("rowD").classList.toggle("locked", !st.corr); $("sD").disabled = !st.corr;
   $("soundBtn").textContent = `♪ この音を聞く（${fmtF(f)} Hz）`;
+  Staff.set($("staff"), f);
   draw();
 }
 function setPlaying(p){ st.playing = p; $("playBtn").textContent = p ? "一時停止" : "再生"; }
@@ -376,7 +379,7 @@ $("qs").innerHTML = [
   ["気体を「二酸化炭素」にしよう。空気と比べて、音はどうなるか。", "二酸化炭素は空気より重い（密度が大きい）ので音速が小さくなり、同じ管でも固有振動数は小さく（音は低く）なります。"]
 ].map(([q, a]) => `<li>${q}<details><summary>答えを見る</summary><p class="ans">${a}</p></details></li>`).join("");
 
-buildN(); sync(); setPlaying(st.playing); resize(); requestAnimationFrame(tick);
+buildN(); Staff.mount($("staff")); sync(); setPlaying(st.playing); resize(); requestAnimationFrame(tick);
 })();
 </script>
 </body>
